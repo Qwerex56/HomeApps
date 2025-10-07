@@ -1,0 +1,29 @@
+@import 'tailwindcss';
+
+html {
+  position: relative;
+  height: 100%;
+
+  background-color: rgba(0, 22, 33, 0.917);
+
+  z-index: -1;
+}
+
+html::before {
+  position: absolute;
+  content: '';
+
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 100%;
+
+  background-color: rgba(0, 22, 33, 0.084);
+  background-image: url('/public/background-image.svg');
+
+  background-size: cover;
+  filter: blur(8rem);
+
+  z-index: -1;
+}
