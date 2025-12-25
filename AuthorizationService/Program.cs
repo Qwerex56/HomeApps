@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
-using System.Security.Claims;
 using System.Text;
+using AuthorizationService.Services.AccountService;
+using AuthorizationService.Services.JwtService;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -10,69 +10,61 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAuthentication(options =>
     {
-        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+        options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     })
-    .AddCookie()
-    .AddGoogle(options =>
+    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
     {
         options.ClientId = builder.Configuration["Auth__Google__ClientId"];
         options.ClientSecret = builder.Configuration["Auth__Google__ClientSecret"];
         options.CallbackPath = "/signin-google";
+        
+        options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Auth__Jwt__Issuer"],
+            
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Auth__Jwt__Audience"],
+            
+            ValidateLifetime = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Auth__Jwt__Key"])),
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (context.Request.Cookies.ContainsKey("jwt"))
+                {
+                    context.Token = context.Request.Cookies["jwt"];
+                }
+    
+                return Task.CompletedTask;
+            }
+        };
     });
-
-// builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//     .AddJwtBearer(options =>
-//     {
-//         options.TokenValidationParameters = new TokenValidationParameters
-//         {
-//             ValidateIssuer = true,
-//             ValidIssuer = builder.Configuration["Auth__Jwt__Issuer"],
-//             
-//             ValidateAudience = true,
-//             ValidAudience = builder.Configuration["Auth__Jwt__Audience"],
-//             
-//             ValidateLifetime = true,
-//             IssuerSigningKey = new SymmetricSecurityKey(
-//                 Encoding.UTF8.GetBytes(builder.Configuration["Auth__Jwt__Key"])),
-//         };
-//     });
 
 builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 
+
+builder.Services.AddSingleton<IAccountService, AccountService>();
+builder.Services.AddSingleton<JwtService>();
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-
-/*
- * 1. Setup google sign-in in Services
- * 2. Add login scheme in one endpoint e.g. .../login
- * 3. Add api end-point to which user will be redirected after successful login
- *
- */
-// Endpoint do wywołania logowania
-// app.MapGet("/login", async (HttpContext context) =>
-// {
-//     await context.ChallengeAsync(GoogleDefaults.AuthenticationScheme,
-//         new AuthenticationProperties { RedirectUri = "/me" });
-// });
-//
-// // Endpoint callbacku — pokaże dane użytkownika
-// app.MapGet("/me", (HttpContext context) =>
-// {
-//     var user = context.User;
-//     return Results.Json(new
-//     {
-//         Name = user.Identity?.Name,
-//         Email = user.FindFirst(ClaimTypes.Email)?.Value
-//     });
-// });
 
 app.MapControllers();
 
