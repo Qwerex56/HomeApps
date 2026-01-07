@@ -1,12 +1,18 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace AccountManagement.Models;
 
 public class User {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty; // Should autogen when empty on creation
+    public Guid Id { get; init; } = Guid.NewGuid();
+    
+    [MaxLength(64)]
+    public string Name { get; set; } = string.Empty;
+    
+    [MaxLength(320)]
     public required string Email { get; set; }
 
-    public int? HouseholdId { get; set; } = null; // foreign key
-    public Household? Household { get; set; } = null;
+    public ICollection<UserHousehold> UserHouseholds { get; set; } = [];
+    public ICollection<Household>  Households { get; set; } = [];
     
     public ICollection<Account> Accounts { get; set; } = [];
 }
