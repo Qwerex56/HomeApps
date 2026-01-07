@@ -15,4 +15,6 @@ public class User {
     public ICollection<Household>  Households { get; set; } = [];
     
     public ICollection<Account> Accounts { get; set; } = [];
+
+    public JwtToken JwtToken { get; set; } = null!;
 }
