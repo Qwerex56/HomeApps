@@ -7,7 +7,7 @@ public class Account {
     public Guid Id { get; init; } = Guid.NewGuid();
     
     [MaxLength(128)]
-    public required string ServiceName { get; set; } = string.Empty;
+    public string ServiceName { get; set; } = string.Empty;
     public SyncStatusEnum SyncStatus { get; set; }
     public DateTime LastSync { get; set; }
     
