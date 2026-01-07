@@ -4,7 +4,7 @@ using AccountManagement.Enums;
 namespace AccountManagement.Models;
 
 public class Account {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; init; } = Guid.NewGuid();
     
     [MaxLength(128)]
     public required string ServiceName { get; set; } = string.Empty;
