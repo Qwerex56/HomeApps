@@ -11,7 +11,7 @@ public class UserHousehold {
     public Household Household { get; set; } = null!;
 
     public HouseholdRoleEnum UserHouseholdRole { get; set; } = HouseholdRoleEnum.Guest;
-    public DateTime JoinDate { get; set; } = DateTime.Now;
+    public DateTime JoinDate { get; set; }
     
     [MaxLength(64)]
     public string Nickname { get; set; } = string.Empty;
