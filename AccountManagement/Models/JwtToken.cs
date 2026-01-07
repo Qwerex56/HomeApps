@@ -12,6 +12,6 @@ public class JwtToken {
     public DateTime Expires { get; set; }
     public DateTime Created { get; set; }
     
-    [StringLength(SHA256.HashSizeInBytes)]
+    [StringLength(64)]
     public string TokenHash { get; set; } = string.Empty;
 }
