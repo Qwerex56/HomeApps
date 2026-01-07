@@ -25,5 +25,10 @@ public class AccountDbContext : DbContext {
                 r => r.HasOne(e => e.Household).WithMany(e => e.UserHouseholds).HasForeignKey(e => e.HouseholdId),
                 l => l.HasOne(e => e.User).WithMany(e => e.UserHouseholds).HasForeignKey(e => e.UserId)
             );
+
+        modelBuilder.Entity<User>()
+            .HasOne(e => e.JwtToken)
+            .WithOne(e => e.User)
+            .HasForeignKey<JwtToken>(e => e.UserId);
     }
 }
