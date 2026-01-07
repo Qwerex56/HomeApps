@@ -89,7 +89,6 @@ public class LoginController : ControllerBase
     public async Task<IActionResult> PostLogin()
     {
         var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
-        var test = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         
         if (string.IsNullOrEmpty(email))
         {
