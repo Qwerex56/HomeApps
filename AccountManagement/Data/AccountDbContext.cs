@@ -11,6 +11,8 @@ public class AccountDbContext : DbContext {
     public DbSet<Household> Households { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Account> Accounts { get; set; }
+    public DbSet<UserHousehold> UserHouseholds { get; set; }
+    public DbSet<JwtToken> JwtTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         modelBuilder.Entity<User>()

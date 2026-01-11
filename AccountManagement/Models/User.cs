@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AccountManagement.Models;
 
-public class User {
+public class User : IEntity {
     public Guid Id { get; init; } = Guid.NewGuid();
     
     [MaxLength(64)]

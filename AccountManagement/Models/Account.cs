@@ -3,7 +3,7 @@ using AccountManagement.Enums;
 
 namespace AccountManagement.Models;
 
-public class Account {
+public class Account : IEntity {
     public Guid Id { get; init; } = Guid.NewGuid();
     
     [MaxLength(128)]

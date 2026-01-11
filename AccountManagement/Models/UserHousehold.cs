@@ -3,7 +3,7 @@ using AccountManagement.Enums;
 
 namespace AccountManagement.Models;
 
-public class UserHousehold {
+public class UserHousehold : IEntity {
     public Guid UserId { get; set; }
     public User User { get; set; } = null!;
     

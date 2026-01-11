@@ -3,8 +3,8 @@ using System.Security.Cryptography;
 
 namespace AccountManagement.Models;
 
-public class JwtToken {
-    public Guid Id { get; init; } = Guid.NewGuid();    
+public class JwtToken : IEntity {
+    public Guid Id { get; init; } = Guid.NewGuid();
     
     public Guid UserId { get; set; }
     public User User { get; set; } = null!;
