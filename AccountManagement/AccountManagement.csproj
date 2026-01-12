@@ -30,6 +30,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Shared.Authorization\Shared.Authorization.csproj" />
+      <ProjectReference Include="..\Shared\Shared.csproj" />
     </ItemGroup>
 
 </Project>

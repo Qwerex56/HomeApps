@@ -9,7 +9,7 @@ public class User : IEntity {
     public string Name { get; set; } = string.Empty;
     
     [MaxLength(320)]
-    public required string Email { get; set; }
+    public string Email { get; set; } = string.Empty;
 
     public ICollection<UserHousehold> UserHouseholds { get; set; } = [];
     public ICollection<Household>  Households { get; set; } = [];
