@@ -41,7 +41,8 @@ public class UserService : IUserService {
 
         var user = new User {
             Email = email,
-            Name = name
+            Name = name,
+            CreatedAt = DateTime.UtcNow
         };
         
         await _userRepository.CreateAsync(user);

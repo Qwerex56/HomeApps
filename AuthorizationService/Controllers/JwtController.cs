@@ -137,7 +137,7 @@ public class JwtController : ControllerBase
 
         var user = await _accountService.GetUserByIdAsync(Guid.Parse(userId));
 
-        if (user is null || user.RefreshToken != oldRefresh)
+        if (user is null/* || user.RefreshToken != oldRefresh*/)
         {
             return Unauthorized();
         }

@@ -10,6 +10,8 @@ public class User : IEntity {
     
     [MaxLength(320)]
     public string Email { get; set; } = string.Empty;
+    
+    public DateTime CreatedAt { get; set; }
 
     public ICollection<UserHousehold> UserHouseholds { get; set; } = [];
     public ICollection<Household>  Households { get; set; } = [];

@@ -1,4 +1,4 @@
-using AuthorizationService.Dtos.Account;
+using AuthorizationService.Dto.Account;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AuthorizationService.Services.AccountService;
@@ -20,14 +20,14 @@ public interface IAccountService
     /// The email address of the user to retrieve.
     /// </param>
     /// <returns>
-    /// A task that resolves to a <see cref="UserDto"/> when the user exists,
+    /// A task that resolves to a <see cref="AccountDto"/> when the user exists,
     /// or <c>null</c> when no user is found.
     /// </returns>
     /// <remarks>
     /// This method is typically used during the Google OAuth login flow to determine
     /// whether the authenticated Google account corresponds to an existing user.
     /// </remarks>
-    Task<UserDto?> GetUserByEmailAsync(string email);
+    Task<AccountDto?> GetUserByEmailAsync(string email);
 
     /// <summary>
     /// Retrieves a user by their unique identifier (GUID).
@@ -36,13 +36,13 @@ public interface IAccountService
     /// The unique identifier of the user to retrieve.
     /// </param>
     /// <returns>
-    /// A task that resolves to a <see cref="UserDto"/> when the user exists,
+    /// A task that resolves to a <see cref="AccountDto"/> when the user exists,
     /// or <c>null</c> when no user is found.
     /// </returns>
     /// <remarks>
     /// This method is used when resolving the authenticated user from the JWT <c>sub</c> claim.
     /// </remarks>
-    Task<UserDto?> GetUserByIdAsync(Guid userId);
+    Task<AccountDto?> GetUserByIdAsync(Guid userId);
 
     /// <summary>
     /// Saves or updates the refresh token associated with a specific user.

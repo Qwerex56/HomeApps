@@ -2,7 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using AuthorizationService.Dtos.Account;
+using AuthorizationService.Dto.Account;
 using Microsoft.IdentityModel.Tokens;
 using Shared.Authorization.Configuration;
 
@@ -34,7 +34,7 @@ public class JwtService
     /// <summary>
     /// Generates a signed JWT access token for the specified user.
     /// </summary>
-    /// <param name="user">
+    /// <param name="account">
     /// The user for whom the token should be generated. The user's ID and email are included as claims.
     /// </param>
     /// <returns>
@@ -59,7 +59,7 @@ public class JwtService
     /// <see cref="JwtOptions"/> section in the application configuration.
     /// </para>
     /// </remarks>
-    public string GenerateToken(UserDto user)
+    public string GenerateToken(AccountDto account)
     {
         var jwtOptions = new JwtOptions();
         _configuration.GetSection(JwtOptions.Jwt).Bind(jwtOptions);
@@ -69,8 +69,8 @@ public class JwtService
 
         Claim[] claims =
         [
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(JwtRegisteredClaimNames.Sub, account.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, account.Email),
             new Claim(ClaimTypes.Role, "roles") // TODO: Save user roles
         ];
 

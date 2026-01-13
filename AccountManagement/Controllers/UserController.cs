@@ -1,4 +1,5 @@
 using AccountManagement.Dto.User;
+using AccountManagement.Mappers;
 using AccountManagement.Services.UserService;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,7 +18,7 @@ public class UserController : ControllerBase {
     }
 
     [HttpGet]
-    [Route("{id:guid}")]
+    [Route("id/{id:guid}")]
     public async Task<IActionResult> GetUserById(Guid id) {
         var user = await _userService.GetUserByIdAsync(id);
 
@@ -28,10 +29,25 @@ public class UserController : ControllerBase {
         return Ok(user);
     }
 
+    [HttpGet]
+    [Route("email/{email}")]
+    public async Task<IActionResult> GetUserByEmail(string email) {
+        var user = await _userService.GetUserByEmailAsync(email);
+        
+        if (user is null) {
+            return NotFound();
+        }
+        
+        return Ok(UserMapper.ToCreatedUserDto(user));
+    }
+    
     [HttpPost]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserDto user) {
-        var result = await _userService.CreateUserAsync(user);
+        var createdUser = await _userService.CreateUserAsync(user);
         
-        return CreatedAtAction(nameof(GetUserById), new { id = result.Id }, result);
+        return CreatedAtAction(
+            nameof(GetUserById), 
+            new { id = createdUser.Id }, 
+            UserMapper.ToCreatedUserDto(createdUser));
     }
 }

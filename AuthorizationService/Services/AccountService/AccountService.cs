@@ -1,5 +1,6 @@
-using AuthorizationService.Dtos.Account;
+using AuthorizationService.Dto.Account;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Validators;
 
 namespace AuthorizationService.Services.AccountService;
 
@@ -34,22 +35,17 @@ public class AccountService : IAccountService
     /// The email address of the user to retrieve.
     /// </param>
     /// <returns>
-    /// A task that resolves to a <see cref="UserDto"/> when the user exists,
+    /// A task that resolves to a <see cref="AccountDto"/> when the user exists,
     /// or <c>null</c> when no user is found.
     /// </returns>
     /// <remarks>
-    /// In development mode, this method returns a placeholder <see cref="UserDto"/> instead of
+    /// In development mode, this method returns a placeholder <see cref="AccountDto"/> instead of
     /// performing an HTTP request. This is intended for local testing without requiring the
     /// AccountManagement service to be running.
     /// </remarks>
-    public async Task<UserDto?> GetUserByEmailAsync(string email)
+    public async Task<AccountDto?> GetUserByEmailAsync(string email)
     {
-        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
-        {
-            return new UserDto(Guid.CreateVersion7(), "nil", "nil", "");
-        }
-
-        var response = await _httpClient.GetFromJsonAsync<UserDto?>(
+        var response = await _httpClient.GetFromJsonAsync<AccountDto?>(
             "http://localhost:5000/api/users/" + email); // TODO: change endpoint
 
         return response;
@@ -62,25 +58,41 @@ public class AccountService : IAccountService
     /// The unique identifier of the user to retrieve.
     /// </param>
     /// <returns>
-    /// A task that resolves to a <see cref="UserDto"/> when the user exists,
+    /// A task that resolves to a <see cref="AccountDto"/> when the user exists,
     /// or <c>null</c> when no user is found.
     /// </returns>
     /// <remarks>
-    /// In development mode, this method returns a placeholder <see cref="UserDto"/> instead of
+    /// In development mode, this method returns a placeholder <see cref="AccountDto"/> instead of
     /// performing an HTTP request. This is intended for local testing without requiring the
     /// AccountManagement service to be running.
     /// </remarks>
-    public async Task<UserDto?> GetUserByIdAsync(Guid userId)
+    public async Task<AccountDto?> GetUserByIdAsync(Guid userId)
     {
-        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
-        {
-            return new UserDto(Guid.CreateVersion7(), "nil", "nil", "");
-        }
-
-        var response = await _httpClient.GetFromJsonAsync<UserDto?>(
-            $"http://localhost:5000/api/users/{userId}"); // TODO: change endpoint
+        var response = await _httpClient.GetFromJsonAsync<AccountDto?>(
+            $"http://localhost:5200/api/users/{userId}"); // TODO: change endpoint
 
         return response;
+    }
+
+    public async Task<AccountDto?> RegisterUserAsync(RegisterAccountDto account) {
+        var email = account.Email.Trim().ToLowerInvariant();
+        var name = account.Name.Trim();
+        
+        EmailValidator.Validate(email);
+        NameValidator.Validate(name);
+
+        var request = new RegisterAccountDto {
+            Name = name,
+            Email = email,
+        };
+
+        var response = await _httpClient.PostAsJsonAsync("http://localhost:5200/api/v1/users", request);
+
+        if (!response.IsSuccessStatusCode) {
+            throw new Exception(response.ReasonPhrase);
+        }
+        
+        return await response.Content.ReadFromJsonAsync<AccountDto?>();
     }
 
     /// <summary>

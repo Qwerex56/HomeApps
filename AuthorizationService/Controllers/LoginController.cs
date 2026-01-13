@@ -11,8 +11,7 @@ namespace AuthorizationService.Controllers;
 
 [ApiController]
 [Route("api/v1/[controller]")]
-public class LoginController : ControllerBase
-{
+public class LoginController : ControllerBase {
     private readonly IAccountService _accountService;
 
     /// <summary>
@@ -21,8 +20,7 @@ public class LoginController : ControllerBase
     /// <param name="accountService">
     /// Service used to retrieve user information from the AccountManagement microservice.
     /// </param>
-    public LoginController(IAccountService accountService)
-    {
+    public LoginController(IAccountService accountService) {
         _accountService = accountService;
     }
 
@@ -42,8 +40,7 @@ public class LoginController : ControllerBase
     [HttpGet]
     [Route("")]
     [Route("login")]
-    public async Task Login()
-    {
+    public async Task Login() {
         await HttpContext.ChallengeAsync(
             GoogleDefaults.AuthenticationScheme,
             new AuthenticationProperties { RedirectUri = "/api/v1/Login/post-login" });
@@ -86,19 +83,16 @@ public class LoginController : ControllerBase
     /// <response code="404">No user was found in AccountManagement for the given email.</response>
     [HttpGet]
     [Route("post-login")]
-    public async Task<IActionResult> PostLogin()
-    {
+    public async Task<IActionResult> PostLogin() {
         var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
-        
-        if (string.IsNullOrEmpty(email))
-        {
+
+        if (string.IsNullOrEmpty(email)) {
             // user not logged-in redirect to Google OAuth
             return Redirect("https://localhost:7252/api/v1/Login");
         }
 
         var user = await _accountService.GetUserByEmailAsync(email);
-        if (user is null)
-        {
+        if (user is null) {
             return NotFound(email);
         }
 
@@ -108,25 +102,21 @@ public class LoginController : ControllerBase
     [Authorize]
     [HttpGet]
     [Route("logout")]
-    public async Task<IActionResult> Logout()
-    {
+    public async Task<IActionResult> Logout() {
         var userId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
-        if (!string.IsNullOrEmpty(userId))
-        {
+        if (!string.IsNullOrEmpty(userId)) {
             await _accountService.SaveRefreshTokenAsync(Guid.Parse(userId), "");
         }
 
-        Response.Cookies.Append("jwt", "", new CookieOptions
-        {
+        Response.Cookies.Append("jwt", "", new CookieOptions {
             HttpOnly = true,
             Secure = true,
             Expires = DateTime.UnixEpoch,
             SameSite = SameSiteMode.Strict
         });
 
-        Response.Cookies.Append("refreshToken", "", new CookieOptions
-        {
+        Response.Cookies.Append("refreshToken", "", new CookieOptions {
             HttpOnly = true,
             Secure = true,
             Expires = DateTime.UnixEpoch,
@@ -175,19 +165,16 @@ public class LoginController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpGet]
     [Route("me")]
-    public async Task<IActionResult> Me()
-    {
+    public async Task<IActionResult> Me() {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrEmpty(userId))
-        {
+        if (string.IsNullOrEmpty(userId)) {
             return NotFound(new { message = "User not found", user = userId }); // TODO: Turn into object
         }
 
         var user = await _accountService.GetUserByIdAsync(Guid.Parse(userId));
 
-        if (user is null)
-        {
+        if (user is null) {
             return NotFound(new { message = "User not found", user = userId });
         }
 
