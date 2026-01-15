@@ -8,5 +8,7 @@ public interface IUserService {
     
     public Task<User?> GetUserByIdAsync(Guid id);
     
-    public Task<User> CreateUserAsync(CreateUserDto createUserDto);
+    public Task<User> CreateUserWithPasswordAsync(CreateUserByAdminDto createUserByAdminDto);
+
+    public Task<User> CreateExternalUserAsync(CreateUserExternalDto createUserExternalDto);
 }

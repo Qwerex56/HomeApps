@@ -1,9 +1,8 @@
 using System.ComponentModel.DataAnnotations;
-using System.Security.Cryptography;
 
 namespace AccountManagement.Models;
 
-public class JwtToken : IEntity {
+public class RefreshToken : IEntity {
     public Guid Id { get; init; } = Guid.NewGuid();
     
     public Guid UserId { get; set; }

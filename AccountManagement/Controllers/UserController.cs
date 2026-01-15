@@ -40,14 +40,4 @@ public class UserController : ControllerBase {
         
         return Ok(UserMapper.ToCreatedUserDto(user));
     }
-    
-    [HttpPost]
-    public async Task<IActionResult> CreateUser([FromBody] CreateUserDto user) {
-        var createdUser = await _userService.CreateUserAsync(user);
-        
-        return CreatedAtAction(
-            nameof(GetUserById), 
-            new { id = createdUser.Id }, 
-            UserMapper.ToCreatedUserDto(createdUser));
-    }
 }

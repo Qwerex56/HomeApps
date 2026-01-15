@@ -26,7 +26,9 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Middlewares\" />
       <Folder Include="Migrations\" />
+      <Folder Include="Services\" />
     </ItemGroup>
 
     <ItemGroup>

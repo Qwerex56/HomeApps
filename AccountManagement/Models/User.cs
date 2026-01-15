@@ -18,5 +18,5 @@ public class User : IEntity {
     
     public ICollection<Account> Accounts { get; set; } = [];
 
-    public JwtToken JwtToken { get; set; } = null!;
+    public RefreshToken RefreshToken { get; set; } = null!;
 }
