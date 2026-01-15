@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AccountManagement.Migrations
 {
     [DbContext(typeof(AccountDbContext))]
-    [Migration("20260107170710_Update User Household")]
-    partial class UpdateUserHousehold
+    [Migration("20260113212405_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -28,7 +28,6 @@ namespace AccountManagement.Migrations
             modelBuilder.Entity("AccountManagement.Models.Account", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("LastSync")
@@ -55,7 +54,6 @@ namespace AccountManagement.Migrations
             modelBuilder.Entity("AccountManagement.Models.Household", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("Created")
@@ -71,11 +69,40 @@ namespace AccountManagement.Migrations
                     b.ToTable("Households");
                 });
 
+            modelBuilder.Entity("AccountManagement.Models.JwtToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("Expires")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("JwtTokens");
+                });
+
             modelBuilder.Entity("AccountManagement.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -118,7 +145,7 @@ namespace AccountManagement.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserHousehold");
+                    b.ToTable("UserHouseholds");
                 });
 
             modelBuilder.Entity("AccountManagement.Models.Account", b =>
@@ -126,6 +153,17 @@ namespace AccountManagement.Migrations
                     b.HasOne("AccountManagement.Models.User", "User")
                         .WithMany("Accounts")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("AccountManagement.Models.JwtToken", b =>
+                {
+                    b.HasOne("AccountManagement.Models.User", "User")
+                        .WithOne("JwtToken")
+                        .HasForeignKey("AccountManagement.Models.JwtToken", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -159,6 +197,9 @@ namespace AccountManagement.Migrations
             modelBuilder.Entity("AccountManagement.Models.User", b =>
                 {
                     b.Navigation("Accounts");
+
+                    b.Navigation("JwtToken")
+                        .IsRequired();
 
                     b.Navigation("UserHouseholds");
                 });

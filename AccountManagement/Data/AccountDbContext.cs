@@ -1,5 +1,6 @@
 using AccountManagement.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace AccountManagement.Data;
 
@@ -12,7 +13,8 @@ public class AccountDbContext : DbContext {
     public DbSet<User> Users { get; set; }
     public DbSet<Account> Accounts { get; set; }
     public DbSet<UserHousehold> UserHouseholds { get; set; }
-    public DbSet<JwtToken> JwtTokens { get; set; }
+    public DbSet<RefreshToken> JwtTokens { get; set; }
+    public DbSet<UserCredentials> UserCredentials { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         modelBuilder.Entity<User>()
@@ -29,8 +31,19 @@ public class AccountDbContext : DbContext {
             );
 
         modelBuilder.Entity<User>()
-            .HasOne(e => e.JwtToken)
+            .HasOne(e => e.RefreshToken)
             .WithOne(e => e.User)
-            .HasForeignKey<JwtToken>(e => e.UserId);
+            .HasForeignKey<RefreshToken>(e => e.UserId);
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes()) {
+            var id = entityType.FindProperty("Id");
+            
+            if (id is null) {
+                continue;
+            }
+            
+            id.SetColumnType("uuid");
+            id.ValueGenerated = ValueGenerated.Never;
+        }
     }
 }

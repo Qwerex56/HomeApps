@@ -25,7 +25,6 @@ namespace AccountManagement.Migrations
             modelBuilder.Entity("AccountManagement.Models.Account", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("LastSync")
@@ -52,7 +51,6 @@ namespace AccountManagement.Migrations
             modelBuilder.Entity("AccountManagement.Models.Household", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("Created")
@@ -71,7 +69,6 @@ namespace AccountManagement.Migrations
             modelBuilder.Entity("AccountManagement.Models.JwtToken", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("Created")
@@ -82,7 +79,8 @@ namespace AccountManagement.Migrations
 
                     b.Property<string>("TokenHash")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -92,14 +90,16 @@ namespace AccountManagement.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("JwtToken");
+                    b.ToTable("JwtTokens");
                 });
 
             modelBuilder.Entity("AccountManagement.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -142,7 +142,7 @@ namespace AccountManagement.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserHousehold");
+                    b.ToTable("UserHouseholds");
                 });
 
             modelBuilder.Entity("AccountManagement.Models.Account", b =>

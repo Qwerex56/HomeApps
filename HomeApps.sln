@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared.Authorization", "Sha
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{B9005A4C-345C-4E12-93B5-E67A1ED47988}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccountManagement.Tests", "AccountManagement.Tests\AccountManagement.Tests.csproj", "{AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,5 +37,9 @@ Global
 		{B9005A4C-345C-4E12-93B5-E67A1ED47988}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B9005A4C-345C-4E12-93B5-E67A1ED47988}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B9005A4C-345C-4E12-93B5-E67A1ED47988}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
