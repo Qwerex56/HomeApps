@@ -50,12 +50,11 @@ public class UserRepository : IUserRepository {
         return user;
     }
 
-    public async Task<User?> GetByEmailAsync(string email) {
-        return await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == email);
+    public async Task CreateUserCredentialsAsync(UserCredential userCredential) {
+        await _context.UserCredentials.AddAsync(userCredential);
     }
 
-    public async Task CreateUserCredentialsAsync(UserCredentials userCredentials) {
-        await _context.UserCredentials.AddAsync(userCredentials);
+    public Task CreateExternalCredentialsAsync(ExternalCredentials externalCredentials) {
+        throw new NotImplementedException();
     }
 }

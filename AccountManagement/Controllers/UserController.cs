@@ -28,16 +28,4 @@ public class UserController : ControllerBase {
         
         return Ok(user);
     }
-
-    [HttpGet]
-    [Route("email/{email}")]
-    public async Task<IActionResult> GetUserByEmail(string email) {
-        var user = await _userService.GetUserByEmailAsync(email);
-        
-        if (user is null) {
-            return NotFound();
-        }
-        
-        return Ok(UserMapper.ToCreatedUserDto(user));
-    }
 }

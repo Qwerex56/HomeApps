@@ -8,15 +8,13 @@ public class User : IEntity {
     [MaxLength(64)]
     public string Name { get; set; } = string.Empty;
     
-    [MaxLength(320)]
-    public string Email { get; set; } = string.Empty;
-    
     public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    
+    public bool IsActive { get; set; } = true; // Check for soft delete
 
     public ICollection<UserHousehold> UserHouseholds { get; set; } = [];
     public ICollection<Household>  Households { get; set; } = [];
-    
-    public ICollection<Account> Accounts { get; set; } = [];
 
     public RefreshToken RefreshToken { get; set; } = null!;
 }

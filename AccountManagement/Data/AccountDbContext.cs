@@ -11,17 +11,11 @@ public class AccountDbContext : DbContext {
     // tables
     public DbSet<Household> Households { get; set; }
     public DbSet<User> Users { get; set; }
-    public DbSet<Account> Accounts { get; set; }
     public DbSet<UserHousehold> UserHouseholds { get; set; }
     public DbSet<RefreshToken> JwtTokens { get; set; }
-    public DbSet<UserCredentials> UserCredentials { get; set; }
+    public DbSet<UserCredential> UserCredentials { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
-        modelBuilder.Entity<User>()
-            .HasMany(u => u.Accounts)
-            .WithOne(a => a.User)
-            .HasForeignKey(a => a.UserId);
-
         modelBuilder.Entity<User>()
             .HasMany(e => e.Households)
             .WithMany(e => e.Users)

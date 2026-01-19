@@ -14,6 +14,6 @@ public class UserServiceTests {
     private readonly UserService _userService;
 
     public UserServiceTests() {
-        _userService = new UserService(_userRepositoryMock.Object,  _unitOfWorkMock.Object);
+        
     }
 }

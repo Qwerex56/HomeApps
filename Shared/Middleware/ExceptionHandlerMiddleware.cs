@@ -42,10 +42,8 @@ public class ExceptionHandlerMiddleware {
 
     private static (HttpStatusCode statusCode, string error) MapExceptionToHttp(Exception exception) {
         return exception switch {
-            EmailFormatException => (HttpStatusCode.BadRequest, "Invalid email format."),
             EmailDuplicationException => (HttpStatusCode.Conflict, "User with this email already exists."),
-            NameFormatException => (HttpStatusCode.BadRequest, "Invalid name format."),
-            NameTooShortException => (HttpStatusCode.BadRequest, "Name is too short."),
+            ValidationException ve => (ve.HttpStatusCode, ve.Message), 
             
             _ => (HttpStatusCode.InternalServerError, "Server Error")
         };

@@ -1,6 +1,8 @@
 namespace Shared.Exceptions.Validators;
 
-public class EmailFormatException : Exception {
+public sealed class EmailFormatException : ValidationException {
+    public override string ErrorCode => "Invalid Email format.";
+
     public string Value { get; }
 
     public EmailFormatException(string value) : base($"Invalid email '{value}'.") {

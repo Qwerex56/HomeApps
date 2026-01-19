@@ -17,7 +17,7 @@ builder.Services.AddDbContext<AccountDbContext>(optionsBuilder => {
 
 builder.Services.AddRepositories();
 builder.Services.AddUnitOfWorks();
-builder.Services.AddAccountServices();
+builder.Services.AddAppServices();
 
 var app = builder.Build();
 

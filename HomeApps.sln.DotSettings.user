@@ -14,5 +14,6 @@
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Validators.EmailValidatorTests&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Services.UserServiceTests.CreateUser_ShouldCreateNewUserAndCommit&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Validators.PasswordValidatorTests&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

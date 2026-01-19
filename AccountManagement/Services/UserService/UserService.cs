@@ -1,8 +1,9 @@
 using AccountManagement.Dto.User;
-using AccountManagement.Hashers.PasswordHasher;
 using AccountManagement.Models;
+using AccountManagement.Repositories.UserCredentialRepository;
 using AccountManagement.Repositories.UserRepository;
 using AccountManagement.Workers.UnitOfWork;
+using Microsoft.AspNetCore.Identity;
 using Shared.Exceptions.Service;
 using Shared.Validators;
 
@@ -10,18 +11,19 @@ namespace AccountManagement.Services.UserService;
 
 public class UserService : IUserService {
     private readonly IUserRepository _userRepository;
+    private readonly IUserCredentialRepository _userCredentialRepository;
+    
     private readonly IUnitOfWork _unitOfWork;
     
-    private readonly IPasswordHasher _passwordHasher;
+    private readonly IPasswordHasher<User> _passwordHasher;
 
-    public UserService(IUserRepository userRepository, IUnitOfWork unitOfWork) {
+    public UserService(IUserRepository userRepository, IUnitOfWork unitOfWork, IPasswordHasher<User> passwordHasher, IUserCredentialRepository userCredentialRepository) {
         _userRepository = userRepository;
+        _userCredentialRepository = userCredentialRepository;
+        
         _unitOfWork = unitOfWork;
-    }
-
-    public async Task<User?> GetUserByEmailAsync(string email) {
-        var user = await _userRepository.GetByEmailAsync(email);
-        return user;
+        
+        _passwordHasher = passwordHasher;
     }
 
     public async Task<User?> GetUserByIdAsync(Guid id) {
@@ -37,25 +39,25 @@ public class UserService : IUserService {
         EmailValidator.Validate(email);
         PasswordValidator.Validate(createUserByAdminDto.Password);
 
-        var userExists = await _userRepository.GetByEmailAsync(email);
+        var userExists = await _userCredentialRepository.GetByEmailAsync(email);
 
         if (userExists is not null) {
             throw new EmailDuplicationException(createUserByAdminDto.Email);
         }
 
         var user = new User {
-            Email = email,
             Name = name,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt =  DateTime.UtcNow
         };
         
-        var (passwordHash, saltHash) = _passwordHasher.HashPassword(createUserByAdminDto.Password);
+        var passwordHash = _passwordHasher.HashPassword(user, createUserByAdminDto.Password);
         
-        var userCredentials = new UserCredentials {
+        var userCredentials = new UserCredential {
             UserId = user.Id,
             User = user,
+            Email = email,
             PasswordHash = passwordHash,
-            PasswordSalt = saltHash,
         };
 
         await _userRepository.CreateAsync(user);
@@ -72,14 +74,13 @@ public class UserService : IUserService {
         NameValidator.Validate(name);
         EmailValidator.Validate(email);
 
-        var userExists = await _userRepository.GetByEmailAsync(email);
+        var userExists = await _userCredentialRepository.GetByEmailAsync(email);
 
         if (userExists is not null) {
             throw new EmailDuplicationException(createUserExternalDto.Email);
         }
 
         var user = new User {
-            Email = email,
             Name = name,
             CreatedAt = DateTime.UtcNow
         };
