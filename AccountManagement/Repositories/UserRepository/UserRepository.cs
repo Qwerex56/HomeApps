@@ -57,4 +57,8 @@ public class UserRepository : IUserRepository {
     public Task CreateExternalCredentialsAsync(ExternalCredentials externalCredentials) {
         throw new NotImplementedException();
     }
+
+    public async Task CreateUserCredentialsAsync(UserCredentials userCredentials) {
+        await _context.UserCredentials.AddAsync(userCredentials);
+    }
 }
