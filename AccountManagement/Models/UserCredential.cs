@@ -5,5 +5,4 @@ public class UserCredential : IEntity {
     public string PasswordHash { get; set; } = string.Empty;
 
     public Guid UserId { get; init; }
-    public User User { get; init; } = null!;
 }

@@ -9,6 +9,6 @@ public class Household : IEntity {
     public required string FamilyName { get; set; } = string.Empty;
     public DateTime Created { get; set; }
 
-    public ICollection<UserHousehold> UserHouseholds { get; set; } = [];
-    public ICollection<User>  Users { get; set; } = [];
+    public ICollection<UserHousehold> UserHouseholds { get; } = [];
+    public ICollection<User>  Users { get; } = [];
 }

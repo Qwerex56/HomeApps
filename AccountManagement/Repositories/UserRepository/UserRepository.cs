@@ -22,14 +22,7 @@ public class UserRepository : IUserRepository {
     }
 
     public async Task UpdateAsync(User item) {
-        var oldUser = await GetByIdAsync(item.Id);
-
-        if (oldUser is null) {
-            throw new KeyNotFoundException();
-        }
-        
-        _context.Users
-            .Update(item);
+        _context.Users.Update(item);
     }
 
     public async Task<User?> GetByIdAsync(Guid id) {
@@ -50,15 +43,9 @@ public class UserRepository : IUserRepository {
         return user;
     }
 
-    public async Task CreateUserCredentialsAsync(UserCredential userCredential) {
-        await _context.UserCredentials.AddAsync(userCredential);
-    }
+    public async Task<User> DeleteAsync(User item) {
+        _context.Users.Remove(item);
 
-    public Task CreateExternalCredentialsAsync(ExternalCredentials externalCredentials) {
-        throw new NotImplementedException();
-    }
-
-    public async Task CreateUserCredentialsAsync(UserCredentials userCredentials) {
-        await _context.UserCredentials.AddAsync(userCredentials);
+        return item;
     }
 }

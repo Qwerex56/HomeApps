@@ -1,11 +1,10 @@
 namespace AccountManagement.Models;
 
-public class ExternalCredentials {
-    public Guid UserId { get; init; }
-    public User User { get; init; }
+public class ExternalCredentials : IEntity {
+    public Guid UserId { get; set; }
 
-    public string ProviderName { get; init; }
-    public string ProviderId { get; init; }
+    public string ProviderName { get; set; } = string.Empty;
+    public string ProviderId { get; set; }  = string.Empty;
     
-    public DateTime CreatedAt { get; init; }
+    public DateTime CreatedAt { get; set; }
 }

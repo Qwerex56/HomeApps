@@ -6,7 +6,7 @@ using Shared.Authorization;
 
 namespace AccountManagement.Controllers;
 
-[Authorize(Roles = nameof(UserRoleEnum.SystemAdmin))]
+[Authorize(Roles = $"{nameof(UserSystemRoleEnum.SystemAdmin)},{nameof(UserSystemRoleEnum.SystemOwner)}")]
 [ApiController]
 [Route("api/v1/[controller]")]
 public class AdminUserController : ControllerBase {

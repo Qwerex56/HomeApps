@@ -8,4 +8,5 @@ namespace AccountManagement.Mappers;
 public static partial class UserMapper {
     public static partial CreatedUserDto ToCreatedUserDto(User user);
     
+    public static partial GetUserDto ToGetUserDto(User user);
 }

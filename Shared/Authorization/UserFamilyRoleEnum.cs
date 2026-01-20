@@ -1,7 +1,7 @@
 namespace Shared.Authorization;
 
-public enum UserRoleEnum {
-    SystemAdmin,
+public enum UserFamilyRoleEnum {
+    FamilyOwner,
     FamilyAdmin,
     FamilyMember,
     Guest

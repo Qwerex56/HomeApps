@@ -5,26 +5,34 @@ using Microsoft.EntityFrameworkCore;
 namespace AccountManagement.Repositories.UserCredentialRepository;
 
 public class UserCredentialRepository : IUserCredentialRepository {
-    private readonly AccountDbContext _dbContext;
+    private readonly AccountDbContext _context;
 
-    public UserCredentialRepository(AccountDbContext dbContext) {
-        _dbContext = dbContext;
+    public UserCredentialRepository(AccountDbContext context) {
+        _context = context;
     }
 
-    public Task<IEnumerable<UserCredential>> GetAllAsync() {
-        throw new NotImplementedException();
+    public async Task<IEnumerable<UserCredential>> GetAllAsync() {
+        return await _context.UserCredentials
+            .AsNoTracking()
+            .ToListAsync();
     }
 
-    public Task CreateAsync(UserCredential item) {
-        throw new NotImplementedException();
+    public async Task CreateAsync(UserCredential item) {
+        await _context.UserCredentials.AddAsync(item);
     }
 
-    public Task UpdateAsync(UserCredential item) {
-        throw new NotImplementedException();
+    public async Task UpdateAsync(UserCredential item) {
+        _context.UserCredentials.Update(item);
+    }
+
+    public async Task<UserCredential> DeleteAsync(UserCredential item) {
+        _context.UserCredentials.Remove(item);
+
+        return item;
     }
 
     public async Task<UserCredential?> GetByEmailAsync(string email) {
-        return await _dbContext.UserCredentials
+        return await _context.UserCredentials
             .FirstOrDefaultAsync(c => c.Email == email);
     }
 }

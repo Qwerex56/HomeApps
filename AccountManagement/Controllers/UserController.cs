@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace AccountManagement.Controllers;
 
 [ApiController]
-[Route("api/v1/users")]
+[Route("api/v1/[controller]")]
 public class UserController : ControllerBase {
     private readonly IUserService _userService;
     
@@ -26,6 +26,6 @@ public class UserController : ControllerBase {
             return NotFound();
         }
         
-        return Ok(user);
+        return Ok(UserMapper.ToGetUserDto(user));
     }
 }

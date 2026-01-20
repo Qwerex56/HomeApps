@@ -8,4 +8,6 @@ public interface IRepository<TEntity> where TEntity : IEntity {
     public Task CreateAsync(TEntity item);
     
     public Task UpdateAsync(TEntity item);
+    
+    public Task<TEntity> DeleteAsync(TEntity item);
 }

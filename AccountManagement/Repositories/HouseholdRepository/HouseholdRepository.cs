@@ -22,12 +22,6 @@ public class HouseholdRepository : IHouseHoldRepository {
     }
 
     public async Task UpdateAsync(Household item) {
-        var household = await GetByIdAsync(item.Id);
-
-        if (household is null) {
-            throw new KeyNotFoundException();
-        }
-        
         _context.Households.Update(item);
     }
 
@@ -47,5 +41,11 @@ public class HouseholdRepository : IHouseHoldRepository {
         _context.Households.Remove(household);
         
         return household;
+    }
+
+    public async Task<Household> DeleteAsync(Household item) {
+        _context.Households.Remove(item);
+        
+        return item;
     }
 }

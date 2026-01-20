@@ -22,36 +22,25 @@ public class JwtRepository : IJwtRepository {
     }
 
     public async Task UpdateAsync(RefreshToken item) {
-        var jwt = await GetByIdAsync(item.Id);
-
-        if (jwt is null) {
-            throw new KeyNotFoundException();
-        }
-        
         _context.JwtTokens.Update(item);
     }
 
-    public async Task<RefreshToken?> GetByIdAsync(Guid id) {
-        var jwt = await _context.JwtTokens.FirstOrDefaultAsync(j => j.Id == id);
+    public async Task<RefreshToken> DeleteAsync(RefreshToken item) {
+        _context.JwtTokens.Remove(item);
         
-        return jwt;
-    }
-
-    public async Task<RefreshToken> DeleteAsync(Guid id) {
-        var jwt = await GetByIdAsync(id);
-
-        if (jwt is null) {
-            throw new KeyNotFoundException();
-        }
-        
-        _context.JwtTokens.Remove(jwt);
-        
-        return jwt;
+        return item;
     }
 
     public async Task<RefreshToken?> GetByUserIdAsync(Guid userId) {
         var jwt = await _context.JwtTokens.FirstOrDefaultAsync(j => j.UserId == userId);
         
         return jwt;
+    }
+
+    public async Task<RefreshToken?> GetByTokenHashAsync(string hash) {
+        var refreshToken = await _context.JwtTokens
+            .FirstOrDefaultAsync(t => t.TokenHash ==  hash);
+
+        return refreshToken;
     }
 }

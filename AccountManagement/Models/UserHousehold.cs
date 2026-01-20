@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using AccountManagement.Enums;
+using Shared.Authorization;
 
 namespace AccountManagement.Models;
 
@@ -10,10 +11,11 @@ public class UserHousehold : IEntity {
     public Guid HouseholdId { get; set; }
     public Household Household { get; set; } = null!;
 
-    public HouseholdRoleEnum UserHouseholdRole { get; set; } = HouseholdRoleEnum.Guest;
-    public DateTime JoinDate { get; set; }
     
     [MaxLength(64)]
     public string Nickname { get; set; } = string.Empty;
+    public DateTime JoinDate { get; set; }
+    
+    public UserFamilyRoleEnum UserHouseholdRole { get; set; } = UserFamilyRoleEnum.Guest;
     public FamilyFunctionEnum FamilyFunction { get; set; } = FamilyFunctionEnum.Other;
 }
