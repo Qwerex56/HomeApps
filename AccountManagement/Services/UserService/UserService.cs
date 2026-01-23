@@ -53,6 +53,7 @@ public class UserService : IUserService {
 
         var user = new User {
             Name = name,
+            Role = createUserByAdminDto.Role,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };

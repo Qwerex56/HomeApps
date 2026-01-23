@@ -1,8 +1,8 @@
 using Shared.Authorization;
 
-namespace AccountManagement.Dto.User;
+namespace AccountManagement.Options;
 
-public class CreateUserByAdminDto {
+public class SeedUserOptions {
     public string Name { get; set; }
     public string Email { get; set; }
     public string Password { get; set; }

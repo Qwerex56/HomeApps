@@ -17,5 +17,7 @@
     &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Validators.EmailValidatorTests&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Services.UserServiceTests.CreateUser_ShouldCreateNewUserAndCommit&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Validators.PasswordValidatorTests&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Services.LoginServiceTests.RefreshUserSession_ShouldReturnNewTokens_WhenFreshTokenIsValid&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Services.LoginServiceTests.RefreshUserSession_ShouldReturnNewTokens_WhenRefreshTokenIsValid&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

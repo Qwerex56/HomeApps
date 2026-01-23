@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AccountManagement.Migrations
 {
     [DbContext(typeof(AccountDbContext))]
-    [Migration("20260113212405_Initial")]
+    [Migration("20260122213322_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -25,21 +25,21 @@ namespace AccountManagement.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("AccountManagement.Models.Account", b =>
+            modelBuilder.Entity("AccountManagement.Models.ExternalCredentials", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("LastSync")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ServiceName")
+                    b.Property<string>("ProviderId")
                         .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasColumnType("text");
 
-                    b.Property<int>("SyncStatus")
-                        .HasColumnType("integer");
+                    b.Property<string>("ProviderName")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -48,7 +48,7 @@ namespace AccountManagement.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Accounts");
+                    b.ToTable("ExternalCredentials");
                 });
 
             modelBuilder.Entity("AccountManagement.Models.Household", b =>
@@ -69,7 +69,7 @@ namespace AccountManagement.Migrations
                     b.ToTable("Households");
                 });
 
-            modelBuilder.Entity("AccountManagement.Models.JwtToken", b =>
+            modelBuilder.Entity("AccountManagement.Models.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -104,19 +104,47 @@ namespace AccountManagement.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(320)
-                        .HasColumnType("character varying(320)");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("AccountManagement.Models.UserCredential", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("UserCredentials");
                 });
 
             modelBuilder.Entity("AccountManagement.Models.UserHousehold", b =>
@@ -148,26 +176,31 @@ namespace AccountManagement.Migrations
                     b.ToTable("UserHouseholds");
                 });
 
-            modelBuilder.Entity("AccountManagement.Models.Account", b =>
+            modelBuilder.Entity("AccountManagement.Models.ExternalCredentials", b =>
                 {
-                    b.HasOne("AccountManagement.Models.User", "User")
-                        .WithMany("Accounts")
+                    b.HasOne("AccountManagement.Models.User", null)
+                        .WithMany("ExternalCredentials")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("AccountManagement.Models.JwtToken", b =>
+            modelBuilder.Entity("AccountManagement.Models.RefreshToken", b =>
                 {
-                    b.HasOne("AccountManagement.Models.User", "User")
-                        .WithOne("JwtToken")
-                        .HasForeignKey("AccountManagement.Models.JwtToken", "UserId")
+                    b.HasOne("AccountManagement.Models.User", null)
+                        .WithOne("RefreshToken")
+                        .HasForeignKey("AccountManagement.Models.RefreshToken", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
 
-                    b.Navigation("User");
+            modelBuilder.Entity("AccountManagement.Models.UserCredential", b =>
+                {
+                    b.HasOne("AccountManagement.Models.User", null)
+                        .WithOne("UserCredential")
+                        .HasForeignKey("AccountManagement.Models.UserCredential", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("AccountManagement.Models.UserHousehold", b =>
@@ -196,10 +229,11 @@ namespace AccountManagement.Migrations
 
             modelBuilder.Entity("AccountManagement.Models.User", b =>
                 {
-                    b.Navigation("Accounts");
+                    b.Navigation("ExternalCredentials");
 
-                    b.Navigation("JwtToken")
-                        .IsRequired();
+                    b.Navigation("RefreshToken");
+
+                    b.Navigation("UserCredential");
 
                     b.Navigation("UserHouseholds");
                 });

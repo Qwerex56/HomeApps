@@ -41,7 +41,7 @@ public class AccountDbContext : DbContext {
             .UsingEntity<UserHousehold>(
                 r => r.HasOne<Household>(e => e.Household).WithMany(e => e.UserHouseholds),
                 l => l.HasOne<User>(e => e.User).WithMany(e => e.UserHouseholds));
-
+        
         foreach (var entityType in modelBuilder.Model.GetEntityTypes()) {
             var id = entityType.FindProperty("Id");
 

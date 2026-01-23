@@ -1,8 +1,11 @@
 using AccountManagement.Models;
+using AccountManagement.Repositories.ExternalCredentialRepository;
 using AccountManagement.Repositories.HouseholdRepository;
 using AccountManagement.Repositories.JwtRepository;
+using AccountManagement.Repositories.UserCredentialRepository;
 using AccountManagement.Repositories.UserHouseholdRepository;
 using AccountManagement.Repositories.UserRepository;
+using AccountManagement.Services.LoginService;
 using AccountManagement.Services.UserService;
 using AccountManagement.Workers.UnitOfWork;
 using Microsoft.AspNetCore.Identity;
@@ -15,6 +18,8 @@ public static class RegisterServices {
         services.AddScoped<IHouseHoldRepository, HouseholdRepository>();
         services.AddScoped<IUserHouseHoldRepository, UserHouseholdRepository>();
         services.AddScoped<IJwtRepository, JwtRepository>();
+        services.AddScoped<IUserCredentialRepository, UserCredentialRepository>();
+        services.AddScoped<IExternalCredentialRepository, ExternalCredentialRepository>();
     }
 
     public static void AddUnitOfWorks(this IServiceCollection services) {
@@ -23,6 +28,7 @@ public static class RegisterServices {
     
     public static void AddAppServices(this IServiceCollection services) {
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<ILoginService, LoginService>();
         
         services.AddScoped<IPasswordHasher<User>,  PasswordHasher<User>>();
     }
