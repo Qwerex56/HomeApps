@@ -1,0 +1,12 @@
+### Login
+
+POST https://localhost:7276/api/v1/Login/login
+Content-Type: application/json
+
+{
+  "email": "admin@admin.com",
+  "password": "Admin!234"
+}
+
+### Me
+GET https://localhost:7276/api/v1/Login/me
