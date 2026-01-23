@@ -18,7 +18,7 @@ public class LoginServiceTests {
     
     private readonly Mock<IUserRepository> _userRepositoryMock = new();
     private readonly Mock<IUserCredentialRepository> _userCredentialRepositoryMock = new();
-    private readonly Mock<IJwtRepository> _jwtRepositoryMock = new();
+    private readonly Mock<IRefreshTokenRepository> _jwtRepositoryMock = new();
 
     
     private LoginService CreateService()

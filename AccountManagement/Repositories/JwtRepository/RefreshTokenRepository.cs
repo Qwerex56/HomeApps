@@ -4,10 +4,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AccountManagement.Repositories.JwtRepository;
 
-public class JwtRepository : IJwtRepository {
+public class RefreshTokenRepository : IRefreshTokenRepository {
     private readonly AccountDbContext _context;
 
-    public JwtRepository(AccountDbContext context) {
+    public RefreshTokenRepository(AccountDbContext context) {
         _context = context;
     }
 

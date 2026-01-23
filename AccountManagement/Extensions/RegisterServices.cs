@@ -17,7 +17,7 @@ public static class RegisterServices {
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IHouseHoldRepository, HouseholdRepository>();
         services.AddScoped<IUserHouseHoldRepository, UserHouseholdRepository>();
-        services.AddScoped<IJwtRepository, JwtRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IUserCredentialRepository, UserCredentialRepository>();
         services.AddScoped<IExternalCredentialRepository, ExternalCredentialRepository>();
     }

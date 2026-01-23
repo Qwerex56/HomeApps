@@ -20,16 +20,16 @@ public class LoginService : ILoginService {
 
     private readonly IUserRepository _userRepository;
     private readonly IUserCredentialRepository _userCredentialRepository;
-    private readonly IJwtRepository _jwtRepository;
+    private readonly IRefreshTokenRepository _refreshTokenRepository;
 
     private readonly IUnitOfWork _unitOfWork;
 
     public LoginService(IPasswordHasher<User> passwordHasher, IUserRepository userRepository,
-        IUserCredentialRepository userCredentialRepository, IJwtRepository jwtRepository, IUnitOfWork unitOfWork) {
+        IUserCredentialRepository userCredentialRepository, IRefreshTokenRepository refreshTokenRepository, IUnitOfWork unitOfWork) {
         _passwordHasher = passwordHasher;
         _userRepository = userRepository;
         _userCredentialRepository = userCredentialRepository;
-        _jwtRepository = jwtRepository;
+        _refreshTokenRepository = refreshTokenRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -93,7 +93,7 @@ public class LoginService : ILoginService {
             TokenHash = refreshHash
         };
 
-        await _jwtRepository.CreateAsync(token);
+        await _refreshTokenRepository.CreateAsync(token);
         await _unitOfWork.SaveChangesAsync();
 
         return new RefreshTokenDto {
@@ -104,7 +104,7 @@ public class LoginService : ILoginService {
 
     public async Task<RefreshTokenWithJwtDto> RefreshUserSession(string token) {
         var tokenHash = HashRefreshToken(token);
-        var refreshToken = await _jwtRepository.GetByTokenHashAsync(tokenHash);
+        var refreshToken = await _refreshTokenRepository.GetByTokenHashAsync(tokenHash);
 
         if (refreshToken is null) {
             throw new TokenNotFoundException();
@@ -114,7 +114,7 @@ public class LoginService : ILoginService {
             throw new TokenExpiredException();
         }
         
-        await _jwtRepository.DeleteAsync(refreshToken);
+        await _refreshTokenRepository.DeleteAsync(refreshToken);
         await _unitOfWork.SaveChangesAsync();
         
         var newRefresh = await GenerateRefreshTokenAsync(refreshToken.UserId);
@@ -128,13 +128,13 @@ public class LoginService : ILoginService {
 
     public async Task RemoveRefreshTokenWithHash(string token) {
         var tokenHash = HashRefreshToken(token);
-        var refreshToken = await _jwtRepository.GetByTokenHashAsync(tokenHash);
+        var refreshToken = await _refreshTokenRepository.GetByTokenHashAsync(tokenHash);
 
         if (refreshToken is null) {
             throw new TokenNotFoundException(token);
         }
 
-        await _jwtRepository.DeleteAsync(refreshToken);
+        await _refreshTokenRepository.DeleteAsync(refreshToken);
         await _unitOfWork.SaveChangesAsync();
     }
 
