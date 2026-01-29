@@ -42,7 +42,7 @@ public class ExceptionHandlerMiddleware {
 
     private static (HttpStatusCode statusCode, string error) MapExceptionToHttp(Exception exception) {
         return exception switch {
-            EmailDuplicationException => (HttpStatusCode.Conflict, "User with this email already exists."),
+            EmailDuplicationException => (HttpStatusCode.Conflict, "User with this email already exists2."),
             ValidationException ve => (ve.HttpStatusCode, ve.Message),
             ServiceException se => (se.HttpStatusCode, se.Message),
             

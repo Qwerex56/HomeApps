@@ -5,11 +5,13 @@ using System.Text;
 using AccountManagement.Dto.Credentials;
 using AccountManagement.Dto.LoginDto;
 using AccountManagement.Models;
+using AccountManagement.Options;
 using AccountManagement.Repositories.JwtRepository;
 using AccountManagement.Repositories.UserCredentialRepository;
 using AccountManagement.Repositories.UserRepository;
 using AccountManagement.Workers.UnitOfWork;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Shared.Exceptions.Service;
 
@@ -18,19 +20,26 @@ namespace AccountManagement.Services.LoginService;
 public class LoginService : ILoginService {
     private readonly IPasswordHasher<User> _passwordHasher;
 
+    private readonly IOptions<JwtOptions> _jwtOptions;
+
     private readonly IUserRepository _userRepository;
     private readonly IUserCredentialRepository _userCredentialRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
 
     private readonly IUnitOfWork _unitOfWork;
 
-    public LoginService(IPasswordHasher<User> passwordHasher, IUserRepository userRepository,
-        IUserCredentialRepository userCredentialRepository, IRefreshTokenRepository refreshTokenRepository, IUnitOfWork unitOfWork) {
+    public LoginService(IPasswordHasher<User> passwordHasher,
+        IUserRepository userRepository,
+        IUserCredentialRepository userCredentialRepository,
+        IRefreshTokenRepository refreshTokenRepository,
+        IUnitOfWork unitOfWork,
+        IOptions<JwtOptions> jwtOptions) {
         _passwordHasher = passwordHasher;
         _userRepository = userRepository;
         _userCredentialRepository = userCredentialRepository;
         _refreshTokenRepository = refreshTokenRepository;
         _unitOfWork = unitOfWork;
+        _jwtOptions = jwtOptions;
     }
 
     public async Task<User?> ValidateCredentials(UserCredentialsDto providedCredentialsDto) {
@@ -57,34 +66,39 @@ public class LoginService : ILoginService {
         return user;
     }
 
-    public async Task<JwtSecurityToken> GenerateJwtTokenAsync(Guid userId) {
+    public async Task<string> GenerateJwtTokenAsync(Guid userId) {
         var user = await _userRepository.GetByIdAsync(userId);
 
         if (user is null) {
             throw new UserNotFoundException(userId.ToString());
         }
 
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("SECURITY_KEY"));
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Value.SecretKey));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
         Claim[] claims = [
-            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Role, user.Role.ToString())
         ];
 
         var token = new JwtSecurityToken(
-            issuer: "ISSUER",
-            audience: "AUDIENCE",
+            issuer: _jwtOptions.Value.Issuer,
+            audience: _jwtOptions.Value.Audience,
             claims: claims,
             expires: DateTime.UtcNow.AddHours(12),
             signingCredentials: credentials);
 
-        return token;
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
     public async Task<RefreshTokenDto> GenerateRefreshTokenAsync(Guid userId) {
         var (refreshRaw, refreshHash) = GenerateRefreshTokens();
+        var user = await _userRepository.GetByIdAsync(userId);
 
+        if (user is null) {
+            throw new UserNotFoundException(userId.ToString());
+        }
+        
         var token = new RefreshToken {
             UserId = userId,
             Created = DateTime.UtcNow,
@@ -92,6 +106,10 @@ public class LoginService : ILoginService {
 
             TokenHash = refreshHash
         };
+
+        if (user.RefreshToken is not null) {
+            await _refreshTokenRepository.DeleteAsync(user.RefreshToken);
+        }
 
         await _refreshTokenRepository.CreateAsync(token);
         await _unitOfWork.SaveChangesAsync();
@@ -113,10 +131,10 @@ public class LoginService : ILoginService {
         if (refreshToken.Expires < DateTime.UtcNow) {
             throw new TokenExpiredException();
         }
-        
+
         await _refreshTokenRepository.DeleteAsync(refreshToken);
         await _unitOfWork.SaveChangesAsync();
-        
+
         var newRefresh = await GenerateRefreshTokenAsync(refreshToken.UserId);
         var newJwt = await GenerateJwtTokenAsync(refreshToken.UserId);
 

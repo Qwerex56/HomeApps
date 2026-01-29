@@ -11,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<SeedUserOptions>(
     builder.Configuration.GetSection("SeedUser"));
 builder.Services.Configure<JwtOptions>(
-    builder.Configuration.GetSection("JwtSettings"));
+    builder.Configuration.GetSection("JwtOptions"));
 
 // Auth
 builder.Services.AddJwtBearerAuthentication(builder.Configuration);
@@ -56,4 +56,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 await RegisterBaseOwner.SeedUserAsync(app);
+
 app.Run();

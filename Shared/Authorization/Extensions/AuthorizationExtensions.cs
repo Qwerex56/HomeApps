@@ -31,7 +31,7 @@ public static class AuthorizationExtensions {
     
     // --- ADD JWT BEARER ---
     public static void AddJwtBearerAuthentication(this IServiceCollection services, IConfiguration config) {
-        var jwtConfig = config.GetSection("JwtSettings");
+        var jwtConfig = config.GetSection("JwtOptions");
         var jwtKey = Encoding.UTF8.GetBytes(jwtConfig["SecretKey"]);
         
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => {
