@@ -65,8 +65,8 @@ public class UserController : ControllerBase {
     }
 
     [Authorize]
-    [HttpDelete]
-    public async Task<IActionResult> DeleteUser() {
+    [HttpPut]
+    public async Task<IActionResult> DeactivateAccount() {
         var userId = GetUserIdString();
 
         if (string.IsNullOrEmpty(userId)) {

@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using AccountManagement.Dto.Credentials;
 using AccountManagement.Dto.LoginDto;
+using AccountManagement.Mappers;
 using AccountManagement.Services.LoginService;
 using AccountManagement.Services.UserService;
 using Microsoft.AspNetCore.Authorization;
@@ -102,6 +103,6 @@ public class LoginController : ControllerBase {
             return NotFound();
         }
 
-        return Ok(user);
+        return Ok(UserMapper.ToGetUserDto(user));
     }
 }

@@ -64,6 +64,8 @@ public class UserService : IUserService {
             Email = email,
             PasswordHash = passwordHash,
         };
+        
+        user.UserCredential = userCredentials;
 
         await _userRepository.CreateAsync(user);
         await _userCredentialRepository.CreateAsync(userCredentials);
@@ -168,7 +170,16 @@ public class UserService : IUserService {
         await _unitOfWork.SaveChangesAsync();
     }
 
-    public Task UserSoftDeleteById(string userId) {
-        throw new NotImplementedException();
+    // Sets account for deactivation, deactivated user will be still valid for X days
+    public async Task UserSoftDeleteById(string userId) {
+        var user = await GetUserByIdAsync(Guid.Parse(userId));
+
+        if (user is null) {
+            throw new UserNotFoundException(userId);
+        }
+
+        user.IsActive = false;
+        await _userRepository.UpdateAsync(user);
+        await _unitOfWork.SaveChangesAsync();
     }
 }
