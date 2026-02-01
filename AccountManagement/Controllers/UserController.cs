@@ -33,7 +33,7 @@ public class UserController : ControllerBase {
 
     [Authorize]
     [HttpGet]
-    public async Task<IActionResult> Me() {
+    public async Task<IActionResult> GetMe() {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userId)) {
@@ -51,7 +51,7 @@ public class UserController : ControllerBase {
 
     [Authorize]
     [HttpPut]
-    public async Task<IActionResult> Me([FromBody] UserSelfUpdateDto userUpdateDto) {
+    public async Task<IActionResult> UpdateMe([FromBody] UserSelfUpdateDto userUpdateDto) {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userId)) {
