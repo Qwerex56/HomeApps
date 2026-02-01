@@ -17,4 +17,6 @@ public interface IUserService {
     public Task<User?> GetUserByEmailAsync(string email);
     
     public Task<User?> GetUserByProviderIdAsync(string providerId);
+    public Task UpdateUserInfo(UserSelfUpdateDto userSelfUpdateDto, string userId);
+    public Task UserSoftDeleteById(string userId);
 }

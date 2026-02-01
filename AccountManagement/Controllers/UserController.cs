@@ -1,12 +1,14 @@
+using System.Security.Claims;
 using AccountManagement.Dto.User;
 using AccountManagement.Mappers;
 using AccountManagement.Services.UserService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccountManagement.Controllers;
 
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/v1/[controller]/[action]")]
 public class UserController : ControllerBase {
     private readonly IUserService _userService;
     
@@ -27,5 +29,56 @@ public class UserController : ControllerBase {
         }
         
         return Ok(UserMapper.ToGetUserDto(user));
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> GetMe() {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId)) {
+            return NotFound();
+        }
+
+        var user = await _userService.GetUserByIdAsync(Guid.Parse(userId));
+
+        if (user is null) {
+            return NotFound();
+        }
+
+        return Ok(UserMapper.ToGetUserDto(user));
+    }
+
+    [Authorize]
+    [HttpPut]
+    public async Task<IActionResult> UpdateMe([FromBody] UserSelfUpdateDto userUpdateDto) {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId)) {
+            return NotFound();
+        }
+
+        await _userService.UpdateUserInfo(userUpdateDto, userId);
+
+        return Ok();
+    }
+
+    [Authorize]
+    [HttpPut]
+    public async Task<IActionResult> DeactivateAccount() {
+        var userId = GetUserIdString();
+
+        if (string.IsNullOrEmpty(userId)) {
+            return NotFound();
+        }
+        
+        await _userService.UserSoftDeleteById(userId);
+        
+        Response.Cookies.Delete("refreshToken");
+        return Ok();
+    }
+    
+    private string? GetUserIdString() {
+        return User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     }
 }

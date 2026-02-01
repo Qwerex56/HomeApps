@@ -33,6 +33,7 @@ public class AccountDbContext : DbContext {
             .HasOne(e => e.RefreshToken)
             .WithOne()
             .HasForeignKey<RefreshToken>(e => e.UserId)
+            .HasPrincipalKey<User>(e => e.Id)
             .IsRequired();
 
         modelBuilder.Entity<User>()

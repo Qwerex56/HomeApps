@@ -10,4 +10,12 @@ public class EmailValidator : IValidator<string> {
         var result = Regex.Match(value, pattern);
         return result.Success ? true : throw new EmailFormatException(value);
     }
+
+    public static bool ValidateOrNull(string? value) {
+        if (value is null) {
+            throw new EmailIsNullException();
+        }
+        
+        return Validate(value);
+    }
 }

@@ -11,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<SeedUserOptions>(
     builder.Configuration.GetSection("SeedUser"));
 builder.Services.Configure<JwtOptions>(
-    builder.Configuration.GetSection("JwtSettings"));
+    builder.Configuration.GetSection("JwtOptions"));
 
 // Auth
 builder.Services.AddJwtBearerAuthentication(builder.Configuration);
@@ -32,6 +32,15 @@ builder.Services.AddRepositories();
 builder.Services.AddUnitOfWorks();
 builder.Services.AddAppServices();
 
+builder.Services.AddCors(options => {
+    options.AddPolicy("AllowFrontend", policy => {
+        policy.WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope()) {
@@ -50,10 +59,13 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
+app.UseCors("AllowFrontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
 await RegisterBaseOwner.SeedUserAsync(app);
+
 app.Run();

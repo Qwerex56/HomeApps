@@ -17,7 +17,7 @@ public sealed class NameFormatException : ValidationException {
 
 public sealed class NameTooShortException : ValidationException {
     public override string ErrorCode => "Name is too short.";
-    
+
     public string Value { get; }
 
     public NameTooShortException(string value) : base($"Name '{value}' is too short. Minimum length is 3 characters.") {
@@ -28,4 +28,13 @@ public sealed class NameTooShortException : ValidationException {
         $"Name '{value}' is too short. Minimum length is 3 characters.", inner) {
         Value = value;
     }
+}
+
+public sealed class NameIsNullException : ValidationException {
+    public override string ErrorCode => "Name is null.";
+    public string Value { get; } = string.Empty;
+
+    public NameIsNullException() : base($"Name is null.") { }
+
+    public NameIsNullException(string? value, Exception inner) : base($"Name '{value}' is null.", inner) { }
 }

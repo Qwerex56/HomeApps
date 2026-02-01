@@ -15,4 +15,12 @@ public class NameValidator : IValidator<string> {
 
         return result.Success ? true : throw new NameFormatException(value);
     }
+
+    public static bool ValidateOrNull(string? value) {
+        if (value is null) {
+            throw new NameIsNullException();
+        }
+        
+        return Validate(value);
+    }
 }

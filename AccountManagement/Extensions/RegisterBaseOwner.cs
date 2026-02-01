@@ -2,6 +2,7 @@ using AccountManagement.Dto.User;
 using AccountManagement.Options;
 using AccountManagement.Services.UserService;
 using Microsoft.Extensions.Options;
+using Shared.Exceptions.Service;
 using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IWebHostEnvironment;
 
 namespace AccountManagement.Extensions;
@@ -25,7 +26,13 @@ public static class RegisterBaseOwner {
             Password = options.Password,
             Role = options.Role,
         };
-        
-        await userService.CreateUserWithPasswordAsync(dto);
+
+        try {
+            await userService.CreateUserWithPasswordAsync(dto);
+        }
+        catch (EmailDuplicationException e) {
+            Console.WriteLine(e);
+            Console.WriteLine("Skipping");
+        }
     }
 }
