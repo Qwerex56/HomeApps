@@ -149,7 +149,7 @@ public class UserService : IUserService {
         }
 
         if (userSelfUpdateDto.Email is not null) {
-            NameValidator.Validate(userSelfUpdateDto.Email);
+            EmailValidator.Validate(userSelfUpdateDto.Email);
 
             if (await _userCredentialRepository.GetByEmailAsync(userSelfUpdateDto.Email) is null) {
                 throw new EmailDuplicationException(userSelfUpdateDto.Email);
