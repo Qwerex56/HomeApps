@@ -59,12 +59,12 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
+app.UseCors("AllowFrontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.UseCors("AllowFrontend");
 
 await RegisterBaseOwner.SeedUserAsync(app);
 
