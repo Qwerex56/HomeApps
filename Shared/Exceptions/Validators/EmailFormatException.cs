@@ -14,3 +14,13 @@ public sealed class EmailFormatException : ValidationException {
         Value = value;
     }
 }
+
+public sealed class EmailIsNullException : ValidationException {
+    public override string ErrorCode => "Email is null.";
+
+    public string Value { get; } = string.Empty;
+
+    public EmailIsNullException() : base($"Email is null.") { }
+
+    public EmailIsNullException(string? value, Exception inner) : base($"Email '{value}' is null.", inner) { }
+}

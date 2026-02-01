@@ -7,5 +7,5 @@ public class UserLoggedInDto {
     public required string DisplayName { get; init; }
     public required string EmailAddress { get; init; }
     
-    public required JwtSecurityToken Token { get; init; }
+    public required string Token { get; init; }
 }

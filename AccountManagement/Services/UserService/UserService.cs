@@ -4,7 +4,6 @@ using AccountManagement.Repositories.ExternalCredentialRepository;
 using AccountManagement.Repositories.UserCredentialRepository;
 using AccountManagement.Repositories.UserRepository;
 using AccountManagement.Workers.UnitOfWork;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Shared.Exceptions.Service;
 using Shared.Validators;
@@ -65,6 +64,8 @@ public class UserService : IUserService {
             Email = email,
             PasswordHash = passwordHash,
         };
+        
+        user.UserCredential = userCredentials;
 
         await _userRepository.CreateAsync(user);
         await _userCredentialRepository.CreateAsync(userCredentials);
@@ -115,7 +116,7 @@ public class UserService : IUserService {
 
     public async Task<bool> AccountExistsByProviderId(string providerId) {
         var credential = await _externalCredentialRepository.GetExternalCredentialByProviderId(providerId);
-        
+
         return credential is not null;
     }
 
@@ -125,12 +126,60 @@ public class UserService : IUserService {
         if (credential is null) {
             return null;
         }
-        
+
         var user = await _userRepository.GetByIdAsync(credential.UserId);
         return user;
     }
-    
+
     public Task<User?> GetUserByProviderIdAsync(string providerId) {
         throw new NotImplementedException();
+    }
+
+    public async Task UpdateUserInfo(UserSelfUpdateDto userSelfUpdateDto, string userId) {
+        var user = await GetUserByIdAsync(Guid.Parse(userId));
+
+        if (user is null) {
+            throw new UserNotFoundException(userId);
+        }
+
+        if (userSelfUpdateDto.UserName is not null) {
+            NameValidator.Validate(userSelfUpdateDto.UserName);
+
+            user.Name = userSelfUpdateDto.UserName;
+        }
+
+        if (userSelfUpdateDto.Email is not null) {
+            EmailValidator.Validate(userSelfUpdateDto.Email);
+
+            if (await _userCredentialRepository.GetByEmailAsync(userSelfUpdateDto.Email) is null) {
+                throw new EmailDuplicationException(userSelfUpdateDto.Email);
+            }
+
+            if (user.UserCredential != null) 
+                user.UserCredential.Email = userSelfUpdateDto.Email;
+        }
+
+        if (userSelfUpdateDto.Password is not null) {
+            PasswordValidator.Validate(userSelfUpdateDto.Password);
+
+            var passwordHash = _passwordHasher.HashPassword(user, userSelfUpdateDto.Password);
+            if (user.UserCredential != null) 
+                user.UserCredential.PasswordHash = passwordHash;
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+    }
+
+    // Sets account for deactivation, deactivated user will be still valid for X days
+    public async Task UserSoftDeleteById(string userId) {
+        var user = await GetUserByIdAsync(Guid.Parse(userId));
+
+        if (user is null) {
+            throw new UserNotFoundException(userId);
+        }
+
+        user.IsActive = false;
+        await _userRepository.UpdateAsync(user);
+        await _unitOfWork.SaveChangesAsync();
     }
 }

@@ -34,4 +34,12 @@ public class PasswordValidator : IValidator<string> {
 
         return true;
     }
+
+    public static bool ValidateOrNull(string? value) {
+        if (value is null) {
+            throw new PasswordIsNullException();
+        }
+        
+        return Validate(value);
+    }
 }
