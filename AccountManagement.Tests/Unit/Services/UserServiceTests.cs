@@ -152,8 +152,8 @@ public class UserServiceTests {
     [InlineData("")]
     [InlineData(" ")]
     [InlineData("invlidEmail")]
-    [InlineData("Invlaid email")]
-    [InlineData("Invlaidemail@example")]
+    [InlineData("Invalid email")]
+    [InlineData("Invalidemail@example")]
     public async Task CreateUserWithPasswordAsync_ShouldThrowException_WhenEmailIsInvalidOrNull(string email) {
         var mockDto = new CreateUserByAdminDto {
             Email = email,
