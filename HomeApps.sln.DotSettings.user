@@ -26,5 +26,11 @@
     &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Services.UserServiceTests.GetUserByIdAsync_ShouldReturnUser_WhenGuidIsValid&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Services.UserServiceTests.GetUserByIdAsync_ShouldReturnUser_WhenGuidIsInvalid&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Services.UserServiceTests.CreateUserWithPasswordAsync_ShouldCreateUser_WhenDtoIsValid&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Services.UserServiceTests.CreateUserWithPasswordAsync_ShouldNotCreateUser_WhenUserExists&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Services.UserServiceTests.CreateUserWithPasswordAsync_ShouldThrowException_WhenEmailIsInvalid&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Services.UserServiceTests.CreateUserWithPasswordAsync_ShouldThrowException_WhenEmailIsEmpty&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Services.UserServiceTests.CreateUserWithPasswordAsync_ShouldThrowException_WhenNameIsTooShortOrNull&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Services.UserServiceTests.CreateUserWithPasswordAsync_ShouldThrowException_WhenNameIsInvlid&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::AFA3C329-FCCB-4EDF-A59D-D0F22DDA21D1::net9.0::AccountManagement.Tests.Unit.Services.UserServiceTests.CreateUserWithPasswordAsync_ShouldThrowException_WhenPasswordIsInvalid&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

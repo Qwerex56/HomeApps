@@ -9,6 +9,8 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using Moq;
 using Shared.Authorization;
+using Shared.Exceptions.Service;
+using Shared.Exceptions.Validators;
 
 namespace AccountManagement.Tests.Unit.Services;
 
@@ -111,6 +113,98 @@ public class UserServiceTests {
         Assert.Equal(PasswordVerificationResult.Success, verificationResult);
     }
 
+    [Fact]
+    public async Task CreateUserWithPasswordAsync_ShouldThrowException_WhenUserExists() {
+        var mockDto = new CreateUserByAdminDto {
+            Email = "valid@email.com",
+            Name = "ValidName",
+            Password = "Val1dP@ssword",
+            Role = UserSystemRoleEnum.SystemMember
+        };
+
+        var existingUser = new User {
+            Id = Guid.NewGuid(),
+            Name = mockDto.Name,
+            Role = mockDto.Role
+        };
+
+        var existingUserCredential = new UserCredential {
+            Id = Guid.NewGuid(),
+            UserId = existingUser.Id,
+            Email = mockDto.Email,
+            PasswordHash = _passwordHasher.HashPassword(existingUser, mockDto.Password)
+        };
+        
+        existingUser.UserCredential = existingUserCredential;
+        
+        _userCredRepoMock
+            .Setup(s => s.GetByEmailAsync(mockDto.Email))
+            .ReturnsAsync(existingUserCredential);
+
+        await Assert.ThrowsAsync<EmailDuplicationException>(async () => {
+            await _userService.CreateUserWithPasswordAsync(mockDto);
+        });
+        
+        _userCredRepoMock.Verify(s => s.GetByEmailAsync(mockDto.Email), Times.Once);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("invlidEmail")]
+    [InlineData("Invlaid email")]
+    [InlineData("Invlaidemail@example")]
+    public async Task CreateUserWithPasswordAsync_ShouldThrowException_WhenEmailIsInvalidOrNull(string email) {
+        var mockDto = new CreateUserByAdminDto {
+            Email = email,
+            Name = "ValidName",
+            Password = "Val1dP@ssword",
+            Role = UserSystemRoleEnum.SystemMember
+        };
+
+        await Assert.ThrowsAsync<EmailFormatException>(async () => {
+            await _userService.CreateUserWithPasswordAsync(mockDto);
+        });
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("  ")]
+    [InlineData("na")]
+    [InlineData("Na  ")]
+    public async Task CreateUserWithPasswordAsync_ShouldThrowException_WhenNameIsTooShortOrNull(string name) {
+        var mockDto = new CreateUserByAdminDto {
+            Email = "valid@email.example",
+            Name = name,
+            Password = "Val1dP@ssword",
+            Role = UserSystemRoleEnum.SystemMember
+        };
+
+        await Assert.ThrowsAsync<NameTooShortException>(async () => {
+            await _userService.CreateUserWithPasswordAsync(mockDto);
+        });
+    }
+
+    [Theory]
+    [InlineData("123Name")]
+    [InlineData("123")]
+    [InlineData("Adri@n")]
+    [InlineData("1User")]
+    [InlineData("_user")]
+    [InlineData("User Name")]
+    [InlineData("User-Name")]
+    public async Task CreateUserWithPasswordAsync_ShouldThrowException_WhenNameIsInvalid(string name) {
+        var mockDto = new CreateUserByAdminDto {
+            Email = "valid@email.example",
+            Name = name,
+            Password = "Val1dP@ssword",
+            Role = UserSystemRoleEnum.SystemMember
+        };
+
+        await Assert.ThrowsAsync<NameFormatException>(async () => {
+            await _userService.CreateUserWithPasswordAsync(mockDto);
+        });
+    }
 
     [Fact]
     public async Task AccountExistsByEmailAsync_ShouldReturnTrue_WhenCredentialIsValid() {

@@ -30,7 +30,6 @@ public class UserController : ControllerBase {
         
         return Ok(UserMapper.ToGetUserDto(user));
     }
-    
 
     [Authorize]
     [HttpGet]

@@ -32,6 +32,15 @@ builder.Services.AddRepositories();
 builder.Services.AddUnitOfWorks();
 builder.Services.AddAppServices();
 
+builder.Services.AddCors(options => {
+    options.AddPolicy("AllowFrontend", policy => {
+        policy.WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope()) {
@@ -54,6 +63,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseCors("AllowFrontend");
 
 await RegisterBaseOwner.SeedUserAsync(app);
 
