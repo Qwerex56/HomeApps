@@ -10,5 +10,5 @@ public class Household : IEntity {
     public DateTime Created { get; set; }
 
     public ICollection<UserHousehold> UserHouseholds { get; } = [];
-    public ICollection<User>  Users { get; } = [];
+    public ICollection<User> Users { get; } = [];
 }
