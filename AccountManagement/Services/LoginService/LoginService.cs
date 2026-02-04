@@ -167,7 +167,7 @@ public class LoginService : ILoginService {
     }
 
     private static string HashRefreshToken(string refreshToken) {
-        var refreshBytes = Encoding.UTF8.GetBytes(refreshToken);
+        var refreshBytes = Convert.FromBase64String(refreshToken);
         var hashBytes = SHA256.HashData(refreshBytes);
 
         return Convert.ToBase64String(hashBytes);

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using AccountManagement.Dto.HouseholdDto;
 using AccountManagement.Mappers;
 using AccountManagement.Services.HouseholdService.HouseholdCommandService;
 using AccountManagement.Services.HouseholdService.HouseholdQueryService;
@@ -26,7 +27,7 @@ public class HouseholdController : ControllerBase {
 
     [HttpGet]
     [Authorize]
-    public async Task<IActionResult> GetUserHouseholdsAsync() {
+    public async Task<IActionResult> GetUserHouseholds() {
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userIdString)) {
@@ -48,5 +49,70 @@ public class HouseholdController : ControllerBase {
         }
 
         return Ok(HouseholdMapper.ToHouseholdDto(household));
+    }
+    
+    // --- Commands ---
+
+    [HttpPost]
+    [Authorize]
+    public async Task<IActionResult> CreateHousehold([FromBody] CreateHouseholdRequest request) {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId)) {
+            return Unauthorized();
+        }
+
+        var createHouseholdDto = new CreateHouseholdDto {
+            CreatorId = Guid.Parse(userId),
+            FamilyName = request.FamilyName
+        };
+        
+        await _householdCommandService.CreateHouseholdAsync(createHouseholdDto);
+        return Ok();
+    }
+
+    [HttpPut]
+    [Authorize]
+    public async Task<IActionResult> UpdateHousehold([FromBody] UpdateHouseholdRequest request) {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId)) {
+            return Unauthorized();
+        }
+
+        var createDto = HouseholdMapper.ToUpdateDto(request, Guid.Parse(userId));
+        
+        await _householdCommandService.UpdateHouseholdAsync(createDto);
+        return Ok();
+    }
+
+    [HttpPost]
+    [Authorize]
+    public async Task<IActionResult> AddUser([FromBody] AddUserToHouseholdRequest request) {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId)) {
+            return Unauthorized();
+        }
+        
+        var addUserDto = HouseholdMapper.ToAddUserDto(request, Guid.Parse(userId));
+        
+        await _householdCommandService.AddUserToHouseholdAsync(addUserDto);
+        return Ok();
+    }
+
+    [HttpDelete]
+    [Authorize]
+    public async Task<IActionResult> RemoveUser([FromBody] RemoveUserFromHouseholdRequest request) {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId)) {
+            return Unauthorized();
+        }
+        
+        var removeUserDto = HouseholdMapper.ToRemoveUserDto(request, Guid.Parse(userId));
+        
+        await _householdCommandService.RemoveUserFromHouseholdAsync(removeUserDto);
+        return Ok();
     }
 }

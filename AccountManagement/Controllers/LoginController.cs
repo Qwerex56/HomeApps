@@ -44,8 +44,9 @@ public class LoginController : ControllerBase {
         Response.Cookies.Append("refreshToken", refreshToken.Token, new CookieOptions {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Strict,
+            SameSite = SameSiteMode.None,
             Expires = refreshToken.Expires,
+            Path = "/"
         });
 
         return Ok(loggedUserDto);
@@ -54,7 +55,7 @@ public class LoginController : ControllerBase {
     [HttpGet]
     [Route("logout")]
     public async Task<IActionResult> Logout() {
-        var rawToken = Request.Cookies["refreshTokens"];
+        var rawToken = Request.Cookies["refreshToken"];
 
         if (string.IsNullOrEmpty(rawToken)) {
             return Ok();
@@ -62,7 +63,14 @@ public class LoginController : ControllerBase {
         
         await _loginService.RemoveRefreshTokenWithHash(rawToken);
         
-        Response.Cookies.Delete("refreshTokens");
+        Response.Cookies.Delete("refreshToken", new CookieOptions {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Path = "/",
+            Domain = "localhost"
+        });
+        
         return Ok();
     }
     
@@ -80,8 +88,9 @@ public class LoginController : ControllerBase {
         Response.Cookies.Append("refreshToken", tokens.RefreshToken.Token, new CookieOptions {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Strict,
+            SameSite = SameSiteMode.None,
             Expires =  tokens.RefreshToken.Expires,
+            Path = "/"
         });
 
         return Ok(tokens.JwtToken);
