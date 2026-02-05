@@ -2,13 +2,16 @@ using System.Security.Claims;
 using AccountManagement.Dto.User;
 using AccountManagement.Mappers;
 using AccountManagement.Services.UserService;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccountManagement.Controllers;
 
 [ApiController]
-[Route("api/v1/[controller]/[action]")]
+[ApiVersion("1.0")]
+[ApiVersion("2.0")]
+[Route("api/v{version:apiVersion}/[controller]/[action]")]
 public class UserController : ControllerBase {
     private readonly IUserService _userService;
     
