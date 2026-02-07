@@ -10,8 +10,7 @@ namespace AccountManagement.Controllers;
 
 [ApiController]
 [ApiVersion("1.0")]
-[ApiVersion("2.0")]
-[Route("api/v{version:apiVersion}/[controller]/[action]")]
+[Route("v{version:apiVersion}/[controller]/[action]")]
 public class UserController : ControllerBase {
     private readonly IUserService _userService;
     
@@ -36,6 +35,9 @@ public class UserController : ControllerBase {
 
     [Authorize]
     [HttpGet]
+    [ProducesResponseType(typeof(GetUserDto),  StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetMe() {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 

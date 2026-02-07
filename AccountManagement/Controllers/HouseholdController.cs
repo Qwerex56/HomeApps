@@ -3,13 +3,15 @@ using AccountManagement.Dto.HouseholdDto;
 using AccountManagement.Mappers;
 using AccountManagement.Services.HouseholdService.HouseholdCommandService;
 using AccountManagement.Services.HouseholdService.HouseholdQueryService;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccountManagement.Controllers;
 
 [ApiController]
-[Route("api/v1/[controller]/[action]")]
+[ApiVersion("1.0")]
+[Route("v{version:apiVersion}/[controller]/[action]")]
 public class HouseholdController : ControllerBase {
     private readonly ILogger<HouseholdController> _logger;
 

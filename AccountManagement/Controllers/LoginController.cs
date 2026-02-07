@@ -1,17 +1,18 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using AccountManagement.Dto.Credentials;
 using AccountManagement.Dto.LoginDto;
 using AccountManagement.Mappers;
 using AccountManagement.Services.LoginService;
 using AccountManagement.Services.UserService;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccountManagement.Controllers;
 
 [ApiController]
-[Route("api/v1/[controller]")]
+[ApiVersion("1.0")]
+[Route("v{version:apiVersion}/[controller]/[action]")]
 public class LoginController : ControllerBase {
     private readonly IUserService _userService;
     private readonly ILoginService _loginService;
@@ -22,7 +23,6 @@ public class LoginController : ControllerBase {
     }
 
     [HttpPost]
-    [Route("login")]
     public async Task<IActionResult> Login([FromBody] UserCredentialsDto credentials) {
         var user = await _loginService.ValidateCredentials(credentials);
 
@@ -46,14 +46,14 @@ public class LoginController : ControllerBase {
             Secure = true,
             SameSite = SameSiteMode.None,
             Expires = refreshToken.Expires,
-            Path = "/"
+            Path = "/",
+            Domain = "app.localhost"
         });
 
         return Ok(loggedUserDto);
     }
     
     [HttpGet]
-    [Route("logout")]
     public async Task<IActionResult> Logout() {
         var rawToken = Request.Cookies["refreshToken"];
 
@@ -68,14 +68,13 @@ public class LoginController : ControllerBase {
             Secure = true,
             SameSite = SameSiteMode.None,
             Path = "/",
-            Domain = "localhost"
+            Domain = "app.localhost"
         });
         
         return Ok();
     }
     
     [HttpGet]
-    [Route("refresh")]
     public async Task<IActionResult> RefreshToken() {
         var rawToken = Request.Cookies["refreshToken"];
 
@@ -90,7 +89,8 @@ public class LoginController : ControllerBase {
             Secure = true,
             SameSite = SameSiteMode.None,
             Expires =  tokens.RefreshToken.Expires,
-            Path = "/"
+            Path = "/",
+            Domain = "app.localhost"
         });
 
         return Ok(tokens.JwtToken);
@@ -98,7 +98,6 @@ public class LoginController : ControllerBase {
 
     [Authorize]
     [HttpGet]
-    [Route("me")]
     public async Task<IActionResult> Me() {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 

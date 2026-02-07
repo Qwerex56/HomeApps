@@ -1,5 +1,6 @@
 using AccountManagement.Dto.User;
 using AccountManagement.Services.UserService;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Authorization;
@@ -8,7 +9,8 @@ namespace AccountManagement.Controllers;
 
 [Authorize(Roles = $"{nameof(UserSystemRoleEnum.SystemAdmin)},{nameof(UserSystemRoleEnum.SystemOwner)}")]
 [ApiController]
-[Route("api/v1/[controller]")]
+[ApiVersion("1.0")]
+[Route("v{version:apiVersion}/[controller]")]
 public class AdminUserController : ControllerBase {
     private readonly IUserService _userService;
 
