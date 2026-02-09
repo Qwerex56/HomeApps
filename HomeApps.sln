@@ -7,10 +7,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		compose.prod.yaml = compose.prod.yaml
 		.env = .env
 		compose.dev.yaml = compose.dev.yaml
-		certs\api.localhost-key.pem = certs\api.localhost-key.pem
-		certs\api.localhost.pem = certs\api.localhost.pem
-		certs\app.localhost-key.pem = certs\app.localhost-key.pem
-		certs\app.localhost.pem = certs\app.localhost.pem
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{B9005A4C-345C-4E12-93B5-E67A1ED47988}"

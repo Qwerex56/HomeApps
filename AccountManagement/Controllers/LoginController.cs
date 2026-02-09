@@ -6,6 +6,7 @@ using AccountManagement.Services.LoginService;
 using AccountManagement.Services.UserService;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccountManagement.Controllers;
@@ -23,6 +24,10 @@ public class LoginController : ControllerBase {
     }
 
     [HttpPost]
+    [ProducesResponseType(typeof(UserLoggedInDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Login([FromBody] UserCredentialsDto credentials) {
         var user = await _loginService.ValidateCredentials(credentials);
 
@@ -54,6 +59,8 @@ public class LoginController : ControllerBase {
     }
     
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Logout() {
         var rawToken = Request.Cookies["refreshToken"];
 
@@ -75,6 +82,9 @@ public class LoginController : ControllerBase {
     }
     
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RefreshToken() {
         var rawToken = Request.Cookies["refreshToken"];
 
@@ -94,23 +104,5 @@ public class LoginController : ControllerBase {
         });
 
         return Ok(tokens.JwtToken);
-    }
-
-    [Authorize]
-    [HttpGet]
-    public async Task<IActionResult> Me() {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(userId)) {
-            return NotFound();
-        }
-
-        var user = await _userService.GetUserByIdAsync(Guid.Parse(userId));
-
-        if (user is null) {
-            return NotFound();
-        }
-
-        return Ok(UserMapper.ToGetUserDto(user));
     }
 }

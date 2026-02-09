@@ -29,6 +29,9 @@ public class HouseholdController : ControllerBase {
 
     [HttpGet]
     [Authorize]
+    [ProducesResponseType(typeof(IEnumerable<HouseholdDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetUserHouseholds() {
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -43,6 +46,10 @@ public class HouseholdController : ControllerBase {
     }
 
     [HttpGet]
+    [Authorize]
+    [ProducesResponseType(typeof(HouseholdDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetHousehold([FromBody] Guid householdId) {
         var household = await _householdQueryService.GetHouseholdAsync(householdId);
 
@@ -57,6 +64,9 @@ public class HouseholdController : ControllerBase {
 
     [HttpPost]
     [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> CreateHousehold([FromBody] CreateHouseholdRequest request) {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -75,6 +85,10 @@ public class HouseholdController : ControllerBase {
 
     [HttpPut]
     [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateHousehold([FromBody] UpdateHouseholdRequest request) {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -90,6 +104,9 @@ public class HouseholdController : ControllerBase {
 
     [HttpPost]
     [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> AddUser([FromBody] AddUserToHouseholdRequest request) {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -105,6 +122,9 @@ public class HouseholdController : ControllerBase {
 
     [HttpDelete]
     [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RemoveUser([FromBody] RemoveUserFromHouseholdRequest request) {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
