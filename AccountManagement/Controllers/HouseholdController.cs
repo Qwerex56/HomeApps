@@ -36,7 +36,7 @@ public class HouseholdController : ControllerBase {
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userIdString)) {
-            return NotFound();
+            return Unauthorized();
         }
 
         var userId = Guid.Parse(userIdString);
