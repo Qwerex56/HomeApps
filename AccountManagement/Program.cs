@@ -15,7 +15,7 @@ builder.Services.Configure<SeedUserOptions>(
 builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("JwtOptions"));
 builder.Services.Configure<DbConnectionOptions>(
-    builder.Configuration.GetSection("DbConnectionOptions"));
+    builder.Configuration.GetSection("DbConnectionConfig"));
 
 // Versioning
 builder.Services.AddApiVersioning(options => {
