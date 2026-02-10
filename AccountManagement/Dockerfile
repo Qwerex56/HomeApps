@@ -6,7 +6,7 @@ EXPOSE 8080
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["AccountManagement/AccountManagment.csproj", "AccountManagement/"]
+COPY ["AccountManagement/AccountManagement.csproj", "AccountManagement/"]
 RUN dotnet restore "AccountManagement/AccountManagement.csproj"
 COPY . .
 WORKDIR "/src/AccountManagement"
