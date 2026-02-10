@@ -95,7 +95,7 @@ public class HouseholdCommandService : IHouseholdCommandService {
             throw new HouseholdNotFoundException($"Household with ID '{addUserToHouseholdDto.HouseholdId}' not found.");
         }
 
-        // Do invitor is in household and have rule for inviting
+        // Does invitor exist in household and have permission to invite
         var invitorInHousehold = household.UserHouseholds.FirstOrDefault(uh => uh.UserId == invitor.Id);
         if (invitorInHousehold is null || (invitorInHousehold.UserHouseholdRole != UserFamilyRoleEnum.FamilyOwner &&
                                            invitorInHousehold.UserHouseholdRole != UserFamilyRoleEnum.FamilyAdmin)) {
