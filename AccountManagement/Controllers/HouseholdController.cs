@@ -45,12 +45,12 @@ public class HouseholdController : ControllerBase {
         return Ok(HouseholdMapper.ToHouseholdDtos(households));
     }
 
-    [HttpGet]
+    [HttpGet("{householdId:guid}")]
     [Authorize]
     [ProducesResponseType(typeof(HouseholdDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetHousehold([FromBody] Guid householdId) {
+    public async Task<IActionResult> GetHousehold(Guid householdId) {
         var household = await _householdQueryService.GetHouseholdAsync(householdId);
 
         if (household is null) {
