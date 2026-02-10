@@ -19,6 +19,7 @@ public class HouseholdRepository : IHouseHoldRepository {
 
     public async Task<IEnumerable<Household>> GetUserAllHouseholdsAsync(Guid userId) {
         return await _context.Households
+            .Include(h => h.Users)
             .Where(h => h.UserHouseholds.Any(u => u.UserId == userId))
             .AsNoTracking()
             .ToListAsync();
