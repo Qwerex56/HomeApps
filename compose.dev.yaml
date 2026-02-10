@@ -1,4 +1,4 @@
-﻿services:
+services:
   traefik:
     image: traefik:v3.0
     command:
