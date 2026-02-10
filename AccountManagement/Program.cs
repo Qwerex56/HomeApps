@@ -1,10 +1,9 @@
-using AccountManagement.Controllers;
 using AccountManagement.Data;
 using AccountManagement.Extensions;
 using AccountManagement.Options;
 using Asp.Versioning;
-using Asp.Versioning.Conventions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Shared.Authorization.Extensions;
 using Shared.Middleware;
 
@@ -15,6 +14,8 @@ builder.Services.Configure<SeedUserOptions>(
     builder.Configuration.GetSection("SeedUser"));
 builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("JwtOptions"));
+builder.Services.Configure<DbConnectionOptions>(
+    builder.Configuration.GetSection("DbConnectionOptions"));
 
 // Versioning
 builder.Services.AddApiVersioning(options => {
@@ -38,23 +39,21 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 // Add db to the container
-builder.Services.AddDbContext<AccountDbContext>(optionsBuilder => {
-    optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+builder.Services.AddDbContext<AccountDbContext>((sp, optionsBuilder) => {
+    var dbOptions = sp.GetRequiredService<IOptions<DbConnectionOptions>>().Value;
+    
+    optionsBuilder.UseNpgsql(dbOptions.ConnectionString, npsqlOptions => {
+        npsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorCodesToAdd: null);
+    });
 });
 
 builder.Services.AddRepositories();
 builder.Services.AddUnitOfWorks();
 builder.Services.AddAppServices();
 builder.Services.AddEndpointsApiExplorer();
-
-builder.Services.AddCors(options => {
-    options.AddPolicy("AllowFrontend", policy => {
-        policy.WithOrigins("https://app.localhost")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
-    });
-});
 
 var app = builder.Build();
 
@@ -73,8 +72,6 @@ app.UseMiddleware<ExceptionHandlerMiddleware>();
 // app.UseHttpsRedirection();
 
 app.UseRouting();
-
-app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
