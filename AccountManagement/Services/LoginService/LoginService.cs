@@ -167,7 +167,17 @@ public class LoginService : ILoginService {
     }
 
     private static string HashRefreshToken(string refreshToken) {
-        var refreshBytes = Convert.FromBase64String(refreshToken);
+        if (string.IsNullOrWhiteSpace(refreshToken)) {
+            throw new TokenNotFoundException(refreshToken);
+        }
+
+        byte[] refreshBytes;
+        try {
+            refreshBytes = Convert.FromBase64String(refreshToken);
+        } catch (FormatException) {
+            // Treat malformed Base64 input as an authentication failure rather than a server error.
+            throw new TokenNotFoundException(refreshToken);
+        }
         var hashBytes = SHA256.HashData(refreshBytes);
 
         return Convert.ToBase64String(hashBytes);
