@@ -1,12 +1,7 @@
-using System.Security.Claims;
 using AccountManagement.Dto.Credentials;
 using AccountManagement.Dto.LoginDto;
-using AccountManagement.Mappers;
 using AccountManagement.Services.LoginService;
-using AccountManagement.Services.UserService;
 using Asp.Versioning;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccountManagement.Controllers;
@@ -15,11 +10,9 @@ namespace AccountManagement.Controllers;
 [ApiVersion("1.0")]
 [Route("v{version:apiVersion}/[controller]/[action]")]
 public class LoginController : ControllerBase {
-    private readonly IUserService _userService;
     private readonly ILoginService _loginService;
 
-    public LoginController(IUserService userService, ILoginService loginService) {
-        _userService = userService;
+    public LoginController(ILoginService loginService) {
         _loginService = loginService;
     }
 
