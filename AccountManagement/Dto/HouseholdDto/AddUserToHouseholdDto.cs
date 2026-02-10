@@ -7,5 +7,5 @@ public class AddUserToHouseholdDto {
     public required Guid InviteeId { get; init; }
     public required Guid HouseholdId { get; init; }
 
-    public required FamilyFunctionEnum FamilyFunction { get; init; } = FamilyFunctionEnum.Other;
+    public FamilyFunctionEnum FamilyFunction { get; init; } = FamilyFunctionEnum.Other;
 }
