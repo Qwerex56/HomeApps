@@ -69,6 +69,7 @@ if (app.Environment.IsDevelopment()) {
 
 app.UseMiddleware<ExceptionHandlerMiddleware>();
 
+// HTTPS redirection is not needed - Traefik handles TLS termination
 // app.UseHttpsRedirection();
 
 app.UseRouting();
