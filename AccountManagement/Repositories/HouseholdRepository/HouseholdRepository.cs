@@ -17,6 +17,14 @@ public class HouseholdRepository : IHouseHoldRepository {
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Household>> GetUserAllHouseholdsAsync(Guid userId) {
+        return await _context.Households
+            .Include(h => h.Users)
+            .Where(h => h.UserHouseholds.Any(u => u.UserId == userId))
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
     public async Task CreateAsync(Household item) {
         await _context.Households.AddAsync(item);
     }
@@ -26,7 +34,9 @@ public class HouseholdRepository : IHouseHoldRepository {
     }
 
     public async Task<Household?> GetByIdAsync(Guid id) {
-        var household = await _context.Households.FirstOrDefaultAsync(h => h.Id == id);
+        var household = await _context.Households
+            .Include(h => h.Users)
+            .FirstOrDefaultAsync(h => h.Id == id);
         
         return household;
     }

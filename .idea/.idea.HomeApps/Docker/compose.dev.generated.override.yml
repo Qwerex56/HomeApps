@@ -1,0 +1,21 @@
+# This is a generated file. Not intended for manual editing.
+services:
+  account-management:
+    build:
+      context: "F:\\HomeApps"
+      dockerfile: "AccountManagement/Dockerfile"
+      target: "base"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net9.0/AccountManagement.dll"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "accountmanagement:dev"
+    ports: []
+    volumes:
+    - "F:\\HomeApps\\AccountManagement:/app:rw"
+    - "F:\\HomeApps:/src:rw"
+    - "C:\\Users\\qwere\\.nuget\\packages:/home/app/.nuget/packages"
+    working_dir: "/app"

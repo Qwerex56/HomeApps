@@ -1,28 +1,26 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using AccountManagement.Dto.Credentials;
 using AccountManagement.Dto.LoginDto;
-using AccountManagement.Mappers;
 using AccountManagement.Services.LoginService;
-using AccountManagement.Services.UserService;
-using Microsoft.AspNetCore.Authorization;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccountManagement.Controllers;
 
 [ApiController]
-[Route("api/v1/[controller]")]
+[ApiVersion("1.0")]
+[Route("v{version:apiVersion}/[controller]/[action]")]
 public class LoginController : ControllerBase {
-    private readonly IUserService _userService;
     private readonly ILoginService _loginService;
 
-    public LoginController(IUserService userService, ILoginService loginService) {
-        _userService = userService;
+    public LoginController(ILoginService loginService) {
         _loginService = loginService;
     }
 
     [HttpPost]
-    [Route("login")]
+    [ProducesResponseType(typeof(UserLoggedInDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Login([FromBody] UserCredentialsDto credentials) {
         var user = await _loginService.ValidateCredentials(credentials);
 
@@ -44,17 +42,20 @@ public class LoginController : ControllerBase {
         Response.Cookies.Append("refreshToken", refreshToken.Token, new CookieOptions {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Strict,
+            SameSite = SameSiteMode.None,
             Expires = refreshToken.Expires,
+            Path = "/",
+            Domain = "app.localhost"
         });
 
         return Ok(loggedUserDto);
     }
     
     [HttpGet]
-    [Route("logout")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Logout() {
-        var rawToken = Request.Cookies["refreshTokens"];
+        var rawToken = Request.Cookies["refreshToken"];
 
         if (string.IsNullOrEmpty(rawToken)) {
             return Ok();
@@ -62,12 +63,21 @@ public class LoginController : ControllerBase {
         
         await _loginService.RemoveRefreshTokenWithHash(rawToken);
         
-        Response.Cookies.Delete("refreshTokens");
+        Response.Cookies.Delete("refreshToken", new CookieOptions {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Path = "/",
+            Domain = "app.localhost"
+        });
+        
         return Ok();
     }
     
     [HttpGet]
-    [Route("refresh")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RefreshToken() {
         var rawToken = Request.Cookies["refreshToken"];
 
@@ -80,29 +90,12 @@ public class LoginController : ControllerBase {
         Response.Cookies.Append("refreshToken", tokens.RefreshToken.Token, new CookieOptions {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Strict,
+            SameSite = SameSiteMode.None,
             Expires =  tokens.RefreshToken.Expires,
+            Path = "/",
+            Domain = "app.localhost"
         });
 
         return Ok(tokens.JwtToken);
-    }
-
-    [Authorize]
-    [HttpGet]
-    [Route("me")]
-    public async Task<IActionResult> Me() {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(userId)) {
-            return NotFound();
-        }
-
-        var user = await _userService.GetUserByIdAsync(Guid.Parse(userId));
-
-        if (user is null) {
-            return NotFound();
-        }
-
-        return Ok(UserMapper.ToGetUserDto(user));
     }
 }

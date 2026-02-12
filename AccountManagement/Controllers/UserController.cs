@@ -2,13 +2,15 @@ using System.Security.Claims;
 using AccountManagement.Dto.User;
 using AccountManagement.Mappers;
 using AccountManagement.Services.UserService;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccountManagement.Controllers;
 
 [ApiController]
-[Route("api/v1/[controller]/[action]")]
+[ApiVersion("1.0")]
+[Route("v{version:apiVersion}/[controller]/[action]")]
 public class UserController : ControllerBase {
     private readonly IUserService _userService;
     
@@ -21,6 +23,8 @@ public class UserController : ControllerBase {
 
     [HttpGet]
     [Route("id/{id:guid}")]
+    [ProducesResponseType(typeof(GetUserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetUserById(Guid id) {
         var user = await _userService.GetUserByIdAsync(id);
 
@@ -33,6 +37,9 @@ public class UserController : ControllerBase {
 
     [Authorize]
     [HttpGet]
+    [ProducesResponseType(typeof(GetUserDto),  StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetMe() {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -51,6 +58,10 @@ public class UserController : ControllerBase {
 
     [Authorize]
     [HttpPut]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateMe([FromBody] UserSelfUpdateDto userUpdateDto) {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -65,6 +76,9 @@ public class UserController : ControllerBase {
 
     [Authorize]
     [HttpPut]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> DeactivateAccount() {
         var userId = GetUserIdString();
 
