@@ -1,6 +1,5 @@
 using AccountManagement.Dto.HouseholdDto;
 using AccountManagement.Mappers;
-using AccountManagement.Models;
 using AccountManagement.Repositories.HouseholdRepository;
 
 namespace AccountManagement.Services.HouseholdService.HouseholdQueryService;

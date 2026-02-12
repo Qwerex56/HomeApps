@@ -34,7 +34,9 @@ public class HouseholdRepository : IHouseHoldRepository {
     }
 
     public async Task<Household?> GetByIdAsync(Guid id) {
-        var household = await _context.Households.FirstOrDefaultAsync(h => h.Id == id);
+        var household = await _context.Households
+            .Include(h => h.Users)
+            .FirstOrDefaultAsync(h => h.Id == id);
         
         return household;
     }
