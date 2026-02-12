@@ -5,7 +5,7 @@ using Moq;
 namespace AccountManagement.Tests.Unit.Services.Household;
 
 public class HouseholdQueryTests : HouseholdTestBase {
-    private HouseholdQueryService _householdQueryService;
+    private readonly HouseholdQueryService _householdQueryService;
 
     public HouseholdQueryTests() : base() {
         _householdQueryService = new HouseholdQueryService(
