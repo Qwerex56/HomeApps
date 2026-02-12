@@ -10,7 +10,6 @@ public static partial class HouseholdMapper {
     [MapProperty(nameof(Household.Users), nameof(HouseholdDto.UsersCount), Use = nameof(MapUserCount))]
     public static partial HouseholdDto ToHouseholdDto(Household household);
 
-    [MapperIgnoreSource(nameof(Household.Users))]
     [MapProperty(nameof(Household.Users), nameof(HouseholdDto.UsersCount), Use = nameof(MapUserCount))]
     public static partial IEnumerable<HouseholdDto> ToHouseholdDtos(IEnumerable<Household> households);
     
