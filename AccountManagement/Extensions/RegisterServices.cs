@@ -5,6 +5,8 @@ using AccountManagement.Repositories.JwtRepository;
 using AccountManagement.Repositories.UserCredentialRepository;
 using AccountManagement.Repositories.UserHouseholdRepository;
 using AccountManagement.Repositories.UserRepository;
+using AccountManagement.Services.HouseholdService.HouseholdCommandService;
+using AccountManagement.Services.HouseholdService.HouseholdQueryService;
 using AccountManagement.Services.LoginService;
 using AccountManagement.Services.UserService;
 using AccountManagement.Workers.UnitOfWork;
@@ -29,6 +31,9 @@ public static class RegisterServices {
     public static void AddAppServices(this IServiceCollection services) {
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ILoginService, LoginService>();
+        
+        services.AddScoped<IHouseholdQueryService, HouseholdQueryService>();
+        services.AddScoped<IHouseholdCommandService, HouseholdCommandService>();
         
         services.AddScoped<IPasswordHasher<User>,  PasswordHasher<User>>();
     }

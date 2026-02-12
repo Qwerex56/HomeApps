@@ -1,7 +1,9 @@
 using AccountManagement.Data;
 using AccountManagement.Extensions;
 using AccountManagement.Options;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Shared.Authorization.Extensions;
 using Shared.Middleware;
 
@@ -12,6 +14,19 @@ builder.Services.Configure<SeedUserOptions>(
     builder.Configuration.GetSection("SeedUser"));
 builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("JwtOptions"));
+builder.Services.Configure<DbConnectionOptions>(
+    builder.Configuration.GetSection("DbConnectionConfig"));
+
+// Versioning
+builder.Services.AddApiVersioning(options => {
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = ApiVersionReader.Combine(
+        new UrlSegmentApiVersionReader(),
+        new HeaderApiVersionReader("X-Version"));
+    options.ApiVersionSelector = new CurrentImplementationApiVersionSelector(options);
+});
 
 // Auth
 builder.Services.AddJwtBearerAuthentication(builder.Configuration);
@@ -24,22 +39,21 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 // Add db to the container
-builder.Services.AddDbContext<AccountDbContext>(optionsBuilder => {
-    optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+builder.Services.AddDbContext<AccountDbContext>((sp, optionsBuilder) => {
+    var dbOptions = sp.GetRequiredService<IOptions<DbConnectionOptions>>().Value;
+    
+    optionsBuilder.UseNpgsql(dbOptions.ConnectionString, npsqlOptions => {
+        npsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorCodesToAdd: null);
+    });
 });
 
 builder.Services.AddRepositories();
 builder.Services.AddUnitOfWorks();
 builder.Services.AddAppServices();
-
-builder.Services.AddCors(options => {
-    options.AddPolicy("AllowFrontend", policy => {
-        policy.WithOrigins("http://localhost:5173")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
-    });
-});
+builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
@@ -55,11 +69,10 @@ if (app.Environment.IsDevelopment()) {
 
 app.UseMiddleware<ExceptionHandlerMiddleware>();
 
-app.UseHttpsRedirection();
+// HTTPS redirection is not needed - Traefik handles TLS termination
+// app.UseHttpsRedirection();
 
 app.UseRouting();
-
-app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
