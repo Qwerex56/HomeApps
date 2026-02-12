@@ -42,7 +42,7 @@ public class HouseholdController : ControllerBase {
         var userId = Guid.Parse(userIdString);
         var households = await _householdQueryService.GetUserHouseholdsAsync(userId);
 
-        return Ok(HouseholdMapper.ToHouseholdDtos(households));
+        return Ok(households);
     }
 
     [HttpGet("{householdId:guid}")]
@@ -57,7 +57,7 @@ public class HouseholdController : ControllerBase {
             return NotFound();
         }
 
-        return Ok(HouseholdMapper.ToHouseholdDto(household));
+        return Ok(household);
     }
     
     // --- Commands ---

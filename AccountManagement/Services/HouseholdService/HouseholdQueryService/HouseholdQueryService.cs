@@ -1,4 +1,5 @@
-using AccountManagement.Models;
+using AccountManagement.Dto.HouseholdDto;
+using AccountManagement.Mappers;
 using AccountManagement.Repositories.HouseholdRepository;
 
 namespace AccountManagement.Services.HouseholdService.HouseholdQueryService;
@@ -13,11 +14,18 @@ public class HouseholdQueryService : IHouseholdQueryService {
         _householdRepository = householdRepository;
     }
 
-    public async Task<IEnumerable<Household>> GetUserHouseholdsAsync(Guid userId) {
-        return await _householdRepository.GetUserAllHouseholdsAsync(userId);
+    public async Task<IEnumerable<HouseholdDto>> GetUserHouseholdsAsync(Guid userId) {
+        var data = await _householdRepository.GetUserAllHouseholdsAsync(userId);
+        return HouseholdMapper.ToHouseholdDtos(data);
     }
 
-    public async Task<Household?> GetHouseholdAsync(Guid householdId) {
-        return await _householdRepository.GetByIdAsync(householdId);
+    public async Task<HouseholdDto?> GetHouseholdAsync(Guid householdId) {
+        var data = await _householdRepository.GetByIdAsync(householdId);
+
+        if (data is null) {
+            return null;
+        }
+        
+        return HouseholdMapper.ToHouseholdDto(data);
     }
 }
