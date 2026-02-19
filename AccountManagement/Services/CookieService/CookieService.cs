@@ -1,12 +1,13 @@
 using AccountManagement.Options;
+using Microsoft.Extensions.Options;
 
 namespace AccountManagement.Services.CookieService;
 
 public class CookieService : ICookieService {
     private readonly CookieOptionsConfig _cookieOptionsConfig;
 
-    public CookieService(CookieOptionsConfig cookieOptionsConfig) {
-        _cookieOptionsConfig = cookieOptionsConfig;
+    public CookieService(IOptions<CookieOptionsConfig> cookieOptions) {
+        _cookieOptionsConfig = cookieOptions.Value;
     }
 
     public void SetRefreshToken(HttpResponse response, string refreshToken, DateTime refreshTokenExpires) {
