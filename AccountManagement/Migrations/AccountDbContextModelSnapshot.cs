@@ -22,108 +22,217 @@ namespace AccountManagement.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("AccountManagement.Models.Account", b =>
+            modelBuilder.Entity("AccountManagement.Models.ExternalCredentials", b =>
                 {
-                    b.Property<int>("AccountId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AccountId"));
-
-                    b.Property<DateTime>("LastSync")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ServiceName")
+                    b.Property<string>("ProviderId")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("SyncStatus")
-                        .HasColumnType("integer");
+                    b.Property<string>("ProviderName")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
 
-                    b.HasKey("AccountId");
+                    b.HasKey("Id");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Accounts");
+                    b.ToTable("ExternalCredentials");
                 });
 
             modelBuilder.Entity("AccountManagement.Models.Household", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("FamilyName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Households");
                 });
 
+            modelBuilder.Entity("AccountManagement.Models.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("Expires")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("JwtTokens");
+                });
+
             modelBuilder.Entity("AccountManagement.Models.User", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("Role")
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("AccountManagement.Models.UserCredential", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("HouseholdId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
+                    b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("HouseholdId");
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("UserCredentials");
                 });
 
-            modelBuilder.Entity("AccountManagement.Models.Account", b =>
+            modelBuilder.Entity("AccountManagement.Models.UserHousehold", b =>
                 {
+                    b.Property<Guid>("HouseholdId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("FamilyFunction")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("JoinDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Nickname")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("UserHouseholdRole")
+                        .HasColumnType("integer");
+
+                    b.HasKey("HouseholdId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserHouseholds");
+                });
+
+            modelBuilder.Entity("AccountManagement.Models.ExternalCredentials", b =>
+                {
+                    b.HasOne("AccountManagement.Models.User", null)
+                        .WithMany("ExternalCredentials")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AccountManagement.Models.RefreshToken", b =>
+                {
+                    b.HasOne("AccountManagement.Models.User", null)
+                        .WithOne("RefreshToken")
+                        .HasForeignKey("AccountManagement.Models.RefreshToken", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AccountManagement.Models.UserCredential", b =>
+                {
+                    b.HasOne("AccountManagement.Models.User", null)
+                        .WithOne("UserCredential")
+                        .HasForeignKey("AccountManagement.Models.UserCredential", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AccountManagement.Models.UserHousehold", b =>
+                {
+                    b.HasOne("AccountManagement.Models.Household", "Household")
+                        .WithMany("UserHouseholds")
+                        .HasForeignKey("HouseholdId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("AccountManagement.Models.User", "User")
-                        .WithMany("Accounts")
+                        .WithMany("UserHouseholds")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("AccountManagement.Models.User", b =>
-                {
-                    b.HasOne("AccountManagement.Models.Household", "Household")
-                        .WithMany("Members")
-                        .HasForeignKey("HouseholdId");
-
                     b.Navigation("Household");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("AccountManagement.Models.Household", b =>
                 {
-                    b.Navigation("Members");
+                    b.Navigation("UserHouseholds");
                 });
 
             modelBuilder.Entity("AccountManagement.Models.User", b =>
                 {
-                    b.Navigation("Accounts");
+                    b.Navigation("ExternalCredentials");
+
+                    b.Navigation("RefreshToken");
+
+                    b.Navigation("UserCredential");
+
+                    b.Navigation("UserHouseholds");
                 });
 #pragma warning restore 612, 618
         }
