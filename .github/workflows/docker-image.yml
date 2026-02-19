@@ -33,6 +33,7 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
+          -f AccountManagement/Dockerfile \
           -t ${{ secrets.DOCKERHUB_USERNAME }}/account-management:latest \
           -t ${{ secrets.DOCKERHUB_USERNAME }}/account-management:${{ github.sha }} \
           .
