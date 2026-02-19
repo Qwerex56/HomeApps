@@ -42,6 +42,6 @@ public class CookieService : ICookieService {
             }
         };
         
-        response.Cookies.Delete("refreshToken");
+        response.Cookies.Delete("refreshToken", cookieOptions);
     }
 }
