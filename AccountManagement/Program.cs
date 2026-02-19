@@ -16,6 +16,8 @@ builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("JwtOptions"));
 builder.Services.Configure<DbConnectionOptions>(
     builder.Configuration.GetSection("DbConnectionConfig"));
+builder.Services.Configure<CookieOptionsConfig>(
+    builder.Configuration.GetSection("CookieOptions"));
 
 // Versioning
 builder.Services.AddApiVersioning(options => {
