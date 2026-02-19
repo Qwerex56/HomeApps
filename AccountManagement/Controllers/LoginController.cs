@@ -1,5 +1,6 @@
 using AccountManagement.Dto.Credentials;
 using AccountManagement.Dto.LoginDto;
+using AccountManagement.Services.CookieService;
 using AccountManagement.Services.LoginService;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
@@ -11,9 +12,11 @@ namespace AccountManagement.Controllers;
 [Route("v{version:apiVersion}/[controller]/[action]")]
 public class LoginController : ControllerBase {
     private readonly ILoginService _loginService;
+    private readonly ICookieService _cookieService;
 
-    public LoginController(ILoginService loginService) {
+    public LoginController(ILoginService loginService, ICookieService cookieService) {
         _loginService = loginService;
+        _cookieService = cookieService;
     }
 
     [HttpPost]
@@ -39,18 +42,11 @@ public class LoginController : ControllerBase {
             Token = jwt
         };
 
-        Response.Cookies.Append("refreshToken", refreshToken.Token, new CookieOptions {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.None,
-            Expires = refreshToken.Expires,
-            Path = "/",
-            Domain = "app.localhost"
-        });
+        _cookieService.SetRefreshToken(Response, refreshToken.Token, refreshToken.Expires);
 
         return Ok(loggedUserDto);
     }
-    
+
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -60,20 +56,14 @@ public class LoginController : ControllerBase {
         if (string.IsNullOrEmpty(rawToken)) {
             return Ok();
         }
-        
+
         await _loginService.RemoveRefreshTokenWithHash(rawToken);
-        
-        Response.Cookies.Delete("refreshToken", new CookieOptions {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.None,
-            Path = "/",
-            Domain = "app.localhost"
-        });
-        
+
+        _cookieService.RemoveRefreshToken(Response);
+
         return Ok();
     }
-    
+
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -84,17 +74,10 @@ public class LoginController : ControllerBase {
         if (string.IsNullOrEmpty(rawToken)) {
             return Unauthorized();
         }
-        
+
         var tokens = await _loginService.RefreshUserSession(rawToken);
-        
-        Response.Cookies.Append("refreshToken", tokens.RefreshToken.Token, new CookieOptions {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.None,
-            Expires =  tokens.RefreshToken.Expires,
-            Path = "/",
-            Domain = "app.localhost"
-        });
+
+        _cookieService.SetRefreshToken(Response, tokens.RefreshToken.Token, tokens.RefreshToken.Expires);
 
         return Ok(tokens.JwtToken);
     }
