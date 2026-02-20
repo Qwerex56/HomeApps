@@ -12,10 +12,6 @@ public static class RegisterBaseOwner {
         using var scope = app.Services.CreateScope();
         
         var env = scope.ServiceProvider.GetRequiredService<IHostingEnvironment>();
-
-        if (!env.IsDevelopment()) {
-            return;
-        }
         
         var options = scope.ServiceProvider.GetRequiredService<IOptions<SeedUserOptions>>().Value;
         var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
