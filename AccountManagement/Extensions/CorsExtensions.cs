@@ -13,6 +13,7 @@ public static class CorsExtensions {
         var frontendDomain = configuration.GetSection("FrontendCorsOptions")
                                           .Get<FrontendCorsOptions>()?.FrontendDomain
                              ?? string.Empty;
+        Console.WriteLine($"[CORS] FrontendDomain = '{frontendDomain}'");
 
         if (string.IsNullOrWhiteSpace(frontendDomain)) {
             throw new InvalidOperationException(
