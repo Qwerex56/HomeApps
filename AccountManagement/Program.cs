@@ -30,6 +30,9 @@ builder.Services.AddApiVersioning(options => {
     options.ApiVersionSelector = new CurrentImplementationApiVersionSelector(options);
 });
 
+// CORS
+builder.Services.AddFrontendCors(builder.Configuration);
+
 // Auth
 builder.Services.AddJwtBearerAuthentication(builder.Configuration);
 builder.Services.AddAuthorization(options => { options.AddAllCustomPolicies(); });
@@ -75,6 +78,8 @@ app.UseMiddleware<ExceptionHandlerMiddleware>();
 // app.UseHttpsRedirection();
 
 app.UseRouting();
+
+app.UseCors(CorsExtensions.FrontendCorsPolicy);
 
 app.UseAuthentication();
 app.UseAuthorization();
