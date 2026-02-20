@@ -31,7 +31,8 @@ builder.Services.AddApiVersioning(options => {
 });
 
 // CORS
-builder.Services.AddFrontendCors(builder.Configuration);
+using var bootstrapLoggerFactory = LoggerFactory.Create(b => b.AddConfiguration(builder.Configuration.GetSection("Logging")).AddConsole());
+builder.Services.AddFrontendCors(builder.Configuration, bootstrapLoggerFactory.CreateLogger(nameof(CorsExtensions)));
 
 // Auth
 builder.Services.AddJwtBearerAuthentication(builder.Configuration);
