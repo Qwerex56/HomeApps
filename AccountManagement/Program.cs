@@ -18,6 +18,8 @@ builder.Services.Configure<DbConnectionOptions>(
     builder.Configuration.GetSection("DbConnectionConfig"));
 builder.Services.Configure<CookieOptionsConfig>(
     builder.Configuration.GetSection("CookieOptions"));
+builder.Services.Configure<RabbitMqOptions>(
+    builder.Configuration.GetSection("RabbitMqOptions"));
 
 // Versioning
 builder.Services.AddApiVersioning(options => {
