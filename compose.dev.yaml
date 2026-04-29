@@ -1,11 +1,10 @@
 services:
   traefik:
-    image: traefik:v3.0
+    image: traefik:v2.11
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
-      - "--providers.file.directory=/dynamic"
-      - "--providers.file.watch=true"
+      - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
     ports:
@@ -13,10 +12,12 @@ services:
       - "443:443"
       - "8080:8080"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/certs:ro
       - ./dynamic:/dynamic:ro
-  
+    networks:
+      - traefik
+
   postgres-db:
     image: postgres:16
     container_name: postgres
@@ -24,6 +25,20 @@ services:
       - .env
     ports:
       - "5432:5432"
+    networks:
+      - traefik
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - traefik
   
   account-management:
     image: accountmanagement
@@ -31,33 +46,72 @@ services:
       context: .
       dockerfile: AccountManagement/Dockerfile
     container_name: account_service
+    env_file:
+      - .env
+    environment:
+      - DbConnectionConfig__DbName=homeapps_accounts
+    ports:
+      - "5001:8080"
     depends_on:
       - postgres-db
+      - rabbitmq
+      - traefik
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`app.localhost`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.api.entrypoints=websecure"
-      - "traefik.http.routers.api.tls=true"
-      - "traefik.http.services.api.loadbalancer.server.port=8080"
-      - "traefik.http.middlewares.api-strip.stripprefix.prefixes=/api"
-      - "traefik.http.routers.api.middlewares=api-strip"
-  
-  frontend:
+      - "traefik.http.routers.account.rule=Host(`account.app.localhost`)"
+      - "traefik.http.routers.account.entrypoints=websecure"
+      - "traefik.http.routers.account.tls=true"
+      - "traefik.http.routers.account.service=account"
+      - "traefik.http.services.account.loadbalancer.server.port=8080"
+    networks:
+      - traefik
+
+  household-api:
+    image: householdapi
     build:
-      context: ../HomeApps_WebApp/HomeApps_WebApp
-      dockerfile: Dockerfile.dev
-    container_name: frontend
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-    volumes:
-      - ../HomeApps_WebApp/HomeApps_WebApp:/app
-      - /app/node_modules
-    command: ["npm", "run", "dev", "--", "--host"]
+      context: .
+      dockerfile: Household.Api/Dockerfile
+    container_name: household_service
+    ports:
+      - "5002:8080"
     depends_on:
-      - account-management
+      - rabbitmq
+      - postgres-db
+      - traefik
+    env_file:
+      - .env
+    environment:
+      - DbConnectionConfig__DbName=homeapps_household
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`app.localhost`)"
-      - "traefik.http.routers.frontend.entrypoints=websecure"
-      - "traefik.http.routers.frontend.tls=true"
-      - "traefik.http.services.frontend.loadbalancer.server.port=5173"
+      - "traefik.http.routers.household.rule=Host(`household.app.localhost`)"
+      - "traefik.http.routers.household.entrypoints=websecure"
+      - "traefik.http.routers.household.tls=true"
+      - "traefik.http.routers.household.service=household"
+      - "traefik.http.services.household.loadbalancer.server.port=8080"
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: false
+
+#  frontend:
+#    build:
+#      context: ../HomeApps_WebApp/HomeApps_WebApp
+#      dockerfile: Dockerfile.dev
+#    container_name: frontend
+#    environment:
+#      - CHOKIDAR_USEPOLLING=true
+#    volumes:
+#      - ../HomeApps_WebApp/HomeApps_WebApp:/app
+#      - /app/node_modules
+#    command: ["npm", "run", "dev", "--", "--host"]
+#    depends_on:
+#      - account-management
+#    labels:
+#      - "traefik.enable=true"
+#      - "traefik.http.routers.frontend.rule=Host(`app.localhost`)"
+#      - "traefik.http.routers.frontend.entrypoints=websecure"
+#      - "traefik.http.routers.frontend.tls=true"
+#      - "traefik.http.services.frontend.loadbalancer.server.port=5173"

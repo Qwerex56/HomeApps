@@ -1,0 +1,18 @@
+<Solution>
+	<Folder Name="/Solution Items/">
+		<File Path=".env" />
+		<File Path="compose.dev.yaml" />
+		<File Path="compose.prod.yaml" />
+	</Folder>
+	
+	<Folder Name="/AccountService/">
+		<Project Path="AccountManagement/AccountManagement.csproj" />
+	</Folder>
+
+	<Folder Name="/HouseholdService/">
+		<Project Path="Household.Api/Household.Api.csproj" />
+	</Folder>
+
+	<Project Path="AuthorizationService/AuthorizationService.csproj" />
+	<Project Path="Shared/Shared.csproj" />
+</Solution>

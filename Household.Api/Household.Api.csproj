@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+      <TargetFramework>net10.0</TargetFramework>
+      <Nullable>enable</Nullable>
+      <ImplicitUsings>enable</ImplicitUsings>
+      <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+      <RootNamespace>HouseholdService</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="FluentResults" Version="4.0.0" />
+        <PackageReference Include="FluentValidation" Version="12.1.1" />
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+        <PackageReference Include="MassTransit" Version="8.5.8" />
+        <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.8" />
+        <PackageReference Include="MediatR" Version="14.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.6"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.5" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+        <PackageReference Include="Riok.Mapperly" Version="4.3.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Shared\Shared.csproj" />
+    </ItemGroup>
+
+</Project>

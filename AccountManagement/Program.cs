@@ -1,10 +1,11 @@
-using AccountManagement.Data;
-using AccountManagement.Extensions;
-using AccountManagement.Options;
+using AccountService.Infrastructure.Data;
+using AccountService.Infrastructure.Extensions;
+using AccountService.Infrastructure.Options;
 using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Shared.Authorization.Extensions;
+using Shared.MassTransit;
 using Shared.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,7 +34,8 @@ builder.Services.AddApiVersioning(options => {
 });
 
 // CORS
-using var bootstrapLoggerFactory = LoggerFactory.Create(b => b.AddConfiguration(builder.Configuration.GetSection("Logging")).AddConsole());
+using var bootstrapLoggerFactory =
+    LoggerFactory.Create(b => b.AddConfiguration(builder.Configuration.GetSection("Logging")).AddConsole());
 builder.Services.AddFrontendCors(builder.Configuration, bootstrapLoggerFactory.CreateLogger(nameof(CorsExtensions)));
 
 // Auth
@@ -49,7 +51,7 @@ builder.Services.AddOpenApi();
 // Add db to the container
 builder.Services.AddDbContext<AccountDbContext>((sp, optionsBuilder) => {
     var dbOptions = sp.GetRequiredService<IOptions<DbConnectionOptions>>().Value;
-    
+
     optionsBuilder.UseNpgsql(dbOptions.ConnectionString, npsqlOptions => {
         npsqlOptions.EnableRetryOnFailure(
             maxRetryCount: 3,
@@ -61,6 +63,7 @@ builder.Services.AddDbContext<AccountDbContext>((sp, optionsBuilder) => {
 builder.Services.AddRepositories();
 builder.Services.AddUnitOfWorks();
 builder.Services.AddAppServices();
+builder.Services.AddMassTransitWithRabbitMq(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
