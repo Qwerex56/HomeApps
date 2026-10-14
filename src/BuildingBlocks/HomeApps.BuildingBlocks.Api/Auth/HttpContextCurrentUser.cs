@@ -14,6 +14,9 @@ internal sealed class HttpContextCurrentUser(IHttpContextAccessor accessor) : IC
     public Guid? UserId =>
         IsAuthenticated && Guid.TryParse(Principal!.FindFirstValue(ClaimNames.Subject), out var id) ? id : null;
 
+    public Guid RequiredUserId =>
+        UserId ?? throw new InvalidOperationException("There is no authenticated user on this request.");
+
     public string? Email => IsAuthenticated ? Principal!.FindFirstValue(ClaimNames.Email) : null;
 
     public IReadOnlyCollection<string> Roles =>

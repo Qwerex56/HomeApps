@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace HomeApps.BuildingBlocks.Infrastructure;
 
@@ -64,6 +65,11 @@ public static class DependencyInjection
         return services;
     }
 
+    /// <summary>
+    /// MassTransit with the EF Core outbox. The transport comes from <c>Messaging:Transport</c>:
+    /// <c>RabbitMq</c> (default) or <c>InMemory</c>, which runs MassTransit's in-memory test harness
+    /// (integration tests, or running one service alone; never production).
+    /// </summary>
     public static IServiceCollection AddHomeAppsMessaging<TContext>(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -71,27 +77,30 @@ public static class DependencyInjection
         Assembly consumersAssembly)
         where TContext : HomeAppsDbContext
     {
-        services.AddValidatedOptions<RabbitMqOptions>(RabbitMqOptions.SectionName);
+        ArgumentNullException.ThrowIfNull(configuration);
+
         services.AddScoped<IEventBus, MassTransitEventBus>();
 
+        var transport = configuration[MessagingTransportKey] ?? RabbitMqTransport;
+        if (string.Equals(transport, InMemoryTransport, StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddMassTransitTestHarness(bus => ConfigureBus<TContext>(bus, serviceName, consumersAssembly));
+            return services;
+        }
+
+        if (!string.Equals(transport, RabbitMqTransport, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"Unknown {MessagingTransportKey} '{transport}'. Use '{RabbitMqTransport}' or '{InMemoryTransport}'.");
+        }
+
+        services.AddValidatedOptions<RabbitMqOptions>(RabbitMqOptions.SectionName);
         services.AddMassTransit(bus =>
         {
-            bus.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(prefix: serviceName, includeNamespace: false));
-            bus.AddConsumers(consumersAssembly);
-
-            bus.AddEntityFrameworkOutbox<TContext>(outbox =>
-            {
-                outbox.UsePostgres();
-                outbox.UseBusOutbox();
-            });
-
-            // Inbox + outbox on every consumer: duplicates are ignored, and messages a consumer publishes
-            // are committed together with its database changes.
-            bus.AddConfigureEndpointsCallback((context, _, endpoint) => endpoint.UseEntityFrameworkOutbox<TContext>(context));
+            ConfigureBus<TContext>(bus, serviceName, consumersAssembly);
 
             bus.UsingRabbitMq((context, rabbit) =>
             {
-                var options = configuration.GetValidatedOptions<RabbitMqOptions>(RabbitMqOptions.SectionName);
+                var options = context.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
                 rabbit.Host(options.Host, options.Port, options.VirtualHost, host =>
                 {
                     host.Username(options.Username);
@@ -102,5 +111,27 @@ public static class DependencyInjection
         });
 
         return services;
+    }
+
+    public const string MessagingTransportKey = "Messaging:Transport";
+    public const string RabbitMqTransport = "RabbitMq";
+    public const string InMemoryTransport = "InMemory";
+
+    private static void ConfigureBus<TContext>(IBusRegistrationConfigurator bus, string serviceName, Assembly consumersAssembly)
+        where TContext : HomeAppsDbContext
+    {
+        bus.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(prefix: serviceName, includeNamespace: false));
+        bus.AddConsumers(consumersAssembly);
+
+        bus.AddEntityFrameworkOutbox<TContext>(outbox =>
+        {
+            outbox.UsePostgres();
+            outbox.UseBusOutbox();
+            outbox.QueryDelay = TimeSpan.FromSeconds(1);
+        });
+
+        // Inbox + outbox on every consumer: duplicates are ignored, and messages a consumer publishes
+        // are committed together with its database changes.
+        bus.AddConfigureEndpointsCallback((context, _, endpoint) => endpoint.UseEntityFrameworkOutbox<TContext>(context));
     }
 }

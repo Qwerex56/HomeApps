@@ -20,5 +20,5 @@ public interface ICurrentUser
     /// The user id for code that only runs behind authentication. Throws if there is no authenticated user,
     /// which means an endpoint was opened to anonymous callers by mistake.
     /// </summary>
-    Guid RequiredUserId => UserId ?? throw new InvalidOperationException("There is no authenticated user on this request.");
+    Guid RequiredUserId { get; }
 }

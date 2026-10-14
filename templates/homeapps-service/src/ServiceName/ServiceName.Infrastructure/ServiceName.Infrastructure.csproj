@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- DbContext, EF configurations, repositories, consumers. Implements the ports declared in Application. -->
+  <ItemGroup>
+    <ProjectReference Include="..\ServiceName.Application\ServiceName.Application.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Infrastructure\HomeApps.BuildingBlocks.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

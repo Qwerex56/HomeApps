@@ -1,0 +1,29 @@
+name: Service template
+
+# Generates services from the dotnet new templates, builds them and runs their tests (Postgres via Testcontainers).
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "templates/**"
+      - ".github/workflows/templates.yml"
+  push:
+    branches: [master]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "templates/**"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Shared kit tests
+        run: dotnet test tests/BuildingBlocks/HomeApps.BuildingBlocks.Tests
+      - name: Generate, build and test services from the templates
+        run: ./templates/verify.sh

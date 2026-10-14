@@ -1,0 +1,3 @@
+# EF Core migrations are generated: keep analyzers (and warnings-as-errors) off them.
+[**/Migrations/*.cs]
+generated_code = true

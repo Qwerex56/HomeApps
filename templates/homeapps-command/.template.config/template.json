@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "HomeApps",
+  "classifications": [
+    "HomeApps",
+    "Item"
+  ],
+  "identity": "HomeApps.Templates.Command",
+  "name": "HomeApps command",
+  "shortName": "homeapps-command",
+  "description": "A command slice: command, validator and handler in Application, plus its endpoint in Api. Run it from src/<Service>.",
+  "tags": {
+    "language": "C#",
+    "type": "item"
+  },
+  "sourceName": "CommandName",
+  "preferNameDirectory": false,
+  "symbols": {
+    "service": {
+      "type": "parameter",
+      "datatype": "string",
+      "isRequired": true,
+      "replaces": "ServiceName",
+      "fileRename": "ServiceName",
+      "description": "The service name, e.g. Accounts (the folder under src/)."
+    },
+    "feature": {
+      "type": "parameter",
+      "datatype": "string",
+      "isRequired": true,
+      "replaces": "FeatureName",
+      "fileRename": "FeatureName",
+      "description": "The feature folder (usually the aggregate, plural), e.g. Users."
+    },
+    "featureLower": {
+      "type": "generated",
+      "generator": "casing",
+      "parameters": {
+        "source": "feature",
+        "toLower": true
+      },
+      "replaces": "featurelower"
+    },
+    "returns": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "",
+      "replaces": "TReturn",
+      "description": "Type the command returns on success, e.g. Guid. Leave empty for none."
+    },
+    "hasReturn": {
+      "type": "computed",
+      "value": "(returns != \"\")"
+    },
+    "method": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "Post",
+      "replaces": "HttpVerb",
+      "choices": [
+        {
+          "choice": "Post"
+        },
+        {
+          "choice": "Put"
+        },
+        {
+          "choice": "Patch"
+        },
+        {
+          "choice": "Delete"
+        }
+      ],
+      "description": "HTTP method of the endpoint."
+    }
+  }
+}

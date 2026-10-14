@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -18,17 +17,5 @@ public static class OptionsExtensions
             .BindConfiguration(sectionName)
             .ValidateDataAnnotations()
             .ValidateOnStart();
-    }
-
-    /// <summary>Reads and validates options immediately, for values needed while registering services.</summary>
-    public static TOptions GetValidatedOptions<TOptions>(this IConfiguration configuration, string sectionName)
-        where TOptions : class, new()
-    {
-        ArgumentNullException.ThrowIfNull(configuration);
-
-        var options = configuration.GetSection(sectionName).Get<TOptions>() ?? new TOptions();
-        var context = new System.ComponentModel.DataAnnotations.ValidationContext(options);
-        System.ComponentModel.DataAnnotations.Validator.ValidateObject(options, context, validateAllProperties: true);
-        return options;
     }
 }

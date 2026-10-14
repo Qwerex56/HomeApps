@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Architecture tests (fast, no Docker) and API tests against Postgres in Docker (Category=Integration).
+    Run only the fast ones by filtering on Category!=Integration (see docs/how-a-service-is-built.md).
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\ServiceName\ServiceName.Api\ServiceName.Api.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Testing\HomeApps.BuildingBlocks.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+
+</Project>
