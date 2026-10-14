@@ -1,0 +1,17 @@
+<Project>
+  <!-- Chain to a repository-wide Directory.Build.props when one exists (Phase 0). -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))"
+          Condition="'$([MSBuild]::GetPathOfFileAbove(`Directory.Build.props`, `$(MSBuildThisFileDirectory)../`))' != ''" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- CA1711: names like IDomainEventHandler are the convention here. CA2007: no ConfigureAwait in app code. -->
+    <NoWarn>$(NoWarn);CA1711;CA2007</NoWarn>
+  </PropertyGroup>
+</Project>

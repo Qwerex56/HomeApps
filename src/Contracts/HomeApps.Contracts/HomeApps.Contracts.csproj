@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Integration messages shared between services. Records only: no logic, no dependencies. -->
+
+</Project>
