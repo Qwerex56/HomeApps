@@ -1,6 +1,6 @@
 # 0006: A shared kit plus `dotnet new` templates instead of copied code
 
-Status: accepted (2026-10-14)
+Status: superseded by [0007](0007-lean-kit-without-templates.md) (2026-10-16)
 
 ## Context
 

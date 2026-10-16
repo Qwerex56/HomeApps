@@ -17,6 +17,6 @@ An architecture test in each service enforces the references.
 ## Consequences
 
 - Business rules live in aggregates and can be unit tested without a database.
-- More projects per service; the template creates them, so the cost is paid once.
+- More projects per service; the first service is the reference to copy, so the cost is paid once.
 - EF Core mapping must be done with `IEntityTypeConfiguration<T>`, not attributes, and aggregates need a private
   parameterless constructor for EF.
