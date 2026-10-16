@@ -11,7 +11,7 @@ namespace HomeApps.BuildingBlocks.Infrastructure.Persistence;
 /// <summary>
 /// Base DbContext for every service. It is the service's <see cref="IUnitOfWork"/>:
 /// <list type="number">
-/// <item>Before saving, it collects domain events from tracked aggregates and dispatches them in-process through MediatR.
+/// <item>Before saving, it collects domain events from tracked aggregates (<see cref="IHasDomainEvents"/>) and dispatches them in-process through MediatR.
 /// Handlers may change more aggregates or publish integration messages (which land in the outbox tables).</item>
 /// <item>It repeats until no new events appear, then saves everything in one transaction.</item>
 /// </list>
@@ -52,7 +52,7 @@ public abstract class HomeAppsDbContext(DbContextOptions options, IPublisher pub
         for (var round = 0; round < MaxDispatchRounds; round++)
         {
             var aggregates = ChangeTracker
-                .Entries<IAggregateRoot>()
+                .Entries<IHasDomainEvents>()
                 .Select(e => e.Entity)
                 .Where(a => a.DomainEvents.Count > 0)
                 .ToList();

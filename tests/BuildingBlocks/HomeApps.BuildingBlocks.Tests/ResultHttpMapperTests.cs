@@ -1,6 +1,6 @@
 using FluentResults;
 using HomeApps.BuildingBlocks.Api.Results;
-using HomeApps.BuildingBlocks.Domain.Errors;
+using HomeApps.BuildingBlocks.Application;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -8,34 +8,24 @@ namespace HomeApps.BuildingBlocks.Tests;
 
 public sealed class ResultHttpMapperTests
 {
-    public static TheoryData<IError, int> Errors => new()
+    [Fact]
+    public void Any_error_maps_to_400_with_its_message()
     {
-        { new NotFoundError("x.not_found", "m"), StatusCodes.Status404NotFound },
-        { new ConflictError("x.conflict", "m"), StatusCodes.Status409Conflict },
-        { new ForbiddenError("x.forbidden", "m"), StatusCodes.Status403Forbidden },
-        { new UnauthorizedError("x.unauthorized", "m"), StatusCodes.Status401Unauthorized },
-        { ValidationError.ForField("Name", "m"), StatusCodes.Status400BadRequest },
-        { new Error("untyped"), StatusCodes.Status422UnprocessableEntity },
-    };
+        var httpResult = Result.Fail("Household is full.").ToHttpResult();
 
-    [Theory]
-    [MemberData(nameof(Errors))]
-    public void Typed_errors_map_to_their_status(IError error, int expectedStatus)
-    {
-        var httpResult = Result.Fail(error).ToHttpResult();
-
-        var status = Assert.IsAssignableFrom<IStatusCodeHttpResult>(httpResult).StatusCode;
-        Assert.Equal(expectedStatus, status);
+        var problem = Assert.IsType<ProblemHttpResult>(httpResult);
+        Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
+        Assert.Equal("Household is full.", problem.ProblemDetails.Detail);
     }
 
     [Fact]
-    public void Validation_errors_carry_field_failures_and_the_code()
+    public void Field_errors_map_to_a_validation_problem()
     {
-        var httpResult = Result.Fail(ValidationError.ForField("Name", "Required.")).ToHttpResult();
+        var httpResult = Result.Fail(ValidationErrors.ForField("Name", "Required.")).ToHttpResult();
 
         var problem = Assert.IsType<ValidationProblem>(httpResult);
+        Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
         Assert.Equal(["Required."], problem.ProblemDetails.Errors["Name"]);
-        Assert.Equal("validation.failed", problem.ProblemDetails.Extensions["code"]);
     }
 
     [Fact]

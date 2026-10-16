@@ -3,7 +3,6 @@ using FluentValidation;
 using HomeApps.BuildingBlocks.Application;
 using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.BuildingBlocks.Application.Messaging;
-using HomeApps.BuildingBlocks.Domain.Errors;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
@@ -37,7 +36,7 @@ public sealed class CreateWidgetHandler(HandlerCalls calls) : ICommandHandler<Cr
     {
         calls.Count++;
         return Task.FromResult(request.Name == "taken"
-            ? Result.Fail<Guid>(new ConflictError("widget.taken", "Taken."))
+            ? Result.Fail<Guid>("Taken.")
             : Result.Ok(Guid.NewGuid()));
     }
 }
@@ -73,8 +72,8 @@ public sealed class PipelineTests
         var result = await CreateSender().Send(new CreateWidget("too long name"));
 
         Assert.True(result.IsFailed);
-        var error = Assert.IsType<ValidationError>(result.Errors.Single());
-        Assert.Contains("Name", error.Failures.Keys);
+        var error = result.Errors.Single();
+        Assert.Equal("Name", error.Metadata[ValidationErrors.FieldKey]);
         Assert.Equal(0, _calls.Count);
         await _unitOfWork.DidNotReceiveWithAnyArgs().SaveChangesAsync(default);
     }
@@ -84,7 +83,7 @@ public sealed class PipelineTests
     {
         var result = await CreateSender().Send(new DeleteWidget(""));
 
-        Assert.IsType<ValidationError>(result.Errors.Single());
+        Assert.Equal("Name", result.Errors.Single().Metadata[ValidationErrors.FieldKey]);
     }
 
     [Fact]
@@ -101,7 +100,7 @@ public sealed class PipelineTests
     {
         var result = await CreateSender().Send(new CreateWidget("taken"));
 
-        Assert.IsType<ConflictError>(result.Errors.Single());
+        Assert.Equal("Taken.", result.Errors.Single().Message);
         await _unitOfWork.DidNotReceiveWithAnyArgs().SaveChangesAsync(default);
     }
 

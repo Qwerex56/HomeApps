@@ -1,5 +1,5 @@
 using FluentResults;
-using HomeApps.BuildingBlocks.Domain.Errors;
+using HomeApps.BuildingBlocks.Application;
 using Microsoft.AspNetCore.Http;
 using HttpResults = Microsoft.AspNetCore.Http.Results;
 
@@ -7,9 +7,9 @@ namespace HomeApps.BuildingBlocks.Api.Results;
 
 /// <summary>
 /// The one place where a <see cref="Result"/> becomes an HTTP response.
-/// Success → 200/201/204. Failure → ProblemDetails whose status comes from the first typed error:
-/// <see cref="ValidationError"/> 400, <see cref="UnauthorizedError"/> 401, <see cref="ForbiddenError"/> 403,
-/// <see cref="NotFoundError"/> 404, <see cref="ConflictError"/> 409, any other error 422.
+/// Success → 200/201/204. Failure → 400: a ValidationProblem when the errors name fields
+/// (<see cref="ValidationErrors.FieldKey"/>), otherwise a ProblemDetails with the first error's message.
+/// There are no typed errors yet; when a service needs 401/403/404/409, add the error type and map it here.
 /// </summary>
 public static class ResultHttpMapper
 {
@@ -41,37 +41,19 @@ public static class ResultHttpMapper
             throw new ArgumentException("A failed result must carry at least one error.", nameof(errors));
         }
 
-        var first = errors[0];
-        var code = first is DomainError domainError ? domainError.Code : "error";
-
-        if (first is ValidationError)
+        var fieldErrors = errors.Where(e => e.Metadata.ContainsKey(ValidationErrors.FieldKey)).ToList();
+        if (fieldErrors.Count > 0)
         {
-            var failures = errors
-                .OfType<ValidationError>()
-                .SelectMany(e => e.Failures.Count > 0 ? e.Failures : new Dictionary<string, string[]> { [string.Empty] = [e.Message] })
-                .GroupBy(kv => kv.Key, StringComparer.Ordinal)
-                .ToDictionary(g => g.Key, g => g.SelectMany(kv => kv.Value).Distinct(StringComparer.Ordinal).ToArray(), StringComparer.Ordinal);
+            var failures = fieldErrors
+                .GroupBy(e => e.Metadata[ValidationErrors.FieldKey]?.ToString() ?? string.Empty, StringComparer.Ordinal)
+                .ToDictionary(g => g.Key, g => g.Select(e => e.Message).Distinct(StringComparer.Ordinal).ToArray(), StringComparer.Ordinal);
 
-            return TypedResults.ValidationProblem(
-                failures,
-                detail: first.Message,
-                title: "Validation failed",
-                extensions: new Dictionary<string, object?> { ["code"] = code });
+            return TypedResults.ValidationProblem(failures, title: "Validation failed");
         }
 
-        var (status, title) = first switch
-        {
-            UnauthorizedError => (StatusCodes.Status401Unauthorized, "Unauthorized"),
-            ForbiddenError => (StatusCodes.Status403Forbidden, "Forbidden"),
-            NotFoundError => (StatusCodes.Status404NotFound, "Not found"),
-            ConflictError => (StatusCodes.Status409Conflict, "Conflict"),
-            _ => (StatusCodes.Status422UnprocessableEntity, "Request could not be processed"),
-        };
-
         return HttpResults.Problem(
-            detail: first.Message,
-            statusCode: status,
-            title: title,
-            extensions: new Dictionary<string, object?> { ["code"] = code });
+            detail: errors[0].Message,
+            statusCode: StatusCodes.Status400BadRequest,
+            title: "Request could not be processed");
     }
 }

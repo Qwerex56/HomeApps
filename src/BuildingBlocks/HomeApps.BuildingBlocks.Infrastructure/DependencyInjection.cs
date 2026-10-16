@@ -3,7 +3,6 @@ using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.BuildingBlocks.Infrastructure.Messaging;
 using HomeApps.BuildingBlocks.Infrastructure.Options;
 using HomeApps.BuildingBlocks.Infrastructure.Persistence;
-using HomeApps.BuildingBlocks.Infrastructure.Time;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -23,7 +22,7 @@ public static class DependencyInjection
     /// <list type="bullet">
     /// <item>Postgres DbContext with retry on transient failures, registered as <see cref="IUnitOfWork"/>, plus a health check.</item>
     /// <item>MassTransit on RabbitMQ with the EF Core outbox (bus outbox for publishing, inbox on every consumer endpoint).</item>
-    /// <item>Consumers from <paramref name="consumersAssembly"/>, <see cref="IEventBus"/> and <see cref="IDateTimeProvider"/>.</item>
+    /// <item>Consumers from <paramref name="consumersAssembly"/>, <see cref="IEventBus"/> and the .NET <see cref="TimeProvider"/>.</item>
     /// </list>
     /// </summary>
     /// <param name="serviceName">Short service name, used as the queue name prefix (e.g. <c>accounts</c>).</param>
@@ -41,7 +40,6 @@ public static class DependencyInjection
         services.AddHomeAppsMessaging<TContext>(configuration, serviceName, consumersAssembly);
 
         services.TryAddSingleton(TimeProvider.System);
-        services.TryAddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
         return services;
     }
