@@ -1,0 +1,29 @@
+name: CI
+
+# Builds the whole solution and runs every test project on each pull request and on master.
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore
+        run: dotnet restore HomeApps.slnx
+      - name: Build
+        run: dotnet build HomeApps.slnx --configuration Release --no-restore
+      - name: Test
+        run: dotnet test HomeApps.slnx --configuration Release --no-build

@@ -1,0 +1,24 @@
+<Project>
+  <!--
+    Settings for every project in the repository. src/ and tests/ add their own Directory.Build.props on top
+    (analyzers and test packages); a csproj can still override anything here.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!--
+    The services that predate the shared kit still have warnings. They keep building as they did
+    until they are replaced; new projects get no such exception.
+  -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'AccountManagement'
+                         Or '$(MSBuildProjectName)' == 'Household.Api'
+                         Or '$(MSBuildProjectName)' == 'AuthorizationService'
+                         Or '$(MSBuildProjectName)' == 'Shared'
+                         Or '$(MSBuildProjectName)' == 'TodoListService'">
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,30 @@
+<Solution>
+	<Folder Name="/Solution Items/">
+		<File Path=".env" />
+		<File Path="compose.dev.yaml" />
+		<File Path="compose.prod.yaml" />
+		<File Path="compose.yaml" />
+	</Folder>
+	
+	<Folder Name="/AccountService/">
+		<Project Path="AccountManagement/AccountManagement.csproj" />
+	</Folder>
+
+	<Folder Name="/HouseholdService/">
+		<Project Path="Household.Api/Household.Api.csproj" />
+	</Folder>
+	<Folder Name="/src/">
+		<Project Path="src/BuildingBlocks/HomeApps.BuildingBlocks.Api/HomeApps.BuildingBlocks.Api.csproj" />
+		<Project Path="src/BuildingBlocks/HomeApps.BuildingBlocks.Application/HomeApps.BuildingBlocks.Application.csproj" />
+		<Project Path="src/BuildingBlocks/HomeApps.BuildingBlocks.Domain/HomeApps.BuildingBlocks.Domain.csproj" />
+		<Project Path="src/BuildingBlocks/HomeApps.BuildingBlocks.Infrastructure/HomeApps.BuildingBlocks.Infrastructure.csproj" />
+		<Project Path="src/Contracts/HomeApps.Contracts/HomeApps.Contracts.csproj" />
+	</Folder>
+	<Folder Name="/tests/">
+		<Project Path="tests/BuildingBlocks/HomeApps.BuildingBlocks.Testing/HomeApps.BuildingBlocks.Testing.csproj" />
+		<Project Path="tests/BuildingBlocks/HomeApps.BuildingBlocks.Tests/HomeApps.BuildingBlocks.Tests.csproj" />
+	</Folder>
+
+	<Project Path="AuthorizationService/AuthorizationService.csproj" />
+	<Project Path="Shared/Shared.csproj" />
+</Solution>
