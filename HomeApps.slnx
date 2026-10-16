@@ -3,6 +3,7 @@
 		<File Path=".env" />
 		<File Path="compose.dev.yaml" />
 		<File Path="compose.prod.yaml" />
+		<File Path="compose.yaml" />
 	</Folder>
 	
 	<Folder Name="/AccountService/">
@@ -26,4 +27,5 @@
 
 	<Project Path="AuthorizationService/AuthorizationService.csproj" />
 	<Project Path="Shared/Shared.csproj" />
+	<Project Path="TodoListService/TodoListService.csproj" />
 </Solution>
