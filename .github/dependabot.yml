@@ -10,3 +10,9 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-request-limit: 5
+    ignore:
+      # Newer major versions are commercial: MediatR 13+ needs a licence key, MassTransit 9 is paid.
+      - dependency-name: "MediatR"
+        versions: [">= 13"]
+      - dependency-name: "MassTransit*"
+        versions: [">= 9"]
