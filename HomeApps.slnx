@@ -3,7 +3,6 @@
 		<File Path=".env" />
 		<File Path="compose.dev.yaml" />
 		<File Path="compose.prod.yaml" />
-		<File Path="compose.yaml" />
 	</Folder>
 	
 	<Folder Name="/AccountService/">
@@ -25,6 +24,5 @@
 		<Project Path="tests/BuildingBlocks/HomeApps.BuildingBlocks.Tests/HomeApps.BuildingBlocks.Tests.csproj" />
 	</Folder>
 
-	<Project Path="AuthorizationService/AuthorizationService.csproj" />
 	<Project Path="Shared/Shared.csproj" />
 </Solution>
