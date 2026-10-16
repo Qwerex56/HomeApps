@@ -1,7 +1,8 @@
 <Project>
   <!--
-    Central package versions for the new services (src/ and tests/).
-    When the repository gets a root Directory.Packages.props (Phase 0), move these entries there and delete this file.
+    Central package versions for the whole repository.
+    Projects reference packages without a version: <PackageReference Include="MediatR" />.
+    To add or bump a package, change its version here, once, for every project.
   -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -46,5 +47,15 @@
     <PackageVersion Include="NetArchTest.Rules" Version="1.3.2" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Current services">
+    <!-- Used only by the services that predate the shared kit (AccountManagement, Household.Api, Shared). -->
+    <PackageVersion Include="Asp.Versioning.Mvc" Version="8.1.1" />
+    <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.1" />
+    <PackageVersion Include="Riok.Mapperly" Version="4.3.1" />
+    <PackageVersion Include="Microsoft.AspNetCore" Version="2.3.9" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication" Version="2.3.9" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authorization" Version="9.0.12" />
   </ItemGroup>
 </Project>

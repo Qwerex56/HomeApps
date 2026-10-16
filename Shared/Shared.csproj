@@ -8,13 +8,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="MassTransit" Version="8.5.8" />
-      <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.8" />
-      <PackageReference Include="Microsoft.AspNetCore" Version="2.3.9" />
-      <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.3.9" />
-      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.5" />
-      <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="9.0.12" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.5" />
+      <PackageReference Include="MassTransit" />
+      <PackageReference Include="MassTransit.RabbitMQ" />
+      <PackageReference Include="Microsoft.AspNetCore" />
+      <PackageReference Include="Microsoft.AspNetCore.Authentication" />
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+      <PackageReference Include="Microsoft.AspNetCore.Authorization" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" />
     </ItemGroup>
 
     <ItemGroup>
