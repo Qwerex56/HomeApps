@@ -74,6 +74,7 @@ app.UseAuthorization();
 app.MapHouseholdEndpoints();
 app.MapInviteEndpoints();
 
-app.MapGet("/", () => "Household API");
+app.MapGet("/health", () => "Household API");
+app.MapGet("/api-name", () => "Household Api");
 
 app.Run();

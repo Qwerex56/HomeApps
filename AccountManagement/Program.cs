@@ -94,4 +94,6 @@ app.MapControllers();
 
 await RegisterBaseOwner.SeedUserAsync(app);
 
+app.MapGet("/health", () => "Account API");
+
 app.Run();
