@@ -3,26 +3,23 @@
 		<File Path=".env" />
 		<File Path="compose.dev.yaml" />
 		<File Path="compose.prod.yaml" />
-	</Folder>
-	
-	<Folder Name="/AccountService/">
-		<Project Path="AccountManagement/AccountManagement.csproj" />
+		<File Path="Directory.Build.props" />
+		<File Path="Directory.Packages.props" />
+		<File Path="global.json" />
 	</Folder>
 
-	<Folder Name="/HouseholdService/">
-		<Project Path="Household.Api/Household.Api.csproj" />
-	</Folder>
-	<Folder Name="/src/">
-		<Project Path="src/BuildingBlocks/HomeApps.BuildingBlocks.Api/HomeApps.BuildingBlocks.Api.csproj" />
-		<Project Path="src/BuildingBlocks/HomeApps.BuildingBlocks.Application/HomeApps.BuildingBlocks.Application.csproj" />
+	<Folder Name="/BuildingBlocks/">
 		<Project Path="src/BuildingBlocks/HomeApps.BuildingBlocks.Domain/HomeApps.BuildingBlocks.Domain.csproj" />
+		<Project Path="src/BuildingBlocks/HomeApps.BuildingBlocks.Application/HomeApps.BuildingBlocks.Application.csproj" />
 		<Project Path="src/BuildingBlocks/HomeApps.BuildingBlocks.Infrastructure/HomeApps.BuildingBlocks.Infrastructure.csproj" />
-		<Project Path="src/Contracts/HomeApps.Contracts/HomeApps.Contracts.csproj" />
+		<Project Path="src/BuildingBlocks/HomeApps.BuildingBlocks.Api/HomeApps.BuildingBlocks.Api.csproj" />
 	</Folder>
-	<Folder Name="/tests/">
+	<Folder Name="/BuildingBlocks/tests/">
 		<Project Path="tests/BuildingBlocks/HomeApps.BuildingBlocks.Testing/HomeApps.BuildingBlocks.Testing.csproj" />
 		<Project Path="tests/BuildingBlocks/HomeApps.BuildingBlocks.Tests/HomeApps.BuildingBlocks.Tests.csproj" />
 	</Folder>
 
-	<Project Path="Shared/Shared.csproj" />
+	<Folder Name="/Contracts/">
+		<Project Path="src/Contracts/HomeApps.Contracts/HomeApps.Contracts.csproj" />
+	</Folder>
 </Solution>

@@ -6,10 +6,3 @@
       - .env
     ports:
       - "5432:5432"
-  
-  accountmanagement:
-    image: accountmanagement
-    build:
-      context: .
-      dockerfile: AccountManagement/Dockerfile
-      

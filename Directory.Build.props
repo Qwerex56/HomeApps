@@ -9,16 +9,4 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
-
-  <!--
-    The services that predate the shared kit still have warnings. They keep building as they did
-    until they are replaced; new projects get no such exception.
-  -->
-  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'AccountManagement'
-                         Or '$(MSBuildProjectName)' == 'Household.Api'
-                         Or '$(MSBuildProjectName)' == 'AuthorizationService'
-                         Or '$(MSBuildProjectName)' == 'Shared'
-                         Or '$(MSBuildProjectName)' == 'TodoListService'">
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-  </PropertyGroup>
 </Project>

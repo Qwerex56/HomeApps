@@ -39,58 +39,6 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
     networks:
       - traefik
-  
-  account-management:
-    image: accountmanagement
-    build:
-      context: .
-      dockerfile: AccountManagement/Dockerfile
-    container_name: account_service
-    env_file:
-      - .env
-    environment:
-      - DbConnectionConfig__DbName=homeapps_accounts
-    ports:
-      - "5001:8080"
-    depends_on:
-      - postgres-db
-      - rabbitmq
-      - traefik
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.account.rule=Host(`account.app.localhost`)"
-      - "traefik.http.routers.account.entrypoints=websecure"
-      - "traefik.http.routers.account.tls=true"
-      - "traefik.http.routers.account.service=account"
-      - "traefik.http.services.account.loadbalancer.server.port=8080"
-    networks:
-      - traefik
-
-  household-api:
-    image: householdapi
-    build:
-      context: .
-      dockerfile: Household.Api/Dockerfile
-    container_name: household_service
-    ports:
-      - "5002:8080"
-    depends_on:
-      - rabbitmq
-      - postgres-db
-      - traefik
-    env_file:
-      - .env
-    environment:
-      - DbConnectionConfig__DbName=homeapps_household
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.household.rule=Host(`household.app.localhost`)"
-      - "traefik.http.routers.household.entrypoints=websecure"
-      - "traefik.http.routers.household.tls=true"
-      - "traefik.http.routers.household.service=household"
-      - "traefik.http.services.household.loadbalancer.server.port=8080"
-    networks:
-      - traefik
 
 networks:
   traefik:
