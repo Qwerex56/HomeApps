@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "HomeApps",
+  "classifications": [
+    "HomeApps",
+    "Item"
+  ],
+  "identity": "HomeApps.Templates.Query",
+  "name": "HomeApps query",
+  "shortName": "homeapps-query",
+  "description": "A query slice: query, response and handler in Application, plus its GET endpoint in Api. Run it from src/<Service>.",
+  "tags": {
+    "language": "C#",
+    "type": "item"
+  },
+  "sourceName": "QueryName",
+  "preferNameDirectory": false,
+  "symbols": {
+    "service": {
+      "type": "parameter",
+      "datatype": "string",
+      "isRequired": true,
+      "replaces": "ServiceName",
+      "fileRename": "ServiceName",
+      "description": "The service name, e.g. Accounts (the folder under src/)."
+    },
+    "feature": {
+      "type": "parameter",
+      "datatype": "string",
+      "isRequired": true,
+      "replaces": "FeatureName",
+      "fileRename": "FeatureName",
+      "description": "The feature folder (usually the aggregate, plural), e.g. Users."
+    },
+    "featureLower": {
+      "type": "generated",
+      "generator": "casing",
+      "parameters": {
+        "source": "feature",
+        "toLower": true
+      },
+      "replaces": "featurelower"
+    }
+  }
+}

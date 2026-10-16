@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Pure unit tests of aggregates: no mocks, no database. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\ServiceName\ServiceName.Domain\ServiceName.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
