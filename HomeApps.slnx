@@ -27,5 +27,4 @@
 
 	<Project Path="AuthorizationService/AuthorizationService.csproj" />
 	<Project Path="Shared/Shared.csproj" />
-	<Project Path="TodoListService/TodoListService.csproj" />
 </Solution>
