@@ -3,8 +3,8 @@ using FluentResults;
 namespace HomeApps.BuildingBlocks.Application;
 
 /// <summary>
-/// Input validation failures are plain FluentResults errors that name the field in their metadata. There are no
-/// typed error classes yet: write one when a service really needs a different HTTP status.
+/// Input validation failures are plain FluentResults errors that name the field in their metadata.
+/// Rule violations with another HTTP status use <c>AppError</c> (ADR 0008).
 /// </summary>
 public static class ValidationErrors
 {

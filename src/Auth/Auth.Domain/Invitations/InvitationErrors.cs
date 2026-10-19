@@ -1,19 +1,16 @@
-using Auth.Domain.Common;
 using FluentResults;
+using HomeApps.BuildingBlocks.Domain.Errors;
 
 namespace Auth.Domain.Invitations;
 
 public static class InvitationErrors
 {
-    public static Error InvalidOrExpired => AuthError.Create(
-        "invitation.invalid_or_expired",
-        "The invitation is not valid any more.");
+    public static Error InvalidOrExpired => new AppError("invitation.invalid_or_expired",
+        "The invitation is not valid any more.", ErrorKind.Validation);
 
-    public static Error AlreadyPending => AuthError.Create(
-        "invitation.already_pending",
-        "This email address already has a pending invitation.");
+    public static Error AlreadyPending => new AppError("invitation.already_pending",
+        "This email address already has a pending invitation.", ErrorKind.Conflict);
 
-    public static Error InviterCannotSignIn => AuthError.Create(
-        "auth.cannot_sign_in",
-        "Only an active account can invite people.");
+    public static Error InviterCannotSignIn => new AppError("auth.cannot_sign_in",
+        "Only an active account can invite people.", ErrorKind.Unauthorized);
 }

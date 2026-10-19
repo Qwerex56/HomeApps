@@ -58,7 +58,7 @@ public sealed class IdentityRegistrationTests
 
     [Fact]
     public void R1_TakenEmailIsRejected() =>
-        Assert.Equal("email.taken", RegisterWithPassword(emailTaken: true).Errors[0].Metadata[AuthError.CodeKey]);
+        Assert.Equal("email.taken", RegisterWithPassword(emailTaken: true).Errors[0].Metadata[HomeApps.BuildingBlocks.Domain.Errors.AppError.CodeKey]);
 
     [Fact]
     public void R2_WeakPasswordIsRejected() => Assert.True(RegisterWithPassword("short").IsFailed);

@@ -33,11 +33,11 @@ nothing to register.
 ## The rules, in one place
 
 - **Rich domain, no base classes.** An aggregate is a plain class that declares its own `Id`, keeps setters private
-  and exposes methods that return `Result` / `Result<T>`. Don't throw for rules. There are no typed errors yet:
-  fail with a message (`Result.Fail("...")`) and add an error type when a service really needs another HTTP status.
+  and exposes methods that return `Result` / `Result<T>`. Don't throw for rules. Fail with an `AppError`
+  (code + `ErrorKind`, ADR 0008), kept as static properties next to the aggregate (`IdentityErrors.EmailTaken`).
 - **One mapper to HTTP.** Endpoints end with `.ToHttpResult()` (200/204) or `.ToCreatedHttpResult(...)` (201).
-  Every failure becomes a 400: a ValidationProblem when the errors name fields (validation), otherwise a
-  ProblemDetails with the first error's message. Unhandled exceptions become a generic 500 that never shows the
+  Field validation errors become a 400 ValidationProblem; otherwise the first `AppError`'s kind picks the status
+  (401/403/404/409/423, plain errors 400) and its code goes into the ProblemDetails as `code`. Unhandled exceptions become a generic 500 that never shows the
   exception message.
 - **Identity from the token only.** Inject `ICurrentUser`; never take "me" from the URL or body.
   Every endpoint requires a valid token unless it calls `.AllowAnonymous()`.

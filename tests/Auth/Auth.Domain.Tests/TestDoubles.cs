@@ -41,5 +41,5 @@ internal static class A
     }
 
     public static string Code(this FluentResults.ResultBase result) =>
-        (string)result.Errors[0].Metadata[Domain.Common.AuthError.CodeKey];
+        (string)result.Errors[0].Metadata[HomeApps.BuildingBlocks.Domain.Errors.AppError.CodeKey];
 }

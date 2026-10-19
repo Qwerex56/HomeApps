@@ -1,5 +1,6 @@
 using FluentResults;
 using HomeApps.BuildingBlocks.Application;
+using HomeApps.BuildingBlocks.Domain.Errors;
 using Microsoft.AspNetCore.Http;
 using HttpResults = Microsoft.AspNetCore.Http.Results;
 
@@ -7,12 +8,15 @@ namespace HomeApps.BuildingBlocks.Api.Results;
 
 /// <summary>
 /// The one place where a <see cref="Result"/> becomes an HTTP response.
-/// Success → 200/201/204. Failure → 400: a ValidationProblem when the errors name fields
-/// (<see cref="ValidationErrors.FieldKey"/>), otherwise a ProblemDetails with the first error's message.
-/// There are no typed errors yet; when a service needs 401/403/404/409, add the error type and map it here.
+/// Success → 200/201/204. Failure: a 400 ValidationProblem when the errors name fields
+/// (<see cref="ValidationErrors.FieldKey"/>); otherwise a ProblemDetails whose status comes from the first
+/// <see cref="AppError"/>'s <see cref="ErrorKind"/> (with its code in <c>code</c>), or 400 for a plain error.
 /// </summary>
 public static class ResultHttpMapper
 {
+    /// <summary>ProblemDetails extension carrying <see cref="AppError.Code"/>, e.g. <c>"code": "email.taken"</c>.</summary>
+    public const string CodeExtension = "code";
+
     public static IResult ToHttpResult(this Result result)
     {
         ArgumentNullException.ThrowIfNull(result);
@@ -51,9 +55,29 @@ public static class ResultHttpMapper
             return TypedResults.ValidationProblem(failures, title: "Validation failed");
         }
 
+        var appError = errors.OfType<AppError>().FirstOrDefault();
+        if (appError is null)
+        {
+            return HttpResults.Problem(
+                detail: errors[0].Message,
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Request could not be processed");
+        }
+
         return HttpResults.Problem(
-            detail: errors[0].Message,
-            statusCode: StatusCodes.Status400BadRequest,
-            title: "Request could not be processed");
+            detail: appError.Message,
+            statusCode: StatusFor(appError.Kind),
+            title: "Request could not be processed",
+            extensions: new Dictionary<string, object?> { [CodeExtension] = appError.Code });
     }
+
+    private static int StatusFor(ErrorKind kind) => kind switch
+    {
+        ErrorKind.Unauthorized => StatusCodes.Status401Unauthorized,
+        ErrorKind.Forbidden => StatusCodes.Status403Forbidden,
+        ErrorKind.NotFound => StatusCodes.Status404NotFound,
+        ErrorKind.Conflict => StatusCodes.Status409Conflict,
+        ErrorKind.Locked => StatusCodes.Status423Locked,
+        _ => StatusCodes.Status400BadRequest,
+    };
 }
