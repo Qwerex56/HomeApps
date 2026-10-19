@@ -19,6 +19,13 @@
 		<Project Path="tests/BuildingBlocks/HomeApps.BuildingBlocks.Tests/HomeApps.BuildingBlocks.Tests.csproj" />
 	</Folder>
 
+	<Folder Name="/Auth/">
+		<Project Path="src/Auth/Auth.Domain/Auth.Domain.csproj" />
+	</Folder>
+	<Folder Name="/Auth/tests/">
+		<Project Path="tests/Auth/Auth.Domain.Tests/Auth.Domain.Tests.csproj" />
+	</Folder>
+
 	<Folder Name="/Contracts/">
 		<Project Path="src/Contracts/HomeApps.Contracts/HomeApps.Contracts.csproj" />
 	</Folder>
