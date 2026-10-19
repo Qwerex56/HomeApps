@@ -12,6 +12,9 @@ public interface ICurrentUser
 
     string? Email { get; }
 
+    /// <summary>The <c>auth_time</c> claim: when the user last proved who they are, not when the token was refreshed.</summary>
+    DateTimeOffset? AuthenticatedAt { get; }
+
     IReadOnlyCollection<string> Roles { get; }
 
     bool IsInRole(string role);
