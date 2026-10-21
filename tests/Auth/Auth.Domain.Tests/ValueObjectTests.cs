@@ -106,4 +106,14 @@ public sealed class ValueObjectTests
 
         Assert.Matches("^[2-9A-HJ-NP-Z]{3}-[2-9A-HJ-NP-Z]{3}$", code);
     }
+
+    [Fact]
+    public void InvitationCode_RoundTripsAndRejectsOtherText()
+    {
+        var code = InvitationCode.New();
+
+        Assert.Equal(code, InvitationCode.Create(" " + code.Value.ToLowerInvariant() + " ").Value);
+        Assert.Equal("invitation.code_invalid", InvitationCode.Create("K7P-2Q0").Code());
+        Assert.True(InvitationCode.Create(null).IsFailed);
+    }
 }

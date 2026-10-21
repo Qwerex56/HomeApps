@@ -43,7 +43,7 @@ internal sealed class ConfirmExternalLinkHandler(
             return client.ToResult<SignInResult>();
         }
 
-        if (tokens.ReadTicket(command.Ticket) is not ExternalLinkTicket ticket)
+        if (await tokens.ReadTicketAsync(command.Ticket) is not ExternalLinkTicket ticket)
         {
             return Result.Fail<SignInResult>(ApplicationErrors.TicketInvalid);
         }

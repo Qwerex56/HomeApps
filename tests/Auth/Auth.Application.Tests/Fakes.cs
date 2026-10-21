@@ -111,7 +111,7 @@ internal sealed class FakeTokens : ITokenIssuer
         return value;
     }
 
-    public Ticket? ReadTicket(string value) => _tickets.GetValueOrDefault(value);
+    public Task<Ticket?> ReadTicketAsync(string value) => Task.FromResult(_tickets.GetValueOrDefault(value));
 }
 
 internal sealed class FakeVerifier : IExternalIdentityVerifier
@@ -128,8 +128,17 @@ internal sealed class FakeUnitOfWork : IUnitOfWork
 {
     public int Saves { get; private set; }
 
+    /// <summary>Simulates another request saving the same rows first.</summary>
+    public bool LoseNextRace { get; set; }
+
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        if (LoseNextRace)
+        {
+            LoseNextRace = false;
+            throw new ConcurrencyConflictException();
+        }
+
         Saves++;
         return Task.FromResult(0);
     }

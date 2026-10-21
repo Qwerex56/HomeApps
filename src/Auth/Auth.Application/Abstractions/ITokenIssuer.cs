@@ -15,7 +15,7 @@ public interface ITokenIssuer
     string IssueTicket(Ticket ticket);
 
     /// <summary>The ticket, or null when it is forged, expired or not a ticket at all.</summary>
-    Ticket? ReadTicket(string value);
+    Task<Ticket?> ReadTicketAsync(string value);
 }
 
 public sealed record AccessToken(string Value, DateTimeOffset ExpiresAt);

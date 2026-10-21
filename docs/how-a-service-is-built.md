@@ -43,6 +43,8 @@ nothing to register.
   Every endpoint requires a valid token unless it calls `.AllowAnonymous()`.
 - **One repository per aggregate**, declared in `Application/Abstractions`, implemented in Infrastructure, registered in
   `Infrastructure/DependencyInjection.cs`. No generic `IRepository<T>`. The DbContext is the `IUnitOfWork`.
+  A lost optimistic-concurrency race (e.g. a Postgres `xmin` row version) surfaces as `ConcurrencyConflictException`:
+  a handler that expects the race catches it and returns a typed error, otherwise the API answers 409 `concurrency.conflict`.
 - **Events.** An aggregate that raises domain events implements `IHasDomainEvents`: it keeps its own list, adds
   events to it in its methods and clears it in `ClearDomainEvents()`. When the unit of work saves, they are dispatched in-process to
   `IDomainEventHandler<T>` before the commit. To tell other services, publish a `HomeApps.Contracts` message through

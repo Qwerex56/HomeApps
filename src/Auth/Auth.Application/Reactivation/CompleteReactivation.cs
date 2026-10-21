@@ -35,7 +35,7 @@ internal sealed class CompleteReactivationHandler(
             return client.ToResult<AuthTokens>();
         }
 
-        if (tokens.ReadTicket(command.Ticket) is not ReactivationTicket ticket)
+        if (await tokens.ReadTicketAsync(command.Ticket) is not ReactivationTicket ticket)
         {
             return Result.Fail<AuthTokens>(ApplicationErrors.TicketInvalid);
         }

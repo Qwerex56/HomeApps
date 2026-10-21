@@ -15,6 +15,7 @@ namespace HomeApps.BuildingBlocks.Infrastructure.Persistence;
 /// Handlers may change more aggregates or publish integration messages (which land in the outbox tables).</item>
 /// <item>It repeats until no new events appear, then saves everything in one transaction.</item>
 /// </list>
+/// A lost optimistic-concurrency race surfaces as <see cref="ConcurrencyConflictException"/>, so Application code never sees EF types.
 /// It also maps the MassTransit outbox/inbox tables and applies every <see cref="IEntityTypeConfiguration{TEntity}"/>
 /// from the derived context's assembly.
 /// </summary>
@@ -28,7 +29,14 @@ public abstract class HomeAppsDbContext(DbContextOptions options, IPublisher pub
     public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
         await DispatchDomainEventsAsync(cancellationToken);
-        return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        try
+        {
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            throw new ConcurrencyConflictException("Another request changed the same data first.", exception);
+        }
     }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess) =>

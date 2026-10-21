@@ -50,6 +50,16 @@ internal sealed class RefreshTokensHandler(
             return issued.ToResult<AuthTokens>();
         }
 
+        try
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (ConcurrencyConflictException)
+        {
+            // Q8: another request used the same token a moment earlier (two tabs). Not theft: the session stays.
+            return Result.Fail<AuthTokens>(IdentityErrors.InvalidRefreshToken);
+        }
+
         return tokens.Tokens(identity, issued.Value, client.Value.Registered);
     }
 }

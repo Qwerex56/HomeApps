@@ -125,8 +125,20 @@ public sealed class SignInTests
         var reused = await Refresh().Handle(new RefreshTokensCommand(tokens.RefreshToken, "homeapps-web", null), default);
 
         Assert.Equal("auth.invalid_refresh_token", reused.Code());
-        Assert.Equal(1, _w.UnitOfWork.Saves);
+        Assert.Equal(2, _w.UnitOfWork.Saves); // the rotation, then the revocation despite the failure (P4)
         Assert.Empty(identity.ActiveSessions(_w.Time.Now));
+    }
+
+    [Fact]
+    public async Task Refresh_that_loses_a_race_fails_without_revoking_the_session()
+    {
+        var (identity, tokens) = await _w.Registered();
+        _w.UnitOfWork.LoseNextRace = true;
+
+        var result = await Refresh().Handle(new RefreshTokensCommand(tokens.RefreshToken, "homeapps-web", null), default);
+
+        Assert.Equal("auth.invalid_refresh_token", result.Code());
+        Assert.Null(identity.Sessions[0].RevokedAt);
     }
 
     [Fact]
