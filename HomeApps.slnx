@@ -29,6 +29,7 @@
 		<Project Path="tests/Auth/Auth.Api.Tests/Auth.Api.Tests.csproj" />
 		<Project Path="tests/Auth/Auth.Application.Tests/Auth.Application.Tests.csproj" />
 		<Project Path="tests/Auth/Auth.Domain.Tests/Auth.Domain.Tests.csproj" />
+		<Project Path="tests/Auth/Auth.IntegrationTests/Auth.IntegrationTests.csproj" />
 		<Project Path="tests/Auth/Auth.Infrastructure.Tests/Auth.Infrastructure.Tests.csproj" />
 	</Folder>
 

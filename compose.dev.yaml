@@ -1,3 +1,10 @@
+# Local development (auth-implementation.md, step 6).
+#   docker compose -f compose.dev.yaml up -d                     infrastructure only; run Auth from Rider (Q19)
+#   docker compose -f compose.dev.yaml --profile services up -d  everything in containers
+# Everything is served at https://app.localhost: /auth and /.well-known go to Auth, the rest to Vue (vite on :5173).
+# Values come from .env when present (copy .env.example); the defaults below work without it.
+name: homeapps
+
 services:
   traefik:
     image: traefik:v2.11
@@ -5,61 +12,91 @@ services:
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.directory=/dynamic"
+      - "--providers.file.watch=true"
       - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.websecure.address=:443"
     ports:
       - "80:80"
       - "443:443"
       - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/certs:ro
       - ./dynamic:/dynamic:ro
-    networks:
-      - traefik
 
-  postgres-db:
+  postgres:
     image: postgres:16
-    container_name: postgres
-    env_file:
-      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
       - "5432:5432"
-    networks:
-      - traefik
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      retries: 10
 
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      retries: 10
+
+  # Catches every email; the inbox is at http://localhost:8025.
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  auth:
+    profiles: ["services"]
+    build:
+      context: .
+      dockerfile: src/Auth/Auth.Api/Dockerfile
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    networks:
-      - traefik
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Database: "Host=postgres;Database=homeapps_auth;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: ${RABBITMQ_USER:-guest}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-guest}
+      Auth__Email__Smtp__Host: mailpit
+      Auth__Bootstrap__Email: ${AUTH_BOOTSTRAP_EMAIL:-}
+      Auth__Google__ClientId: ${AUTH_GOOGLE_CLIENT_ID:-}
+      Auth__Google__ClientSecret: ${AUTH_GOOGLE_CLIENT_SECRET:-}
+      # Traefik is the only proxy in front of Auth; trust its X-Forwarded-For.
+      Auth__Proxy__KnownNetworks__0: "0.0.0.0/0"
+    volumes:
+      - auth-keys:/app/.keys
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    labels:
+      - "traefik.enable=true"
+      # Higher priority than the file route to Rider (dynamic/dev-routes.yaml), so the container wins while it runs.
+      - "traefik.http.routers.auth.rule=Host(`app.localhost`) && (PathPrefix(`/auth`) || PathPrefix(`/.well-known`))"
+      - "traefik.http.routers.auth.priority=200"
+      - "traefik.http.routers.auth.entrypoints=websecure"
+      - "traefik.http.routers.auth.tls=true"
+      - "traefik.http.services.auth.loadbalancer.server.port=8080"
 
-networks:
-  traefik:
-    external: false
-
-#  frontend:
-#    build:
-#      context: ../HomeApps_WebApp/HomeApps_WebApp
-#      dockerfile: Dockerfile.dev
-#    container_name: frontend
-#    environment:
-#      - CHOKIDAR_USEPOLLING=true
-#    volumes:
-#      - ../HomeApps_WebApp/HomeApps_WebApp:/app
-#      - /app/node_modules
-#    command: ["npm", "run", "dev", "--", "--host"]
-#    depends_on:
-#      - account-management
-#    labels:
-#      - "traefik.enable=true"
-#      - "traefik.http.routers.frontend.rule=Host(`app.localhost`)"
-#      - "traefik.http.routers.frontend.entrypoints=websecure"
-#      - "traefik.http.routers.frontend.tls=true"
-#      - "traefik.http.services.frontend.loadbalancer.server.port=5173"
+volumes:
+  postgres-data:
+  auth-keys:

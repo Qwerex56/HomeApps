@@ -26,7 +26,7 @@ public sealed class GoogleTests(AuthApiFactory api) : IClassFixture<AuthApiFacto
         using var callback = await browser.GetAsync($"/auth/external/google/callback?code=abc&state={query["state"]}");
 
         Assert.Equal(HttpStatusCode.Redirect, callback.StatusCode);
-        Assert.Equal(new Uri("http://localhost:5173/home"), callback.Headers.Location);
+        Assert.Equal(new Uri("https://app.localhost/home"), callback.Headers.Location);
         var challenge = Base64UrlEncoder.Encode(SHA256.HashData(Encoding.ASCII.GetBytes(api.Google.LastCodeVerifier!)));
         Assert.Equal(query["code_challenge"].ToString(), challenge);
         Assert.Equal(query["redirect_uri"].ToString(), api.Google.LastRedirectUri!.ToString());

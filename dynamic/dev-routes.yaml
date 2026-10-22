@@ -1,0 +1,25 @@
+# Routes to what runs on the host during development (Q19): Auth from Rider on :5100, Vue (vite) on :5173.
+# The auth container from the "services" profile overrides the Auth route with a higher priority.
+http:
+  routers:
+    auth-host:
+      rule: "Host(`app.localhost`) && (PathPrefix(`/auth`) || PathPrefix(`/.well-known`))"
+      priority: 100
+      entryPoints: [websecure]
+      service: auth-host
+      tls: {}
+    frontend-host:
+      rule: "Host(`app.localhost`)"
+      priority: 1
+      entryPoints: [websecure]
+      service: frontend-host
+      tls: {}
+  services:
+    auth-host:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:5100"
+    frontend-host:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:5173"

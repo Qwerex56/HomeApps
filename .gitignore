@@ -8,3 +8,6 @@ riderModule.iml
 
 # Development signing keys (Auth, Q9)
 .keys/
+
+# Local secrets for docker compose; .env.example is the template.
+.env

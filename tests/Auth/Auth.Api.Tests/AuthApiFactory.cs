@@ -90,6 +90,7 @@ public class AuthApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Auth:Google:ClientSecret", "google-secret");
         builder.UseSetting("Auth:RateLimits:PerMinute", PerMinute.ToString(System.Globalization.CultureInfo.InvariantCulture));
         builder.UseSetting("Auth:RateLimits:MailPerHour", "1000");
+        builder.UseSetting("Auth:Email:Smtp:Host", string.Empty);
 
         builder.ConfigureTestServices(services =>
         {

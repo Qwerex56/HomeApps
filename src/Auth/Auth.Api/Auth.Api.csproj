@@ -1,5 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+  <PropertyGroup>
+    <!-- dotnet user-secrets: Google client id and secret for running from Rider (docs/auth.md). -->
+    <UserSecretsId>homeapps-auth</UserSecretsId>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Auth.Infrastructure\Auth.Infrastructure.csproj" />
     <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Api\HomeApps.BuildingBlocks.Api.csproj" />

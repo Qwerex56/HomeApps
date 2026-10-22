@@ -6,7 +6,8 @@ How to build, test and change HomeApps day to day. For how a new service is put 
 ## What you need
 
 - .NET 10 SDK (`global.json` accepts 10.0 or newer).
-- Docker, only for integration tests (Testcontainers starts Postgres) and for building images.
+- Docker, for the local infrastructure (`compose.dev.yaml`), for tests that need Postgres, RabbitMQ or Mailpit
+  (Testcontainers) and for building images. See [auth.md](auth.md) for running Auth locally.
 
 ## What is where
 
@@ -16,7 +17,8 @@ How to build, test and change HomeApps day to day. For how a new service is put 
 | `src/Contracts/` | `HomeApps.Contracts`: only the messages and names that cross service boundaries. |
 | `src/<Service>/`, `tests/<Service>/` | One folder per service (Auth, Accounts, Household), written on the kit. |
 | `tests/BuildingBlocks/` | Kit tests and the shared integration-test fixture. |
-| `compose.dev.yaml` | Local infrastructure: Traefik, Postgres, RabbitMQ. Services are added as they are written. |
+| `compose.dev.yaml` | Local infrastructure: Traefik, Postgres, RabbitMQ, Mailpit; services in the `services` profile. |
+| `.env.example` | What compose reads; copy to `.env` (never committed) to change it. |
 | `HomeApps.slnx` | The one solution file, with a folder for BuildingBlocks, Contracts and each service. Open it in Rider; CI builds it. |
 
 No C# project lives in the repository root: all code is in `src/` and `tests/`.
