@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Auth.Application.Abstractions;
+using Auth.Application.Common;
 using Auth.Domain.Identities;
 using FluentResults;
 using HomeApps.BuildingBlocks.Domain.Errors;
@@ -27,11 +28,9 @@ internal sealed partial class ExternalIdentityVerifier(
     private static readonly string[] GoogleIssuers = ["https://accounts.google.com", "accounts.google.com"];
     private static readonly JsonWebTokenHandler Handler = new();
 
-    public static Error ProviderDisabled => new AppError("external_login.provider_disabled",
-        "Signing in with this provider is not available.", ErrorKind.Validation);
+    private static Error ProviderDisabled => ApplicationErrors.ExternalProviderDisabled;
 
-    public static Error Failed => new AppError("external_login.failed",
-        "The provider did not confirm who you are. Try again.", ErrorKind.Unauthorized);
+    private static Error Failed => ApplicationErrors.ExternalLoginFailed;
 
     public async Task<Result<ExternalIdentity>> VerifyAsync(
         ExternalProvider provider, string code, string codeVerifier, Uri redirectUri, CancellationToken cancellationToken)

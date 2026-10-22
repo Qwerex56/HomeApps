@@ -15,4 +15,10 @@ public static class ApplicationErrors
 
     public static Error ExternalEmailNotVerified => new AppError("external_login.email_not_verified",
         "The provider has not verified this email address.", ErrorKind.Forbidden);
+
+    public static Error ExternalProviderDisabled => new AppError("external_login.provider_disabled",
+        "Signing in with this provider is not available.", ErrorKind.Validation);
+
+    public static Error ExternalLoginFailed => new AppError("external_login.failed",
+        "The provider did not confirm who you are. Try again.", ErrorKind.Unauthorized);
 }
