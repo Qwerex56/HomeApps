@@ -49,6 +49,10 @@
 		<Project Path="tests/Accounts/Accounts.Infrastructure.Tests/Accounts.Infrastructure.Tests.csproj" />
 	</Folder>
 
+	<Folder Name="/Households/">
+		<Project Path="src/Households/Households.Domain/Households.Domain.csproj" />
+	</Folder>
+
 	<Folder Name="/Contracts/">
 		<Project Path="src/Contracts/HomeApps.Contracts/HomeApps.Contracts.csproj" />
 	</Folder>
