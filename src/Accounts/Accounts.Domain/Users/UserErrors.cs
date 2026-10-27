@@ -25,6 +25,9 @@ public static class UserErrors
     public static Error DateOfBirthInvalid => new AppError("profile.date_of_birth_invalid",
         "The date of birth cannot be in the future or before 1900.", ErrorKind.Validation);
 
+    public static Error ReasonInvalid => new AppError("account.reason_invalid",
+        $"The reason may have at most {Disabling.ReasonMaxLength} characters and no control characters except new lines.", ErrorKind.Validation);
+
     public static Error ForbiddenRole => new AppError("forbidden.role", "Your role does not allow this.", ErrorKind.Forbidden);
 
     public static Error OwnerProtected => new AppError("account.owner_protected",

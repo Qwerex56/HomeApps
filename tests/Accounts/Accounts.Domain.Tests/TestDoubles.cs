@@ -19,11 +19,29 @@ internal static class A
     public static Email Email(string value = "adam@example.com") => Domain.Common.Email.Create(value).Value;
 
     public static Profile Profile(string displayName = "Adam", string? avatarUrl = null) =>
-        Users.Profile.Create(displayName, "Adam", "Nowak", null, avatarUrl, "pl-PL", "Europe/Warsaw", null, Today).Value;
+        Domain.Users.Profile.Create(displayName, "Adam", "Nowak", null, avatarUrl, "pl-PL", "Europe/Warsaw", null, Today).Value;
 
     public static string Code(this FluentResults.ResultBase result) =>
         (string)result.Errors[0].Metadata[HomeApps.BuildingBlocks.Domain.Errors.AppError.CodeKey];
 
     public static IEnumerable<string> Codes(this FluentResults.ResultBase result) =>
         result.Errors.Select(e => (string)e.Metadata[HomeApps.BuildingBlocks.Domain.Errors.AppError.CodeKey]);
+}
+
+internal static class AUser
+{
+    public static Registration Registration(RegistrationSource source = RegistrationSource.Password) =>
+        Domain.Users.Registration.Create(source, A.Now, false, null, null, "homeapps-web", "Firefox", "pl-PL");
+
+    /// <summary>A registered, active user with the given role; events cleared.</summary>
+    public static User Registered(TimeProvider time, ServerRole role = ServerRole.User, string email = "adam@example.com")
+    {
+        var user = User.Register(Guid.NewGuid(), A.Email(email), role, A.Profile(), Registration(), time);
+        user.ClearDomainEvents();
+        return user;
+    }
+
+    public static Actor Self(this User user) => new(user.Id, user.Role);
+
+    public static Actor Someone(ServerRole role) => new(Guid.NewGuid(), role);
 }
