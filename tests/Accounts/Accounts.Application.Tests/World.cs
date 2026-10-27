@@ -63,3 +63,9 @@ internal static class ResultExtensions
 {
     public static string Code(this ResultBase result) => (string)result.Errors[0].Metadata[AppError.CodeKey];
 }
+
+internal static class Forms
+{
+    public static Common.ProfileInput Profile(string displayName = "Adam", string? preferredName = null) =>
+        new(displayName, "Adam", "Nowak", preferredName, null, "pl-PL", "Europe/Warsaw", null);
+}
