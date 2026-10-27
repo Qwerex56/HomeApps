@@ -11,11 +11,16 @@ namespace HomeApps.BuildingBlocks.Api.Results;
 /// Success → 200/201/204. Failure: a 400 ValidationProblem when the errors name fields
 /// (<see cref="ValidationErrors.FieldKey"/>); otherwise a ProblemDetails whose status comes from the first
 /// <see cref="AppError"/>'s <see cref="ErrorKind"/> (with its code in <c>code</c>), or 400 for a plain error.
+/// When a result carries several <see cref="AppError"/>s (e.g. every bad field of a form), all of them are listed in
+/// <c>errors</c> as <c>{ code, message }</c>, so a form can mark each one.
 /// </summary>
 public static class ResultHttpMapper
 {
     /// <summary>ProblemDetails extension carrying <see cref="AppError.Code"/>, e.g. <c>"code": "email.taken"</c>.</summary>
     public const string CodeExtension = "code";
+
+    /// <summary>ProblemDetails extension listing every <see cref="AppError"/> when there is more than one.</summary>
+    public const string ErrorsExtension = "errors";
 
     public static IResult ToHttpResult(this Result result)
     {
@@ -64,11 +69,18 @@ public static class ResultHttpMapper
                 title: "Request could not be processed");
         }
 
+        var extensions = new Dictionary<string, object?> { [CodeExtension] = appError.Code };
+        var appErrors = errors.OfType<AppError>().ToList();
+        if (appErrors.Count > 1)
+        {
+            extensions[ErrorsExtension] = appErrors.Select(e => new ProblemError(e.Code, e.Message)).ToArray();
+        }
+
         return HttpResults.Problem(
             detail: appError.Message,
             statusCode: StatusFor(appError.Kind),
             title: "Request could not be processed",
-            extensions: new Dictionary<string, object?> { [CodeExtension] = appError.Code });
+            extensions: extensions);
     }
 
     private static int StatusFor(ErrorKind kind) => kind switch
@@ -81,3 +93,6 @@ public static class ResultHttpMapper
         _ => StatusCodes.Status400BadRequest,
     };
 }
+
+/// <summary>One entry of the <c>errors</c> extension: <c>{ "code": "...", "message": "..." }</c>.</summary>
+public sealed record ProblemError(string Code, string Message);

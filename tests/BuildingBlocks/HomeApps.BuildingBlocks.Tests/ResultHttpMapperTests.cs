@@ -55,4 +55,29 @@ public sealed class ResultHttpMapperTests
         Assert.Equal("Thing is broken.", problem.ProblemDetails.Detail);
         Assert.Equal("thing.broken", problem.ProblemDetails.Extensions[ResultHttpMapper.CodeExtension]);
     }
+
+    [Fact]
+    public void Several_app_errors_are_all_listed_and_the_first_decides_status_and_code()
+    {
+        var httpResult = Result.Fail(
+        [
+            new AppError("profile.name_invalid", "Bad name.", ErrorKind.Validation),
+            new AppError("profile.zone_invalid", "Bad zone.", ErrorKind.Validation),
+        ]).ToHttpResult();
+
+        var problem = Assert.IsType<ProblemHttpResult>(httpResult);
+        Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
+        Assert.Equal("profile.name_invalid", problem.ProblemDetails.Extensions[ResultHttpMapper.CodeExtension]);
+        var listed = Assert.IsType<ProblemError[]>(problem.ProblemDetails.Extensions[ResultHttpMapper.ErrorsExtension]);
+        Assert.Equal(["profile.name_invalid", "profile.zone_invalid"], listed.Select(e => e.Code));
+    }
+
+    [Fact]
+    public void A_single_app_error_has_no_list()
+    {
+        var problem = Assert.IsType<ProblemHttpResult>(
+            Result.Fail(new AppError("thing.broken", "Thing is broken.", ErrorKind.Conflict)).ToHttpResult());
+
+        Assert.False(problem.ProblemDetails.Extensions.ContainsKey(ResultHttpMapper.ErrorsExtension));
+    }
 }
