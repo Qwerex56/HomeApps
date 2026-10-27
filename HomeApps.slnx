@@ -36,10 +36,12 @@
 	<Folder Name="/Accounts/">
 		<Project Path="src/Accounts/Accounts.Application/Accounts.Application.csproj" />
 		<Project Path="src/Accounts/Accounts.Domain/Accounts.Domain.csproj" />
+		<Project Path="src/Accounts/Accounts.Infrastructure/Accounts.Infrastructure.csproj" />
 	</Folder>
 	<Folder Name="/Accounts/tests/">
 		<Project Path="tests/Accounts/Accounts.Application.Tests/Accounts.Application.Tests.csproj" />
 		<Project Path="tests/Accounts/Accounts.Domain.Tests/Accounts.Domain.Tests.csproj" />
+		<Project Path="tests/Accounts/Accounts.Infrastructure.Tests/Accounts.Infrastructure.Tests.csproj" />
 	</Folder>
 
 	<Folder Name="/Contracts/">
