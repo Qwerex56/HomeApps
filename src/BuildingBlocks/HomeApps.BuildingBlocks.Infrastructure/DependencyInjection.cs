@@ -26,18 +26,21 @@ public static class DependencyInjection
     /// </list>
     /// </summary>
     /// <param name="serviceName">Short service name, used as the queue name prefix (e.g. <c>accounts</c>).</param>
+    /// <param name="retry">Optional retry for every consumer endpoint, applied before the inbox and outbox so each
+    /// attempt gets a fresh transaction. Without it a failed message goes straight to the <c>_error</c> queue.</param>
     public static IServiceCollection AddHomeAppsInfrastructure<TContext>(
         this IServiceCollection services,
         IConfiguration configuration,
         string serviceName,
-        Assembly consumersAssembly)
+        Assembly consumersAssembly,
+        Action<IRetryConfigurator>? retry = null)
         where TContext : HomeAppsDbContext
     {
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentException.ThrowIfNullOrWhiteSpace(serviceName);
 
         services.AddHomeAppsPersistence<TContext>(configuration);
-        services.AddHomeAppsMessaging<TContext>(configuration, serviceName, consumersAssembly);
+        services.AddHomeAppsMessaging<TContext>(configuration, serviceName, consumersAssembly, retry);
 
         services.TryAddSingleton(TimeProvider.System);
 
@@ -72,7 +75,8 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration,
         string serviceName,
-        Assembly consumersAssembly)
+        Assembly consumersAssembly,
+        Action<IRetryConfigurator>? retry = null)
         where TContext : HomeAppsDbContext
     {
         ArgumentNullException.ThrowIfNull(configuration);
@@ -82,7 +86,7 @@ public static class DependencyInjection
         var transport = configuration[MessagingTransportKey] ?? RabbitMqTransport;
         if (string.Equals(transport, InMemoryTransport, StringComparison.OrdinalIgnoreCase))
         {
-            services.AddMassTransitTestHarness(bus => ConfigureBus<TContext>(bus, serviceName, consumersAssembly));
+            services.AddMassTransitTestHarness(bus => ConfigureBus<TContext>(bus, serviceName, consumersAssembly, retry));
             return services;
         }
 
@@ -94,7 +98,7 @@ public static class DependencyInjection
         services.AddValidatedOptions<RabbitMqOptions>(RabbitMqOptions.SectionName);
         services.AddMassTransit(bus =>
         {
-            ConfigureBus<TContext>(bus, serviceName, consumersAssembly);
+            ConfigureBus<TContext>(bus, serviceName, consumersAssembly, retry);
 
             bus.UsingRabbitMq((context, rabbit) =>
             {
@@ -115,7 +119,8 @@ public static class DependencyInjection
     public const string RabbitMqTransport = "RabbitMq";
     public const string InMemoryTransport = "InMemory";
 
-    private static void ConfigureBus<TContext>(IBusRegistrationConfigurator bus, string serviceName, Assembly consumersAssembly)
+    private static void ConfigureBus<TContext>(
+        IBusRegistrationConfigurator bus, string serviceName, Assembly consumersAssembly, Action<IRetryConfigurator>? retry)
         where TContext : HomeAppsDbContext
     {
         bus.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(prefix: serviceName, includeNamespace: false));
@@ -130,6 +135,14 @@ public static class DependencyInjection
 
         // Inbox + outbox on every consumer: duplicates are ignored, and messages a consumer publishes
         // are committed together with its database changes.
-        bus.AddConfigureEndpointsCallback((context, _, endpoint) => endpoint.UseEntityFrameworkOutbox<TContext>(context));
+        bus.AddConfigureEndpointsCallback((context, _, endpoint) =>
+        {
+            if (retry is not null)
+            {
+                endpoint.UseMessageRetry(retry);
+            }
+
+            endpoint.UseEntityFrameworkOutbox<TContext>(context);
+        });
     }
 }
