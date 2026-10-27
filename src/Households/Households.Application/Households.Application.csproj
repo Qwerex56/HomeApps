@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Households use cases: one file per feature (command or query, validator, handler), ports for Infrastructure. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Households.Domain\Households.Domain.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Application\HomeApps.BuildingBlocks.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Households.Application.Tests" />
+  </ItemGroup>
+
+</Project>

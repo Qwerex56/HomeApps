@@ -50,6 +50,7 @@
 	</Folder>
 
 	<Folder Name="/Households/">
+		<Project Path="src/Households/Households.Application/Households.Application.csproj" />
 		<Project Path="src/Households/Households.Domain/Households.Domain.csproj" />
 	</Folder>
 	<Folder Name="/Households/tests/">
