@@ -53,7 +53,8 @@ Without Google settings the Google endpoints answer `external_login.provider_dis
 | --- | --- |
 | `ConnectionStrings:Database` | Auth's own Postgres database. |
 | `RabbitMq:*`, `Messaging:Transport` | The broker (`RabbitMq`, or `InMemory` for tests only). |
-| `Jwt:Authority`, `Auth:Signing:Issuer` | Auth's public address, e.g. `https://app.localhost`. Both are the same. |
+| `Auth:Signing:Issuer` | Auth's public address, e.g. `https://app.localhost`; the `iss` of every token. |
+| `Jwt:Authority` | Where Auth validates its own tokens from; the same public address. |
 | `Auth:Signing:PrivateKeyPem` | RSA key in PEM. Required outside Development. When changing keys, put the old public key in `PreviousPublicKeyPem` for 15 minutes. |
 | `Auth:Clients` | The apps that may ask for tokens. `Browser` gets the refresh token in a cookie, `Native` gets it in the body. `RedirectUris` limits where Google sign-in may return. |
 | `Auth:RegistrationOpen` | Sign-up without an invitation. Off by default. |
@@ -67,7 +68,10 @@ Without Google settings the Google endpoints answer `external_login.provider_dis
 ## How other services trust Auth
 
 Services validate access tokens themselves. They read `{Jwt:Authority}/.well-known/openid-configuration`, take
-the keys from `/.well-known/jwks.json`, and check the audience `homeapps`. `AddHomeAppsDefaults` in the kit does all
+the keys from `/.well-known/jwks.json`, and check the audience `homeapps`. The metadata keeps the public `issuer`
+but gives `jwks_uri` at the address the caller used. So a service can set `Jwt:Authority` to Auth's address inside
+the Docker network (`http://auth:8080`, with `Jwt:Issuer` set to the public address and `Jwt:RequireHttpsMetadata`
+off) and never goes through the public domain or needs a certificate for it. `AddHomeAppsDefaults` in the kit does all
 of this from the `Jwt` section. The token carries `sub` (the user id, the same in every service), `email`, `role`,
 `client_id` and `auth_time`. Auth only sends events (`src/Contracts/HomeApps.Contracts/Auth`). Accounts sends
 `UserDisabled`, `UserEnabled` and `UserErased` back.

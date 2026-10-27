@@ -7,7 +7,7 @@ How to build, test and change HomeApps day to day. For how a new service is put 
 
 - .NET 10 SDK (`global.json` accepts 10.0 or newer).
 - Docker, for the local infrastructure (`compose.dev.yaml`), for tests that need Postgres, RabbitMQ or Mailpit
-  (Testcontainers) and for building images. See [auth.md](auth.md) for running Auth locally.
+  (Testcontainers) and for building images. See [auth.md](auth.md) for running Auth locally and [accounts.md](accounts.md) for Accounts.
 
 ## What is where
 
