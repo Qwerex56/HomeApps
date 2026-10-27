@@ -1,7 +1,8 @@
 # Local development (auth-implementation.md, step 6).
 #   docker compose -f compose.dev.yaml up -d                     infrastructure only; run Auth from Rider (Q19)
 #   docker compose -f compose.dev.yaml --profile services up -d  everything in containers
-# Everything is served at https://app.localhost: /auth and /.well-known go to Auth, the rest to Vue (vite on :5173).
+# Everything is served at https://app.localhost: /auth and /.well-known go to Auth, /users and /admin/users to Accounts,
+# the rest to Vue (vite on :5173). Services read Auth's keys inside the Docker network (accounts plan Q10).
 # Values come from .env when present (copy .env.example); the defaults below work without it.
 name: homeapps
 
@@ -79,6 +80,9 @@ services:
       Auth__Google__ClientSecret: ${AUTH_GOOGLE_CLIENT_SECRET:-}
       # Traefik is the only proxy in front of Auth; trust its X-Forwarded-For.
       Auth__Proxy__KnownNetworks__0: "0.0.0.0/0"
+    # Published as 5100 too, so Accounts from Rider reads the keys the same way when Auth runs here.
+    ports:
+      - "5100:8080"
     volumes:
       - auth-keys:/app/.keys
     depends_on:
@@ -96,6 +100,36 @@ services:
       - "traefik.http.routers.auth.entrypoints=websecure"
       - "traefik.http.routers.auth.tls=true"
       - "traefik.http.services.auth.loadbalancer.server.port=8080"
+
+  accounts:
+    profiles: ["services"]
+    build:
+      context: .
+      dockerfile: src/Accounts/Accounts.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Database: "Host=postgres;Database=homeapps_accounts;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: ${RABBITMQ_USER:-guest}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-guest}
+      # Keys straight from the auth container (Q10); the tokens still name the public issuer.
+      Jwt__Authority: "http://auth:8080"
+      Jwt__Issuer: "https://app.localhost"
+      Jwt__RequireHttpsMetadata: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      auth:
+        condition: service_started
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.accounts.rule=Host(`app.localhost`) && (PathPrefix(`/users`) || PathPrefix(`/admin/users`))"
+      - "traefik.http.routers.accounts.priority=200"
+      - "traefik.http.routers.accounts.entrypoints=websecure"
+      - "traefik.http.routers.accounts.tls=true"
+      - "traefik.http.services.accounts.loadbalancer.server.port=8080"
 
 volumes:
   postgres-data:
