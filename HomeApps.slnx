@@ -52,6 +52,9 @@
 	<Folder Name="/Households/">
 		<Project Path="src/Households/Households.Domain/Households.Domain.csproj" />
 	</Folder>
+	<Folder Name="/Households/tests/">
+		<Project Path="tests/Households/Households.Domain.Tests/Households.Domain.Tests.csproj" />
+	</Folder>
 
 	<Folder Name="/Contracts/">
 		<Project Path="src/Contracts/HomeApps.Contracts/HomeApps.Contracts.csproj" />
