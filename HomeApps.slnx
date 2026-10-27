@@ -1,4 +1,7 @@
 <Solution>
+	<Folder Name="/Integration/">
+		<Project Path="tests/Integration/HomeApps.IntegrationTests/HomeApps.IntegrationTests.csproj" />
+	</Folder>
 	<Folder Name="/Solution Items/">
 		<File Path=".env" />
 		<File Path="compose.dev.yaml" />

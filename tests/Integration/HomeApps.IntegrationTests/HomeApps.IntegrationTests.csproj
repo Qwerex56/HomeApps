@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Tests across services: the real Auth and the real Accounts in one process, on one RabbitMQ and one Postgres.
+       Both Apis have a top-level Program, so each reference gets an alias. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Auth\Auth.Api\Auth.Api.csproj" Aliases="AuthApi" />
+    <ProjectReference Include="..\..\..\src\Accounts\Accounts.Api\Accounts.Api.csproj" Aliases="AccountsApi" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers.RabbitMq" />
+  </ItemGroup>
+
+</Project>
