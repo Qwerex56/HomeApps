@@ -33,6 +33,13 @@
 		<Project Path="tests/Auth/Auth.Infrastructure.Tests/Auth.Infrastructure.Tests.csproj" />
 	</Folder>
 
+	<Folder Name="/Accounts/">
+		<Project Path="src/Accounts/Accounts.Domain/Accounts.Domain.csproj" />
+	</Folder>
+	<Folder Name="/Accounts/tests/">
+		<Project Path="tests/Accounts/Accounts.Domain.Tests/Accounts.Domain.Tests.csproj" />
+	</Folder>
+
 	<Folder Name="/Contracts/">
 		<Project Path="src/Contracts/HomeApps.Contracts/HomeApps.Contracts.csproj" />
 	</Folder>
