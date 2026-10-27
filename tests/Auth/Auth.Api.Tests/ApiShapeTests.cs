@@ -83,6 +83,20 @@ public sealed class ApiShapeTests(AuthApiFactory api) : IClassFixture<AuthApiFac
     }
 
     [Fact]
+    public async Task Keys_are_offered_at_the_address_the_caller_used_and_the_issuer_stays_public()
+    {
+        using var inside = api.CreateClient(new() { BaseAddress = new Uri("http://auth:8080") });
+        using var outside = api.CreateClient(new() { BaseAddress = new Uri("https://app.localhost") });
+
+        var internalMetadata = await inside.GetFromJsonAsync<Dictionary<string, object>>("/.well-known/openid-configuration");
+        var publicMetadata = await outside.GetFromJsonAsync<Dictionary<string, object>>("/.well-known/openid-configuration");
+
+        Assert.Equal("http://auth:8080/.well-known/jwks.json", internalMetadata!["jwks_uri"].ToString());
+        Assert.Equal("https://app.localhost/.well-known/jwks.json", publicMetadata!["jwks_uri"].ToString());
+        Assert.Equal(publicMetadata["issuer"].ToString(), internalMetadata["issuer"].ToString());
+    }
+
+    [Fact]
     public async Task Unknown_invitation_needs_no_token()
     {
         using var client = api.CreateClient();
