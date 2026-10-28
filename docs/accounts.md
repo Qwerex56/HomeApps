@@ -86,7 +86,7 @@ It publishes `UserCreated`, `UserProfileUpdated`, `UserDisabled`, `UserEnabled` 
 
 `Accounts.Domain.Tests` and `Accounts.Application.Tests` need nothing. `Accounts.Infrastructure.Tests` and
 `Accounts.Api.Tests` run on a real Postgres (`ACCOUNTS_TEST_DATABASE`, otherwise Testcontainers).
-`tests/Integration/HomeApps.IntegrationTests` runs the real Auth and Accounts together on Postgres and RabbitMQ
+`tests/Integration/HomeApps.IntegrationTests` runs the real Auth, Accounts and Households together on Postgres and RabbitMQ
 (`AUTH_TEST_DATABASE`, `AUTH_TEST_RABBITMQ`, otherwise Testcontainers):
 
 ```bash

@@ -74,7 +74,8 @@ the Docker network (`http://auth:8080`, with `Jwt:Issuer` set to the public addr
 off) and never goes through the public domain or needs a certificate for it. `AddHomeAppsDefaults` in the kit does all
 of this from the `Jwt` section. The token carries `sub` (the user id, the same in every service), `email`, `role`,
 `client_id` and `auth_time`. Auth only sends events (`src/Contracts/HomeApps.Contracts/Auth`). Accounts sends
-`UserDisabled`, `UserEnabled` and `UserErased` back.
+`UserDisabled`, `UserEnabled` and `UserErased` back. From Households Auth reads `OwnershipTransferred`, to email a
+person who became a household's Owner without choosing it ([households.md](households.md)).
 
 ## Auth as the pattern for the next service
 
