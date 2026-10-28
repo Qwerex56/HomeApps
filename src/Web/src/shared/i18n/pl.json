@@ -1,0 +1,150 @@
+{
+  "app": {
+    "name": "HomeApps",
+    "home": "Pulpit",
+    "account": "Moje konto",
+    "notFound": "Nie ma takiej strony",
+    "backHome": "Wróć na pulpit"
+  },
+  "colorScheme": {
+    "label": "Motyw",
+    "system": "Jak w systemie",
+    "light": "Jasny",
+    "dark": "Ciemny"
+  },
+  "home": {
+    "welcome": "Witaj w HomeApps",
+    "skeleton": "Konto, domy i urządzenia pojawią się tutaj w kolejnych etapach."
+  },
+  "errors": {
+    "unknown": "Coś poszło nie tak. Spróbuj ponownie.",
+    "network": "Brak połączenia z serwerem.",
+    "rate_limited": "Za dużo prób. Spróbuj ponownie za {seconds} s.",
+    "auth": {
+      "invalid_credentials": "Nieprawidłowy email lub hasło.",
+      "locked_out": "Konto jest chwilowo zablokowane po zbyt wielu nieudanych próbach.",
+      "cannot_sign_in": "Nie można się zalogować na to konto.",
+      "invalid_refresh_token": "Sesja wygasła. Zaloguj się ponownie.",
+      "registration_closed": "Rejestracja jest możliwa tylko z zaproszenia.",
+      "reauthentication_required": "Potwierdź, że to Ty, logując się ponownie."
+    },
+    "account": {
+      "disabled_by_user": "To konto zostało przez Ciebie wyłączone."
+    },
+    "reactivation": {
+      "pending": "Przywracamy konto, to potrwa chwilę."
+    },
+    "email": {
+      "taken": "Ten email jest już używany.",
+      "unchanged": "To jest Twój obecny email."
+    },
+    "password": {
+      "too_weak": "Hasło jest za słabe."
+    },
+    "token": {
+      "invalid_or_expired": "Link jest nieważny albo wygasł."
+    },
+    "invitation": {
+      "invalid_or_expired": "Zaproszenie jest nieważne albo wygasło.",
+      "already_pending": "Na ten email czeka już zaproszenie."
+    },
+    "external_login": {
+      "cancelled": "Logowanie zostało przerwane.",
+      "provider_disabled": "Logowanie przez tego dostawcę jest wyłączone.",
+      "already_linked": "To konto Google jest już połączone z innym kontem.",
+      "last_method": "Nie możesz usunąć ostatniej metody logowania.",
+      "link_declined": "Konta nie zostały połączone.",
+      "failed": "Nie udało się zalogować przez Google. Spróbuj ponownie.",
+      "link_required": "Konto z tym adresem już istnieje."
+    },
+    "user": {
+      "pending": "Przygotowujemy Twoje konto…"
+    },
+    "client": {
+      "unknown": "Nieznana aplikacja."
+    },
+    "forbidden": {
+      "role": "Nie masz uprawnień do tej operacji."
+    }
+  },
+  "auth": {
+    "or": "albo",
+    "google": "Zaloguj przez Google",
+    "logout": "Wyloguj",
+    "logoutEverywhere": "Wyloguj na wszystkich urządzeniach",
+    "ticketMissing": "Ta strona działa tylko zaraz po logowaniu. Zaloguj się ponownie.",
+    "fields": {
+      "email": "Email",
+      "password": "Hasło",
+      "displayName": "Nazwa wyświetlana",
+      "firstName": "Imię",
+      "lastName": "Nazwisko"
+    },
+    "login": {
+      "title": "Zaloguj się",
+      "submit": "Zaloguj",
+      "noAccount": "Nie masz konta?",
+      "register": "Załóż je",
+      "forgot": "Nie pamiętasz hasła?"
+    },
+    "register": {
+      "title": "Załóż konto",
+      "submit": "Załóż konto",
+      "haveAccount": "Masz już konto?",
+      "login": "Zaloguj się"
+    },
+    "callback": {
+      "working": "Kończymy logowanie…",
+      "back": "Wróć do logowania"
+    },
+    "link": {
+      "title": "Połącz konta",
+      "text": "Konto z adresem {email} już istnieje. Podaj jego hasło, a połączymy je z Google i zalogujemy Cię.",
+      "confirm": "Połącz i zaloguj",
+      "decline": "Nie łącz"
+    },
+    "reactivate": {
+      "title": "Czy na pewno chcesz przywrócić konto?",
+      "text": "To konto zostało przez Ciebie wyłączone. Sprawdź swoje dane i potwierdź, a konto znowu będzie aktywne.",
+      "confirm": "Przywróć konto",
+      "cancel": "Nie teraz"
+    }
+  },
+  "invite": {
+    "title": "Zaproszenie do HomeApps",
+    "bootstrap": "To jest pierwsze konto na tym serwerze: będziesz jego właścicielem.",
+    "by": "{by} zaprasza Cię do HomeApps.",
+    "for": "Zaproszenie na adres {email} jest ważne do {date}.",
+    "orPassword": "albo ustaw hasło",
+    "submit": "Załóż konto",
+    "signedIn": "Używasz teraz konta {email}. Wyloguj się, żeby przyjąć zaproszenie na nowe konto."
+  },
+  "password": {
+    "forgot": {
+      "title": "Nie pamiętasz hasła?",
+      "text": "Podaj email konta, a wyślemy link do ustawienia nowego hasła.",
+      "submit": "Wyślij link",
+      "sent": "Jeśli konto z adresem {email} istnieje, wysłaliśmy na nie link. Jest ważny godzinę."
+    },
+    "reset": {
+      "title": "Ustaw nowe hasło",
+      "new": "Nowe hasło",
+      "submit": "Zapisz hasło",
+      "done": "Hasło zmienione. Zaloguj się nowym hasłem."
+    }
+  },
+  "confirm": {
+    "password": {
+      "title": "Potwierdź zmianę hasła",
+      "text": "Po potwierdzeniu nowe hasło zacznie działać, a wszystkie urządzenia zostaną wylogowane.",
+      "submit": "Potwierdzam zmianę hasła",
+      "done": "Hasło zmienione. Zaloguj się nowym hasłem."
+    },
+    "email": {
+      "title": "Potwierdź nowy email",
+      "text": "Po potwierdzeniu będziesz logować się nowym adresem.",
+      "submit": "Potwierdzam nowy email",
+      "done": "Email zmieniony."
+    }
+  }
+}
