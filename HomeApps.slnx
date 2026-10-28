@@ -50,11 +50,13 @@
 	</Folder>
 
 	<Folder Name="/Households/">
+		<Project Path="src/Households/Households.Api/Households.Api.csproj" />
 		<Project Path="src/Households/Households.Application/Households.Application.csproj" />
 		<Project Path="src/Households/Households.Domain/Households.Domain.csproj" />
 		<Project Path="src/Households/Households.Infrastructure/Households.Infrastructure.csproj" />
 	</Folder>
 	<Folder Name="/Households/tests/">
+		<Project Path="tests/Households/Households.Api.Tests/Households.Api.Tests.csproj" />
 		<Project Path="tests/Households/Households.Application.Tests/Households.Application.Tests.csproj" />
 		<Project Path="tests/Households/Households.Domain.Tests/Households.Domain.Tests.csproj" />
 		<Project Path="tests/Households/Households.Infrastructure.Tests/Households.Infrastructure.Tests.csproj" />
