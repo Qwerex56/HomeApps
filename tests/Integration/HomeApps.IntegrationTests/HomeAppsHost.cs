@@ -1,8 +1,10 @@
 extern alias AccountsApi;
 extern alias AuthApi;
+extern alias HouseholdsApi;
 
 using System.Collections.Concurrent;
 using System.Globalization;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
@@ -24,9 +26,9 @@ using Testcontainers.RabbitMq;
 namespace HomeApps.IntegrationTests;
 
 /// <summary>
-/// Auth and Accounts as they run together: each its own database on one Postgres, both on one RabbitMQ, emails
-/// recorded instead of sent. Accounts reads Auth's keys through Auth's test server, the way it reads them from
-/// <c>http://auth:8080</c> in Docker (Q10), so every token is a real one signed by Auth. Postgres and RabbitMQ come
+/// Auth, Accounts and Households as they run together: each its own database on one Postgres, all on one RabbitMQ,
+/// emails recorded instead of sent. Accounts and Households read Auth's keys through Auth's test server, the way they
+/// read them from <c>http://auth:8080</c> in Docker (Q10), so every token is a real one signed by Auth. Postgres and RabbitMQ come
 /// from <c>AUTH_TEST_DATABASE</c> and <c>AUTH_TEST_RABBITMQ</c> when set, otherwise from Testcontainers.
 /// The configured Owner is invited at start-up, as on a fresh server (A-30).
 /// </summary>
@@ -45,6 +47,8 @@ public sealed class HomeAppsHost : IAsyncLifetime
     public AuthHost Auth { get; private set; } = null!;
 
     public AccountsHost Accounts { get; private set; } = null!;
+
+    public HouseholdsHost Households { get; private set; } = null!;
 
     public RecordedEmails Emails { get; } = new();
 
@@ -69,14 +73,17 @@ public sealed class HomeAppsHost : IAsyncLifetime
 
         Auth = new AuthHost(this, Database("auth"));
         Accounts = new AccountsHost(this, Database("accounts"));
+        Households = new HouseholdsHost(this, Database("households"));
 
-        // Start Auth first: Accounts asks it for the keys, and both create their queues on start.
+        // Start Auth first: the others ask it for the keys, and every service creates its queues on start.
         _ = Auth.Server;
         _ = Accounts.Server;
+        _ = Households.Server;
     }
 
     public async Task DisposeAsync()
     {
+        await Households.DisposeAsync();
         await Accounts.DisposeAsync();
         await Auth.DisposeAsync();
 
@@ -166,28 +173,121 @@ public sealed class HomeAppsHost : IAsyncLifetime
         }
     }
 
+    /// <summary>Reads Auth's keys over Auth's test server, as from <c>http://auth:8080</c> in Docker.</summary>
+    private ConfigurationManager<OpenIdConnectConfiguration> AuthKeys() => new(
+        "http://auth/.well-known/openid-configuration",
+        new OpenIdConnectConfigurationRetriever(),
+        new HttpDocumentRetriever(new HttpClient(Auth.Server.CreateHandler())) { RequireHttps = false });
+
+    private static void TrustAuth(IWebHostBuilder builder)
+    {
+        builder.UseSetting("Jwt:Authority", "http://auth");
+        builder.UseSetting("Jwt:Issuer", "https://app.localhost");
+        builder.UseSetting("Jwt:RequireHttpsMetadata", "false");
+    }
+
     /// <summary>The real Accounts Api, trusting Auth's keys exactly as in Docker, only over the test server.</summary>
     public sealed class AccountsHost(HomeAppsHost host, string connectionString) : WebApplicationFactory<AccountsApi::Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             host.UseMessaging(builder, connectionString);
-            builder.UseSetting("Jwt:Authority", "http://auth");
-            builder.UseSetting("Jwt:Issuer", "https://app.localhost");
-            builder.UseSetting("Jwt:RequireHttpsMetadata", "false");
+            TrustAuth(builder);
             builder.UseSetting("Accounts:RateLimits:Changes", "1000");
             builder.ConfigureTestServices(services =>
             {
                 foreach (var scheme in new[] { JwtBearerDefaults.AuthenticationScheme, "ReactivationTicket" })
                 {
-                    services.PostConfigure<JwtBearerOptions>(scheme, bearer =>
-                        bearer.ConfigurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
-                            "http://auth/.well-known/openid-configuration",
-                            new OpenIdConnectConfigurationRetriever(),
-                            new HttpDocumentRetriever(new HttpClient(host.Auth.Server.CreateHandler())) { RequireHttps = false }));
+                    services.PostConfigure<JwtBearerOptions>(scheme, bearer => bearer.ConfigurationManager = host.AuthKeys());
                 }
             });
         }
+    }
+
+    /// <summary>The real Households Api, trusting Auth's keys like Accounts.</summary>
+    public sealed class HouseholdsHost(HomeAppsHost host, string connectionString) : WebApplicationFactory<HouseholdsApi::Program>
+    {
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
+            host.UseMessaging(builder, connectionString);
+            TrustAuth(builder);
+            builder.UseSetting("Households:RateLimits:Invites", "1000");
+            builder.UseSetting("Households:RateLimits:Changes", "1000");
+            builder.ConfigureTestServices(services =>
+                services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, bearer => bearer.ConfigurationManager = host.AuthKeys()));
+        }
+    }
+
+    // People, as the tests across services need them: signed up through Auth, so every service hears of them.
+
+    public sealed record Tokens(string Access, string Refresh);
+
+    public sealed record Person(Guid Id, string Email, Tokens Tokens);
+
+    private static SemaphoreSlim OwnerLock { get; } = new(1, 1);
+    private bool _ownerAccepted;
+
+    public static object SignUp(string email, string displayName) =>
+        new { email, password = Password, displayName, locale = "pl-PL", clientId = Client };
+
+    public static object Login(string email) => new { email, password = Password, clientId = Client };
+
+    public async Task<Person> SignUpAsync(string displayName)
+    {
+        var email = Unique(displayName.ToLowerInvariant());
+        using var auth = Auth.CreateClient();
+        using var registered = await auth.PostAsJsonAsync("/auth/register", SignUp(email, displayName));
+        Assert.Equal(HttpStatusCode.OK, registered.StatusCode);
+        var tokens = await TokensAsync(registered);
+        var me = await (await auth.SendAsync(HttpMethod.Get, "/auth/me", tokens.Access)).ReadJsonAsync();
+        return new Person(me.GetProperty("id").GetGuid(), email, tokens);
+    }
+
+    /// <summary>The account in Accounts, waiting while it says <c>user.pending</c> (UC-01).</summary>
+    public async Task<JsonElement> AccountAsync(string accessToken)
+    {
+        using var accounts = Accounts.CreateClient();
+        return await EventuallyAsync<JsonElement?>(async () =>
+        {
+            using var response = await accounts.SendAsync(HttpMethod.Get, "/users/me", accessToken);
+            return response.StatusCode == HttpStatusCode.OK ? await response.ReadJsonAsync() : null;
+        }, "the account in Accounts") ?? default;
+    }
+
+    /// <summary>The Owner invited at start-up (A-30): accepts the emailed invitation once, then signs in.</summary>
+    public async Task<Tokens> OwnerAsync()
+    {
+        await OwnerLock.WaitAsync();
+        try
+        {
+            using var auth = Auth.CreateClient();
+            if (!_ownerAccepted)
+            {
+                var token = await Emails.TokenSentToAsync(OwnerEmail);
+                using var accepted = await auth.PostAsJsonAsync($"/auth/invitations/{token}/accept", new
+                {
+                    password = Password,
+                    displayName = "Gospodarz",
+                    clientId = Client,
+                });
+                Assert.Equal(HttpStatusCode.OK, accepted.StatusCode);
+                _ownerAccepted = true;
+            }
+
+            using var login = await auth.PostAsJsonAsync("/auth/login", Login(OwnerEmail));
+            return await TokensAsync(login);
+        }
+        finally
+        {
+            OwnerLock.Release();
+        }
+    }
+
+    public static async Task<Tokens> TokensAsync(HttpResponseMessage response)
+    {
+        Assert.True(response.StatusCode == HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        var body = await response.ReadJsonAsync();
+        return new Tokens(body.GetProperty("accessToken").GetString()!, body.GetProperty("refreshToken").GetString()!);
     }
 }
 
@@ -209,6 +309,12 @@ public sealed partial class RecordedEmails : IEmailSender
         var link = message is null ? null : Link().Match(message.Text);
         return Task.FromResult(link is { Success: true } ? link.Groups["token"].Value : null);
     }, $"an email to {to}");
+
+    /// <summary>The newest email to <paramref name="to"/> whose subject contains <paramref name="subject"/>.</summary>
+    public Task<EmailMessage> SentToAsync(string to, string subject) => HomeAppsHost.EventuallyAsync(() =>
+        Task.FromResult(_sent.LastOrDefault(m =>
+            string.Equals(m.To, to, StringComparison.OrdinalIgnoreCase) && m.Subject.Contains(subject, StringComparison.Ordinal))),
+        $"an email to {to} about {subject}");
 
     [GeneratedRegex(@"https://\S+?(?:token=|/invite/)(?<token>[A-Za-z0-9_\-]+)")]
     private static partial Regex Link();
