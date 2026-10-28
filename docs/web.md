@@ -93,8 +93,8 @@ feature's `api.ts`.
   guards wait for it, and the app shows a spinner until then.
 - The access token lives only in memory and is refreshed a minute before it expires, and once on a 401 (the request is
   then repeated). The sign-in endpoints themselves are never refreshed for (a 401 there is a wrong password).
-- A refresh token works once and Auth has no grace window, so two tabs refreshing at once would end the session
-  everywhere. Every refresh runs under one Web Lock (`homeapps.refresh`) shared by all tabs, and the new token goes to
+- A refresh token works once. Auth accepts it again only for 10 seconds after it was used (`Auth:RefreshGraceWindow`,
+  for a reload in the middle of a refresh); two tabs refreshing at once still lose one request. Every refresh runs under one Web Lock (`homeapps.refresh`) shared by all tabs, and the new token goes to
   the other tabs over a `BroadcastChannel`, which also carries sign-out.
 - Auth limits `/auth/refresh` separately from sign-in (`Auth:RateLimits:RefreshPerMinute`, 60 per IP). A `429` is
   waited out with `Retry-After`, never treated as signed out.

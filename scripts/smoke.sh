@@ -81,6 +81,11 @@ access=$(call owner POST /auth/login "{\"email\":\"$owner_email\",\"password\":\
 expect 200 "Owner signs in"
 access=$(call owner POST /auth/refresh "{\"clientId\":\"$client\"}" | jq -r .accessToken)
 expect 200 "refresh from the cookie"
+cp "$work/owner" "$work/owner-before-reload"
+call owner POST /auth/refresh "{\"clientId\":\"$client\"}" >/dev/null; expect 200 "refresh whose answer the browser loses (page reload)"
+cp "$work/owner-before-reload" "$work/owner"
+access=$(call owner POST /auth/refresh "{\"clientId\":\"$client\"}" | jq -r .accessToken)
+expect 200 "the same old cookie again inside the grace window (R6a)"
 eventually_ok /users/me "$access" "Accounts created the profile from Auth's event"
 call owner GET /users/me '' "$access" | jq -e '.role == "Owner"' >/dev/null || fail "Owner role did not reach Accounts"
 echo "ok  role Owner in Accounts"

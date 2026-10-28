@@ -63,6 +63,7 @@ Without Google settings the Google endpoints answer `external_login.provider_dis
 | `Auth:Email:FrontendBaseUrl`, `From`, `Smtp:*` | Emails. Without an SMTP host, Development writes the emails to the log; any other environment does not start. |
 | `Auth:DataProtection:KeysPath` | Keys that encrypt the Google sign-in cookie. Keep them on a volume in a container. |
 | `Auth:Proxy:KnownNetworks` | Proxies whose `X-Forwarded-For` is trusted (Traefik), so rate limits see the real caller. |
+| `Auth:RefreshGraceWindow` | How long a just-rotated refresh token still works, `00:00:10` by default (R6a). A browser that reloads the page in the middle of a refresh never gets the new token and comes back with the old one; inside the window that gets a new token, after it (or from another client) it counts as theft and ends the session (R7). |
 | `Auth:RateLimits:*` | Anonymous attempts per IP and minute (`PerMinute`, 10); token refreshes per IP and minute (`RefreshPerMinute`, 60, a separate budget so open tabs never use up sign-in attempts); emails per IP and per address and hour. |
 
 ## How other services trust Auth

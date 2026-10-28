@@ -66,6 +66,25 @@ public sealed class SignInTests(AuthApiFactory api) : IClassFixture<AuthApiFacto
     }
 
     [Fact]
+    public async Task A_refresh_whose_answer_was_lost_can_be_repeated_with_the_old_token()
+    {
+        using var client = api.CreateClient();
+        using var registered = await AuthApiFactory.RegisterAsync(client, AuthApiFactory.Unique("reload"), AuthApiFactory.NativeClient);
+        var refreshToken = (await registered.ReadJsonAsync()).GetProperty("refreshToken").GetString();
+
+        // The page reloads: this answer never reaches the browser.
+        using var lost = await client.PostAsJsonAsync("/auth/refresh", new { clientId = AuthApiFactory.NativeClient, refreshToken });
+        Assert.Equal(HttpStatusCode.OK, lost.StatusCode);
+
+        using var retried = await client.PostAsJsonAsync("/auth/refresh", new { clientId = AuthApiFactory.NativeClient, refreshToken });
+        Assert.Equal(HttpStatusCode.OK, retried.StatusCode);
+        var next = (await retried.ReadJsonAsync()).GetProperty("refreshToken").GetString();
+
+        using var later = await client.PostAsJsonAsync("/auth/refresh", new { clientId = AuthApiFactory.NativeClient, refreshToken = next });
+        Assert.Equal(HttpStatusCode.OK, later.StatusCode);
+    }
+
+    [Fact]
     public async Task Wrong_password_is_401_with_a_code()
     {
         using var client = api.CreateClient();

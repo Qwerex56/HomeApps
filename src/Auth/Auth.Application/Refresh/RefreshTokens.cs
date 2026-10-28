@@ -6,6 +6,7 @@ using FluentResults;
 using FluentValidation;
 using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.BuildingBlocks.Application.Messaging;
+using Microsoft.Extensions.Options;
 
 namespace Auth.Application.Refresh;
 
@@ -26,6 +27,7 @@ internal sealed class RefreshTokensHandler(
     IClientRegistry clients,
     ITokenIssuer tokens,
     IUnitOfWork unitOfWork,
+    IOptions<AuthOptions> options,
     TimeProvider time) : ICommandHandler<RefreshTokensCommand, AuthTokens>
 {
     public async Task<Result<AuthTokens>> Handle(RefreshTokensCommand command, CancellationToken cancellationToken)
@@ -42,7 +44,7 @@ internal sealed class RefreshTokensHandler(
             return Result.Fail<AuthTokens>(IdentityErrors.InvalidRefreshToken);
         }
 
-        var issued = identity.Refresh(command.RefreshToken, client.Value.Info, time);
+        var issued = identity.Refresh(command.RefreshToken, client.Value.Info, time, options.Value.RefreshGraceWindow);
         if (issued.IsFailed)
         {
             // P4: a reused token revokes its whole session (R7); that must be saved although the command fails.
@@ -56,7 +58,8 @@ internal sealed class RefreshTokensHandler(
         }
         catch (ConcurrencyConflictException)
         {
-            // Q8: another request used the same token a moment earlier (two tabs). Not theft: the session stays.
+            // Q8: another request used the same token at the same moment (two tabs). Not theft: the session stays, and
+            // a retry with the same token within the grace window (R6a) gets a new one.
             return Result.Fail<AuthTokens>(IdentityErrors.InvalidRefreshToken);
         }
 

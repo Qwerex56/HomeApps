@@ -14,7 +14,7 @@ public sealed class SignInTests
 
     private SignInWithPasswordHandler Login() => new(_w.Identities, _w.Clients, _w.Tokens, _w.Hasher, _w.UnitOfWork, _w.Time);
 
-    private RefreshTokensHandler Refresh() => new(_w.Identities, _w.Clients, _w.Tokens, _w.UnitOfWork, _w.Time);
+    private RefreshTokensHandler Refresh() => new(_w.Identities, _w.Clients, _w.Tokens, _w.UnitOfWork, _w.OptionsAccessor, _w.Time);
 
     [Fact]
     public async Task Register_signs_the_new_user_in_with_the_clients_token_delivery()
@@ -121,11 +121,26 @@ public sealed class SignInTests
         var first = await Refresh().Handle(new RefreshTokensCommand(tokens.RefreshToken, "homeapps-web", null), default);
         Assert.True(first.IsSuccess);
         Assert.NotEqual(tokens.RefreshToken, first.Value.RefreshToken);
+        _w.Time.Now = _w.Time.Now.AddSeconds(11);
 
         var reused = await Refresh().Handle(new RefreshTokensCommand(tokens.RefreshToken, "homeapps-web", null), default);
 
         Assert.Equal("auth.invalid_refresh_token", reused.Code());
         Assert.Equal(2, _w.UnitOfWork.Saves); // the rotation, then the revocation despite the failure (P4)
+        Assert.Empty(identity.ActiveSessions(_w.Time.Now));
+    }
+
+    [Fact]
+    public async Task Refresh_grace_window_comes_from_the_options()
+    {
+        var (identity, tokens) = await _w.Registered();
+        _w.Options.RefreshGraceWindow = TimeSpan.FromSeconds(2);
+        await Refresh().Handle(new RefreshTokensCommand(tokens.RefreshToken, "homeapps-web", null), default);
+        _w.Time.Now = _w.Time.Now.AddSeconds(3);
+
+        var reused = await Refresh().Handle(new RefreshTokensCommand(tokens.RefreshToken, "homeapps-web", null), default);
+
+        Assert.Equal("auth.invalid_refresh_token", reused.Code());
         Assert.Empty(identity.ActiveSessions(_w.Time.Now));
     }
 

@@ -9,6 +9,9 @@ public sealed class AuthOptions
     public bool RegistrationOpen { get; set; }
 
     public BootstrapOptions Bootstrap { get; set; } = new();
+
+    /// <summary>R6a: how long a just-rotated refresh token is still accepted (a reload in the middle of a refresh).</summary>
+    public TimeSpan RefreshGraceWindow { get; set; } = TimeSpan.FromSeconds(10);
 }
 
 public sealed class BootstrapOptions
