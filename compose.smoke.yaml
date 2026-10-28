@@ -1,0 +1,22 @@
+# Overlay for the smoke test (scripts/smoke.sh): the production stack with Mailpit as the mail server, so the script
+# can read invitations, and without Let's Encrypt (Traefik serves its own self-signed certificate).
+#   HOMEAPPS_DOMAIN=home-apps.localhost docker compose -f compose.prod.yaml -f compose.smoke.yaml up -d --build
+services:
+  traefik:
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.http.tls=true"
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "8025:8025"
+
+  auth:
+    environment:
+      Auth__Email__Smtp__Host: mailpit
+      Auth__Email__Smtp__Port: "1025"
