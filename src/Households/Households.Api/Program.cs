@@ -19,9 +19,6 @@ app.UseHomeAppsDefaults();
 // After authentication and authorization, so the limits are counted per signed-in user.
 app.UseRateLimiter();
 
-if (app.Environment.IsDevelopment())
-{
-    await app.MigrateDatabaseAsync<HouseholdsDbContext>();
-}
+await app.MigrateDatabaseOnStartupAsync<HouseholdsDbContext>();
 
 await app.RunAsync();

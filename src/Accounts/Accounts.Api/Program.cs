@@ -20,9 +20,6 @@ app.UseHomeAppsDefaults();
 // endpoints themselves run last, after every middleware added here.
 app.UseRateLimiter();
 
-if (app.Environment.IsDevelopment())
-{
-    await app.MigrateDatabaseAsync<AccountsDbContext>();
-}
+await app.MigrateDatabaseOnStartupAsync<AccountsDbContext>();
 
 await app.RunAsync();
