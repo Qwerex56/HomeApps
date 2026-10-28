@@ -106,11 +106,6 @@ namespace Households.Infrastructure.Persistence.Migrations
                     b.HasIndex("AccessUntil")
                         .HasFilter("\"AccessUntil\" IS NOT NULL");
 
-                    b.HasIndex("HouseholdId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Memberships_OneOwner")
-                        .HasFilter("\"Role\" = 'Owner'");
-
                     b.HasIndex("InvitedBy");
 
                     b.HasIndex("UserId");

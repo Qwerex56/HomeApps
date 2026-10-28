@@ -48,7 +48,8 @@ internal sealed class MembershipConfiguration : IEntityTypeConfiguration<Members
         builder.HasIndex(m => m.InvitedBy);
         builder.HasIndex(m => m.AccessUntil).HasFilter("\"AccessUntil\" IS NOT NULL");
 
-        // The invariant "exactly one Owner" also holds in the database.
-        builder.HasIndex(m => m.HouseholdId).IsUnique().HasFilter("\"Role\" = 'Owner'").HasDatabaseName("IX_Memberships_OneOwner");
+        // The invariant "exactly one Owner" also holds in the database, as a deferred exclusion constraint added by
+        // the OneOwnerDeferred migration (EF cannot model it). A unique index is checked row by row, so a handover
+        // failed whenever EF wrote the new Owner before the old one stepped down.
     }
 }

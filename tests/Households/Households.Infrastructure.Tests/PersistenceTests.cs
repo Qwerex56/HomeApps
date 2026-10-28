@@ -71,6 +71,27 @@ public sealed class PersistenceTests(PostgresFixture database) : IClassFixture<P
     }
 
     [Fact]
+    public async Task OwnershipHandoverIsSavedWhicheverRowEfWritesFirst()
+    {
+        // Several rounds, because EF's order of the two updates is not fixed; a row-by-row check failed some of them.
+        for (var round = 0; round < 5; round++)
+        {
+            var (household, owner, member, invite) = A.Household(_time);
+            await Save(household, invite);
+
+            await using (var db = database.CreateContext())
+            {
+                var loaded = (await new HouseholdRepository(db).GetByIdAsync(household.Id, default))!;
+                Assert.True(loaded.TransferOwnership(A.User(owner), member, _time).IsSuccess);
+                await db.SaveChangesAsync();
+            }
+
+            await using var read = database.CreateContext();
+            Assert.Equal(member, (await new HouseholdRepository(read).GetByIdAsync(household.Id, default))!.Owner!.UserId);
+        }
+    }
+
+    [Fact]
     public async Task DatabaseRefusesASecondOwner()
     {
         var (household, _, member, invite) = A.Household(_time);
@@ -79,7 +100,7 @@ public sealed class PersistenceTests(PostgresFixture database) : IClassFixture<P
         await using var db = database.CreateContext();
         var error = await Assert.ThrowsAsync<Npgsql.PostgresException>(() => db.Database.ExecuteSqlRawAsync(
             "UPDATE \"Memberships\" SET \"Role\" = 'Owner' WHERE \"HouseholdId\" = {0} AND \"UserId\" = {1}", household.Id, member));
-        Assert.Equal("IX_Memberships_OneOwner", error.ConstraintName);
+        Assert.Equal("EX_Memberships_OneOwner", error.ConstraintName);
     }
 
     [Fact]
