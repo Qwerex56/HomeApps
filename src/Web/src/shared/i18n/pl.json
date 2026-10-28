@@ -84,7 +84,8 @@
       "title": "Zaloguj się",
       "submit": "Zaloguj",
       "noAccount": "Nie masz konta?",
-      "register": "Załóż je"
+      "register": "Załóż je",
+      "forgot": "Nie pamiętasz hasła?"
     },
     "register": {
       "title": "Załóż konto",
@@ -107,6 +108,43 @@
       "text": "To konto zostało przez Ciebie wyłączone. Sprawdź swoje dane i potwierdź, a konto znowu będzie aktywne.",
       "confirm": "Przywróć konto",
       "cancel": "Nie teraz"
+    }
+  },
+  "invite": {
+    "title": "Zaproszenie do HomeApps",
+    "bootstrap": "To jest pierwsze konto na tym serwerze: będziesz jego właścicielem.",
+    "by": "{by} zaprasza Cię do HomeApps.",
+    "for": "Zaproszenie na adres {email} jest ważne do {date}.",
+    "orPassword": "albo ustaw hasło",
+    "submit": "Załóż konto",
+    "signedIn": "Używasz teraz konta {email}. Wyloguj się, żeby przyjąć zaproszenie na nowe konto."
+  },
+  "password": {
+    "forgot": {
+      "title": "Nie pamiętasz hasła?",
+      "text": "Podaj email konta, a wyślemy link do ustawienia nowego hasła.",
+      "submit": "Wyślij link",
+      "sent": "Jeśli konto z adresem {email} istnieje, wysłaliśmy na nie link. Jest ważny godzinę."
+    },
+    "reset": {
+      "title": "Ustaw nowe hasło",
+      "new": "Nowe hasło",
+      "submit": "Zapisz hasło",
+      "done": "Hasło zmienione. Zaloguj się nowym hasłem."
+    }
+  },
+  "confirm": {
+    "password": {
+      "title": "Potwierdź zmianę hasła",
+      "text": "Po potwierdzeniu nowe hasło zacznie działać, a wszystkie urządzenia zostaną wylogowane.",
+      "submit": "Potwierdzam zmianę hasła",
+      "done": "Hasło zmienione. Zaloguj się nowym hasłem."
+    },
+    "email": {
+      "title": "Potwierdź nowy email",
+      "text": "Po potwierdzeniu będziesz logować się nowym adresem.",
+      "submit": "Potwierdzam nowy email",
+      "done": "Email zmieniony."
     }
   }
 }

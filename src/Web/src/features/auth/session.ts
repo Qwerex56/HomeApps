@@ -122,7 +122,7 @@ export const useSessionStore = defineStore('session', () => {
 
   connectSession({ accessToken: () => accessToken.value, refresh })
 
-  return { accessToken, status, claims, isAdmin, apply, refresh, start, signOut }
+  return { accessToken, status, claims, isAdmin, apply, clear, refresh, start, signOut }
 })
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))

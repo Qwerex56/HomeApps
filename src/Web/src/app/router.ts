@@ -59,6 +59,30 @@ export const router = createRouter({
           meta: { guestOnly: true },
           component: () => import('@/features/auth/pages/ReactivatePage.vue'),
         },
+        // The links from Auth's emails: these paths are fixed by Auth's email templates.
+        { path: 'invite/:token', name: 'invite', component: () => import('@/features/auth/pages/InvitePage.vue') },
+        {
+          path: 'forgot-password',
+          name: 'forgot-password',
+          component: () => import('@/features/auth/pages/ForgotPasswordPage.vue'),
+        },
+        {
+          path: 'reset-password',
+          name: 'reset-password',
+          component: () => import('@/features/auth/pages/ResetPasswordPage.vue'),
+        },
+        {
+          path: 'confirm-password',
+          name: 'confirm-password',
+          component: () => import('@/features/auth/pages/ConfirmLinkPage.vue'),
+          props: { kind: 'password' },
+        },
+        {
+          path: 'confirm-email',
+          name: 'confirm-email',
+          component: () => import('@/features/auth/pages/ConfirmLinkPage.vue'),
+          props: { kind: 'email' },
+        },
         { path: ':pathMatch(.*)*', name: 'not-found', component: () => import('./NotFoundPage.vue') },
       ],
     },

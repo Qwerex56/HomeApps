@@ -111,6 +111,13 @@ feature's `api.ts`.
 | `/signin/link` | "An account with this email exists": its password links Google (A-15). |
 | `/signin/reactivate` | Bringing back an account you disabled (A-09, UC-05); waits out `409 reactivation.pending`. |
 
+| `/invite/:token` | The invitation email (A-07): preview, then a password or Google with the invitation. |
+| `/forgot-password`, `/reset-password?token=` | Forgotten password (A-08); the reset signs out every session. |
+| `/confirm-password?token=`, `/confirm-email?token=` | Confirming a password or email change from the email. A button, never an automatic request, because mail scanners open links. |
+
+The email paths are fixed by Auth's templates (`EmailTemplates.Link`); changing one means changing both. In
+Development without an SMTP host Auth writes the emails, links included, to its log.
+
 Tickets travel between pages in `history.state`, never in the URL. No page may live under `/auth`, `/users` or
 `/admin/users`: Traefik sends those paths to the services.
 

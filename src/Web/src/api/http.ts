@@ -32,7 +32,8 @@ export function connectSession(connection: SessionConnection) {
 }
 
 // Endpoints that answer 401 for a wrong password or an expired link, not for an expired access token.
-const signInEndpoints = /^\/auth\/(login|register|refresh|logout|reactivation|external|password|invitations)\b/
+const signInEndpoints =
+  /^\/auth\/(login|register|refresh|logout|reactivation|external|password|invitations|me\/(password|email)\/confirm)\b/
 
 http.interceptors.request.use((config) => {
   const token = config.ticket ?? session.accessToken()

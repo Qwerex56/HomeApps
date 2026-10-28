@@ -59,6 +59,11 @@ async function signIn() {
           </template>
         </FormField>
         <FormField id="password" :label="t('auth.fields.password')" :errors="fieldErrors.password">
+          <template #aside>
+            <RouterLink :to="{ name: 'forgot-password' }" class="text-sm text-primary hover:underline">
+              {{ t('auth.login.forgot') }}
+            </RouterLink>
+          </template>
           <template #default="{ invalid }">
             <Password
               v-model="form.password"

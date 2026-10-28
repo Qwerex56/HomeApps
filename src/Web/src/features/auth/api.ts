@@ -11,6 +11,15 @@ export interface TokenResponse {
 }
 
 export type RegisterInput = Omit<Schemas['RegisterRequest'], 'clientId'>
+export type AcceptInvitationInput = Omit<Schemas['AcceptInvitationRequest'], 'clientId'>
+
+/** A-07: what the invitation link shows before the account exists. */
+export interface InvitationPreview {
+  email: string
+  invitedByEmail: string | null
+  kind: 'Invite' | 'Bootstrap'
+  expiresAt: string
+}
 
 export const authApi = {
   async login(email: string, password: string) {
@@ -31,6 +40,33 @@ export const authApi = {
 
   async logoutEverywhere() {
     await http.post('/auth/logout-all')
+  },
+
+  async invitation(token: string) {
+    return (await http.get<InvitationPreview>(`/auth/invitations/${encodeURIComponent(token)}`)).data
+  },
+
+  async acceptInvitation(token: string, input: AcceptInvitationInput) {
+    const url = `/auth/invitations/${encodeURIComponent(token)}/accept`
+    return (await http.post<TokenResponse>(url, { ...input, clientId: CLIENT_ID })).data
+  },
+
+  /** A-08: always 202, whether the address has an account or not (R9). */
+  async forgotPassword(email: string) {
+    await http.post('/auth/password/forgot', { email })
+  },
+
+  async resetPassword(token: string, password: string) {
+    await http.post('/auth/password/reset', { token, password })
+  },
+
+  /** The link from the "confirm your new password" email. Signs out every session (Q1). */
+  async confirmPasswordChange(token: string) {
+    await http.post('/auth/me/password/confirm', { token })
+  },
+
+  async confirmEmailChange(token: string) {
+    await http.post('/auth/me/email/confirm', { token })
   },
 
   /** A-09, last step: the reactivation ticket becomes a normal session. 409 reactivation.pending until Auth hears from Accounts. */
