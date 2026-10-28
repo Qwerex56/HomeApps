@@ -9,7 +9,8 @@ namespace HomeApps.BuildingBlocks.Api.Errors;
 /// <summary>
 /// Catches what nothing else handled. Business rules return typed errors instead of throwing, so reaching this
 /// handler means a bug or an outage: it logs the exception and answers a generic 500 that never echoes
-/// <see cref="Exception.Message"/> to the caller. The one expected exception, a lost concurrency race, becomes 409.
+/// <see cref="Exception.Message"/> to the caller. Two exceptions are expected: a lost concurrency race becomes 409,
+/// and a request ASP.NET Core could not bind (bad JSON, an unknown enum value) keeps its own 4xx.
 /// </summary>
 internal sealed partial class LastResortExceptionHandler(
     IProblemDetailsService problemDetailsService,
@@ -35,6 +36,22 @@ internal sealed partial class LastResortExceptionHandler(
                     Title = "The data changed in the meantime",
                     Detail = "Someone else changed the same data first. Try again.",
                     Extensions = { [ResultHttpMapper.CodeExtension] = "concurrency.conflict" },
+                },
+            });
+        }
+
+        if (exception is BadHttpRequestException badRequest)
+        {
+            httpContext.Response.StatusCode = badRequest.StatusCode;
+            return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
+            {
+                HttpContext = httpContext,
+                ProblemDetails =
+                {
+                    Status = badRequest.StatusCode,
+                    Title = "The request could not be read",
+                    Detail = "Check the request body and parameters.",
+                    Extensions = { [ResultHttpMapper.CodeExtension] = "request.invalid" },
                 },
             });
         }
