@@ -14,7 +14,8 @@
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix",
     "format": "prettier --write src/",
-    "api:types": "node scripts/api-types.mjs"
+    "api:types": "node scripts/api-types.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@primeuix/themes": "~2.0.3",
@@ -28,6 +29,7 @@
     "vue-router": "^5.4.0"
   },
   "devDependencies": {
+    "@playwright/test": "~1.63.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tsconfig/node22": "^22.0.6",
     "@types/jsdom": "^30.0.0",
