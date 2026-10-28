@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import Message from 'primevue/message'
 import ColorSchemeToggle from '@/shared/components/ColorSchemeToggle.vue'
+import { useMyAccount } from '@/features/account/api'
+import UserMenu from './UserMenu.vue'
 
 const { t } = useI18n()
+const { pending } = useMyAccount()
 
 // The menu grows with each stage (account F4, admin F5, households F6).
 const links = [{ to: { name: 'home' }, label: 'app.home', icon: 'pi pi-home' }]
@@ -31,11 +35,14 @@ const links = [{ to: { name: 'home' }, label: 'app.home', icon: 'pi pi-home' }]
             <span class="hidden sm:inline">{{ t(link.label) }}</span>
           </RouterLink>
         </nav>
-        <!-- The household switcher (Q6) and the user menu come here in F2/F6. -->
+        <!-- The household switcher (Q6) comes here in F6. -->
         <ColorSchemeToggle />
+        <UserMenu />
       </div>
     </header>
     <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+      <!-- Right after sign-up Accounts needs a moment to create the account (user.pending). -->
+      <Message v-if="pending" severity="info" :closable="false" class="mb-4">{{ t('errors.user.pending') }}</Message>
       <RouterView />
     </main>
   </div>

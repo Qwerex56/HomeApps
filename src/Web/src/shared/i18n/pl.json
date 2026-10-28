@@ -14,7 +14,7 @@
   },
   "home": {
     "welcome": "Witaj w HomeApps",
-    "skeleton": "Szkielet aplikacji działa. Logowanie, konto i domy pojawią się w kolejnych etapach."
+    "skeleton": "Konto, domy i urządzenia pojawią się tutaj w kolejnych etapach."
   },
   "errors": {
     "unknown": "Coś poszło nie tak. Spróbuj ponownie.",
@@ -53,7 +53,9 @@
       "provider_disabled": "Logowanie przez tego dostawcę jest wyłączone.",
       "already_linked": "To konto Google jest już połączone z innym kontem.",
       "last_method": "Nie możesz usunąć ostatniej metody logowania.",
-      "link_declined": "Konta nie zostały połączone."
+      "link_declined": "Konta nie zostały połączone.",
+      "failed": "Nie udało się zalogować przez Google. Spróbuj ponownie.",
+      "link_required": "Konto z tym adresem już istnieje."
     },
     "user": {
       "pending": "Przygotowujemy Twoje konto…"
@@ -63,6 +65,48 @@
     },
     "forbidden": {
       "role": "Nie masz uprawnień do tej operacji."
+    }
+  },
+  "auth": {
+    "or": "albo",
+    "google": "Zaloguj przez Google",
+    "logout": "Wyloguj",
+    "logoutEverywhere": "Wyloguj na wszystkich urządzeniach",
+    "ticketMissing": "Ta strona działa tylko zaraz po logowaniu. Zaloguj się ponownie.",
+    "fields": {
+      "email": "Email",
+      "password": "Hasło",
+      "displayName": "Nazwa wyświetlana",
+      "firstName": "Imię",
+      "lastName": "Nazwisko"
+    },
+    "login": {
+      "title": "Zaloguj się",
+      "submit": "Zaloguj",
+      "noAccount": "Nie masz konta?",
+      "register": "Załóż je"
+    },
+    "register": {
+      "title": "Załóż konto",
+      "submit": "Załóż konto",
+      "haveAccount": "Masz już konto?",
+      "login": "Zaloguj się"
+    },
+    "callback": {
+      "working": "Kończymy logowanie…",
+      "back": "Wróć do logowania"
+    },
+    "link": {
+      "title": "Połącz konta",
+      "text": "Konto z adresem {email} już istnieje. Podaj jego hasło, a połączymy je z Google i zalogujemy Cię.",
+      "confirm": "Połącz i zaloguj",
+      "decline": "Nie łącz"
+    },
+    "reactivate": {
+      "title": "Czy na pewno chcesz przywrócić konto?",
+      "text": "To konto zostało przez Ciebie wyłączone. Sprawdź swoje dane i potwierdź, a konto znowu będzie aktywne.",
+      "confirm": "Przywróć konto",
+      "cancel": "Nie teraz"
     }
   }
 }

@@ -14,12 +14,20 @@ export interface Problem {
   fieldErrors: Record<string, string[]>
   /** Seconds from Retry-After (429 rate_limited, 409 reactivation.pending). */
   retryAfter?: number
+  /** A sign-in ticket: reactivation (403 account.disabled_by_user) or linking (409 external_login.link_required). */
+  ticket?: string
+  /** With external_login.link_required: the provider and the email of the existing account. */
+  provider?: string
+  email?: string
 }
 
 interface ProblemBody {
   status?: number
   detail?: string
   code?: string
+  ticket?: string
+  provider?: string
+  email?: string
   errors?: Record<string, string[]> | { code: string; message: string }[]
 }
 
@@ -38,6 +46,9 @@ export function toProblem(error: unknown): Problem {
     errors: [],
     fieldErrors: {},
     retryAfter: Number.isNaN(retryAfter) ? undefined : retryAfter,
+    ticket: body?.ticket,
+    provider: body?.provider,
+    email: body?.email,
   }
 
   if (Array.isArray(body?.errors)) {
