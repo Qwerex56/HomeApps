@@ -79,6 +79,14 @@ public sealed class PipelineTests
     }
 
     [Fact]
+    public async Task Validation_messages_are_in_polish()
+    {
+        var result = await CreateSender().Send(new CreateWidget(string.Empty));
+
+        Assert.Equal("Pole 'Name' nie może być puste.", result.Errors.Single().Message);
+    }
+
+    [Fact]
     public async Task Invalid_command_without_a_value_returns_a_validation_error()
     {
         var result = await CreateSender().Send(new DeleteWidget(""));
