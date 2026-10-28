@@ -17,7 +17,8 @@ You need Node 22 or newer (`.nvmrc` says 24).
    npm run dev
    ```
 
-3. Open <https://app.localhost>. Traefik sends `/auth`, `/.well-known`, `/users` and `/admin/users` to the services
+3. Open <https://app.localhost>. Traefik sends `/auth`, `/.well-known`, `/users`, `/admin/users`, `/households`, `/invites` and
+   `/admin/households` to the services
    and everything else to vite on port 5173 (`dynamic/dev-routes.yaml`), so the app and the services share one origin:
    no CORS, and the refresh cookie (`Path=/auth`) just works. Hot reload goes through Traefik as well.
 
@@ -77,13 +78,12 @@ A page lives in its feature. Something moves to `shared/` only when a second fea
 
 ### Types from OpenAPI
 
-With Auth on port 5100 and Accounts on 5200 (Rider, or the `services` profile), `npm run api:types` writes
-`src/api/types/auth.ts` and `accounts.ts`. The files are committed, so a build never needs the services. Other
-addresses: `AUTH_OPENAPI=… ACCOUNTS_OPENAPI=… npm run api:types`.
+With Auth on port 5100, Accounts on 5200 and Households on 5300 (Rider, or the `services` profile),
+`npm run api:types` writes `src/api/types/auth.ts`, `accounts.ts` and `households.ts`. The files are committed, so a
+build never needs the services. Other addresses: `AUTH_OPENAPI=… ACCOUNTS_OPENAPI=… HOUSEHOLDS_OPENAPI=… npm run api:types`.
 
-The documents describe the request bodies but not the responses yet, because the endpoints return `IResult` without
-`Produces<T>()`. Until a service declares its responses, the response types are written by hand next to the
-feature's `api.ts`.
+Households declares its responses (`Produces<T>()`), so its types are all generated. Auth and Accounts describe only
+the request bodies; their response types are written by hand next to the feature's `api.ts` until they declare them.
 
 ## Session
 
@@ -118,8 +118,12 @@ feature's `api.ts`.
 The email paths are fixed by Auth's templates (`EmailTemplates.Link`); changing one means changing both. In
 Development without an SMTP host Auth writes the emails, links included, to its log.
 
-Tickets travel between pages in `history.state`, never in the URL. No page may live under `/auth`, `/users` or
-`/admin/users`: Traefik sends those paths to the services.
+Tickets travel between pages in `history.state`, never in the URL. No page may live under `/auth`, `/users`,
+`/admin/users`, `/households`, `/invites` or `/admin/households`: Traefik sends those paths to the services.
+
+A signed-out visitor sent to sign in from a page (for example `/join/{code}`) comes back to it afterwards: the path is
+in `?redirect=` and also in this tab's sessionStorage, because the query does not survive signing up, Google or an
+invitation (`useAfterSignIn.ts`).
 
 Right after sign-up Accounts needs a moment to create the account; `useMyAccount` (`features/account/api.ts`) retries
 `404 user.pending` and the layout shows "preparing your account" meanwhile.
@@ -154,6 +158,28 @@ Traefik sends to the services.
 `permissions()` in `features/admin/api.ts` mirrors R1, R3, R5 and R18 only to show the right buttons. A role change is
 made in Auth; Accounts' copy follows from Auth's event a moment later, and the person gets the new role in their token
 on the next refresh. Erasing asks for the account's email, which goes in the DELETE body.
+
+### Households
+
+`features/households`, after [households.md](households.md). The front routes are `/homes`, `/homes/:id/*`,
+`/join/:code` and `/admin/homes`.
+
+| Route | What it does |
+| --- | --- |
+| `/` | The dashboard: the current household with its people, the "you are the Owner now" banner, or how to start. |
+| `/homes` | My households, creating one, joining by a typed code or a pasted link. |
+| `/homes/:id/members` | Members (Member and up): roles, nicknames, a guest's access end, removing, handing over. Inactive accounts greyed out (D6). |
+| `/homes/:id/invites` | Personal invites (Member or Guest, 30 minutes to 7 days) with copy and share, and the guest link (Owner, Admin). |
+| `/homes/:id/settings` | My membership (nickname, leaving), name and description (Owner, Admin), archiving (Owner). A guest sees only this tab. |
+| `/join/:code` | Personal invites and the guest link: what the code leads to, then joining. |
+| `/admin/homes` | Every household for the server Admin and Owner, archiving and restoring. |
+
+The current household (Q6) is `useCurrentHousehold()`: the one picked last (localStorage, per person), otherwise the
+first. The header switcher shows once there are two. `householdPermissions()` in `api.ts` mirrors the roles in
+households.md only to show the right buttons; Polish plurals ("1 osoba, 3 osoby, 5 osób") come from `polishPlural`
+in `shared/i18n`.
+
+On a phone the main menu moves to a tab bar at the bottom of the screen.
 
 ## PWA and the wall tablet
 

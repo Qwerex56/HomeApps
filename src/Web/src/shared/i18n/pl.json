@@ -5,7 +5,9 @@
     "account": "Moje konto",
     "notFound": "Nie ma takiej strony",
     "backHome": "Wróć na pulpit",
-    "admin": "Administracja"
+    "admin": "Administracja",
+    "households": "Domy",
+    "menu": "Menu główne"
   },
   "colorScheme": {
     "label": "Motyw",
@@ -15,7 +17,9 @@
   },
   "home": {
     "welcome": "Witaj w HomeApps",
-    "skeleton": "Konto, domy i urządzenia pojawią się tutaj w kolejnych etapach."
+    "skeleton": "Konto, domy i urządzenia pojawią się tutaj w kolejnych etapach.",
+    "hello": "Cześć, {name}!",
+    "openHousehold": "Otwórz dom"
   },
   "errors": {
     "unknown": "Coś poszło nie tak. Spróbuj ponownie.",
@@ -78,6 +82,34 @@
     },
     "identity": {
       "not_found": "Nie ma takiego konta."
+    },
+    "household": {
+      "not_found": "Nie ma takiego domu albo nie należysz do niego.",
+      "forbidden": "Nie masz uprawnień w tym domu.",
+      "archived": "Ten dom jest zarchiwizowany.",
+      "already_member": "Już należysz do tego domu.",
+      "full": "Ten dom ma już maksymalną liczbę osób.",
+      "owner_cannot_leave": "Właściciel musi najpierw przekazać dom.",
+      "name_invalid": "Nazwa domu jest nieprawidłowa.",
+      "description_invalid": "Opis jest za długi.",
+      "nickname_invalid": "Pseudonim jest nieprawidłowy.",
+      "role_invalid": "Nie można nadać tej roli.",
+      "role_unchanged": "Ta osoba ma już tę rolę.",
+      "transfer_target_invalid": "Tej osobie nie można przekazać domu.",
+      "not_member": "Ta osoba nie należy do domu.",
+      "not_guest": "Czas dostępu dotyczy tylko gości.",
+      "access_until_invalid": "Data końca dostępu musi być w przyszłości.",
+      "no_owner": "Dom nie ma właściciela.",
+      "not_archived": "Ten dom nie jest zarchiwizowany."
+    },
+    "invite": {
+      "not_found": "Nie ma takiego zaproszenia.",
+      "not_usable": "To zaproszenie wygasło albo zostało odwołane.",
+      "role_invalid": "Nie możesz zaprosić z tą rolą.",
+      "validity_invalid": "Nieprawidłowy czas ważności."
+    },
+    "request": {
+      "invalid": "Nieprawidłowe żądanie."
     }
   },
   "auth": {
@@ -322,6 +354,138 @@
       "Locale": "język",
       "TimeZone": "strefa czasowa",
       "DateOfBirth": "data urodzenia"
+    },
+    "tabs": {
+      "users": "Konta",
+      "households": "Domy"
+    },
+    "households": {
+      "title": "Wszystkie domy",
+      "search": "Szukaj po nazwie",
+      "empty": "Brak domów.",
+      "members": "Osób",
+      "created": "Utworzony",
+      "restore": "Przywróć",
+      "restored": "Dom przywrócony"
     }
+  },
+  "households": {
+    "title": "Domy",
+    "create": "Nowy dom",
+    "createSubmit": "Utwórz",
+    "name": "Nazwa",
+    "description": "Opis (opcjonalnie)",
+    "empty": "Nie należysz jeszcze do żadnego domu.",
+    "emptyHint": "Utwórz własny albo dołącz kodem zaproszenia od domownika.",
+    "members": {
+      "you": "(Ty)",
+      "inactive": "konto nieaktywne",
+      "joined": "Dołączył(a) {date}",
+      "until": "Dostęp do {date}",
+      "actions": "Akcje: {name}",
+      "makeRole": "Zmień na: {role}",
+      "roleChanged": "Rola zmieniona",
+      "rename": "Zmień pseudonim",
+      "renamed": "Pseudonim zapisany",
+      "access": "Czas dostępu gościa",
+      "accessUntil": "Dostęp do",
+      "accessHint": "Puste = bez końca.",
+      "accessSaved": "Czas dostępu zapisany",
+      "transfer": "Przekaż dom",
+      "transferTitle": "Przekazać dom?",
+      "transferText": "{name} zostanie właścicielem, a Ty administratorem domu.",
+      "transferred": "Dom przekazany",
+      "remove": "Usuń z domu",
+      "removeTitle": "Usunąć z domu?",
+      "removeText": "{name} straci dostęp do domu, a jego zaproszenia przestaną działać.",
+      "removed": "Usunięto z domu"
+    },
+    "current": "Bieżący",
+    "switch": "Bieżący dom",
+    "archived": "Zarchiwizowany",
+    "nickname": "Pseudonim w tym domu",
+    "nicknameHint": "Puste = {name}.",
+    "role": {
+      "Guest": "Gość",
+      "Member": "Domownik",
+      "Admin": "Administrator",
+      "Owner": "Właściciel"
+    },
+    "tabs": {
+      "members": "Domownicy",
+      "invites": "Zaproszenia",
+      "settings": "Ustawienia"
+    },
+    "join": {
+      "title": "Dołącz do domu",
+      "subtitle": "Wpisz kod z zaproszenia albo wklej cały link.",
+      "code": "Kod zaproszenia",
+      "next": "Dalej",
+      "invitedBy": "{name} zaprasza Cię do domu:",
+      "guestLink": "Zaproszenie do domu:",
+      "as": "jako",
+      "expires": "Ważne do {date}",
+      "guestHint": "Gość widzi tylko nazwę domu i swoje członkostwo.",
+      "accept": "Dołącz"
+    },
+    "ownership": {
+      "received": "Jesteś teraz właścicielem domu „{name}”, bo poprzedni właściciel stracił dostęp do konta.",
+      "acknowledge": "Rozumiem"
+    },
+    "invites": {
+      "title": "Zaproś do domu",
+      "subtitle": "Każdy domownik może zaprosić domownika albo gościa. Kod działa wielokrotnie, aż wygaśnie.",
+      "role": "Jako",
+      "valid": "Ważne przez",
+      "guestUntil": "Dostęp gościa do (opcjonalnie)",
+      "create": "Utwórz zaproszenie",
+      "created": "Zaproszenie utworzone",
+      "empty": "Brak aktywnych zaproszeń.",
+      "expires": "wygasa {date}",
+      "uses": "użyte {count} raz | użyte {count} razy | użyte {count} razy",
+      "copy": "Kopiuj link",
+      "copied": "Link skopiowany",
+      "share": "Udostępnij",
+      "revoke": "Odwołaj",
+      "revoked": "Zaproszenie odwołane",
+      "validity": {
+        "ThirtyMinutes": "30 minut",
+        "OneHour": "1 godzinę",
+        "SixHours": "6 godzin",
+        "TwelveHours": "12 godzin",
+        "OneDay": "1 dzień",
+        "SevenDays": "7 dni"
+      }
+    },
+    "guestLink": {
+      "title": "Stały link dla gości",
+      "subtitle": "Jeden link, przez który goście dołączają bez osobnych zaproszeń.",
+      "none": "Link dla gości jest wyłączony.",
+      "create": "Utwórz link",
+      "created": "Nowy link dla gości gotowy",
+      "regenerate": "Nowy link",
+      "regenerateTitle": "Utworzyć nowy link?",
+      "regenerateText": "Obecny link przestanie działać.",
+      "disable": "Wyłącz link",
+      "disabled": "Link dla gości wyłączony"
+    },
+    "settings": {
+      "membership": "Moje członkostwo",
+      "nicknameHint": "Tak będą Cię widzieć domownicy. Puste = Twoja nazwa.",
+      "saved": "Zapisano",
+      "guestInfo": "Jako gość widzisz tylko nazwę domu i swoje członkostwo.",
+      "leave": "Opuść dom",
+      "leaveTitle": "Opuścić dom?",
+      "leaveText": "Stracisz dostęp do domu „{name}”. Wrócić można tylko z nowym zaproszeniem.",
+      "left": "Opuściłeś dom",
+      "ownerCannotLeave": "Jako właściciel możesz opuścić dom dopiero po przekazaniu go komuś innemu.",
+      "details": "Nazwa i opis",
+      "archive": "Zarchiwizuj dom",
+      "archiveTitle": "Zarchiwizować dom?",
+      "archiveText": "Dom „{name}” zniknie dla wszystkich domowników, a zaproszenia przestaną działać. Przywrócić go może tylko administrator serwera.",
+      "archiveHint": "Dom zniknie dla domowników, ale dane zostaną zachowane.",
+      "archived": "Dom zarchiwizowany"
+    },
+    "memberCount": "{count} osoba | {count} osoby | {count} osób"
   }
 }

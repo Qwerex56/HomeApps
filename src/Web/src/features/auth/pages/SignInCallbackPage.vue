@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useAfterSignIn } from '../useAfterSignIn'
 import { onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -11,6 +12,7 @@ import { useSessionStore } from '../session'
 // A-05: Auth sends the browser back here after Google, with the result in the fragment (never in a server log).
 const { t } = useI18n()
 const router = useRouter()
+const afterSignIn = useAfterSignIn()
 const session = useSessionStore()
 const error = ref<string | null>(null)
 
@@ -32,7 +34,7 @@ onMounted(async () => {
     error.value = errorMessage({ status: 400, code, errors: [], fieldErrors: {} })
   } else if (await session.refresh()) {
     // Signed in: Auth set the refresh cookie, the access token comes from /auth/refresh.
-    await router.replace('/')
+    await afterSignIn()
   } else {
     error.value = t('errors.external_login.failed')
   }

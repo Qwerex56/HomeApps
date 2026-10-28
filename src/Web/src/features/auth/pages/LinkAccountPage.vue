@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useAfterSignIn } from '../useAfterSignIn'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -14,6 +15,7 @@ import { useSessionStore } from '../session'
 // A-15: Google returned an email that already has an account. Linking needs that account's password; "No" changes nothing.
 const { t } = useI18n()
 const router = useRouter()
+const afterSignIn = useAfterSignIn()
 const session = useSessionStore()
 const { busy, formError, fieldErrors, submit } = useSubmit()
 
@@ -22,7 +24,7 @@ const password = ref('')
 
 async function link() {
   if (await submit(async () => session.apply(await authApi.confirmLink(ticket!, password.value)))) {
-    await router.replace('/')
+    await afterSignIn()
   }
 }
 

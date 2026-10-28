@@ -12,6 +12,8 @@ const servicePaths = [
   /^\/users(\/|$)/,
   /^\/admin\/users(\/|$)/,
   /^\/households(\/|$)/,
+  /^\/invites(\/|$)/,
+  /^\/admin\/households(\/|$)/,
   /^\/openapi\//,
 ]
 

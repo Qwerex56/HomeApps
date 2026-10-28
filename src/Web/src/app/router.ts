@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useSessionStore } from '@/features/auth/session'
+import { rememberAfterSignIn } from '@/features/auth/useAfterSignIn'
 import AppLayout from './layouts/AppLayout.vue'
 import GuestLayout from './layouts/GuestLayout.vue'
 
@@ -58,10 +59,46 @@ export const router = createRouter({
             },
           ],
         },
+        // /homes, /join and /admin/homes: /households, /invites and /admin/households belong to the service.
+        {
+          path: 'homes',
+          name: 'households',
+          component: () => import('@/features/households/pages/HouseholdsPage.vue'),
+        },
+        {
+          path: 'homes/:id',
+          props: true,
+          component: () => import('@/features/households/pages/HouseholdPage.vue'),
+          children: [
+            { path: '', name: 'household', redirect: { name: 'household-members' } },
+            {
+              path: 'members',
+              name: 'household-members',
+              component: () => import('@/features/households/pages/MembersTab.vue'),
+            },
+            {
+              path: 'invites',
+              name: 'household-invites',
+              component: () => import('@/features/households/pages/InvitesTab.vue'),
+            },
+            {
+              path: 'settings',
+              name: 'household-settings',
+              component: () => import('@/features/households/pages/SettingsTab.vue'),
+            },
+          ],
+        },
+        {
+          path: 'join/:code',
+          name: 'join',
+          props: true,
+          component: () => import('@/features/households/pages/JoinPage.vue'),
+        },
         // /admin/accounts, never /admin/users or /admin/households: those belong to the services.
         {
           path: 'admin',
           meta: { admin: true },
+          component: () => import('@/features/admin/pages/AdminPage.vue'),
           children: [
             { path: '', redirect: { name: 'admin-users' } },
             {
@@ -74,6 +111,11 @@ export const router = createRouter({
               name: 'admin-user',
               props: true,
               component: () => import('@/features/admin/pages/UserPage.vue'),
+            },
+            {
+              path: 'homes',
+              name: 'admin-households',
+              component: () => import('@/features/admin/pages/HouseholdsPage.vue'),
             },
           ],
         },
@@ -149,6 +191,7 @@ router.beforeEach(async (to) => {
 
   const signedIn = session.status === 'signedIn'
   if (to.matched.some((r) => r.meta.requiresAuth) && !signedIn) {
+    if (to.fullPath !== '/') rememberAfterSignIn(to.fullPath)
     return { name: 'login', query: to.fullPath === '/' ? {} : { redirect: to.fullPath } }
   }
   if (to.meta.guestOnly && signedIn) {

@@ -7,6 +7,7 @@ import openapiTS, { astToString } from 'openapi-typescript'
 const services = {
   auth: process.env.AUTH_OPENAPI ?? 'http://localhost:5100/openapi/v1.json',
   accounts: process.env.ACCOUNTS_OPENAPI ?? 'http://localhost:5200/openapi/v1.json',
+  households: process.env.HOUSEHOLDS_OPENAPI ?? 'http://localhost:5300/openapi/v1.json',
 }
 
 for (const [name, url] of Object.entries(services)) {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { useAfterSignIn } from '../useAfterSignIn'
 import { computed, onMounted, reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
@@ -21,7 +22,7 @@ import GoogleButton from '../GoogleButton.vue'
 // invitation (D8: the Google email may differ from the invited one).
 const { t, d } = useI18n()
 const route = useRoute()
-const router = useRouter()
+const afterSignIn = useAfterSignIn()
 const session = useSessionStore()
 const { busy, formError, fieldErrors, submit } = useSubmit()
 
@@ -51,7 +52,7 @@ async function accept() {
     ),
   )
   if (ok) {
-    await router.replace('/')
+    await afterSignIn()
   }
 }
 </script>

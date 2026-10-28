@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { useAfterSignIn } from '../useAfterSignIn'
 import { onMounted, reactive, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
@@ -18,7 +19,7 @@ import { useSessionStore } from '../session'
 // A-09 / UC-05: "Are you sure you want to restore your account?" with the current profile to check, then the ticket
 // becomes a session. Auth learns about it from Accounts' UserEnabled, so completing waits on 409 reactivation.pending.
 const { t } = useI18n()
-const router = useRouter()
+const afterSignIn = useAfterSignIn()
 const session = useSessionStore()
 const { busy, formError, fieldErrors, submit } = useSubmit()
 
@@ -53,7 +54,7 @@ async function reactivate() {
   })
   waiting.value = false
   if (ok) {
-    await router.replace('/')
+    await afterSignIn()
   }
 }
 
