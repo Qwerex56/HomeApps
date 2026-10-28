@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Households adapters: Postgres with the outbox, the read queries, the consumers of Accounts' events and the hourly guest clean-up. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Households.Application\Households.Application.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Infrastructure\HomeApps.BuildingBlocks.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Households.Infrastructure.Tests" />
+  </ItemGroup>
+
+</Project>
