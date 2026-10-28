@@ -10,8 +10,14 @@ internal sealed class RateLimitOptions
 {
     public const string SectionName = "Auth:RateLimits";
 
-    /// <summary>Anonymous attempts per IP and minute: sign-in, sign-up, refresh, links from emails.</summary>
+    /// <summary>Anonymous attempts per IP and minute: sign-in, sign-up, links from emails.</summary>
     public int PerMinute { get; set; } = 10;
+
+    /// <summary>
+    /// Token refreshes per IP and minute (release plan Q4). Separate from <see cref="PerMinute"/>: a family behind one
+    /// router with a few tabs open each refreshes far more often than anyone signs in.
+    /// </summary>
+    public int RefreshPerMinute { get; set; } = 60;
 
     /// <summary>Requests that send an email, per IP and hour.</summary>
     public int MailPerHour { get; set; } = 10;
@@ -24,6 +30,7 @@ internal static class RateLimits
 {
     public const string Anonymous = "auth-anon";
     public const string Mail = "auth-mail";
+    public const string Refresh = "auth-refresh";
 
     public static IServiceCollection AddAuthRateLimits(this IServiceCollection services)
     {
@@ -56,6 +63,15 @@ internal static class RateLimits
                 new SlidingWindowRateLimiterOptions
                 {
                     PermitLimit = Limits(http).PerMinute,
+                    Window = TimeSpan.FromMinutes(1),
+                    SegmentsPerWindow = 6,
+                    QueueLimit = 0,
+                }));
+
+            limiter.AddPolicy(Refresh, http => RateLimitPartition.GetSlidingWindowLimiter(ClientIp(http), _ =>
+                new SlidingWindowRateLimiterOptions
+                {
+                    PermitLimit = Limits(http).RefreshPerMinute,
                     Window = TimeSpan.FromMinutes(1),
                     SegmentsPerWindow = 6,
                     QueueLimit = 0,

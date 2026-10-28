@@ -60,7 +60,7 @@ internal sealed class SignInEndpoints : IEndpoint
                 return (await sender.Send(new RefreshTokensCommand(token, body.ClientId, http.UserAgent()), ct)).ToTokenResult(http);
             })
             .AllowAnonymous()
-            .RequireRateLimiting(RateLimits.Anonymous);
+            .RequireRateLimiting(RateLimits.Refresh);
 
         auth.MapPost("/logout", async (LogoutRequest? body, HttpContext http, ISender sender, CancellationToken ct) =>
             {

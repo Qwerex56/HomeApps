@@ -8,6 +8,8 @@ namespace Auth.Api.Tests;
 public sealed class LowLimitFactory : AuthApiFactory
 {
     protected override int PerMinute => 2;
+
+    protected override int RefreshPerMinute => 3;
 }
 
 public sealed class RateLimitTests(LowLimitFactory api) : IClassFixture<LowLimitFactory>
@@ -26,6 +28,23 @@ public sealed class RateLimitTests(LowLimitFactory api) : IClassFixture<LowLimit
         Assert.Equal(HttpStatusCode.TooManyRequests, third.StatusCode);
         Assert.NotNull(third.Headers.RetryAfter);
         Assert.Equal("rate_limited", (await third.ReadJsonAsync()).GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task Refresh_has_its_own_higher_limit()
+    {
+        using var client = api.CreateClient();
+        var body = new { refreshToken = "not-a-token", clientId = AuthApiFactory.WebClient };
+
+        var statuses = new List<HttpStatusCode>();
+        for (var i = 0; i < 4; i++)
+        {
+            using var response = await client.PostAsJsonAsync("/auth/refresh", body);
+            statuses.Add(response.StatusCode);
+        }
+
+        Assert.Equal([HttpStatusCode.Unauthorized, HttpStatusCode.Unauthorized, HttpStatusCode.Unauthorized], statuses[..3]);
+        Assert.Equal(HttpStatusCode.TooManyRequests, statuses[3]);
     }
 
     [Fact]
