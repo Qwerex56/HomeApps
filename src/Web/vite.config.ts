@@ -33,6 +33,8 @@ export default defineConfig({
         display: 'standalone',
         background_color: '#0f172a',
         theme_color: '#0f172a',
+        // A long press on the installed app's icon opens the wall view directly.
+        shortcuts: [{ name: 'Tablet na ścianie', short_name: 'Tablet', url: '/wall' }],
         icons: [
           { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512.png', sizes: '512x512', type: 'image/png' },

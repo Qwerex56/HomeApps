@@ -188,6 +188,12 @@ service worker caches only the app itself and updates it on its own. It never an
 the app (`servicePaths` in `vite.config.ts`), above all `/auth/external/google`, which must reach Auth. Add a new
 service's path prefix there. Data is never served offline.
 
+`/wall` (`features/wall`) is the wall tablet (Q7, Q11): clock, date, the current household's active people and
+placeholders for plugin tiles (weather, news), on a dark full-screen page without the app's menu. Open it from the
+user menu ("Tryb tabletu") or, on an installed app, from the icon's long-press shortcut. The tablet signs in as an
+ordinary user and stays signed in through the refresh token. The Screen Wake Lock API keeps the screen on; it needs
+HTTPS, and where it is missing the page says so. The members are read again every 5 minutes.
+
 ## Dark mode
 
 `useColorScheme` (`shared/composables`) follows the system and remembers a choice made with the button in the

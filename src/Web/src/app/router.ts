@@ -121,6 +121,13 @@ export const router = createRouter({
         },
       ],
     },
+    // The wall tablet (Q7): signed in like anyone, but without the app's header and menu.
+    {
+      path: '/wall',
+      name: 'wall',
+      meta: { requiresAuth: true },
+      component: () => import('@/features/wall/WallPage.vue'),
+    },
     {
       path: '/',
       component: GuestLayout,
