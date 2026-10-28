@@ -1,5 +1,5 @@
 # Routes to what runs on the host during development (Q19): Auth from Rider on :5100, Accounts on :5200,
-# Vue (vite) on :5173. The containers from the "services" profile override these routes with a higher priority.
+# Households on :5300, Vue (vite) on :5173. The containers from the "services" profile override these routes with a higher priority.
 http:
   routers:
     auth-host:
@@ -13,6 +13,12 @@ http:
       priority: 100
       entryPoints: [websecure]
       service: accounts-host
+      tls: {}
+    households-host:
+      rule: "Host(`app.localhost`) && (PathPrefix(`/households`) || PathPrefix(`/invites`) || PathPrefix(`/admin/households`))"
+      priority: 100
+      entryPoints: [websecure]
+      service: households-host
       tls: {}
     frontend-host:
       rule: "Host(`app.localhost`)"
@@ -29,6 +35,10 @@ http:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:5200"
+    households-host:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:5300"
     frontend-host:
       loadBalancer:
         servers:

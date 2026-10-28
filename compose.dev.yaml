@@ -2,7 +2,7 @@
 #   docker compose -f compose.dev.yaml up -d                     infrastructure only; run Auth from Rider (Q19)
 #   docker compose -f compose.dev.yaml --profile services up -d  everything in containers
 # Everything is served at https://app.localhost: /auth and /.well-known go to Auth, /users and /admin/users to Accounts,
-# the rest to Vue (vite on :5173). Services read Auth's keys inside the Docker network (accounts plan Q10).
+# /households, /invites and /admin/households to Households, the rest to Vue (vite on :5173). Services read Auth's keys inside the Docker network (accounts plan Q10).
 # Values come from .env when present (copy .env.example); the defaults below work without it.
 name: homeapps
 
@@ -130,6 +130,36 @@ services:
       - "traefik.http.routers.accounts.entrypoints=websecure"
       - "traefik.http.routers.accounts.tls=true"
       - "traefik.http.services.accounts.loadbalancer.server.port=8080"
+
+  households:
+    profiles: ["services"]
+    build:
+      context: .
+      dockerfile: src/Households/Households.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Database: "Host=postgres;Database=homeapps_households;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: ${RABBITMQ_USER:-guest}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-guest}
+      Jwt__Authority: "http://auth:8080"
+      Jwt__Issuer: "https://app.localhost"
+      Jwt__RequireHttpsMetadata: "false"
+      Households__MaxMembers: ${HOUSEHOLDS_MAX_MEMBERS:-100}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      auth:
+        condition: service_started
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.households.rule=Host(`app.localhost`) && (PathPrefix(`/households`) || PathPrefix(`/invites`) || PathPrefix(`/admin/households`))"
+      - "traefik.http.routers.households.priority=200"
+      - "traefik.http.routers.households.entrypoints=websecure"
+      - "traefik.http.routers.households.tls=true"
+      - "traefik.http.services.households.loadbalancer.server.port=8080"
 
 volumes:
   postgres-data:
