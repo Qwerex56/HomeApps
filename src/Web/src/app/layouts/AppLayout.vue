@@ -9,8 +9,11 @@ import UserMenu from './UserMenu.vue'
 const { t } = useI18n()
 const { pending } = useMyAccount()
 
-// The menu grows with each stage (account F4, admin F5, households F6).
-const links = [{ to: { name: 'home' }, label: 'app.home', icon: 'pi pi-home' }]
+// The menu grows with each stage (admin F5, households F6).
+const links = [
+  { to: { name: 'home' }, label: 'app.home', icon: 'pi pi-home', exact: true },
+  { to: { name: 'account-profile' }, label: 'app.account', icon: 'pi pi-user' },
+]
 </script>
 
 <template>
@@ -29,7 +32,8 @@ const links = [{ to: { name: 'home' }, label: 'app.home', icon: 'pi pi-home' }]
             :key="link.label"
             :to="link.to"
             class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-color hover:bg-emphasis"
-            active-class="!text-primary bg-highlight"
+            :active-class="link.exact ? '' : '!text-primary bg-highlight'"
+            exact-active-class="!text-primary bg-highlight"
           >
             <i :class="link.icon" aria-hidden="true" />
             <span class="hidden sm:inline">{{ t(link.label) }}</span>

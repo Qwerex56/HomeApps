@@ -24,7 +24,40 @@ export const router = createRouter({
       path: '/',
       component: AppLayout,
       meta: { requiresAuth: true },
-      children: [{ path: '', name: 'home', component: () => import('@/features/home/HomePage.vue') }],
+      children: [
+        { path: '', name: 'home', component: () => import('@/features/home/HomePage.vue') },
+        {
+          path: 'account',
+          component: () => import('@/features/account/pages/AccountPage.vue'),
+          children: [
+            {
+              path: '',
+              name: 'account-profile',
+              component: () => import('@/features/account/pages/ProfilePage.vue'),
+            },
+            {
+              path: 'security',
+              name: 'account-security',
+              component: () => import('@/features/account/pages/SecurityPage.vue'),
+            },
+            {
+              path: 'sessions',
+              name: 'account-sessions',
+              component: () => import('@/features/account/pages/SessionsPage.vue'),
+            },
+            {
+              path: 'invitations',
+              name: 'account-invitations',
+              component: () => import('@/features/account/pages/InvitationsPage.vue'),
+            },
+            {
+              path: 'history',
+              name: 'account-history',
+              component: () => import('@/features/account/pages/HistoryPage.vue'),
+            },
+          ],
+        },
+      ],
     },
     {
       path: '/',

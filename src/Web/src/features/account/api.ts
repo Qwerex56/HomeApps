@@ -30,8 +30,33 @@ export interface MyAccount {
   updatedAt: string
 }
 
+export type HistoryAction =
+  'Registered' | 'ProfileUpdated' | 'Disabled' | 'Enabled' | 'ReactivatedBySelf' | 'RoleSynced' | 'EmailSynced'
+
+export interface MyHistoryEntry {
+  at: string
+  action: HistoryAction
+}
+
 export const accountKeys = {
   me: ['accounts', 'me'] as const,
+  history: ['accounts', 'me', 'history'] as const,
+}
+
+export const accountApi = {
+  /** UC-02: the whole profile is replaced (Q5), so the form always sends every field. */
+  async updateProfile(profile: ProfileInput) {
+    await http.put('/users/me/profile', profile)
+  },
+
+  async history() {
+    return (await http.get<MyHistoryEntry[]>('/users/me/history')).data
+  },
+
+  /** UC-03: Accounts tells Auth, which ends every session; signing in again offers to bring the account back. */
+  async disable(reason: string | null) {
+    await http.post('/users/me/disable', { reason })
+  },
 }
 
 /**

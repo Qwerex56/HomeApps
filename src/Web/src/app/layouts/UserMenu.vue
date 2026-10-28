@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
 import Menu from 'primevue/menu'
@@ -8,6 +9,7 @@ import { useSessionStore } from '@/features/auth/session'
 import { useMyAccount } from '@/features/account/api'
 
 const { t } = useI18n()
+const router = useRouter()
 const session = useSessionStore()
 const { data: account } = useMyAccount()
 const menu = ref<InstanceType<typeof Menu>>()
@@ -17,6 +19,9 @@ const initials = computed(() => name.value.slice(0, 1).toUpperCase())
 
 const items = computed(() => [
   { label: session.claims?.email, disabled: true },
+  { separator: true },
+  { label: t('app.account'), icon: 'pi pi-user', command: () => router.push({ name: 'account-profile' }) },
+  { label: t('account.tabs.security'), icon: 'pi pi-lock', command: () => router.push({ name: 'account-security' }) },
   { separator: true },
   { label: t('auth.logout'), icon: 'pi pi-sign-out', command: () => session.signOut() },
   { label: t('auth.logoutEverywhere'), icon: 'pi pi-power-off', command: () => session.signOut(true) },

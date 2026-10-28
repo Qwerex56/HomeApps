@@ -146,5 +146,102 @@
       "submit": "Potwierdzam nowy email",
       "done": "Email zmieniony."
     }
+  },
+  "common": {
+    "save": "Zapisz",
+    "cancel": "Anuluj"
+  },
+  "account": {
+    "tabs": {
+      "profile": "Profil",
+      "security": "Bezpieczeństwo",
+      "sessions": "Urządzenia",
+      "invitations": "Zaproszenia",
+      "history": "Historia"
+    },
+    "profile": {
+      "title": "Profil",
+      "preferredName": "Jak się do Ciebie zwracać",
+      "preferredNameHint": "Np. dla JARVIS-a. Puste = imię albo nazwa.",
+      "dateOfBirth": "Data urodzenia",
+      "avatarUrl": "Adres zdjęcia",
+      "locale": "Język",
+      "timeZone": "Strefa czasowa",
+      "saved": "Profil zapisany"
+    },
+    "disable": {
+      "title": "Wyłącz konto",
+      "text": "Konto zostanie wyłączone i wylogujemy Cię wszędzie. Dane zostają: wystarczy się zalogować, żeby je przywrócić.",
+      "button": "Wyłącz konto",
+      "confirmTitle": "Na pewno wyłączyć konto?",
+      "confirmText": "Wylogujemy Cię na wszystkich urządzeniach. Konto przywrócisz, logując się ponownie.",
+      "reason": "Powód (opcjonalnie)",
+      "done": "Konto wyłączone. Zaloguj się, jeśli zechcesz je przywrócić."
+    },
+    "security": {
+      "methods": "Metody logowania",
+      "set": "Ustawione",
+      "notSet": "Brak",
+      "link": "Połącz",
+      "unlink": "Odłącz",
+      "linked": "Konto Google połączone.",
+      "unlinkTitle": "Odłączyć Google?",
+      "unlinkText": "Nie zalogujesz się już przez to konto Google. Upewnij się, że masz inną metodę logowania.",
+      "changePassword": "Zmień hasło",
+      "addPassword": "Dodaj hasło",
+      "currentPassword": "Obecne hasło",
+      "sendLink": "Wyślij link potwierdzający",
+      "passwordSent": "Wysłaliśmy link na Twój email. Nowe hasło zacznie działać po kliknięciu, a wszystkie urządzenia zostaną wylogowane.",
+      "changeEmail": "Zmień email",
+      "currentEmail": "Obecny email: {email}",
+      "newEmail": "Nowy email",
+      "emailSent": "Wysłaliśmy link na {email}. Email zmieni się po jego kliknięciu.",
+      "reauth": "Ta zmiana wymaga świeżego logowania. Zaloguj się ponownie przez Google i wróć tutaj.",
+      "wrongPassword": "Obecne hasło jest nieprawidłowe."
+    },
+    "sessions": {
+      "title": "Urządzenia",
+      "subtitle": "Gdzie jesteś zalogowany. Wyloguj urządzenie, którego nie rozpoznajesz.",
+      "lastUsed": "ostatnio {date}",
+      "revoke": "Wyloguj to urządzenie",
+      "everywhereText": "Wylogujemy wszystkie urządzenia, także to.",
+      "method": {
+        "Password": "Hasło",
+        "Google": "Google",
+        "Apple": "Apple"
+      }
+    },
+    "invitations": {
+      "title": "Zaproś do HomeApps",
+      "subtitle": "Wyślemy link, przez który ta osoba założy konto.",
+      "send": "Wyślij zaproszenie",
+      "sent": "Zaproszenie wysłane na {email}",
+      "empty": "Nie wysłano jeszcze żadnych zaproszeń.",
+      "created": "wysłane {date}",
+      "code": "kod {code}",
+      "resend": "Wyślij ponownie",
+      "resent": "Zaproszenie wysłane ponownie",
+      "revoke": "Odwołaj",
+      "revoked": "Zaproszenie odwołane",
+      "status": {
+        "Pending": "Czeka",
+        "Accepted": "Przyjęte",
+        "Revoked": "Odwołane",
+        "Expired": "Wygasło"
+      }
+    },
+    "history": {
+      "title": "Historia konta",
+      "subtitle": "Kiedy i co zmieniło się na koncie (50 ostatnich).",
+      "action": {
+        "Registered": "Założenie konta",
+        "ProfileUpdated": "Zmiana profilu",
+        "Disabled": "Wyłączenie konta",
+        "Enabled": "Włączenie konta",
+        "ReactivatedBySelf": "Przywrócenie konta",
+        "RoleSynced": "Zmiana roli",
+        "EmailSynced": "Zmiana emaila"
+      }
+    }
   }
 }

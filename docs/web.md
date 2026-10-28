@@ -124,6 +124,22 @@ Tickets travel between pages in `history.state`, never in the URL. No page may l
 Right after sign-up Accounts needs a moment to create the account; `useMyAccount` (`features/account/api.ts`) retries
 `404 user.pending` and the layout shows "preparing your account" meanwhile.
 
+### My account
+
+`/account` (`features/account`) has a tab per subject:
+
+| Route | What it does |
+| --- | --- |
+| `/account` | Profile (PUT the whole profile, Q5) and disabling the account (D4); disabling signs out every tab. |
+| `/account/security` | Login methods (link/unlink Google), password and email change. Both are confirmed from an email. Without a password Auth wants a Google sign-in from the last 5 minutes (`auth.reauthentication_required`). |
+| `/account/sessions` | Signed-in devices (UserAgent only, D6), revoking one or all. |
+| `/account/invitations` | Inviting people to the app (D7), resending and revoking. |
+| `/account/history` | Own account history (date and kind only). |
+
+Accounts validates the profile as a nested object, so its field errors arrive as `Profile.DisplayName`;
+`useSubmit('profile.')` strips the prefix. Validation messages come from FluentValidation in English for now.
+Auth answers a wrong current password with `auth.invalid_credentials`; the security page shows it under the field.
+
 ## PWA and the wall tablet
 
 The app installs on phones and tablets (`vite-plugin-pwa`, manifest in `vite.config.ts`, icons in `public/`). The
