@@ -16,7 +16,8 @@ declare module 'vue-router' {
 
 // History mode: the URL fragment stays free for the result of Google sign-in (frontend.md, section 4).
 // The routes the emails link to (/invite/:token, /reset-password, /confirm-password, /confirm-email) are fixed by Auth.
-// No route may start with /auth, /users or /admin/users: Traefik sends those paths to the services.
+// No route may start with /auth, /users, /admin/users, /households, /invites or /admin/households: Traefik sends
+// those paths to the services.
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -54,6 +55,25 @@ export const router = createRouter({
               path: 'history',
               name: 'account-history',
               component: () => import('@/features/account/pages/HistoryPage.vue'),
+            },
+          ],
+        },
+        // /admin/accounts, never /admin/users or /admin/households: those belong to the services.
+        {
+          path: 'admin',
+          meta: { admin: true },
+          children: [
+            { path: '', redirect: { name: 'admin-users' } },
+            {
+              path: 'accounts',
+              name: 'admin-users',
+              component: () => import('@/features/admin/pages/UsersPage.vue'),
+            },
+            {
+              path: 'accounts/:id',
+              name: 'admin-user',
+              props: true,
+              component: () => import('@/features/admin/pages/UserPage.vue'),
             },
           ],
         },

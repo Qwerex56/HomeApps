@@ -1,19 +1,23 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Message from 'primevue/message'
 import ColorSchemeToggle from '@/shared/components/ColorSchemeToggle.vue'
 import { useMyAccount } from '@/features/account/api'
+import { useSessionStore } from '@/features/auth/session'
 import UserMenu from './UserMenu.vue'
 
 const { t } = useI18n()
 const { pending } = useMyAccount()
+const session = useSessionStore()
 
-// The menu grows with each stage (admin F5, households F6).
-const links = [
+// The menu grows with each stage (households F6). Administration only for Admin and Owner.
+const links = computed(() => [
   { to: { name: 'home' }, label: 'app.home', icon: 'pi pi-home', exact: true },
   { to: { name: 'account-profile' }, label: 'app.account', icon: 'pi pi-user' },
-]
+  ...(session.isAdmin ? [{ to: { name: 'admin-users' }, label: 'app.admin', icon: 'pi pi-users' }] : []),
+])
 </script>
 
 <template>

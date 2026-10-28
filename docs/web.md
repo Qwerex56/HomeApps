@@ -140,6 +140,21 @@ Accounts validates the profile as a nested object, so its field errors arrive as
 `useSubmit('profile.')` strips the prefix. Validation messages come from FluentValidation in English for now.
 Auth answers a wrong current password with `auth.invalid_credentials`; the security page shows it under the field.
 
+### Administration
+
+`/admin/accounts` (`features/admin`) is shown to Admin and Owner (the `role` claim; the services check it again). The
+front routes are `/admin/accounts` and `/admin/accounts/:id`, never `/admin/users` or `/admin/households`, which
+Traefik sends to the services.
+
+| Route | What it does |
+| --- | --- |
+| `/admin/accounts` | UC-10: search (name or email), status and role filters, sorting and paging. The filter lives in the URL. |
+| `/admin/accounts/:id` | UC-11 to UC-17: details, profile edit, history (100 at a time, "older" loads more), disable/enable, password reset (Auth A-22), role (Auth A-23) and erase. |
+
+`permissions()` in `features/admin/api.ts` mirrors R1, R3, R5 and R18 only to show the right buttons. A role change is
+made in Auth; Accounts' copy follows from Auth's event a moment later, and the person gets the new role in their token
+on the next refresh. Erasing asks for the account's email, which goes in the DELETE body.
+
 ## PWA and the wall tablet
 
 The app installs on phones and tablets (`vite-plugin-pwa`, manifest in `vite.config.ts`, icons in `public/`). The

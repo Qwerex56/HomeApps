@@ -4,7 +4,8 @@
     "home": "Pulpit",
     "account": "Moje konto",
     "notFound": "Nie ma takiej strony",
-    "backHome": "Wróć na pulpit"
+    "backHome": "Wróć na pulpit",
+    "admin": "Administracja"
   },
   "colorScheme": {
     "label": "Motyw",
@@ -29,7 +30,11 @@
       "reauthentication_required": "Potwierdź, że to Ty, logując się ponownie."
     },
     "account": {
-      "disabled_by_user": "To konto zostało przez Ciebie wyłączone."
+      "disabled_by_user": "To konto zostało przez Ciebie wyłączone.",
+      "already_disabled": "Konto jest już wyłączone.",
+      "not_disabled": "Konto nie jest wyłączone.",
+      "owner_protected": "Konta właściciela nie można wyłączyć.",
+      "disabled": "Konto jest wyłączone."
     },
     "reactivation": {
       "pending": "Przywracamy konto, to potrwa chwilę."
@@ -58,13 +63,21 @@
       "link_required": "Konto z tym adresem już istnieje."
     },
     "user": {
-      "pending": "Przygotowujemy Twoje konto…"
+      "pending": "Przygotowujemy Twoje konto…",
+      "not_found": "Nie ma takiego konta."
     },
     "client": {
       "unknown": "Nieznana aplikacja."
     },
     "forbidden": {
       "role": "Nie masz uprawnień do tej operacji."
+    },
+    "erase": {
+      "confirmation_mismatch": "Email się nie zgadza.",
+      "not_disabled": "Najpierw wyłącz konto."
+    },
+    "identity": {
+      "not_found": "Nie ma takiego konta."
     }
   },
   "auth": {
@@ -242,6 +255,73 @@
         "RoleSynced": "Zmiana roli",
         "EmailSynced": "Zmiana emaila"
       }
+    }
+  },
+  "admin": {
+    "role": {
+      "User": "Użytkownik",
+      "Admin": "Administrator",
+      "Owner": "Właściciel"
+    },
+    "status": {
+      "Active": "Aktywne",
+      "Disabled": "Wyłączone"
+    },
+    "source": {
+      "Password": "hasło",
+      "Google": "Google",
+      "Apple": "Apple",
+      "Bootstrap": "pierwsze konto"
+    },
+    "users": {
+      "title": "Konta",
+      "search": "Szukaj po nazwie albo emailu",
+      "status": "Status",
+      "role": "Rola",
+      "anyStatus": "Każdy status",
+      "anyRole": "Każda rola",
+      "lastSeen": "Ostatnio widziany",
+      "never": "nigdy",
+      "empty": "Brak kont dla tych filtrów."
+    },
+    "user": {
+      "reset": "Reset hasła",
+      "resetTitle": "Zresetować hasło?",
+      "resetText": "Wylogujemy tę osobę wszędzie i wyślemy link do ustawienia nowego hasła na {email}.",
+      "resetDone": "Link do resetu hasła wysłany",
+      "roleChanged": "Rola zmieniona. Zadziała przy następnym odświeżeniu sesji tej osoby.",
+      "enable": "Włącz konto",
+      "enabled": "Konto włączone",
+      "disable": "Wyłącz konto",
+      "disableTitle": "Wyłączyć konto?",
+      "disableText": "{name} zostanie wylogowany wszędzie. Dane zostają, konto można włączyć z powrotem.",
+      "disabled": "Konto wyłączone",
+      "disabledBySelf": "Użytkownik sam wyłączył konto {date}.",
+      "disabledByAdmin": "Konto wyłączone przez administratora {date}.",
+      "reason": "Powód: {reason}",
+      "erase": "Usuń na zawsze",
+      "eraseTitle": "Usunąć konto na zawsze?",
+      "eraseText": "To jest prośba „zapomnij o mnie”. Konto, jego historia i członkostwa w domach znikną bez możliwości przywrócenia.",
+      "eraseConfirm": "Wpisz {email}, żeby potwierdzić",
+      "erased": "Konto usunięte",
+      "registered": "Rejestracja",
+      "invitedBy": "Zaproszony przez",
+      "invitedAs": "zaproszenie na {email}",
+      "device": "Urządzenie przy rejestracji",
+      "readOnly": "Tego konta nie możesz edytować.",
+      "system": "system",
+      "erasedActor": "usunięte konto",
+      "older": "Starsze wpisy"
+    },
+    "fields": {
+      "DisplayName": "nazwa",
+      "FirstName": "imię",
+      "LastName": "nazwisko",
+      "PreferredName": "forma zwracania się",
+      "AvatarUrl": "zdjęcie",
+      "Locale": "język",
+      "TimeZone": "strefa czasowa",
+      "DateOfBirth": "data urodzenia"
     }
   }
 }
