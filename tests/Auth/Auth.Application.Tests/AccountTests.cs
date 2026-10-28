@@ -151,6 +151,29 @@ public sealed class AccountTests
         Assert.Empty(adam.ActiveSessions(_w.Time.Now));
     }
 
+    [Theory]
+    [InlineData(HomeApps.Contracts.Households.OwnershipTransferReason.OwnerBanned, true)]
+    [InlineData(HomeApps.Contracts.Households.OwnershipTransferReason.OwnerErased, true)]
+    [InlineData(HomeApps.Contracts.Households.OwnershipTransferReason.HandedOver, false)]
+    public async Task New_household_owner_is_mailed_only_when_they_did_not_choose_it(
+        HomeApps.Contracts.Households.OwnershipTransferReason reason, bool mailed)
+    {
+        var (adam, _) = await _w.Registered();
+        var handler = new HouseholdsSync.NotifyOwnershipReceivedHandler(_w.Identities, _w.Bus);
+        var household = Guid.NewGuid();
+
+        Assert.True((await handler.Handle(new HouseholdsSync.NotifyOwnershipReceivedCommand(household, "Dom", adam.Id, reason), default)).IsSuccess);
+        Assert.True((await handler.Handle(new HouseholdsSync.NotifyOwnershipReceivedCommand(household, "Dom", Guid.NewGuid(), reason), default)).IsSuccess);
+
+        var emails = _w.Bus.Published.OfType<Events.AuthEmailRequested>()
+            .Where(e => e.Template == Events.AuthEmailTemplate.HouseholdOwnershipReceived).ToList();
+        Assert.Equal(mailed ? 1 : 0, emails.Count);
+        if (mailed)
+        {
+            Assert.Equal((adam.Email.Value, household, "Dom"), (emails[0].To, emails[0].HouseholdId, emails[0].HouseholdName!));
+        }
+    }
+
     [Fact]
     public async Task Erasing_removes_the_identity_and_only_the_invitation_it_came_through_forgets_its_email()
     {

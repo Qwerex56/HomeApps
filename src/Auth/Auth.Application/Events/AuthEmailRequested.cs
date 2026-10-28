@@ -12,7 +12,10 @@ public sealed record AuthEmailRequested(
     string? Token,
     string? InvitationCode = null,
     string? InvitedByEmail = null,
-    DateTimeOffset? ExpiresAt = null) : IIntegrationEvent;
+    DateTimeOffset? ExpiresAt = null,
+    Guid? HouseholdId = null,
+    string? HouseholdName = null,
+    bool PreviousOwnerErased = false) : IIntegrationEvent;
 
 public enum AuthEmailTemplate
 {
@@ -24,4 +27,7 @@ public enum AuthEmailTemplate
     PasswordChange = 3,
     EmailChange = 4,
     AccountReactivated = 5,
+
+    /// <summary>Households D5a: the person became a household's Owner without choosing it (the Owner was banned or erased).</summary>
+    HouseholdOwnershipReceived = 6,
 }

@@ -3,7 +3,7 @@ using Auth.Application.Events;
 
 namespace Auth.Infrastructure.Emails;
 
-/// <summary>The six Auth emails, in Polish (Q12). Each is a few sentences and one link into the Vue app.</summary>
+/// <summary>The seven Auth emails, in Polish (Q12). Each is a few sentences and one link into the Vue app.</summary>
 internal static class EmailTemplates
 {
     public static EmailMessage Render(AuthEmailRequested email, Uri frontendBaseUrl)
@@ -54,6 +54,15 @@ internal static class EmailTemplates
                     "Twoje konto zostało właśnie przywrócone po zalogowaniu.",
                     "Jeśli to nie Ty, zmień hasło i napisz do administratora serwera.",
                 }),
+            AuthEmailTemplate.HouseholdOwnershipReceived => ($"Przejęcie domu „{email.HouseholdName}” w HomeApps",
+                new[]
+                {
+                    email.PreviousOwnerErased
+                        ? $"Konto dotychczasowego właściciela domu „{email.HouseholdName}” zostało usunięte."
+                        : $"Dotychczasowy właściciel domu „{email.HouseholdName}” stracił dostęp do konta.",
+                    "Od teraz to Ty zarządzasz tym domem jako właściciel: z aktywnych osób masz w nim najwyższą rolę i najdłuższy staż.",
+                    "Własność możesz przekazać dalej w ustawieniach domu.",
+                }),
             _ => throw new ArgumentOutOfRangeException(nameof(email), email.Template, "Unknown email template."),
         };
 
@@ -67,6 +76,11 @@ internal static class EmailTemplates
     public static Uri? Link(AuthEmailRequested email, Uri frontendBaseUrl)
     {
         ArgumentNullException.ThrowIfNull(email);
+
+        if (email.Template == AuthEmailTemplate.HouseholdOwnershipReceived && email.HouseholdId is { } household)
+        {
+            return new Uri(new Uri(frontendBaseUrl.ToString().TrimEnd('/') + "/"), $"households/{household}");
+        }
 
         if (email.Token is null)
         {
@@ -89,6 +103,7 @@ internal static class EmailTemplates
     {
         AuthEmailTemplate.Invitation or AuthEmailTemplate.BootstrapInvitation => "Załóż konto",
         AuthEmailTemplate.PasswordReset => "Ustaw nowe hasło",
+        AuthEmailTemplate.HouseholdOwnershipReceived => "Otwórz dom",
         _ => "Potwierdź",
     };
 }

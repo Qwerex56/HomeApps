@@ -58,6 +58,36 @@ public sealed class MessagingTests
         Assert.DoesNotContain("http", message.Text, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData(false, "stracił dostęp")]
+    [InlineData(true, "zostało usunięte")]
+    public void Household_ownership_mail_names_the_household_and_links_to_it(bool erased, string why)
+    {
+        var household = Guid.NewGuid();
+        var message = EmailTemplates.Render(new AuthEmailRequested(
+            AuthEmailTemplate.HouseholdOwnershipReceived, "ewa@example.com", null,
+            HouseholdId: household, HouseholdName: "<Kowalscy>", PreviousOwnerErased: erased), Frontend);
+
+        Assert.Equal("Przejęcie domu „<Kowalscy>” w HomeApps", message.Subject);
+        Assert.Contains(why, message.Text, StringComparison.Ordinal);
+        Assert.Contains($"https://home.example.com/households/{household}", message.Text, StringComparison.Ordinal);
+        Assert.Contains("&lt;Kowalscy&gt;", message.Html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Ownership_transferred_sends_its_command()
+    {
+        var sender = Substitute.For<ISender>();
+        var message = new HomeApps.Contracts.Households.OwnershipTransferred(
+            Guid.NewGuid(), "Dom", Guid.NewGuid(), Guid.NewGuid(), HomeApps.Contracts.Households.OwnershipTransferReason.OwnerBanned);
+
+        await new Households.OwnershipTransferredConsumer(sender).Consume(Context(message));
+
+        await sender.Received(1).Send(
+            new Application.HouseholdsSync.NotifyOwnershipReceivedCommand(message.HouseholdId, "Dom", message.ToUserId, message.Reason),
+            Arg.Any<CancellationToken>());
+    }
+
     [Fact]
     public async Task Email_consumer_renders_and_sends()
     {
