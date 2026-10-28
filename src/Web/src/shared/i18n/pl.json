@@ -1,0 +1,68 @@
+{
+  "app": {
+    "name": "HomeApps",
+    "home": "Pulpit",
+    "account": "Moje konto",
+    "notFound": "Nie ma takiej strony",
+    "backHome": "Wróć na pulpit"
+  },
+  "colorScheme": {
+    "label": "Motyw",
+    "system": "Jak w systemie",
+    "light": "Jasny",
+    "dark": "Ciemny"
+  },
+  "home": {
+    "welcome": "Witaj w HomeApps",
+    "skeleton": "Szkielet aplikacji działa. Logowanie, konto i domy pojawią się w kolejnych etapach."
+  },
+  "errors": {
+    "unknown": "Coś poszło nie tak. Spróbuj ponownie.",
+    "network": "Brak połączenia z serwerem.",
+    "rate_limited": "Za dużo prób. Spróbuj ponownie za {seconds} s.",
+    "auth": {
+      "invalid_credentials": "Nieprawidłowy email lub hasło.",
+      "locked_out": "Konto jest chwilowo zablokowane po zbyt wielu nieudanych próbach.",
+      "cannot_sign_in": "Nie można się zalogować na to konto.",
+      "invalid_refresh_token": "Sesja wygasła. Zaloguj się ponownie.",
+      "registration_closed": "Rejestracja jest możliwa tylko z zaproszenia.",
+      "reauthentication_required": "Potwierdź, że to Ty, logując się ponownie."
+    },
+    "account": {
+      "disabled_by_user": "To konto zostało przez Ciebie wyłączone."
+    },
+    "reactivation": {
+      "pending": "Przywracamy konto, to potrwa chwilę."
+    },
+    "email": {
+      "taken": "Ten email jest już używany.",
+      "unchanged": "To jest Twój obecny email."
+    },
+    "password": {
+      "too_weak": "Hasło jest za słabe."
+    },
+    "token": {
+      "invalid_or_expired": "Link jest nieważny albo wygasł."
+    },
+    "invitation": {
+      "invalid_or_expired": "Zaproszenie jest nieważne albo wygasło.",
+      "already_pending": "Na ten email czeka już zaproszenie."
+    },
+    "external_login": {
+      "cancelled": "Logowanie zostało przerwane.",
+      "provider_disabled": "Logowanie przez tego dostawcę jest wyłączone.",
+      "already_linked": "To konto Google jest już połączone z innym kontem.",
+      "last_method": "Nie możesz usunąć ostatniej metody logowania.",
+      "link_declined": "Konta nie zostały połączone."
+    },
+    "user": {
+      "pending": "Przygotowujemy Twoje konto…"
+    },
+    "client": {
+      "unknown": "Nieznana aplikacja."
+    },
+    "forbidden": {
+      "role": "Nie masz uprawnień do tej operacji."
+    }
+  }
+}
