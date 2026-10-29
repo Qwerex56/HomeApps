@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    The smallest real plugin: the kit's tests run it, and the web app's plugin host loads its UI as a fixture
+    (docs/plugins.md). Everything in one project on purpose; a real plugin keeps the four-layer split.
+  -->
+  <PropertyGroup>
+    <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\BuildingBlocks\HomeApps.Plugins.Hosting\HomeApps.Plugins.Hosting.csproj" />
+  </ItemGroup>
+
+</Project>
