@@ -1,0 +1,30 @@
+# Overlay for a machine without open ports (CGNAT): the production stack reached through a Cloudflare Tunnel.
+#   docker compose -f compose.prod.yaml -f compose.tunnel.yaml up -d --build
+# cloudflared opens an outgoing connection to Cloudflare, which serves the public certificate for HOMEAPPS_DOMAIN
+# and sends every request through the tunnel to Traefik over plain HTTP inside the Docker network. Nothing is
+# published on this machine and Let's Encrypt is not used. The tunnel's public hostname (Cloudflare dashboard) points
+# at http://traefik:8080. Deployment guide: docs/deployment.md, "Cloudflare Tunnel".
+services:
+  traefik:
+    # The routers keep their entrypoint name (websecure); here it is plain HTTP, TLS ends at Cloudflare.
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.websecure.address=:8080"
+      # Only cloudflared can reach this port, so keep its X-Forwarded-Proto (https) and X-Forwarded-For (the caller).
+      - "--entrypoints.websecure.forwardedHeaders.insecure=true"
+    ports: !reset []
+
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.0
+    restart: unless-stopped
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env}
+    depends_on:
+      - traefik
+
+  auth:
+    environment:
+      # X-Forwarded-For arrives as "caller, cloudflared": Cloudflare names the caller, Traefik adds cloudflared.
+      Auth__Proxy__ForwardLimit: "2"

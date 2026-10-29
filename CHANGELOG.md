@@ -14,6 +14,13 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
   wall tablet, and an "Aplikacje" card in a household's settings to switch them on and off. Plugins use the app's
   Vue and PrimeVue through `@homeapps/plugin-sdk`. The web image lists the instance's plugins from `HOMEAPPS_PLUGINS`.
 - `scripts/pack.sh` packs the kit into a local feed for plugins: NuGet packages and the `@homeapps/plugin-sdk` tarball.
+- **Deployment through a Cloudflare Tunnel** for a connection behind CGNAT: the overlay `compose.tunnel.yaml`
+  (`cloudflared`, Traefik without published ports and without Let's Encrypt), `Auth:Proxy:ForwardLimit` so rate
+  limits see the real caller behind two proxies ([docs/deployment.md](docs/deployment.md)).
+
+### Changed
+
+- `ACME_EMAIL` is optional.
 
 ## 2.0.0 (2026-10-29)
 

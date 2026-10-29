@@ -41,6 +41,8 @@ internal static class DependencyInjection
         services.Configure<ForwardedHeadersOptions>(forwarded =>
         {
             forwarded.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            // One proxy (Traefik) by default; two behind a Cloudflare Tunnel (cloudflared, then Traefik).
+            forwarded.ForwardLimit = configuration.GetValue("Auth:Proxy:ForwardLimit", 1);
             var networks = configuration.GetSection("Auth:Proxy:KnownNetworks").Get<string[]>() ?? [];
             if (networks.Length > 0)
             {

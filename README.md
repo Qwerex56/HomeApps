@@ -41,6 +41,9 @@ scripts/generate-signing-key.sh
 docker compose -f compose.prod.yaml up -d --build
 ```
 
+Bez publicznego adresu (CGNAT) stos wychodzi do internetu przez Cloudflare Tunnel, bez otwierania portów: dodaj
+`CLOUDFLARE_TUNNEL_TOKEN` do `.env` i uruchom `docker compose -f compose.prod.yaml -f compose.tunnel.yaml up -d --build`.
+
 Szczegóły, kopie zapasowe, aktualizacje i testy wydania: [docs/deployment.md](docs/deployment.md).
 
 **Do pracy nad kodem:** infrastruktura w `compose.dev.yaml`, serwisy z Ridera albo w kontenerach, front z vite pod
