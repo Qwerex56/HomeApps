@@ -188,6 +188,27 @@ service worker caches only the app itself and updates it on its own. It never an
 the app (`servicePaths` in `vite.config.ts`), above all `/auth/external/google`, which must reach Auth. Add a new
 service's path prefix there. Data is never served offline.
 
+`/wall` (`features/wall`) is the wall tablet (Q7, Q11): clock, date, the current household's active people and
+placeholders for plugin tiles (weather, news), on a dark full-screen page without the app's menu. Open it from the
+user menu ("Tryb tabletu") or, on an installed app, from the icon's long-press shortcut. The tablet signs in as an
+ordinary user and stays signed in through the refresh token. The Screen Wake Lock API keeps the screen on; it needs
+HTTPS, and where it is missing the page says so. The members are read again every 5 minutes.
+
+## Smoke test
+
+`npm run test:e2e` walks through a running HomeApps in Chromium, on a desktop and a phone screen (`e2e/`,
+Playwright). It starts nothing: run the stack first (dev through Traefik, or the production compose). Registration is
+usually closed, so the test signs in with an existing account:
+
+```bash
+npx playwright install chromium   # once
+E2E_BASE_URL=https://app.localhost E2E_EMAIL=owner@example.com E2E_PASSWORD=… npm run test:e2e
+```
+
+It signs in, reloads, creates a household, makes an invite, opens it at `/join/{code}`, shows the household on
+`/wall` and archives it again. With `E2E_REGISTRATION_OPEN=1` a second person also signs up from the invite link and
+joins. Every run creates its own `Smoke <time>` household and archives it at the end.
+
 ## Dark mode
 
 `useColorScheme` (`shared/composables`) follows the system and remembers a choice made with the button in the

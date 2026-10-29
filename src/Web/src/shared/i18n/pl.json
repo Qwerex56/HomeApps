@@ -487,5 +487,18 @@
       "archived": "Dom zarchiwizowany"
     },
     "memberCount": "{count} osoba | {count} osoby | {count} osób"
+  },
+  "wall": {
+    "open": "Tryb tabletu",
+    "fullscreen": "Pełny ekran",
+    "exitFullscreen": "Wyjdź z pełnego ekranu",
+    "exit": "Zamknij tryb tabletu",
+    "noHousehold": "Nie należysz jeszcze do żadnego domu.",
+    "tiles": {
+      "weather": "Pogoda",
+      "news": "Wiadomości"
+    },
+    "soon": "Wkrótce",
+    "noWakeLock": "Ta przeglądarka nie pozwala utrzymać włączonego ekranu. Ustaw wygaszanie w ustawieniach tabletu."
   }
 }

@@ -4,3 +4,5 @@ dev-dist
 coverage
 *.tsbuildinfo
 *.local
+test-results
+playwright-report

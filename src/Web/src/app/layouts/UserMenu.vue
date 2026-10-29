@@ -22,6 +22,7 @@ const items = computed(() => [
   { separator: true },
   { label: t('app.account'), icon: 'pi pi-user', command: () => router.push({ name: 'account-profile' }) },
   { label: t('account.tabs.security'), icon: 'pi pi-lock', command: () => router.push({ name: 'account-security' }) },
+  { label: t('wall.open'), icon: 'pi pi-tablet', command: () => router.push({ name: 'wall' }) },
   { separator: true },
   { label: t('auth.logout'), icon: 'pi pi-sign-out', command: () => session.signOut() },
   { label: t('auth.logoutEverywhere'), icon: 'pi pi-power-off', command: () => session.signOut(true) },

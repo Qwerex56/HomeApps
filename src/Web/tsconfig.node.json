@@ -4,7 +4,9 @@
     "vite.config.*",
     "vitest.config.*",
     "eslint.config.*",
-    "scripts/**/*"
+    "scripts/**/*",
+    "playwright.config.*",
+    "e2e/**/*"
   ],
   "compilerOptions": {
     "noEmit": true,
