@@ -20,10 +20,14 @@ How to build, test and change HomeApps day to day. For how a new service is put 
 | `compose.dev.yaml` | Local infrastructure: Traefik, Postgres, RabbitMQ, Mailpit; services in the `services` profile. |
 | `.env.example` | What compose reads; copy to `.env` (never committed) to change it. |
 | `HomeApps.slnx` | The one solution file, with a folder for BuildingBlocks, Contracts and each service. Open it in Rider; CI builds it. |
+| `Directory.Build.props` | Settings for every project, the version among them (see below). |
+| `Directory.Packages.props` | The one list of package versions (see below). |
+| `src/Web/` | The Vue app ([web.md](web.md)), with its production image (`Dockerfile`, `nginx.conf`). |
+| `compose.prod.yaml`, `.env.prod.example` | Production: everything behind Traefik with Let's Encrypt ([deployment.md](deployment.md)). |
+| `compose.smoke.yaml`, `scripts/` | The release check (`smoke.sh`) and the signing key generator. |
+| `CHANGELOG.md` | What each version changed. |
 
 No C# project lives in the repository root: all code is in `src/` and `tests/`.
-| `Directory.Build.props` | Settings for every project (see below). |
-| `Directory.Packages.props` | The one list of package versions (see below). |
 
 ## Build and test
 
@@ -85,3 +89,10 @@ What runs on GitHub:
 
 If CI fails, open the failed run from the pull request's Checks tab; the step log shows the compiler or test
 error. Fix it on the same branch and push again; CI reruns by itself.
+
+## Releases
+
+1. Set `<Version>` in `Directory.Build.props` and the image tags in `compose.prod.yaml` to the new version.
+2. Add the version to [CHANGELOG.md](../CHANGELOG.md), including any new setting in `.env.prod.example`.
+3. Run both smoke tests on a fresh stack ([deployment.md](deployment.md#checking-a-release-the-smoke-tests)).
+4. Tag master: `git tag -a v2.0.0 -m "HomeApps 2.0.0"`.
