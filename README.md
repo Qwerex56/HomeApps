@@ -26,6 +26,7 @@ Infrastructure / Api. Wspólny kod to mały kit w `src/BuildingBlocks` i kontrak
 Przed wszystkim stoi Traefik; front to Vue 3 + TypeScript, PrimeVue i Tailwind.
 
 - [docs/how-a-service-is-built.md](docs/how-a-service-is-built.md): jak wygląda serwis i jak dodać kolejny
+- [docs/plugins.md](docs/plugins.md): pluginy poza tym repo (manifest, uprawnienia, paczki kitu)
 - [docs/adr](docs/adr/README.md): decyzje architektoniczne
 - [docs/auth.md](docs/auth.md), [docs/accounts.md](docs/accounts.md), [docs/households.md](docs/households.md),
   [docs/web.md](docs/web.md): poszczególne części

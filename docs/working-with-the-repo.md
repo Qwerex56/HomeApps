@@ -13,10 +13,10 @@ How to build, test and change HomeApps day to day. For how a new service is put 
 
 | Path | What it is |
 | --- | --- |
-| `src/BuildingBlocks/` | The shared kit: `HomeApps.BuildingBlocks.Domain`, `.Application`, `.Infrastructure`, `.Api`. |
+| `src/BuildingBlocks/` | The shared kit: `HomeApps.BuildingBlocks.Domain`, `.Application`, `.Infrastructure`, `.Api`, and the plugin kit `HomeApps.Plugins`, `.Hosting` ([plugins.md](plugins.md)). |
 | `src/Contracts/` | `HomeApps.Contracts`: only the messages and names that cross service boundaries. |
 | `src/<Service>/`, `tests/<Service>/` | One folder per service (Auth, Accounts, Households), written on the kit. |
-| `tests/BuildingBlocks/` | Kit tests and the shared integration-test fixture. |
+| `tests/BuildingBlocks/` | Kit tests, the shared integration-test fixture and `HomeApps.Plugins.Hello`, the sample plugin. |
 | `compose.dev.yaml` | Local infrastructure: Traefik, Postgres, RabbitMQ, Mailpit; services in the `services` profile. |
 | `.env.example` | What compose reads; copy to `.env` (never committed) to change it. |
 | `HomeApps.slnx` | The one solution file, with a folder for BuildingBlocks, Contracts and each service. Open it in Rider; CI builds it. |
@@ -24,7 +24,7 @@ How to build, test and change HomeApps day to day. For how a new service is put 
 | `Directory.Packages.props` | The one list of package versions (see below). |
 | `src/Web/` | The Vue app ([web.md](web.md)), with its production image (`Dockerfile`, `nginx.conf`). |
 | `compose.prod.yaml`, `.env.prod.example` | Production: everything behind Traefik with Let's Encrypt ([deployment.md](deployment.md)). |
-| `compose.smoke.yaml`, `scripts/` | The release check (`smoke.sh`) and the signing key generator. |
+| `compose.smoke.yaml`, `scripts/` | The release check (`smoke.sh`), the signing key generator and `pack.sh`, which packs the kit for plugins. |
 | `CHANGELOG.md` | What each version changed. |
 
 No C# project lives in the repository root: all code is in `src/` and `tests/`.

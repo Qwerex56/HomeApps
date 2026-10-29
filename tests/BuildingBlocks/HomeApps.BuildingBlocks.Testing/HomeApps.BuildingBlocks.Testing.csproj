@@ -3,6 +3,7 @@
   <!-- Shared integration-test plumbing for every service: Postgres in Docker, in-memory bus, test tokens. -->
   <PropertyGroup>
     <IsTestProject>false</IsTestProject>
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

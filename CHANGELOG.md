@@ -2,6 +2,16 @@
 
 Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`.
 
+## 2.1.0 (unreleased)
+
+### Added
+
+- **Plugins:** the kit for apps that live outside this repository ([docs/plugins.md](docs/plugins.md)). The plugin
+  manifest (`GET /plugins/{id}/manifest`), checked at start; household roles asked from Households with a short cache
+  that Households' events clear; permissions per household role checked before every plugin command and query;
+  switching a plugin on per household; everything under `/plugins/{id}`; the built UI served at `/plugins/{id}/ui`.
+- `scripts/pack.sh` packs the kit into a local NuGet feed for plugins.
+
 ## 2.0.0 (2026-10-29)
 
 A rewrite from scratch. The services of the first version (`AccountManagement`, `Household.Api`, `TodoListService`)
