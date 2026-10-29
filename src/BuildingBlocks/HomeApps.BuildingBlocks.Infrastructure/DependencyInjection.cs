@@ -34,13 +34,23 @@ public static class DependencyInjection
         string serviceName,
         Assembly consumersAssembly,
         Action<IRetryConfigurator>? retry = null)
+        where TContext : HomeAppsDbContext =>
+        services.AddHomeAppsInfrastructure<TContext>(configuration, serviceName, [consumersAssembly], retry);
+
+    /// <summary>The same with consumers from several assemblies, e.g. a plugin's own and the plugin kit's.</summary>
+    public static IServiceCollection AddHomeAppsInfrastructure<TContext>(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string serviceName,
+        Assembly[] consumersAssemblies,
+        Action<IRetryConfigurator>? retry = null)
         where TContext : HomeAppsDbContext
     {
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentException.ThrowIfNullOrWhiteSpace(serviceName);
 
         services.AddHomeAppsPersistence<TContext>(configuration);
-        services.AddHomeAppsMessaging<TContext>(configuration, serviceName, consumersAssembly, retry);
+        services.AddHomeAppsMessaging<TContext>(configuration, serviceName, consumersAssemblies, retry);
 
         services.TryAddSingleton(TimeProvider.System);
 
@@ -77,6 +87,15 @@ public static class DependencyInjection
         string serviceName,
         Assembly consumersAssembly,
         Action<IRetryConfigurator>? retry = null)
+        where TContext : HomeAppsDbContext =>
+        services.AddHomeAppsMessaging<TContext>(configuration, serviceName, [consumersAssembly], retry);
+
+    public static IServiceCollection AddHomeAppsMessaging<TContext>(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string serviceName,
+        Assembly[] consumersAssemblies,
+        Action<IRetryConfigurator>? retry = null)
         where TContext : HomeAppsDbContext
     {
         ArgumentNullException.ThrowIfNull(configuration);
@@ -86,7 +105,7 @@ public static class DependencyInjection
         var transport = configuration[MessagingTransportKey] ?? RabbitMqTransport;
         if (string.Equals(transport, InMemoryTransport, StringComparison.OrdinalIgnoreCase))
         {
-            services.AddMassTransitTestHarness(bus => ConfigureBus<TContext>(bus, serviceName, consumersAssembly, retry));
+            services.AddMassTransitTestHarness(bus => ConfigureBus<TContext>(bus, serviceName, consumersAssemblies, retry));
             return services;
         }
 
@@ -98,7 +117,7 @@ public static class DependencyInjection
         services.AddValidatedOptions<RabbitMqOptions>(RabbitMqOptions.SectionName);
         services.AddMassTransit(bus =>
         {
-            ConfigureBus<TContext>(bus, serviceName, consumersAssembly, retry);
+            ConfigureBus<TContext>(bus, serviceName, consumersAssemblies, retry);
 
             bus.UsingRabbitMq((context, rabbit) =>
             {
@@ -120,11 +139,11 @@ public static class DependencyInjection
     public const string InMemoryTransport = "InMemory";
 
     private static void ConfigureBus<TContext>(
-        IBusRegistrationConfigurator bus, string serviceName, Assembly consumersAssembly, Action<IRetryConfigurator>? retry)
+        IBusRegistrationConfigurator bus, string serviceName, Assembly[] consumersAssemblies, Action<IRetryConfigurator>? retry)
         where TContext : HomeAppsDbContext
     {
         bus.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(prefix: serviceName, includeNamespace: false));
-        bus.AddConsumers(consumersAssembly);
+        bus.AddConsumers(consumersAssemblies);
 
         bus.AddEntityFrameworkOutbox<TContext>(outbox =>
         {

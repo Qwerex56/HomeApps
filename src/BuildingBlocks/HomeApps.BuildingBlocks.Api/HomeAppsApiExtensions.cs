@@ -59,7 +59,8 @@ public static class HomeAppsApiExtensions
     /// The matching middleware pipeline. Health checks are anonymous: <c>/health/live</c> (process up) and
     /// <c>/health/ready</c> (dependencies such as the database). OpenAPI is served at <c>/openapi/v1.json</c> in Development.
     /// </summary>
-    public static WebApplication UseHomeAppsDefaults(this WebApplication app)
+    /// <param name="endpointsPrefix">Maps the <see cref="IEndpoint"/>s under this prefix, e.g. <c>/api</c> for a plugin.</param>
+    public static WebApplication UseHomeAppsDefaults(this WebApplication app, string? endpointsPrefix = null)
     {
         ArgumentNullException.ThrowIfNull(app);
 
@@ -77,7 +78,7 @@ public static class HomeAppsApiExtensions
             app.MapOpenApi().AllowAnonymous();
         }
 
-        app.MapEndpoints();
+        app.MapEndpoints(endpointsPrefix is null ? null : app.MapGroup(endpointsPrefix));
 
         return app;
     }
