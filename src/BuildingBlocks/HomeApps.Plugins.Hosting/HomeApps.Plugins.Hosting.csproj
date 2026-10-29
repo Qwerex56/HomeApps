@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <!-- Runs a plugin inside HomeApps: manifest endpoint, household access over HTTP, enablement, path base, UI files. -->
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HomeApps.Plugins\HomeApps.Plugins.csproj" />
+    <ProjectReference Include="..\HomeApps.BuildingBlocks.Api\HomeApps.BuildingBlocks.Api.csproj" />
+    <ProjectReference Include="..\HomeApps.BuildingBlocks.Infrastructure\HomeApps.BuildingBlocks.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="HomeApps.Plugins.Tests" />
+  </ItemGroup>
+
+</Project>

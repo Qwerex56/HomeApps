@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <!--
+    What a plugin's Domain and Application layers may use: the manifest, household access and the permission
+    behavior. No ASP.NET, EF Core or MassTransit here; those live in HomeApps.Plugins.Hosting (docs/plugins.md).
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\HomeApps.BuildingBlocks.Application\HomeApps.BuildingBlocks.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="HomeApps.Plugins.Hosting" />
+    <InternalsVisibleTo Include="HomeApps.Plugins.Tests" />
+  </ItemGroup>
+
+</Project>
