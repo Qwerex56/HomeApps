@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Packs the kit for plugins that live outside this repository (docs/plugins.md) into a local NuGet feed:
-# HomeApps.BuildingBlocks.*, HomeApps.Contracts, HomeApps.Plugins(.Hosting) and the test helpers.
+# Packs the kit for plugins that live outside this repository (docs/plugins.md) into a local feed:
+# HomeApps.BuildingBlocks.*, HomeApps.Contracts, HomeApps.Plugins(.Hosting) and the test helpers as NuGet packages,
+# and @homeapps/plugin-sdk (the UI side) as an npm tarball. Needs `npm ci` in src/Web once.
 # The version is HomeApps' own (Directory.Build.props). Run it again after changing the kit; a plugin's
 # nuget.config points at the feed. HOMEAPPS_PACKAGES changes where the feed is.
 set -euo pipefail
@@ -27,5 +28,15 @@ for project in "${projects[@]}"; do
     id=$(basename "$project" .csproj | tr '[:upper:]' '[:lower:]')
     rm -rf "${NUGET_PACKAGES:-$HOME/.nuget/packages}/$id/$version"
 done
+
+# The UI side, at the same version.
+sdk=src/Web/plugin-sdk
+sdk_version=$(sed -n 's/.*"version": "\(.*\)".*/\1/p' "$sdk/package.json")
+if [[ "$sdk_version" != "$version" ]]; then
+    echo "$sdk/package.json has version $sdk_version, Directory.Build.props $version; make them equal." >&2
+    exit 1
+fi
+npm --prefix "$sdk" run build --silent
+npm pack "./$sdk" --pack-destination "$feed" --silent > /dev/null
 
 echo "Packed HomeApps $version into $feed"

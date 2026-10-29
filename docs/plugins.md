@@ -170,10 +170,53 @@ The DbContext derives from `PluginDbContext` instead of `HomeAppsDbContext`. Con
 
 ## UI
 
-The plugin builds its UI as an ES module (Vite library mode) into `wwwroot/ui/entry.js` (+ `entry.css`); the kit serves
-it at `/plugins/{id}/ui/` anonymously and with `Cache-Control: no-cache`, since the file name stays the same between
-versions. The web app imports it and shares its own Vue, PrimeVue and the signed-in HTTP client with it. The module's
-contract (`@homeapps/plugin-sdk`) comes with the web part of the plugin kit.
+The plugin's UI is a small Vue project (in Todo: `src/Todo.Web`) built into the API project's `wwwroot/ui`. The kit
+serves it at `/plugins/{id}/ui/` anonymously and with `Cache-Control: no-cache`, since `entry.js` keeps its name between
+versions. The web app reads the manifest, imports `ui.entry`, adds `ui.style` and shows the module's pieces:
+
+| Manifest | Module (`definePlugin`) | Where the web app shows it |
+|---|---|---|
+| `ui.routes[]` | `routes[path]` | a page at `/homes/{householdId}/apps/{pluginId}/{path}`; with `menu` also a tab in the household |
+| `ui.widgets[]` | `widgets[id]` | a tile on the household's first page (`Household`) and on `/wall` (`Wall`) |
+| `ui.settings` | `settings` | a section under "Aplikacje" in the household's settings, while the plugin is on there |
+| `enablement` | | the switch under "Aplikacje", usable from `enablement.minRole` up |
+
+Only plugins that are on in the household appear. A plugin that fails to load or throws breaks only its own piece.
+
+```ts
+// src/main.ts of the plugin's UI
+import { definePlugin } from '@homeapps/plugin-sdk'
+import TodayWidget from './TodayWidget.vue'
+
+export default definePlugin({
+  id: 'todo',
+  routes: { '': () => import('./TasksPage.vue') },
+  widgets: { today: TodayWidget },
+  messages: { pl: { title: 'Zadania w {name}' } },
+})
+```
+
+Inside its components the plugin calls `useHost()`: `http` (Axios with the user's token and the app's refresh),
+`apiBase`, `household` (id, name, `myRole`), `user`, `can('tasks.write')` (the manifest's permissions for the role),
+`t('title', { … })` (its own `messages`), `notify(...)` and `errorMessage(error)`. Widgets get `householdId` and
+`place` as props.
+
+**Shared, not bundled.** The plugin's Vite config uses `homeAppsPlugin()` from `@homeapps/plugin-sdk/vite`:
+
+```ts
+export default defineConfig({ plugins: [vue(), homeAppsPlugin({ outDir: '../Todo.Api/wwwroot/ui' })] })
+```
+
+It builds one ES module and reads `vue`, `vue-router`, `vue-i18n`, `pinia` and `@tanstack/vue-query` from the web app
+(`globalThis.__HOMEAPPS_SHARED__`) instead of bundling them, so there is one Vue and one query cache. PrimeVue
+components are used by name without importing them (`<Button>`, `<InputText>`, `<DatePicker>`, `<Dialog>`…; the list
+is `PLUGIN_COMPONENTS` in `src/Web/src/features/plugins/shared.ts`) and carry the app's theme. A plugin's own CSS should
+be scoped (`<style scoped>`); it can use the app's Tailwind classes only where the app already uses them.
+
+**The instance's plugins** come from `/plugins.json`, an array of ids: in production the web image writes it at start
+from `HOMEAPPS_PLUGINS` (`.env`, e.g. `HOMEAPPS_PLUGINS=todo`), during development `vite` serves it from the same
+variable (`HOMEAPPS_PLUGINS=todo npm run dev`). A listed plugin that is not running is left out; one whose manifest
+needs a newer HomeApps or has an unknown `manifestVersion` shows as such under "Aplikacje" and is never loaded.
 
 ## The kit as packages
 
@@ -182,8 +225,9 @@ scripts/pack.sh     # → ~/.homeapps/packages (HOMEAPPS_PACKAGES to change), ve
 ```
 
 It packs `HomeApps.BuildingBlocks.*`, `HomeApps.Contracts`, `HomeApps.Plugins`, `HomeApps.Plugins.Hosting` and
-`HomeApps.BuildingBlocks.Testing`, and drops that version from the local NuGet cache so a repack is picked up. The
-plugin's `nuget.config`:
+`HomeApps.BuildingBlocks.Testing`, and drops that version from the local NuGet cache so a repack is picked up. It also
+packs the UI side as `homeapps-plugin-sdk-<version>.tgz` (run `npm ci` in `src/Web` once first); a plugin's UI
+installs it with `npm install ~/.homeapps/packages/homeapps-plugin-sdk-2.1.0.tgz`. The plugin's `nuget.config`:
 
 ```xml
 <configuration>
@@ -194,7 +238,8 @@ plugin's `nuget.config`:
 </configuration>
 ```
 
-`tests/BuildingBlocks/HomeApps.Plugins.Hello` is the smallest working plugin and the kit's own test subject.
+`tests/BuildingBlocks/HomeApps.Plugins.Hello` is the smallest working plugin and the kit's own test subject, with a UI
+in `ui/` (`npm install && npm run build` there; the build in `wwwroot/ui` is committed).
 
 ## Running a plugin next to HomeApps
 

@@ -10,7 +10,10 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
   manifest (`GET /plugins/{id}/manifest`), checked at start; household roles asked from Households with a short cache
   that Households' events clear; permissions per household role checked before every plugin command and query;
   switching a plugin on per household; everything under `/plugins/{id}`; the built UI served at `/plugins/{id}/ui`.
-- `scripts/pack.sh` packs the kit into a local NuGet feed for plugins.
+- **Web:** plugin UIs inside the app: their pages as tabs of a household, their widgets on the household page and the
+  wall tablet, and an "Aplikacje" card in a household's settings to switch them on and off. Plugins use the app's
+  Vue and PrimeVue through `@homeapps/plugin-sdk`. The web image lists the instance's plugins from `HOMEAPPS_PLUGINS`.
+- `scripts/pack.sh` packs the kit into a local feed for plugins: NuGet packages and the `@homeapps/plugin-sdk` tarball.
 
 ## 2.0.0 (2026-10-29)
 

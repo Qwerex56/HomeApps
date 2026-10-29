@@ -150,6 +150,8 @@ services:
     restart: unless-stopped
     build:
       context: src/Web
+    environment:
+      HOMEAPPS_PLUGINS: ${HOMEAPPS_PLUGINS:-}
     labels:
       - "traefik.enable=true"
       # Lowest priority: everything the services above do not claim is a page of the Vue app.

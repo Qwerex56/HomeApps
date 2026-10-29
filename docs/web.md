@@ -186,10 +186,21 @@ On a phone the main menu moves to a tab bar at the bottom of the screen.
 The app installs on phones and tablets (`vite-plugin-pwa`, manifest in `vite.config.ts`, icons in `public/`). The
 service worker caches only the app itself and updates it on its own. It never answers the services' paths with
 the app (`servicePaths` in `vite.config.ts`), above all `/auth/external/google`, which must reach Auth. Add a new
-service's path prefix there. Data is never served offline.
+service's path prefix there (plugins are covered by `/plugins/`). Data is never served offline.
+
+## Plugins
+
+`features/plugins` hosts the UIs of plugins, which live outside this repository ([plugins.md](plugins.md), "UI"):
+`registry.ts` reads `/plugins.json`, each manifest and UI module once per page load; `PluginPage` (route
+`household-app`), `PluginWidgets` (household page and `/wall`) and `PluginsSettings` (the "Aplikacje" card in a
+household's settings) show their pieces, each through `PluginOutlet`, which hands the plugin its `HostApi`.
+`shared.ts` shares Vue and friends with plugins and registers the PrimeVue components they use by name. The plugin
+SDK (types, `useHost`, the Vite plugin for building a plugin's UI) is `plugin-sdk/`; the app imports its source
+through the `@homeapps/plugin-sdk` alias, plugins its packed build. During development `HOMEAPPS_PLUGINS=todo npm run
+dev` lists plugins.
 
 `/wall` (`features/wall`) is the wall tablet (Q7, Q11): clock, date, the current household's active people and
-placeholders for plugin tiles (weather, news), on a dark full-screen page without the app's menu. Open it from the
+the widgets of the plugins that are on in that household (placeholders for weather and news until there are any), on a dark full-screen page without the app's menu. Open it from the
 user menu ("Tryb tabletu") or, on an installed app, from the icon's long-press shortcut. The tablet signs in as an
 ordinary user and stays signed in through the refresh token. The Screen Wake Lock API keeps the screen on; it needs
 HTTPS, and where it is missing the page says so. The members are read again every 5 minutes.
