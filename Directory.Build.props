@@ -8,17 +8,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-  </PropertyGroup>
-
-  <!--
-    The services that predate the shared kit still have warnings. They keep building as they did
-    until they are replaced; new projects get no such exception.
-  -->
-  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'AccountManagement'
-                         Or '$(MSBuildProjectName)' == 'Household.Api'
-                         Or '$(MSBuildProjectName)' == 'AuthorizationService'
-                         Or '$(MSBuildProjectName)' == 'Shared'
-                         Or '$(MSBuildProjectName)' == 'TodoListService'">
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <Version>2.1.0</Version>
+    <!-- The kit is also packed for plugins outside this repository (scripts/pack.sh, docs/plugins.md). -->
+    <Authors>HomeApps</Authors>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 </Project>

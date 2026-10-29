@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Households domain: households, memberships with household roles, invites and the copy of users from Accounts.
+       Only the kit's domain building blocks and FluentResults. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Domain\HomeApps.BuildingBlocks.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentResults" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Households.Domain.Tests" />
+  </ItemGroup>
+
+</Project>

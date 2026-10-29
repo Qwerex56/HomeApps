@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <!-- Aggregates, entities, value objects, domain events and errors. No EF, MediatR or ASP.NET. -->
-  <ItemGroup>
-    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Domain\HomeApps.BuildingBlocks.Domain.csproj" />
-  </ItemGroup>
-
-</Project>

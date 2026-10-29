@@ -1,3 +1,5 @@
+using HomeApps.BuildingBlocks.Api.Results;
+using HomeApps.BuildingBlocks.Application.Abstractions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -7,7 +9,8 @@ namespace HomeApps.BuildingBlocks.Api.Errors;
 /// <summary>
 /// Catches what nothing else handled. Business rules return typed errors instead of throwing, so reaching this
 /// handler means a bug or an outage: it logs the exception and answers a generic 500 that never echoes
-/// <see cref="Exception.Message"/> to the caller.
+/// <see cref="Exception.Message"/> to the caller. Two exceptions are expected: a lost concurrency race becomes 409,
+/// and a request ASP.NET Core could not bind (bad JSON, an unknown enum value) keeps its own 4xx.
 /// </summary>
 internal sealed partial class LastResortExceptionHandler(
     IProblemDetailsService problemDetailsService,
@@ -19,6 +22,38 @@ internal sealed partial class LastResortExceptionHandler(
         {
             // The client went away; nothing to answer.
             return true;
+        }
+
+        if (exception is ConcurrencyConflictException)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
+            return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
+            {
+                HttpContext = httpContext,
+                ProblemDetails =
+                {
+                    Status = StatusCodes.Status409Conflict,
+                    Title = "The data changed in the meantime",
+                    Detail = "Someone else changed the same data first. Try again.",
+                    Extensions = { [ResultHttpMapper.CodeExtension] = "concurrency.conflict" },
+                },
+            });
+        }
+
+        if (exception is BadHttpRequestException badRequest)
+        {
+            httpContext.Response.StatusCode = badRequest.StatusCode;
+            return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
+            {
+                HttpContext = httpContext,
+                ProblemDetails =
+                {
+                    Status = badRequest.StatusCode,
+                    Title = "The request could not be read",
+                    Detail = "Check the request body and parameters.",
+                    Extensions = { [ResultHttpMapper.CodeExtension] = "request.invalid" },
+                },
+            });
         }
 
         LogUnhandled(logger, exception, httpContext.Request.Method, httpContext.Request.Path);

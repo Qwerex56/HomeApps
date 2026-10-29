@@ -1,0 +1,22 @@
+/* PrimeVue writes its theme into the "primevue" layer (app/primevue.ts), between Tailwind's base and utilities,
+   so a Tailwind class on a PrimeVue component always wins. */
+@layer theme, base, primevue, components, utilities;
+
+@import 'tailwindcss';
+@import 'tailwindcss-primeui';
+@import 'primeicons/primeicons.css';
+
+/* Dark mode follows the same class PrimeVue uses (shared/composables/useColorScheme.ts). */
+@custom-variant dark (&:where(.app-dark, .app-dark *));
+
+@layer base {
+  html,
+  body,
+  #app {
+    @apply min-h-dvh;
+  }
+
+  body {
+    @apply bg-surface-50 text-surface-900 antialiased dark:bg-surface-950 dark:text-surface-0;
+  }
+}

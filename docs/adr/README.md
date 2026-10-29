@@ -9,4 +9,6 @@ Short records of decisions that shape every service. Add a new numbered file whe
 | [0003](0003-domain-events-and-the-outbox.md) | Domain events dispatched before commit, integration messages through the outbox |
 | [0004](0004-repositories-and-unit-of-work.md) | One repository per aggregate, the DbContext as unit of work, saving in a pipeline behavior |
 | [0005](0005-authentication-by-default.md) | Every endpoint authenticated by default, tokens validated with the Auth service's public keys |
-| [0006](0006-shared-kit-and-templates.md) | A shared kit plus `dotnet new` templates instead of copied code |
+| [0006](0006-shared-kit-and-templates.md) | A shared kit plus `dotnet new` templates instead of copied code (superseded by 0007) |
+| [0007](0007-lean-kit-without-templates.md) | A lean kit without templates, entity base classes or typed errors; MediatR 12 |
+| [0008](0008-one-error-type-with-a-kind.md) | One error type (`AppError`) with a code and a kind that picks the HTTP status |

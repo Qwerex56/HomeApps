@@ -19,6 +19,11 @@ internal sealed class HttpContextCurrentUser(IHttpContextAccessor accessor) : IC
 
     public string? Email => IsAuthenticated ? Principal!.FindFirstValue(ClaimNames.Email) : null;
 
+    public DateTimeOffset? AuthenticatedAt =>
+        IsAuthenticated && long.TryParse(Principal!.FindFirstValue(ClaimNames.AuthTime), out var seconds)
+            ? DateTimeOffset.FromUnixTimeSeconds(seconds)
+            : null;
+
     public IReadOnlyCollection<string> Roles =>
         IsAuthenticated ? Principal!.FindAll(ClaimNames.Role).Select(c => c.Value).ToArray() : [];
 

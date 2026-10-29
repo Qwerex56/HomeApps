@@ -1,0 +1,521 @@
+{
+  "app": {
+    "name": "HomeApps",
+    "home": "Pulpit",
+    "account": "Moje konto",
+    "notFound": "Nie ma takiej strony",
+    "backHome": "Wróć na pulpit",
+    "admin": "Administracja",
+    "households": "Domy",
+    "menu": "Menu główne"
+  },
+  "colorScheme": {
+    "label": "Motyw",
+    "system": "Jak w systemie",
+    "light": "Jasny",
+    "dark": "Ciemny"
+  },
+  "home": {
+    "welcome": "Witaj w HomeApps",
+    "skeleton": "Konto, domy i urządzenia pojawią się tutaj w kolejnych etapach.",
+    "hello": "Cześć, {name}!",
+    "openHousehold": "Otwórz dom"
+  },
+  "errors": {
+    "unknown": "Coś poszło nie tak. Spróbuj ponownie.",
+    "network": "Brak połączenia z serwerem.",
+    "rate_limited": "Za dużo prób. Spróbuj ponownie za {seconds} s.",
+    "auth": {
+      "invalid_credentials": "Nieprawidłowy email lub hasło.",
+      "locked_out": "Konto jest chwilowo zablokowane po zbyt wielu nieudanych próbach.",
+      "cannot_sign_in": "Nie można się zalogować na to konto.",
+      "invalid_refresh_token": "Sesja wygasła. Zaloguj się ponownie.",
+      "registration_closed": "Rejestracja jest możliwa tylko z zaproszenia.",
+      "reauthentication_required": "Potwierdź, że to Ty, logując się ponownie."
+    },
+    "account": {
+      "disabled_by_user": "To konto zostało przez Ciebie wyłączone.",
+      "already_disabled": "Konto jest już wyłączone.",
+      "not_disabled": "Konto nie jest wyłączone.",
+      "owner_protected": "Konta właściciela nie można wyłączyć.",
+      "disabled": "Konto jest wyłączone."
+    },
+    "reactivation": {
+      "pending": "Przywracamy konto, to potrwa chwilę."
+    },
+    "email": {
+      "taken": "Ten email jest już używany.",
+      "unchanged": "To jest Twój obecny email."
+    },
+    "password": {
+      "too_weak": "Hasło jest za słabe."
+    },
+    "token": {
+      "invalid_or_expired": "Link jest nieważny albo wygasł."
+    },
+    "invitation": {
+      "invalid_or_expired": "Zaproszenie jest nieważne albo wygasło.",
+      "already_pending": "Na ten email czeka już zaproszenie."
+    },
+    "external_login": {
+      "cancelled": "Logowanie zostało przerwane.",
+      "provider_disabled": "Logowanie przez tego dostawcę jest wyłączone.",
+      "already_linked": "To konto Google jest już połączone z innym kontem.",
+      "last_method": "Nie możesz usunąć ostatniej metody logowania.",
+      "link_declined": "Konta nie zostały połączone.",
+      "failed": "Nie udało się zalogować przez Google. Spróbuj ponownie.",
+      "link_required": "Konto z tym adresem już istnieje."
+    },
+    "user": {
+      "pending": "Przygotowujemy Twoje konto…",
+      "not_found": "Nie ma takiego konta."
+    },
+    "client": {
+      "unknown": "Nieznana aplikacja."
+    },
+    "forbidden": {
+      "role": "Nie masz uprawnień do tej operacji."
+    },
+    "erase": {
+      "confirmation_mismatch": "Email się nie zgadza.",
+      "not_disabled": "Najpierw wyłącz konto."
+    },
+    "identity": {
+      "not_found": "Nie ma takiego konta."
+    },
+    "household": {
+      "not_found": "Nie ma takiego domu albo nie należysz do niego.",
+      "forbidden": "Nie masz uprawnień w tym domu.",
+      "archived": "Ten dom jest zarchiwizowany.",
+      "already_member": "Już należysz do tego domu.",
+      "full": "Ten dom ma już maksymalną liczbę osób.",
+      "owner_cannot_leave": "Właściciel musi najpierw przekazać dom.",
+      "name_invalid": "Nazwa domu jest nieprawidłowa.",
+      "description_invalid": "Opis jest za długi.",
+      "nickname_invalid": "Pseudonim jest nieprawidłowy.",
+      "role_invalid": "Nie można nadać tej roli.",
+      "role_unchanged": "Ta osoba ma już tę rolę.",
+      "transfer_target_invalid": "Tej osobie nie można przekazać domu.",
+      "not_member": "Ta osoba nie należy do domu.",
+      "not_guest": "Czas dostępu dotyczy tylko gości.",
+      "access_until_invalid": "Data końca dostępu musi być w przyszłości.",
+      "no_owner": "Dom nie ma właściciela.",
+      "not_archived": "Ten dom nie jest zarchiwizowany."
+    },
+    "invite": {
+      "not_found": "Nie ma takiego zaproszenia.",
+      "not_usable": "To zaproszenie wygasło albo zostało odwołane.",
+      "role_invalid": "Nie możesz zaprosić z tą rolą.",
+      "validity_invalid": "Nieprawidłowy czas ważności."
+    },
+    "request": {
+      "invalid": "Nieprawidłowe żądanie."
+    },
+    "plugin": {
+      "disabled": "Ta aplikacja nie jest włączona w tym domu.",
+      "forbidden": "Twoja rola w tym domu na to nie pozwala."
+    }
+  },
+  "auth": {
+    "or": "albo",
+    "google": "Zaloguj przez Google",
+    "logout": "Wyloguj",
+    "logoutEverywhere": "Wyloguj na wszystkich urządzeniach",
+    "ticketMissing": "Ta strona działa tylko zaraz po logowaniu. Zaloguj się ponownie.",
+    "fields": {
+      "email": "Email",
+      "password": "Hasło",
+      "displayName": "Nazwa wyświetlana",
+      "firstName": "Imię",
+      "lastName": "Nazwisko"
+    },
+    "login": {
+      "title": "Zaloguj się",
+      "submit": "Zaloguj",
+      "noAccount": "Nie masz konta?",
+      "register": "Załóż je",
+      "forgot": "Nie pamiętasz hasła?"
+    },
+    "register": {
+      "title": "Załóż konto",
+      "submit": "Załóż konto",
+      "haveAccount": "Masz już konto?",
+      "login": "Zaloguj się"
+    },
+    "callback": {
+      "working": "Kończymy logowanie…",
+      "back": "Wróć do logowania"
+    },
+    "link": {
+      "title": "Połącz konta",
+      "text": "Konto z adresem {email} już istnieje. Podaj jego hasło, a połączymy je z Google i zalogujemy Cię.",
+      "confirm": "Połącz i zaloguj",
+      "decline": "Nie łącz"
+    },
+    "reactivate": {
+      "title": "Czy na pewno chcesz przywrócić konto?",
+      "text": "To konto zostało przez Ciebie wyłączone. Sprawdź swoje dane i potwierdź, a konto znowu będzie aktywne.",
+      "confirm": "Przywróć konto",
+      "cancel": "Nie teraz"
+    }
+  },
+  "invite": {
+    "title": "Zaproszenie do HomeApps",
+    "bootstrap": "To jest pierwsze konto na tym serwerze: będziesz jego właścicielem.",
+    "by": "{by} zaprasza Cię do HomeApps.",
+    "for": "Zaproszenie na adres {email} jest ważne do {date}.",
+    "orPassword": "albo ustaw hasło",
+    "submit": "Załóż konto",
+    "signedIn": "Używasz teraz konta {email}. Wyloguj się, żeby przyjąć zaproszenie na nowe konto."
+  },
+  "password": {
+    "forgot": {
+      "title": "Nie pamiętasz hasła?",
+      "text": "Podaj email konta, a wyślemy link do ustawienia nowego hasła.",
+      "submit": "Wyślij link",
+      "sent": "Jeśli konto z adresem {email} istnieje, wysłaliśmy na nie link. Jest ważny godzinę."
+    },
+    "reset": {
+      "title": "Ustaw nowe hasło",
+      "new": "Nowe hasło",
+      "submit": "Zapisz hasło",
+      "done": "Hasło zmienione. Zaloguj się nowym hasłem."
+    }
+  },
+  "confirm": {
+    "password": {
+      "title": "Potwierdź zmianę hasła",
+      "text": "Po potwierdzeniu nowe hasło zacznie działać, a wszystkie urządzenia zostaną wylogowane.",
+      "submit": "Potwierdzam zmianę hasła",
+      "done": "Hasło zmienione. Zaloguj się nowym hasłem."
+    },
+    "email": {
+      "title": "Potwierdź nowy email",
+      "text": "Po potwierdzeniu będziesz logować się nowym adresem.",
+      "submit": "Potwierdzam nowy email",
+      "done": "Email zmieniony."
+    }
+  },
+  "common": {
+    "save": "Zapisz",
+    "cancel": "Anuluj"
+  },
+  "account": {
+    "tabs": {
+      "profile": "Profil",
+      "security": "Bezpieczeństwo",
+      "sessions": "Urządzenia",
+      "invitations": "Zaproszenia",
+      "history": "Historia"
+    },
+    "profile": {
+      "title": "Profil",
+      "preferredName": "Jak się do Ciebie zwracać",
+      "preferredNameHint": "Np. dla JARVIS-a. Puste = imię albo nazwa.",
+      "dateOfBirth": "Data urodzenia",
+      "avatarUrl": "Adres zdjęcia",
+      "locale": "Język",
+      "timeZone": "Strefa czasowa",
+      "saved": "Profil zapisany"
+    },
+    "disable": {
+      "title": "Wyłącz konto",
+      "text": "Konto zostanie wyłączone i wylogujemy Cię wszędzie. Dane zostają: wystarczy się zalogować, żeby je przywrócić.",
+      "button": "Wyłącz konto",
+      "confirmTitle": "Na pewno wyłączyć konto?",
+      "confirmText": "Wylogujemy Cię na wszystkich urządzeniach. Konto przywrócisz, logując się ponownie.",
+      "reason": "Powód (opcjonalnie)",
+      "done": "Konto wyłączone. Zaloguj się, jeśli zechcesz je przywrócić."
+    },
+    "security": {
+      "methods": "Metody logowania",
+      "set": "Ustawione",
+      "notSet": "Brak",
+      "link": "Połącz",
+      "unlink": "Odłącz",
+      "linked": "Konto Google połączone.",
+      "unlinkTitle": "Odłączyć Google?",
+      "unlinkText": "Nie zalogujesz się już przez to konto Google. Upewnij się, że masz inną metodę logowania.",
+      "changePassword": "Zmień hasło",
+      "addPassword": "Dodaj hasło",
+      "currentPassword": "Obecne hasło",
+      "sendLink": "Wyślij link potwierdzający",
+      "passwordSent": "Wysłaliśmy link na Twój email. Nowe hasło zacznie działać po kliknięciu, a wszystkie urządzenia zostaną wylogowane.",
+      "changeEmail": "Zmień email",
+      "currentEmail": "Obecny email: {email}",
+      "newEmail": "Nowy email",
+      "emailSent": "Wysłaliśmy link na {email}. Email zmieni się po jego kliknięciu.",
+      "reauth": "Ta zmiana wymaga świeżego logowania. Zaloguj się ponownie przez Google i wróć tutaj.",
+      "wrongPassword": "Obecne hasło jest nieprawidłowe."
+    },
+    "sessions": {
+      "title": "Urządzenia",
+      "subtitle": "Gdzie jesteś zalogowany. Wyloguj urządzenie, którego nie rozpoznajesz.",
+      "lastUsed": "ostatnio {date}",
+      "revoke": "Wyloguj to urządzenie",
+      "everywhereText": "Wylogujemy wszystkie urządzenia, także to.",
+      "method": {
+        "Password": "Hasło",
+        "Google": "Google",
+        "Apple": "Apple"
+      }
+    },
+    "invitations": {
+      "title": "Zaproś do HomeApps",
+      "subtitle": "Wyślemy link, przez który ta osoba założy konto.",
+      "send": "Wyślij zaproszenie",
+      "sent": "Zaproszenie wysłane na {email}",
+      "empty": "Nie wysłano jeszcze żadnych zaproszeń.",
+      "created": "wysłane {date}",
+      "code": "kod {code}",
+      "resend": "Wyślij ponownie",
+      "resent": "Zaproszenie wysłane ponownie",
+      "revoke": "Odwołaj",
+      "revoked": "Zaproszenie odwołane",
+      "status": {
+        "Pending": "Czeka",
+        "Accepted": "Przyjęte",
+        "Revoked": "Odwołane",
+        "Expired": "Wygasło"
+      }
+    },
+    "history": {
+      "title": "Historia konta",
+      "subtitle": "Kiedy i co zmieniło się na koncie (50 ostatnich).",
+      "action": {
+        "Registered": "Założenie konta",
+        "ProfileUpdated": "Zmiana profilu",
+        "Disabled": "Wyłączenie konta",
+        "Enabled": "Włączenie konta",
+        "ReactivatedBySelf": "Przywrócenie konta",
+        "RoleSynced": "Zmiana roli",
+        "EmailSynced": "Zmiana emaila"
+      }
+    }
+  },
+  "admin": {
+    "role": {
+      "User": "Użytkownik",
+      "Admin": "Administrator",
+      "Owner": "Właściciel"
+    },
+    "status": {
+      "Active": "Aktywne",
+      "Disabled": "Wyłączone"
+    },
+    "source": {
+      "Password": "hasło",
+      "Google": "Google",
+      "Apple": "Apple",
+      "Bootstrap": "pierwsze konto"
+    },
+    "users": {
+      "title": "Konta",
+      "search": "Szukaj po nazwie albo emailu",
+      "status": "Status",
+      "role": "Rola",
+      "anyStatus": "Każdy status",
+      "anyRole": "Każda rola",
+      "lastSeen": "Ostatnio widziany",
+      "never": "nigdy",
+      "empty": "Brak kont dla tych filtrów."
+    },
+    "user": {
+      "reset": "Reset hasła",
+      "resetTitle": "Zresetować hasło?",
+      "resetText": "Wylogujemy tę osobę wszędzie i wyślemy link do ustawienia nowego hasła na {email}.",
+      "resetDone": "Link do resetu hasła wysłany",
+      "roleChanged": "Rola zmieniona. Zadziała przy następnym odświeżeniu sesji tej osoby.",
+      "enable": "Włącz konto",
+      "enabled": "Konto włączone",
+      "disable": "Wyłącz konto",
+      "disableTitle": "Wyłączyć konto?",
+      "disableText": "{name} zostanie wylogowany wszędzie. Dane zostają, konto można włączyć z powrotem.",
+      "disabled": "Konto wyłączone",
+      "disabledBySelf": "Użytkownik sam wyłączył konto {date}.",
+      "disabledByAdmin": "Konto wyłączone przez administratora {date}.",
+      "reason": "Powód: {reason}",
+      "erase": "Usuń na zawsze",
+      "eraseTitle": "Usunąć konto na zawsze?",
+      "eraseText": "To jest prośba „zapomnij o mnie”. Konto, jego historia i członkostwa w domach znikną bez możliwości przywrócenia.",
+      "eraseConfirm": "Wpisz {email}, żeby potwierdzić",
+      "erased": "Konto usunięte",
+      "registered": "Rejestracja",
+      "invitedBy": "Zaproszony przez",
+      "invitedAs": "zaproszenie na {email}",
+      "device": "Urządzenie przy rejestracji",
+      "readOnly": "Tego konta nie możesz edytować.",
+      "system": "system",
+      "erasedActor": "usunięte konto",
+      "older": "Starsze wpisy"
+    },
+    "fields": {
+      "DisplayName": "nazwa",
+      "FirstName": "imię",
+      "LastName": "nazwisko",
+      "PreferredName": "forma zwracania się",
+      "AvatarUrl": "zdjęcie",
+      "Locale": "język",
+      "TimeZone": "strefa czasowa",
+      "DateOfBirth": "data urodzenia"
+    },
+    "tabs": {
+      "users": "Konta",
+      "households": "Domy"
+    },
+    "households": {
+      "title": "Wszystkie domy",
+      "search": "Szukaj po nazwie",
+      "empty": "Brak domów.",
+      "members": "Osób",
+      "created": "Utworzony",
+      "restore": "Przywróć",
+      "restored": "Dom przywrócony"
+    }
+  },
+  "households": {
+    "title": "Domy",
+    "create": "Nowy dom",
+    "createSubmit": "Utwórz",
+    "name": "Nazwa",
+    "description": "Opis (opcjonalnie)",
+    "empty": "Nie należysz jeszcze do żadnego domu.",
+    "emptyHint": "Utwórz własny albo dołącz kodem zaproszenia od domownika.",
+    "members": {
+      "you": "(Ty)",
+      "inactive": "konto nieaktywne",
+      "joined": "Dołączył(a) {date}",
+      "until": "Dostęp do {date}",
+      "actions": "Akcje: {name}",
+      "makeRole": "Zmień na: {role}",
+      "roleChanged": "Rola zmieniona",
+      "rename": "Zmień pseudonim",
+      "renamed": "Pseudonim zapisany",
+      "access": "Czas dostępu gościa",
+      "accessUntil": "Dostęp do",
+      "accessHint": "Puste = bez końca.",
+      "accessSaved": "Czas dostępu zapisany",
+      "transfer": "Przekaż dom",
+      "transferTitle": "Przekazać dom?",
+      "transferText": "{name} zostanie właścicielem, a Ty administratorem domu.",
+      "transferred": "Dom przekazany",
+      "remove": "Usuń z domu",
+      "removeTitle": "Usunąć z domu?",
+      "removeText": "{name} straci dostęp do domu, a jego zaproszenia przestaną działać.",
+      "removed": "Usunięto z domu"
+    },
+    "current": "Bieżący",
+    "switch": "Bieżący dom",
+    "archived": "Zarchiwizowany",
+    "nickname": "Pseudonim w tym domu",
+    "nicknameHint": "Puste = {name}.",
+    "role": {
+      "Guest": "Gość",
+      "Member": "Domownik",
+      "Admin": "Administrator",
+      "Owner": "Właściciel"
+    },
+    "tabs": {
+      "members": "Domownicy",
+      "invites": "Zaproszenia",
+      "settings": "Ustawienia"
+    },
+    "join": {
+      "title": "Dołącz do domu",
+      "subtitle": "Wpisz kod z zaproszenia albo wklej cały link.",
+      "code": "Kod zaproszenia",
+      "next": "Dalej",
+      "invitedBy": "{name} zaprasza Cię do domu:",
+      "guestLink": "Zaproszenie do domu:",
+      "as": "jako",
+      "expires": "Ważne do {date}",
+      "guestHint": "Gość widzi tylko nazwę domu i swoje członkostwo.",
+      "accept": "Dołącz"
+    },
+    "ownership": {
+      "received": "Jesteś teraz właścicielem domu „{name}”, bo poprzedni właściciel stracił dostęp do konta.",
+      "acknowledge": "Rozumiem"
+    },
+    "invites": {
+      "title": "Zaproś do domu",
+      "subtitle": "Każdy domownik może zaprosić domownika albo gościa. Kod działa wielokrotnie, aż wygaśnie.",
+      "role": "Jako",
+      "valid": "Ważne przez",
+      "guestUntil": "Dostęp gościa do (opcjonalnie)",
+      "create": "Utwórz zaproszenie",
+      "created": "Zaproszenie utworzone",
+      "empty": "Brak aktywnych zaproszeń.",
+      "expires": "wygasa {date}",
+      "uses": "użyte {count} raz | użyte {count} razy | użyte {count} razy",
+      "copy": "Kopiuj link",
+      "copied": "Link skopiowany",
+      "share": "Udostępnij",
+      "revoke": "Odwołaj",
+      "revoked": "Zaproszenie odwołane",
+      "validity": {
+        "ThirtyMinutes": "30 minut",
+        "OneHour": "1 godzinę",
+        "SixHours": "6 godzin",
+        "TwelveHours": "12 godzin",
+        "OneDay": "1 dzień",
+        "SevenDays": "7 dni"
+      }
+    },
+    "guestLink": {
+      "title": "Stały link dla gości",
+      "subtitle": "Jeden link, przez który goście dołączają bez osobnych zaproszeń.",
+      "none": "Link dla gości jest wyłączony.",
+      "create": "Utwórz link",
+      "created": "Nowy link dla gości gotowy",
+      "regenerate": "Nowy link",
+      "regenerateTitle": "Utworzyć nowy link?",
+      "regenerateText": "Obecny link przestanie działać.",
+      "disable": "Wyłącz link",
+      "disabled": "Link dla gości wyłączony"
+    },
+    "settings": {
+      "membership": "Moje członkostwo",
+      "nicknameHint": "Tak będą Cię widzieć domownicy. Puste = Twoja nazwa.",
+      "saved": "Zapisano",
+      "guestInfo": "Jako gość widzisz tylko nazwę domu i swoje członkostwo.",
+      "leave": "Opuść dom",
+      "leaveTitle": "Opuścić dom?",
+      "leaveText": "Stracisz dostęp do domu „{name}”. Wrócić można tylko z nowym zaproszeniem.",
+      "left": "Opuściłeś dom",
+      "ownerCannotLeave": "Jako właściciel możesz opuścić dom dopiero po przekazaniu go komuś innemu.",
+      "details": "Nazwa i opis",
+      "archive": "Zarchiwizuj dom",
+      "archiveTitle": "Zarchiwizować dom?",
+      "archiveText": "Dom „{name}” zniknie dla wszystkich domowników, a zaproszenia przestaną działać. Przywrócić go może tylko administrator serwera.",
+      "archiveHint": "Dom zniknie dla domowników, ale dane zostaną zachowane.",
+      "archived": "Dom zarchiwizowany"
+    },
+    "memberCount": "{count} osoba | {count} osoby | {count} osób"
+  },
+  "wall": {
+    "open": "Tryb tabletu",
+    "fullscreen": "Pełny ekran",
+    "exitFullscreen": "Wyjdź z pełnego ekranu",
+    "exit": "Zamknij tryb tabletu",
+    "noHousehold": "Nie należysz jeszcze do żadnego domu.",
+    "tiles": {
+      "weather": "Pogoda",
+      "news": "Wiadomości"
+    },
+    "soon": "Wkrótce",
+    "noWakeLock": "Ta przeglądarka nie pozwala utrzymać włączonego ekranu. Ustaw wygaszanie w ustawieniach tabletu."
+  },
+  "plugins": {
+    "title": "Aplikacje",
+    "switchedOn": "Włączono: {name}",
+    "switchedOff": "Wyłączono: {name}",
+    "whoSwitches": "Aplikacje włącza i wyłącza osoba z odpowiednią rolą w tym domu.",
+    "off": "Ta aplikacja nie jest włączona w tym domu. Włączysz ją w ustawieniach domu.",
+    "notFound": "Nie ma takiej aplikacji.",
+    "failed": "Ta część aplikacji przestała działać. Odśwież stronę, a jeśli to nie pomoże, daj znać administratorowi.",
+    "problem": {
+      "incompatible": "Wymaga nowszej wersji HomeApps",
+      "unavailable": "Chwilowo niedostępna"
+    }
+  }
+}

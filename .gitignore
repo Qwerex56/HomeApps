@@ -5,3 +5,14 @@ riderModule.iml
 /_ReSharper.Caches/
 *.DotSettings.user
 .DS_Store
+
+# Development signing keys (Auth, Q9)
+.keys/
+
+# Local secrets for docker compose; .env.example is the template.
+.env
+# The production signing key (scripts/generate-signing-key.sh).
+secrets/
+
+# Routes to plugins running from an IDE during development (docs/plugins.md); each plugin has its own.
+dynamic/plugin-*.yaml

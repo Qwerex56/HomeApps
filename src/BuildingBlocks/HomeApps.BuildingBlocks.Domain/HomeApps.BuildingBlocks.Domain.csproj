@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Domain building blocks. No EF, MediatR or ASP.NET here: only FluentResults for typed errors. -->
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <!-- Domain building blocks. No EF, MediatR or ASP.NET here: only FluentResults, so rules can return Result. -->
   <ItemGroup>
     <PackageReference Include="FluentResults" />
   </ItemGroup>

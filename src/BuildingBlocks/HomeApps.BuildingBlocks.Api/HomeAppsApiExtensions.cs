@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
@@ -18,15 +19,21 @@ namespace HomeApps.BuildingBlocks.Api;
 
 public static class HomeAppsApiExtensions
 {
+    /// <summary>Where Docker Compose mounts secrets.</summary>
+    public const string SecretsDirectory = "/run/secrets";
+
     /// <summary>
     /// Everything a HomeApps API needs besides its own use cases:
     /// ProblemDetails + last-resort exception handler, JWT bearer validated against the Auth service's JWKS,
     /// authentication required by default (anonymous is opt-in), <see cref="ICurrentUser"/>, health checks,
-    /// OpenAPI and endpoint discovery from <paramref name="endpointsAssembly"/>.
+    /// OpenAPI and endpoint discovery from <paramref name="endpointsAssembly"/>. Docker secrets in
+    /// <see cref="SecretsDirectory"/> are read as settings, one file per key (<c>Auth__Signing__PrivateKeyPem</c>),
+    /// for values that do not fit an environment variable, such as a PEM key.
     /// </summary>
     public static WebApplicationBuilder AddHomeAppsDefaults(this WebApplicationBuilder builder, Assembly endpointsAssembly)
     {
         ArgumentNullException.ThrowIfNull(builder);
+        builder.Configuration.AddKeyPerFile(SecretsDirectory, optional: true);
         var services = builder.Services;
 
         services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
@@ -52,7 +59,8 @@ public static class HomeAppsApiExtensions
     /// The matching middleware pipeline. Health checks are anonymous: <c>/health/live</c> (process up) and
     /// <c>/health/ready</c> (dependencies such as the database). OpenAPI is served at <c>/openapi/v1.json</c> in Development.
     /// </summary>
-    public static WebApplication UseHomeAppsDefaults(this WebApplication app)
+    /// <param name="endpointsPrefix">Maps the <see cref="IEndpoint"/>s under this prefix, e.g. <c>/api</c> for a plugin.</param>
+    public static WebApplication UseHomeAppsDefaults(this WebApplication app, string? endpointsPrefix = null)
     {
         ArgumentNullException.ThrowIfNull(app);
 
@@ -70,7 +78,7 @@ public static class HomeAppsApiExtensions
             app.MapOpenApi().AllowAnonymous();
         }
 
-        app.MapEndpoints();
+        app.MapEndpoints(endpointsPrefix is null ? null : app.MapGroup(endpointsPrefix));
 
         return app;
     }

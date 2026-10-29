@@ -1,6 +1,6 @@
 # 0002: Typed results instead of exceptions for business rules
 
-Status: accepted (2026-10-14)
+Status: accepted (2026-10-14); the typed errors are removed by [0007](0007-lean-kit-without-templates.md), results instead of exceptions still apply
 
 ## Context
 

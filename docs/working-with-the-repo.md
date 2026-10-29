@@ -6,19 +6,28 @@ How to build, test and change HomeApps day to day. For how a new service is put 
 ## What you need
 
 - .NET 10 SDK (`global.json` accepts 10.0 or newer).
-- Docker, only for integration tests (Testcontainers starts Postgres) and for building images.
+- Docker, for the local infrastructure (`compose.dev.yaml`), for tests that need Postgres, RabbitMQ or Mailpit
+  (Testcontainers) and for building images. See [auth.md](auth.md) for running Auth locally and [accounts.md](accounts.md) for Accounts and [households.md](households.md) for Households.
 
 ## What is where
 
 | Path | What it is |
 | --- | --- |
-| `AccountManagement/`, `Household.Api/`, `AuthorizationService/`, `Shared/` | The current services. They keep running as they are while the new ones are built next to them. |
-| `TodoListService/` | Work in progress. It is in the repository but not in the solution yet, because it does not compile. Add it back with `dotnet sln HomeApps.slnx add TodoListService/TodoListService.csproj` once it builds. |
-| `src/`, `tests/` | The shared kit (`HomeApps.BuildingBlocks.*`, `HomeApps.Contracts`) and every new service generated from the templates. |
-| `templates/` | The `dotnet new` templates for services, commands and queries. |
-| `HomeApps.slnx` | The one solution file. Open it in Rider; CI builds it. |
-| `Directory.Build.props` | Settings for every project (see below). |
+| `src/BuildingBlocks/` | The shared kit: `HomeApps.BuildingBlocks.Domain`, `.Application`, `.Infrastructure`, `.Api`, and the plugin kit `HomeApps.Plugins`, `.Hosting` ([plugins.md](plugins.md)). |
+| `src/Contracts/` | `HomeApps.Contracts`: only the messages and names that cross service boundaries. |
+| `src/<Service>/`, `tests/<Service>/` | One folder per service (Auth, Accounts, Households), written on the kit. |
+| `tests/BuildingBlocks/` | Kit tests, the shared integration-test fixture and `HomeApps.Plugins.Hello`, the sample plugin. |
+| `compose.dev.yaml` | Local infrastructure: Traefik, Postgres, RabbitMQ, Mailpit; services in the `services` profile. |
+| `.env.example` | What compose reads; copy to `.env` (never committed) to change it. |
+| `HomeApps.slnx` | The one solution file, with a folder for BuildingBlocks, Contracts and each service. Open it in Rider; CI builds it. |
+| `Directory.Build.props` | Settings for every project, the version among them (see below). |
 | `Directory.Packages.props` | The one list of package versions (see below). |
+| `src/Web/` | The Vue app ([web.md](web.md)), with its production image (`Dockerfile`, `nginx.conf`). |
+| `compose.prod.yaml`, `.env.prod.example` | Production: everything behind Traefik with Let's Encrypt ([deployment.md](deployment.md)). |
+| `compose.smoke.yaml`, `scripts/` | The release check (`smoke.sh`), the signing key generator and `pack.sh`, which packs the kit for plugins. |
+| `CHANGELOG.md` | What each version changed. |
+
+No C# project lives in the repository root: all code is in `src/` and `tests/`.
 
 ## Build and test
 
@@ -29,20 +38,15 @@ dotnet build HomeApps.slnx
 dotnet test HomeApps.slnx
 ```
 
-This is exactly what CI runs. To check the templates still produce working services (this is what the
-template workflow runs), use `./templates/verify.sh`, or `./templates/verify.sh --no-docker` to skip the
-integration tests.
+This is exactly what CI runs.
 
 ## Project settings: Directory.Build.props
 
 The root `Directory.Build.props` applies to every project: `net10.0`, nullable reference types, implicit
 usings and warnings as errors. A new project's csproj does not need to repeat any of that.
 
-- `src/Directory.Build.props` adds analyzers for the shared kit and new services, and `tests/Directory.Build.props`
+- `src/Directory.Build.props` adds analyzers for the kit and the services, and `tests/Directory.Build.props`
   adds xUnit and the test SDK to test projects. Both build on the root file.
-- The current services are listed in the root file as an exception to warnings as errors, because they still
-  have warnings. Remove a service from that list once its warnings are fixed or it is replaced. Never add a new
-  project to it.
 
 ## Packages: Directory.Packages.props
 
@@ -82,8 +86,13 @@ What runs on GitHub:
 | Workflow | When | What |
 | --- | --- | --- |
 | `ci.yml` | Every pull request, and pushes to master | Restores, builds and tests `HomeApps.slnx` in Release. |
-| `templates.yml` | Pull requests touching `src/`, `tests/` or `templates/` | Runs the shared kit tests and `templates/verify.sh`. |
-| `docker-image.yml` | Pushes to master | Builds and pushes the AccountManagement image to Docker Hub. |
 
 If CI fails, open the failed run from the pull request's Checks tab; the step log shows the compiler or test
 error. Fix it on the same branch and push again; CI reruns by itself.
+
+## Releases
+
+1. Set `<Version>` in `Directory.Build.props` and the image tags in `compose.prod.yaml` to the new version.
+2. Add the version to [CHANGELOG.md](../CHANGELOG.md), including any new setting in `.env.prod.example`.
+3. Run both smoke tests on a fresh stack ([deployment.md](deployment.md#checking-a-release-the-smoke-tests)).
+4. Tag master: `git tag -a v2.0.0 -m "HomeApps 2.0.0"`.

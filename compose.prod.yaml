@@ -1,15 +1,171 @@
-﻿services:
-  postgres_db:
-    image: postgres:16
-    container_name: homeapps-postgres
-    env_file:
-      - .env
+# Production: everything at https://${HOMEAPPS_DOMAIN} (home-apps.dev), certificates from Let's Encrypt (release plan Q2).
+#   cp .env.prod.example .env            fill in the values marked "required"
+#   scripts/generate-signing-key.sh      once: secrets/auth-signing.pem, the key Auth signs tokens with
+#   docker compose -f compose.prod.yaml up -d --build
+# Ports 80 and 443 must reach this machine (HTTP-01 challenge). Postgres and RabbitMQ are not published; only Traefik is.
+# Every service applies its migrations on start (Q3). Deployment guide: docs/deployment.md.
+name: homeapps
+
+x-service: &service
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+
+x-environment: &environment
+  ASPNETCORE_ENVIRONMENT: Production
+  Database__MigrateOnStartup: "true"
+  # Without this every SQL statement lands in the log.
+  Logging__LogLevel__Microsoft.EntityFrameworkCore: Warning
+  RabbitMq__Host: rabbitmq
+  RabbitMq__Username: ${RABBITMQ_USER:-homeapps}
+  RabbitMq__Password: ${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD in .env}
+
+# Services that read Auth's keys inside the Docker network; the tokens still name the public issuer (accounts plan Q10).
+x-jwt: &jwt
+  Jwt__Authority: "http://auth:8080"
+  Jwt__Issuer: "https://${HOMEAPPS_DOMAIN:?set HOMEAPPS_DOMAIN in .env}"
+  Jwt__RequireHttpsMetadata: "false"
+
+services:
+  traefik:
+    image: traefik:v2.11
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.http.tls.certresolver=letsencrypt"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:?set ACME_EMAIL in .env}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.caserver=${ACME_CA_SERVER:-https://acme-v02.api.letsencrypt.org/directory}"
     ports:
-      - "5432:5432"
-  
-  accountmanagement:
-    image: accountmanagement
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-homeapps}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-alpine
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-homeapps}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD in .env}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      retries: 10
+      # The first start (a new volume) can take longer than the retries above on a small machine.
+      start_period: 60s
+
+  auth:
+    <<: *service
+    image: homeapps/auth:2.0.0
     build:
       context: .
-      dockerfile: AccountManagement/Dockerfile
-      
+      dockerfile: src/Auth/Auth.Api/Dockerfile
+    environment:
+      <<: *environment
+      ConnectionStrings__Database: "Host=postgres;Database=homeapps_auth;Username=${POSTGRES_USER:-homeapps};Password=${POSTGRES_PASSWORD}"
+      Jwt__Authority: "https://${HOMEAPPS_DOMAIN}"
+      Auth__Signing__Issuer: "https://${HOMEAPPS_DOMAIN}"
+      Auth__Clients__0__RedirectUris__0: "https://${HOMEAPPS_DOMAIN}/"
+      Auth__Bootstrap__Email: ${AUTH_BOOTSTRAP_EMAIL:?set AUTH_BOOTSTRAP_EMAIL in .env}
+      Auth__Google__ClientId: ${AUTH_GOOGLE_CLIENT_ID:-}
+      Auth__Google__ClientSecret: ${AUTH_GOOGLE_CLIENT_SECRET:-}
+      Auth__Email__FrontendBaseUrl: "https://${HOMEAPPS_DOMAIN}"
+      Auth__Email__From: ${SMTP_FROM:?set SMTP_FROM in .env}
+      Auth__Email__Smtp__Host: ${SMTP_HOST:?set SMTP_HOST in .env}
+      Auth__Email__Smtp__Port: ${SMTP_PORT:-587}
+      Auth__Email__Smtp__Username: ${SMTP_USERNAME:-}
+      Auth__Email__Smtp__Password: ${SMTP_PASSWORD:-}
+      # Auth is reachable only through Traefik (no published port), so its X-Forwarded-For is the real caller.
+      Auth__Proxy__KnownNetworks__0: "0.0.0.0/0"
+    # The PEM key as a file: /run/secrets/Auth__Signing__PrivateKeyPem is read as that setting (kit, key per file).
+    secrets:
+      - source: auth-signing-key
+        target: Auth__Signing__PrivateKeyPem
+    volumes:
+      - auth-keys:/app/.keys
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=Host(`${HOMEAPPS_DOMAIN}`) && (PathPrefix(`/auth`) || PathPrefix(`/.well-known`))"
+      - "traefik.http.routers.auth.entrypoints=websecure"
+      - "traefik.http.services.auth.loadbalancer.server.port=8080"
+
+  accounts:
+    <<: *service
+    image: homeapps/accounts:2.0.0
+    build:
+      context: .
+      dockerfile: src/Accounts/Accounts.Api/Dockerfile
+    environment:
+      <<: [*environment, *jwt]
+      ConnectionStrings__Database: "Host=postgres;Database=homeapps_accounts;Username=${POSTGRES_USER:-homeapps};Password=${POSTGRES_PASSWORD}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.accounts.rule=Host(`${HOMEAPPS_DOMAIN}`) && (PathPrefix(`/users`) || PathPrefix(`/admin/users`))"
+      - "traefik.http.routers.accounts.entrypoints=websecure"
+      - "traefik.http.services.accounts.loadbalancer.server.port=8080"
+
+  households:
+    <<: *service
+    image: homeapps/households:2.0.0
+    build:
+      context: .
+      dockerfile: src/Households/Households.Api/Dockerfile
+    environment:
+      <<: [*environment, *jwt]
+      ConnectionStrings__Database: "Host=postgres;Database=homeapps_households;Username=${POSTGRES_USER:-homeapps};Password=${POSTGRES_PASSWORD}"
+      Households__MaxMembers: ${HOUSEHOLDS_MAX_MEMBERS:-100}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.households.rule=Host(`${HOMEAPPS_DOMAIN}`) && (PathPrefix(`/households`) || PathPrefix(`/invites`) || PathPrefix(`/admin/households`))"
+      - "traefik.http.routers.households.entrypoints=websecure"
+      - "traefik.http.services.households.loadbalancer.server.port=8080"
+
+  web:
+    image: homeapps/web:2.0.0
+    restart: unless-stopped
+    build:
+      context: src/Web
+    environment:
+      HOMEAPPS_PLUGINS: ${HOMEAPPS_PLUGINS:-}
+    labels:
+      - "traefik.enable=true"
+      # Lowest priority: everything the services above do not claim is a page of the Vue app.
+      - "traefik.http.routers.web.rule=Host(`${HOMEAPPS_DOMAIN}`)"
+      - "traefik.http.routers.web.priority=1"
+      - "traefik.http.routers.web.entrypoints=websecure"
+      - "traefik.http.services.web.loadbalancer.server.port=80"
+
+secrets:
+  auth-signing-key:
+    file: ./secrets/auth-signing.pem
+
+volumes:
+  letsencrypt:
+  postgres-data:
+  rabbitmq-data:
+  auth-keys:

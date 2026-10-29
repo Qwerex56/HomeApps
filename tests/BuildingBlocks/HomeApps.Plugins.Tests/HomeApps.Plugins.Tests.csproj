@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\HomeApps.Plugins.Hello\HomeApps.Plugins.Hello.csproj" />
+    <ProjectReference Include="..\HomeApps.BuildingBlocks.Testing\HomeApps.BuildingBlocks.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NSubstitute" />
+  </ItemGroup>
+
+</Project>

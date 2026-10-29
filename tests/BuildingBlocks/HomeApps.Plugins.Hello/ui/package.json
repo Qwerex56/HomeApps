@@ -1,0 +1,16 @@
+{
+  "name": "homeapps-plugin-hello-ui",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "@homeapps/plugin-sdk": "file:../../../../src/Web/plugin-sdk",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "axios": "^1.21.0",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.5",
+    "vue": "^3.5.44"
+  }
+}

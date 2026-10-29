@@ -11,25 +11,33 @@ public sealed record GadgetCreated(Guid Id) : IDomainEvent;
 
 public sealed record GadgetAudited(Guid Id) : IDomainEvent;
 
-public sealed class Gadget : AggregateRoot<Guid>
+public sealed class Gadget : IHasDomainEvents
 {
+    private readonly List<IDomainEvent> _domainEvents = [];
+
     private Gadget() { }
 
-    private Gadget(Guid id) : base(id) { }
+    private Gadget(Guid id) => Id = id;
+
+    public Guid Id { get; private set; }
 
     public bool Audited { get; private set; }
+
+    public IReadOnlyList<IDomainEvent> DomainEvents => _domainEvents;
+
+    public void ClearDomainEvents() => _domainEvents.Clear();
 
     public static Gadget Create()
     {
         var gadget = new Gadget(Guid.NewGuid());
-        gadget.Raise(new GadgetCreated(gadget.Id));
+        gadget._domainEvents.Add(new GadgetCreated(gadget.Id));
         return gadget;
     }
 
     public void Audit()
     {
         Audited = true;
-        Raise(new GadgetAudited(Id));
+        _domainEvents.Add(new GadgetAudited(Id));
     }
 }
 

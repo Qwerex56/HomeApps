@@ -3,7 +3,6 @@ using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.BuildingBlocks.Infrastructure.Messaging;
 using HomeApps.BuildingBlocks.Infrastructure.Options;
 using HomeApps.BuildingBlocks.Infrastructure.Persistence;
-using HomeApps.BuildingBlocks.Infrastructure.Time;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -23,25 +22,37 @@ public static class DependencyInjection
     /// <list type="bullet">
     /// <item>Postgres DbContext with retry on transient failures, registered as <see cref="IUnitOfWork"/>, plus a health check.</item>
     /// <item>MassTransit on RabbitMQ with the EF Core outbox (bus outbox for publishing, inbox on every consumer endpoint).</item>
-    /// <item>Consumers from <paramref name="consumersAssembly"/>, <see cref="IEventBus"/> and <see cref="IDateTimeProvider"/>.</item>
+    /// <item>Consumers from <paramref name="consumersAssembly"/>, <see cref="IEventBus"/> and the .NET <see cref="TimeProvider"/>.</item>
     /// </list>
     /// </summary>
     /// <param name="serviceName">Short service name, used as the queue name prefix (e.g. <c>accounts</c>).</param>
+    /// <param name="retry">Optional retry for every consumer endpoint, applied before the inbox and outbox so each
+    /// attempt gets a fresh transaction. Without it a failed message goes straight to the <c>_error</c> queue.</param>
     public static IServiceCollection AddHomeAppsInfrastructure<TContext>(
         this IServiceCollection services,
         IConfiguration configuration,
         string serviceName,
-        Assembly consumersAssembly)
+        Assembly consumersAssembly,
+        Action<IRetryConfigurator>? retry = null)
+        where TContext : HomeAppsDbContext =>
+        services.AddHomeAppsInfrastructure<TContext>(configuration, serviceName, [consumersAssembly], retry);
+
+    /// <summary>The same with consumers from several assemblies, e.g. a plugin's own and the plugin kit's.</summary>
+    public static IServiceCollection AddHomeAppsInfrastructure<TContext>(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string serviceName,
+        Assembly[] consumersAssemblies,
+        Action<IRetryConfigurator>? retry = null)
         where TContext : HomeAppsDbContext
     {
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentException.ThrowIfNullOrWhiteSpace(serviceName);
 
         services.AddHomeAppsPersistence<TContext>(configuration);
-        services.AddHomeAppsMessaging<TContext>(configuration, serviceName, consumersAssembly);
+        services.AddHomeAppsMessaging<TContext>(configuration, serviceName, consumersAssemblies, retry);
 
         services.TryAddSingleton(TimeProvider.System);
-        services.TryAddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
         return services;
     }
@@ -74,7 +85,17 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration,
         string serviceName,
-        Assembly consumersAssembly)
+        Assembly consumersAssembly,
+        Action<IRetryConfigurator>? retry = null)
+        where TContext : HomeAppsDbContext =>
+        services.AddHomeAppsMessaging<TContext>(configuration, serviceName, [consumersAssembly], retry);
+
+    public static IServiceCollection AddHomeAppsMessaging<TContext>(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string serviceName,
+        Assembly[] consumersAssemblies,
+        Action<IRetryConfigurator>? retry = null)
         where TContext : HomeAppsDbContext
     {
         ArgumentNullException.ThrowIfNull(configuration);
@@ -84,7 +105,7 @@ public static class DependencyInjection
         var transport = configuration[MessagingTransportKey] ?? RabbitMqTransport;
         if (string.Equals(transport, InMemoryTransport, StringComparison.OrdinalIgnoreCase))
         {
-            services.AddMassTransitTestHarness(bus => ConfigureBus<TContext>(bus, serviceName, consumersAssembly));
+            services.AddMassTransitTestHarness(bus => ConfigureBus<TContext>(bus, serviceName, consumersAssemblies, retry));
             return services;
         }
 
@@ -96,7 +117,7 @@ public static class DependencyInjection
         services.AddValidatedOptions<RabbitMqOptions>(RabbitMqOptions.SectionName);
         services.AddMassTransit(bus =>
         {
-            ConfigureBus<TContext>(bus, serviceName, consumersAssembly);
+            ConfigureBus<TContext>(bus, serviceName, consumersAssemblies, retry);
 
             bus.UsingRabbitMq((context, rabbit) =>
             {
@@ -117,11 +138,12 @@ public static class DependencyInjection
     public const string RabbitMqTransport = "RabbitMq";
     public const string InMemoryTransport = "InMemory";
 
-    private static void ConfigureBus<TContext>(IBusRegistrationConfigurator bus, string serviceName, Assembly consumersAssembly)
+    private static void ConfigureBus<TContext>(
+        IBusRegistrationConfigurator bus, string serviceName, Assembly[] consumersAssemblies, Action<IRetryConfigurator>? retry)
         where TContext : HomeAppsDbContext
     {
         bus.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(prefix: serviceName, includeNamespace: false));
-        bus.AddConsumers(consumersAssembly);
+        bus.AddConsumers(consumersAssemblies);
 
         bus.AddEntityFrameworkOutbox<TContext>(outbox =>
         {
@@ -132,6 +154,14 @@ public static class DependencyInjection
 
         // Inbox + outbox on every consumer: duplicates are ignored, and messages a consumer publishes
         // are committed together with its database changes.
-        bus.AddConfigureEndpointsCallback((context, _, endpoint) => endpoint.UseEntityFrameworkOutbox<TContext>(context));
+        bus.AddConfigureEndpointsCallback((context, _, endpoint) =>
+        {
+            if (retry is not null)
+            {
+                endpoint.UseMessageRetry(retry);
+            }
+
+            endpoint.UseEntityFrameworkOutbox<TContext>(context);
+        });
     }
 }
