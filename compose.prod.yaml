@@ -76,6 +76,8 @@ services:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
       retries: 10
+      # The first start (a new volume) can take longer than the retries above on a small machine.
+      start_period: 60s
 
   auth:
     <<: *service

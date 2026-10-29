@@ -1,5 +1,5 @@
 # Build from src/Web: docker build src/Web (compose.prod.yaml does this). Static files served by nginx behind Traefik.
-FROM node:22-alpine AS build
+FROM node:24-alpine AS build
 WORKDIR /web
 COPY package.json package-lock.json ./
 RUN npm ci

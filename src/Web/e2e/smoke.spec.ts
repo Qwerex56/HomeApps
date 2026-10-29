@@ -50,9 +50,10 @@ test('creates a household, invites, shows it on the wall and archives it', async
   const code = (await page.locator('section li .font-mono').first().innerText()).trim()
   expect(code).toMatch(/^[0-9A-Z]{5}-[0-9A-Z]{5}$/)
 
-  // The code leads to this household; I am already in it, so joining just opens it.
+  // The code leads to this household; I am already in it, so joining just opens it. Only the page itself: with two
+  // households the header switcher shows the name too.
   await page.goto(`/join/${code}`)
-  await expect(page.getByText(name)).toBeVisible()
+  await expect(page.getByRole('main').getByText(name)).toBeVisible()
   await page.getByRole('button', { name: 'Dołącz' }).click()
   await expect(page).toHaveURL(new RegExp(`/homes/${id}/members$`))
 
