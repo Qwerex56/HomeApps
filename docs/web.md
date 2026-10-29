@@ -141,7 +141,7 @@ Right after sign-up Accounts needs a moment to create the account; `useMyAccount
 | `/account/history` | Own account history (date and kind only). |
 
 Accounts validates the profile as a nested object, so its field errors arrive as `Profile.DisplayName`;
-`useSubmit('profile.')` strips the prefix. Validation messages come from FluentValidation in English for now.
+`useSubmit('profile.')` strips the prefix. Validation messages come from FluentValidation, in Polish.
 Auth answers a wrong current password with `auth.invalid_credentials`; the security page shows it under the field.
 
 ### Administration
