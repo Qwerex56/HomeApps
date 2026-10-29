@@ -6,6 +6,8 @@
   -->
   <PropertyGroup>
     <IsTestProject>false</IsTestProject>
+    <!-- The UI's sources and node_modules; its build lands in wwwroot/ui (ui/vite.config.ts). -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);ui/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
