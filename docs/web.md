@@ -71,7 +71,7 @@ A page lives in its feature. Something moves to `shared/` only when a second fea
   (see Session). `CLIENT_ID` is `homeapps-web`, the browser client in `Auth:Clients`.
 - Every error goes through `toProblem` (`api/problem.ts`). It reads both shapes the services send: an `AppError`
   with `code` (and `errors` when there are several) and a validation failure with messages per field
-  (`fieldErrors`, field names in camelCase). `Retry-After` becomes `retryAfter`.
+  (`fieldErrors`, field names in camelCase, messages already in Polish). `Retry-After` becomes `retryAfter`.
 - `errorMessage` shows the Polish text for a code from `shared/i18n/pl.json` (`errors.<code>`), otherwise the
   service's own `detail`. A new error code in a service gets its text there.
 - TanStack Query does not repeat a 4xx; network errors and 5xx get two more tries.
@@ -93,11 +93,11 @@ the request bodies; their response types are written by hand next to the feature
   guards wait for it, and the app shows a spinner until then.
 - The access token lives only in memory and is refreshed a minute before it expires, and once on a 401 (the request is
   then repeated). The sign-in endpoints themselves are never refreshed for (a 401 there is a wrong password).
-- A refresh token works once and Auth has no grace window, so two tabs refreshing at once would end the session
-  everywhere. Every refresh runs under one Web Lock (`homeapps.refresh`) shared by all tabs, and the new token goes to
+- A refresh token works once. Auth accepts it again only for 10 seconds after it was used (`Auth:RefreshGraceWindow`,
+  for a reload in the middle of a refresh); two tabs refreshing at once still lose one request. Every refresh runs under one Web Lock (`homeapps.refresh`) shared by all tabs, and the new token goes to
   the other tabs over a `BroadcastChannel`, which also carries sign-out.
-- Auth counts `/auth/refresh` against its anonymous limit (`Auth:RateLimits:PerMinute`, 10 per IP). A `429` is waited
-  out with `Retry-After`, never treated as signed out.
+- Auth limits `/auth/refresh` separately from sign-in (`Auth:RateLimits:RefreshPerMinute`, 60 per IP). A `429` is
+  waited out with `Retry-After`, never treated as signed out.
 - Pages inside `AppLayout` need a session (`meta.requiresAuth`), `meta.guestOnly` pages send a signed-in user to the
   dashboard and `meta.admin` needs the Admin or Owner role. The services check all of it again.
 - A request with `{ ticket }` in its Axios config sends that ticket instead of the session token (reactivation).

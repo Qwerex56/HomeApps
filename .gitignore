@@ -11,3 +11,5 @@ riderModule.iml
 
 # Local secrets for docker compose; .env.example is the template.
 .env
+# The production signing key (scripts/generate-signing-key.sh).
+secrets/

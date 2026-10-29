@@ -18,9 +18,6 @@ app.UseForwardedHeaders();
 app.UseRateLimiter();
 app.UseHomeAppsDefaults();
 
-if (app.Environment.IsDevelopment())
-{
-    await app.MigrateDatabaseAsync<AuthDbContext>();
-}
+await app.MigrateDatabaseOnStartupAsync<AuthDbContext>();
 
 await app.RunAsync();

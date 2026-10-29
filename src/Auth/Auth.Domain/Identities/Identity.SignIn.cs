@@ -99,11 +99,17 @@ public sealed partial class Identity
         return token;
     }
 
+    /// <summary>How long a just-rotated refresh token still works (R6a) unless the caller says otherwise.</summary>
+    public static readonly TimeSpan DefaultRefreshGraceWindow = TimeSpan.FromSeconds(10);
+
     /// <summary>
     /// A-03. Single use with rotation in the same session (R6). A used token coming back, or a token presented by
     /// another client, means theft: the whole session is revoked (R7) and the handler saves despite the failure (P4).
+    /// R6a: a token used no longer than <paramref name="graceWindow"/> ago, by the same client, rotates once more
+    /// instead. A browser that reloads the page during a refresh never receives the successor and comes back with the
+    /// old token; that is not theft.
     /// </summary>
-    public Result<IssuedRefreshToken> Refresh(string rawToken, ClientInfo client, TimeProvider time)
+    public Result<IssuedRefreshToken> Refresh(string rawToken, ClientInfo client, TimeProvider time, TimeSpan? graceWindow = null)
     {
         ArgumentNullException.ThrowIfNull(rawToken);
         ArgumentNullException.ThrowIfNull(client);
@@ -118,7 +124,17 @@ public sealed partial class Identity
             return Result.Fail<IssuedRefreshToken>(IdentityErrors.InvalidRefreshToken);
         }
 
-        if (token.UsedAt is not null || session.Client.ClientId != client.ClientId)
+        var sameClient = session.Client.ClientId == client.ClientId;
+        var window = graceWindow ?? DefaultRefreshGraceWindow;
+        var inGraceWindow = window > TimeSpan.Zero && token.UsedAt is { } usedAt && now - usedAt <= window;
+        if (sameClient && inGraceWindow && token.ExpiresAt > now)
+        {
+            return CanSignIn(now)
+                ? session.IssueToken(now)
+                : Result.Fail<IssuedRefreshToken>(IdentityErrors.CannotSignIn);
+        }
+
+        if (token.UsedAt is not null || !sameClient)
         {
             session.Revoke(now);
             Touch(now);

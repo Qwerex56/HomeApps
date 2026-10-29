@@ -65,7 +65,8 @@ dotnet tool restore
 dotnet ef migrations add Initial -p src/Accounts/Accounts.Infrastructure -s src/Accounts/Accounts.Api -o Persistence/Migrations
 ```
 
-In Development the API applies migrations on start.
+In Development the API applies migrations on start; anywhere else only with `Database:MigrateOnStartup=true`
+(`MigrateDatabaseOnStartupAsync` in the kit). Production compose sets it, since every service runs as one instance.
 
 ## Configuration
 

@@ -47,10 +47,48 @@ public sealed class RefreshTests
     {
         var (identity, t1) = A.Registered(_time);
         var t2 = identity.Refresh(t1.Raw, A.Client(), _time).Value;
+        _time.Now = A.Now.AddSeconds(11);
 
         Assert.Equal("auth.invalid_refresh_token", identity.Refresh(t1.Raw, A.Client(), _time).Code());
         Assert.Equal("auth.invalid_refresh_token", identity.Refresh(t2.Raw, A.Client(), _time).Code());
         Assert.Contains(identity.DomainEvents, e => e is RefreshTokenReuseDetected);
+        Assert.Empty(identity.ActiveSessions(A.Now));
+    }
+
+    [Fact]
+    public void R6a_UsedTokenInsideTheGraceWindowRotatesAgainWithoutRevoking()
+    {
+        var (identity, t1) = A.Registered(_time);
+        identity.Refresh(t1.Raw, A.Client(), _time);
+        _time.Now = A.Now.AddSeconds(10);
+
+        var again = identity.Refresh(t1.Raw, A.Client(), _time);
+
+        Assert.True(again.IsSuccess);
+        Assert.Equal(t1.SessionId, again.Value.SessionId);
+        Assert.DoesNotContain(identity.DomainEvents, e => e is RefreshTokenReuseDetected);
+        Assert.True(identity.Refresh(again.Value.Raw, A.Client(), _time).IsSuccess);
+        Assert.Single(identity.ActiveSessions(_time.Now));
+    }
+
+    [Fact]
+    public void R6a_GraceWindowComesFromTheCaller()
+    {
+        var (identity, t1) = A.Registered(_time);
+        identity.Refresh(t1.Raw, A.Client(), _time);
+
+        Assert.True(identity.Refresh(t1.Raw, A.Client(), _time, TimeSpan.Zero).IsFailed);
+        Assert.Contains(identity.DomainEvents, e => e is RefreshTokenReuseDetected);
+    }
+
+    [Fact]
+    public void R6a_AnotherClientInsideTheGraceWindowStillRevokes()
+    {
+        var (identity, t1) = A.Registered(_time);
+        identity.Refresh(t1.Raw, A.Client(), _time);
+        var jarvis = ClientInfo.Create("jarvis", null).Value;
+
+        Assert.True(identity.Refresh(t1.Raw, jarvis, _time).IsFailed);
         Assert.Empty(identity.ActiveSessions(A.Now));
     }
 
