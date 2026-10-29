@@ -11,6 +11,7 @@ import Textarea from 'primevue/textarea'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import FormField from '@/shared/components/FormField.vue'
+import PluginsSettings from '@/features/plugins/PluginsSettings.vue'
 import { useSubmit } from '@/shared/composables/useSubmit'
 import { errorMessage } from '@/api/errorMessage'
 import { toProblem } from '@/api/problem'
@@ -171,6 +172,8 @@ function archive() {
         </form>
       </template>
     </Card>
+
+    <PluginsSettings v-if="can.member" :household="household" />
 
     <Card v-if="can.archive" class="border border-red-200 dark:border-red-900">
       <template #title>{{ t('households.settings.archive') }}</template>

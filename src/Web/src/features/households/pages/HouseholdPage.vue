@@ -10,6 +10,8 @@ import { errorMessage } from '@/api/errorMessage'
 import { toProblem } from '@/api/problem'
 import { useSessionStore } from '@/features/auth/session'
 import OwnershipBanner from '../components/OwnershipBanner.vue'
+import PluginWidgets from '@/features/plugins/PluginWidgets.vue'
+import { localized, useHouseholdPlugins } from '@/features/plugins/registry'
 import { householdKeys, householdPermissions, householdsApi } from '../api'
 import { roleSeverity } from '../tags'
 import { useCurrentHousehold } from '../useCurrentHousehold'
@@ -40,7 +42,9 @@ watch(
   () => [household.value, route.name] as const,
   ([value, name]) => {
     const allowed =
-      name === 'household-settings' || (name === 'household-invites' ? can.value.invite : can.value.seeMembers)
+      name === 'household-settings' ||
+      name === 'household-app' ||
+      (name === 'household-invites' ? can.value.invite : can.value.seeMembers)
     if (value && !allowed) {
       void router.replace({ name: 'household-settings', params: { id: props.id } })
     }
@@ -48,13 +52,42 @@ watch(
   { immediate: true },
 )
 
+// The plugins that are on here add their pages (manifest.ui.routes with menu) between the household's own tabs.
+const { enabled: plugins } = useHouseholdPlugins(() => props.id)
+const pluginTabs = computed(() =>
+  plugins.value.flatMap((plugin) =>
+    (plugin.manifest.ui?.routes ?? [])
+      .filter((r) => r.menu)
+      .map((r) => ({
+        key: `${plugin.manifest.id}/${r.path}`,
+        to: { name: 'household-app', params: { id: props.id, plugin: plugin.manifest.id, path: r.path } },
+        label: localized(r.title),
+        icon: `pi ${plugin.manifest.icon}`,
+      })),
+  ),
+)
+
 const tabs = computed(() => [
   ...(can.value.seeMembers
-    ? [{ name: 'household-members', label: 'households.tabs.members', icon: 'pi pi-users' }]
+    ? [tab('household-members', t('households.tabs.members'), 'pi pi-users')]
     : []),
-  ...(can.value.invite ? [{ name: 'household-invites', label: 'households.tabs.invites', icon: 'pi pi-send' }] : []),
-  { name: 'household-settings', label: 'households.tabs.settings', icon: 'pi pi-cog' },
+  ...(can.value.invite ? [tab('household-invites', t('households.tabs.invites'), 'pi pi-send')] : []),
+  ...pluginTabs.value,
+  tab('household-settings', t('households.tabs.settings'), 'pi pi-cog'),
 ])
+
+function tab(name: string, label: string, icon: string) {
+  return { key: name, to: { name, params: { id: props.id } }, label, icon }
+}
+
+// Widgets stand on the household's first page: the members, or the settings for a guest, who has no members tab.
+const showWidgets = computed(
+  () => route.name === (can.value.seeMembers ? 'household-members' : 'household-settings'),
+)
+
+const pluginHousehold = computed(() =>
+  household.value ? { id: household.value.id, name: household.value.name, myRole: household.value.myRole } : null,
+)
 </script>
 
 <template>
@@ -80,18 +113,19 @@ const tabs = computed(() => [
         </div>
       </div>
       <OwnershipBanner v-if="household.ownershipReceivedAt" :household-id="household.id" :name="household.name" />
+      <PluginWidgets v-if="pluginHousehold && showWidgets" :household="pluginHousehold" place="Household" />
 
       <div class="flex flex-col gap-6 md:flex-row">
         <nav :aria-label="household.name" class="flex gap-1 overflow-x-auto md:w-52 md:shrink-0 md:flex-col">
           <RouterLink
             v-for="tab in tabs"
-            :key="tab.name"
-            :to="{ name: tab.name, params: { id } }"
+            :key="tab.key"
+            :to="tab.to"
             class="flex items-center gap-2 rounded-md px-3 py-2 text-sm whitespace-nowrap text-muted-color hover:bg-emphasis"
             exact-active-class="!text-primary bg-highlight"
           >
             <i :class="tab.icon" aria-hidden="true" />
-            <span>{{ t(tab.label) }}</span>
+            <span>{{ tab.label }}</span>
           </RouterLink>
         </nav>
         <section class="min-w-0 flex-1">

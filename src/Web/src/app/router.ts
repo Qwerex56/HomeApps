@@ -17,8 +17,8 @@ declare module 'vue-router' {
 
 // History mode: the URL fragment stays free for the result of Google sign-in (frontend.md, section 4).
 // The routes the emails link to (/invite/:token, /reset-password, /confirm-password, /confirm-email) are fixed by Auth.
-// No route may start with /auth, /users, /admin/users, /households, /invites or /admin/households: Traefik sends
-// those paths to the services.
+// No route may start with /auth, /users, /admin/users, /households, /invites, /admin/households or /plugins: Traefik
+// sends those paths to the services and plugins.
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -85,6 +85,13 @@ export const router = createRouter({
               path: 'settings',
               name: 'household-settings',
               component: () => import('@/features/households/pages/SettingsTab.vue'),
+            },
+            // A plugin's pages (docs/plugins.md): the plugin decides who may see what.
+            {
+              path: 'apps/:plugin/:path(.*)?',
+              name: 'household-app',
+              props: true,
+              component: () => import('@/features/plugins/PluginPage.vue'),
             },
           ],
         },

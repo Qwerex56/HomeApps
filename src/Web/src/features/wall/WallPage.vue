@@ -5,6 +5,8 @@ import { useQuery } from '@tanstack/vue-query'
 import { householdKeys, householdPermissions, householdsApi } from '@/features/households/api'
 import { useCurrentHousehold } from '@/features/households/useCurrentHousehold'
 import { useWakeLock } from './useWakeLock'
+import PluginWidgets from '@/features/plugins/PluginWidgets.vue'
+import { useHouseholdPlugins } from '@/features/plugins/registry'
 
 // Q7, Q11: the wall tablet. Full screen, big type, no menu; the screen stays on. Plugins add tiles later.
 const { t } = useI18n()
@@ -28,7 +30,12 @@ const { data: members } = useQuery({
 })
 const people = computed(() => (members.value ?? []).filter((m) => m.isActive))
 
-// Slots for the plugin tiles (plugins.md): weather and news first.
+// The widgets of the plugins that are on in this household and may stand on the wall (docs/plugins.md). Until
+// there is one, the slots show what is coming.
+const { enabled } = useHouseholdPlugins(() => current.value?.id)
+const hasWidgets = computed(() =>
+  enabled.value.some((p) => p.manifest.ui?.widgets.some((w) => w.places.includes('Wall') && p.module?.widgets?.[w.id])),
+)
 const tiles = [
   { key: 'weather', icon: 'pi pi-cloud' },
   { key: 'news', icon: 'pi pi-megaphone' },
@@ -92,7 +99,14 @@ onBeforeUnmount(() => document.removeEventListener('fullscreenchange', onFullscr
         <p v-else-if="!isPending" class="text-2xl text-surface-300">{{ t('wall.noHousehold') }}</p>
       </section>
 
-      <section class="grid content-start gap-6">
+      <PluginWidgets
+        v-if="current && hasWidgets"
+        class="lg:col-span-3"
+        :household="current"
+        place="Wall"
+        dark
+      />
+      <section v-else class="grid content-start gap-6">
         <div
           v-for="tile in tiles"
           :key="tile.key"

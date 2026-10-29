@@ -110,6 +110,10 @@
     },
     "request": {
       "invalid": "Nieprawidłowe żądanie."
+    },
+    "plugin": {
+      "disabled": "Ta aplikacja nie jest włączona w tym domu.",
+      "forbidden": "Twoja rola w tym domu na to nie pozwala."
     }
   },
   "auth": {
@@ -500,5 +504,18 @@
     },
     "soon": "Wkrótce",
     "noWakeLock": "Ta przeglądarka nie pozwala utrzymać włączonego ekranu. Ustaw wygaszanie w ustawieniach tabletu."
+  },
+  "plugins": {
+    "title": "Aplikacje",
+    "switchedOn": "Włączono: {name}",
+    "switchedOff": "Wyłączono: {name}",
+    "whoSwitches": "Aplikacje włącza i wyłącza osoba z odpowiednią rolą w tym domu.",
+    "off": "Ta aplikacja nie jest włączona w tym domu. Włączysz ją w ustawieniach domu.",
+    "notFound": "Nie ma takiej aplikacji.",
+    "failed": "Ta część aplikacji przestała działać. Odśwież stronę, a jeśli to nie pomoże, daj znać administratorowi.",
+    "problem": {
+      "incompatible": "Wymaga nowszej wersji HomeApps",
+      "unavailable": "Chwilowo niedostępna"
+    }
   }
 }
