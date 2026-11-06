@@ -1,0 +1,36 @@
+# This is a generated file. Not intended for manual editing.
+services:
+  auth:
+    build:
+      context: "/Users/adrianczubaty/Documents/RiderProjects/HomeApps"
+      dockerfile: "src/Auth/Auth.Api/Dockerfile"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net10.0/Auth.Api.dll"
+    environment:
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "auth.api:dev"
+    ports: []
+    volumes:
+    - "/Users/adrianczubaty/Documents/RiderProjects/HomeApps/src/Auth/Auth.Api:/app:rw"
+    - "/Users/adrianczubaty/Documents/RiderProjects/HomeApps:/src:rw"
+    - "/Users/adrianczubaty/.nuget/packages:/home/app/.nuget/packages"
+    working_dir: "/app"
+  households:
+    build:
+      context: "/Users/adrianczubaty/Documents/RiderProjects/HomeApps"
+      dockerfile: "src/Households/Households.Api/Dockerfile"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net10.0/Households.Api.dll"
+    environment:
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "households.api:dev"
+    ports: []
+    volumes:
+    - "/Users/adrianczubaty/Documents/RiderProjects/HomeApps/src/Households/Households.Api:/app:rw"
+    - "/Users/adrianczubaty/Documents/RiderProjects/HomeApps:/src:rw"
+    - "/Users/adrianczubaty/.nuget/packages:/home/app/.nuget/packages"
+    working_dir: "/app"
