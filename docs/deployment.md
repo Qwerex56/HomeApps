@@ -5,15 +5,24 @@ HomeApps runs on one machine with Docker Compose: Traefik in front (HTTPS from L
 `https://home-apps.dev` in our case; Traefik sends `/auth`, `/.well-known`, `/users`, `/admin/users`, `/households`,
 `/invites` and `/admin/households` to the services and every other path to the web app.
 
-The whole setup is `compose.prod.yaml`. Development is a different file (`compose.dev.yaml`, see
+The whole setup is `compose.prod.yaml`. It reaches the internet in one of two ways:
+
+- **Open ports** (the default): Traefik takes ports 80 and 443 and gets certificates from Let's Encrypt.
+- **Cloudflare Tunnel**, for a connection without a public address (CGNAT) or with blocked ports: the overlay
+  `compose.tunnel.yaml` adds `cloudflared`, which connects out to Cloudflare; Cloudflare serves the certificate and
+  nothing is opened on the machine. See [Cloudflare Tunnel](#cloudflare-tunnel-no-open-ports).
+
+Development is a different file (`compose.dev.yaml`, see
 [working-with-the-repo.md](working-with-the-repo.md)).
 
 ## What you need
 
 - A machine with Docker and the Compose plugin (a home server, a NAS, a small VPS).
-- A domain whose DNS `A` (and `AAAA`, if you have IPv6) record points at that machine's public address.
-- Ports 80 and 443 forwarded to it. Let's Encrypt checks the domain over port 80 (HTTP-01), and every page is HTTPS
-  only (`.dev` domains are on the browsers' HSTS list anyway). No port? See [Without open ports](#without-open-ports).
+- A domain. With open ports: its DNS `A` (and `AAAA`, if you have IPv6) record points at that machine's public
+  address, and ports 80 and 443 are forwarded to it (Let's Encrypt checks the domain over port 80, HTTP-01). Behind
+  CGNAT: the domain's DNS is on Cloudflare (the free plan is enough), see
+  [Cloudflare Tunnel](#cloudflare-tunnel-no-open-ports). Every page is HTTPS only either way (`.dev` domains are on
+  the browsers' HSTS list anyway).
 - An SMTP account for invitations, password resets and notices (any provider; port 587 with STARTTLS by default).
 - Optional: a Google OAuth client for "Sign in with Google".
 
@@ -25,6 +34,9 @@ cp .env.prod.example .env            # fill in every value marked "required"
 scripts/generate-signing-key.sh      # once: secrets/auth-signing.pem
 docker compose -f compose.prod.yaml up -d --build
 ```
+
+(Behind a Cloudflare Tunnel set up the tunnel first and start with both files, see
+[Cloudflare Tunnel](#cloudflare-tunnel-no-open-ports).)
 
 On an empty database Auth sends an invitation to `AUTH_BOOTSTRAP_EMAIL`. That person opens the link, sets a password
 (or uses Google) and becomes the Owner, the only account above Admin. Sign-up is closed (`Auth:RegistrationOpen`
@@ -39,7 +51,9 @@ copies never migrate at the same time.
 | Variable | |
 |---|---|
 | `HOMEAPPS_DOMAIN` | The public address, without `https://`. Becomes the token issuer, the address in every email and Google's redirect. |
-| `ACME_EMAIL` | Let's Encrypt writes here before a certificate expires. `ACME_CA_SERVER` can point at the staging CA for a first try. |
+| `ACME_EMAIL` | Optional: the Let's Encrypt account address. `ACME_CA_SERVER` can point at the staging CA for a first try. Not used behind a tunnel. |
+| `CLOUDFLARE_TUNNEL_TOKEN` | Only with `compose.tunnel.yaml`: the token of the tunnel from the Cloudflare dashboard. A secret. |
+| `COMPOSE_FILE` | Optional: `compose.prod.yaml:compose.tunnel.yaml` makes a plain `docker compose ...` use both files, so no command needs `-f`. |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD` | The database account all three services use. |
 | `RABBITMQ_USER`, `RABBITMQ_PASSWORD` | The message broker account. |
 | `AUTH_BOOTSTRAP_EMAIL` | The first Owner. |
@@ -110,6 +124,9 @@ git pull
 docker compose -f compose.prod.yaml up -d --build
 ```
 
+(Behind a tunnel: `-f compose.prod.yaml -f compose.tunnel.yaml`, or nothing when `COMPOSE_FILE` is set in `.env`.
+The same goes for every command below.)
+
 Migrations run as the new containers start. Read [CHANGELOG.md](../CHANGELOG.md) first: a release that changes
 `.env` says so there.
 
@@ -125,14 +142,67 @@ docker compose -f compose.prod.yaml exec -T postgres pg_dumpall -U homeapps > ho
 Restore into an empty stack with `docker compose -f compose.prod.yaml exec -T postgres psql -U homeapps < file.sql`
 before the services start (`up -d postgres` first).
 
-## Without open ports
+## Cloudflare Tunnel (no open ports)
 
-If ports 80 and 443 cannot be forwarded (CGNAT, a provider that blocks them), two options:
+When the provider puts the connection behind CGNAT (no public address of its own) or blocks ports 80 and 443,
+Let's Encrypt over HTTP-01 cannot work and nobody can reach the machine from outside. A Cloudflare Tunnel turns that
+around: `cloudflared` in the stack opens an outgoing connection to Cloudflare, Cloudflare answers at
+`https://<HOMEAPPS_DOMAIN>` with its own certificate and sends each request down the tunnel.
 
-- **Let's Encrypt over DNS.** With the domain on Cloudflare, replace the `httpchallenge` line of the `traefik`
-  service with `--certificatesresolvers.letsencrypt.acme.dnschallenge.provider=cloudflare` and give Traefik the
-  environment variable `CF_DNS_API_TOKEN` (a token with `Zone:DNS:Edit` for the domain). The app is then reachable
-  inside your network only, unless port 443 is open.
-- **Cloudflare Tunnel.** Run `cloudflared` next to the stack and point the tunnel at `https://traefik:443` with
-  `noTLSVerify: true` (Traefik has no public certificate then); nothing needs to be opened, and Cloudflare serves the
-  public certificate.
+```
+browser ──HTTPS──▶ Cloudflare ──tunnel (outgoing from home)──▶ cloudflared ──HTTP──▶ traefik:8080 ──▶ services, web
+```
+
+`compose.tunnel.yaml` changes the production stack in three ways: Traefik publishes no ports, has no Let's Encrypt and
+listens on plain HTTP at `traefik:8080` inside the Docker network (TLS ends at Cloudflare); the `cloudflared` service
+runs the tunnel; Auth counts two proxies in `X-Forwarded-For` (`Auth__Proxy__ForwardLimit: 2`), so rate limits see
+the caller's address that Cloudflare reports and not cloudflared's. Traefik keeps the `X-Forwarded-Proto: https` it gets
+from the tunnel, so Auth still builds `https://` addresses (the token issuer, Google's redirect, the emails).
+
+### Setting up the tunnel (once)
+
+1. Add the domain to Cloudflare (Add a site, free plan) and switch its nameservers at the registrar to the two
+   Cloudflare gives you. Wait until Cloudflare shows the domain as active. If an `A` record for the domain already
+   exists (from an earlier setup with open ports), delete it: the tunnel creates its own record.
+2. In the Cloudflare dashboard open **Zero Trust → Networks → Tunnels** and create a tunnel of type **Cloudflared**,
+   named e.g. `homeapps`. On the "install connector" step choose Docker and copy the token: the long value after
+   `--token` in the command shown. Do not run that command; the stack runs cloudflared itself.
+3. Add a **public hostname** to the tunnel: subdomain empty, domain `home-apps.dev` (your `HOMEAPPS_DOMAIN`), path
+   empty, service type **HTTP**, URL `traefik:8080`. Cloudflare adds the DNS record (a proxied `CNAME` to the tunnel).
+4. In the domain's **SSL/TLS → Edge Certificates** turn on **Always Use HTTPS**.
+
+Leave caching and the rest at their defaults: Cloudflare does not cache the API answers or the app's HTML, and the
+app's files have content hashes in their names. If **Bot Fight Mode** is on, it can block calls that do not come
+from a browser (scripts, later the JARVIS client); keep it off.
+
+### Starting
+
+```bash
+cp .env.prod.example .env            # required values as above, plus CLOUDFLARE_TUNNEL_TOKEN
+scripts/generate-signing-key.sh      # once
+docker compose -f compose.prod.yaml -f compose.tunnel.yaml up -d --build
+docker compose -f compose.prod.yaml -f compose.tunnel.yaml logs cloudflared   # "Registered tunnel connection" x4
+```
+
+With `COMPOSE_FILE=compose.prod.yaml:compose.tunnel.yaml` in `.env` the `-f` options can go. Within a minute the
+tunnel shows as **Healthy** in the dashboard and `https://<HOMEAPPS_DOMAIN>` opens the app; the first Owner's
+invitation is on its way as described in [First start](#first-start).
+
+Google sign-in does not change: the redirect URI is still `https://<HOMEAPPS_DOMAIN>/auth/external/google/callback`.
+
+### When something does not work
+
+- **The dashboard shows the tunnel as down, the logs say the token is invalid:** `CLOUDFLARE_TUNNEL_TOKEN` is the value
+  after `--token` only, without quotes or the rest of the command. A new token (Refresh token in the dashboard) needs
+  `up -d` again.
+- **Error 1033:** Cloudflare has the hostname but no running tunnel: `cloudflared` is not running or cannot reach the
+  internet (it needs outgoing port 7844, UDP or TCP, or 443).
+- **502 Bad Gateway:** the public hostname is not `HTTP` + `traefik:8080` (for example `HTTPS`), or Traefik is not up.
+- **404 from Traefik:** the hostname in the request is not `HOMEAPPS_DOMAIN` (a typo in `.env`, or another hostname
+  pointed at the same tunnel).
+
+### Reaching it from the local network
+
+All traffic goes through Cloudflare, also from inside the house. That is enough for the app; if Cloudflare is not
+reachable, neither is HomeApps. Reaching it locally without Cloudflare (for example with Let's Encrypt over DNS-01 and
+a local DNS entry) is a possible later addition and not part of this setup.

@@ -3,6 +3,7 @@
 #   scripts/generate-signing-key.sh      once: secrets/auth-signing.pem, the key Auth signs tokens with
 #   docker compose -f compose.prod.yaml up -d --build
 # Ports 80 and 443 must reach this machine (HTTP-01 challenge). Postgres and RabbitMQ are not published; only Traefik is.
+# No public address (CGNAT)? Add the overlay compose.tunnel.yaml (Cloudflare Tunnel, no open ports).
 # Every service applies its migrations on start (Q3). Deployment guide: docs/deployment.md.
 name: homeapps
 
@@ -40,7 +41,7 @@ services:
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.websecure.http.tls.certresolver=letsencrypt"
-      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:?set ACME_EMAIL in .env}"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-}"
       - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
       - "--certificatesresolvers.letsencrypt.acme.caserver=${ACME_CA_SERVER:-https://acme-v02.api.letsencrypt.org/directory}"
