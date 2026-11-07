@@ -42,9 +42,9 @@ On the machine that runs HomeApps (both repositories side by side):
 scripts/pack.sh
 
 # 2. The plugin (in HomeApps.Todo). It uses HomeApps' .env for the domain and the passwords: link it once
-#    (.env is ignored by git there too), then every compose command there works without extra flags.
+#    (.env is ignored by git there too), then name the file in every compose command there.
 ln -s ../HomeApps/.env .env
-docker compose up -d --build
+docker compose -f compose.yaml up -d --build
 
 # 3. Tell the web app (in HomeApps): add the id to .env, then recreate the web container.
 #    HOMEAPPS_PLUGINS=todo        (comma-separated when there are more: todo,weather)
@@ -54,6 +54,9 @@ docker compose -f compose.prod.yaml up -d web
 `scripts/pack.sh` needs the .NET SDK on that machine; when it runs elsewhere, copy `~/.homeapps/packages` over or
 point `HOMEAPPS_PACKAGES` at the folder for step 2. The image does not need Node: the plugin's UI build is committed
 in `src/Todo.Api/wwwroot/ui`.
+
+Always name the file (`-f compose.yaml`) in HomeApps.Todo: the linked `.env` may set `COMPOSE_FILE` for HomeApps
+(tunnel), and compose would then look for `compose.prod.yaml` in the plugin's folder.
 
 The order of steps 2 and 3 does not matter. A plugin listed in `HOMEAPPS_PLUGINS` that is not running is simply left
 out of the app until it answers.
@@ -107,13 +110,13 @@ passed) with Todo started as above.
 ```bash
 # Update (in HomeApps.Todo): migrations run when the new container starts.
 git pull
-docker compose up -d --build
+docker compose -f compose.yaml up -d --build
 ```
 
 A new HomeApps kit version needs `scripts/pack.sh` again before the plugin's build.
 
 To remove the plugin: take `todo` out of `HOMEAPPS_PLUGINS` and recreate `web`, then
-`docker compose down` in HomeApps.Todo. Its data stays in `homeapps_todo` (and in
+`docker compose -f compose.yaml down` in HomeApps.Todo. Its data stays in `homeapps_todo` (and in
 HomeApps' backups, since `pg_dumpall` takes every database) until you drop it:
 `docker compose -f compose.prod.yaml exec postgres dropdb -U homeapps homeapps_todo`.
 
@@ -121,7 +124,7 @@ HomeApps' backups, since `pg_dumpall` takes every database) until you drop it:
 
 | What you see | Where to look |
 |---|---|
-| No **Zadania** under **Aplikacje** | `curl https://<domain>/plugins.json` must list `todo` (recreate `web` after changing `.env`); the manifest URL above must answer; `docker compose logs todo` in HomeApps.Todo |
+| No **Zadania** under **Aplikacje** | `curl https://<domain>/plugins.json` must list `todo` (recreate `web` after changing `.env`); the manifest URL above must answer; `docker compose -f compose.yaml logs todo` in HomeApps.Todo |
 | **Zadania** marked as needing a newer HomeApps | the instance is older than 2.1.0 |
 | `required variable ... is missing` from compose in HomeApps.Todo | the `.env` link is missing (step 2) |
 | `network homeapps_default not found` when starting the plugin | HomeApps is not running, or runs under another compose project name |
