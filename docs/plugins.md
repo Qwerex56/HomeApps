@@ -286,3 +286,5 @@ http:
 ```
 
 Plugin ports from an IDE start at 5400 (Auth 5100, Accounts 5200, Households 5300).
+
+A worked example with every step, checks and troubleshooting: [the Todo plugin in HomeApps](plugin-todo.md).

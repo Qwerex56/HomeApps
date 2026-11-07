@@ -130,6 +130,12 @@ The same goes for every command below.)
 Migrations run as the new containers start. Read [CHANGELOG.md](../CHANGELOG.md) first: a release that changes
 `.env` says so there.
 
+## Plugins
+
+Apps beyond the core run from their own repositories and compose files and join this stack's network. Each one is
+added with `HOMEAPPS_PLUGINS` in `.env` and switched on per household. Step by step for the first one:
+[the Todo plugin in HomeApps](plugin-todo.md).
+
 ## Backups
 
 All data lives in the `postgres-data` volume; `auth-keys` holds the keys for Google sign-in cookies and
