@@ -15,6 +15,11 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
   lists the plugin's notification categories (`Notifications`, JSON `notifications`).
 - **Web:** a "Powiadomienia" tab on the account page; the service worker shows notifications and opens their page on
   a click. Signing out forgets this browser's device first.
+- **Plugins, realtime:** the manifest's optional `Realtime` path (`endpoints.realtime`) for a plugin's own hub; the
+  hub's requests may carry the token as `?access_token=` (on that path only), and `IHouseholdAccess` passes it on.
+  `IHouseholdAccess.GetMembershipAsync` gives the role with `JoinedAt` and `AccessUntil`. `useHost().accessToken()`
+  in `@homeapps/plugin-sdk` for SignalR's `accessTokenFactory`.
+- **Households:** `GET /households/{id}/members/names`, names and avatars for every member, guests included.
 - `scripts/generate-vapid-keys.sh` makes the Web Push keys. The smoke test checks the Notifications service.
 
 ### Changed

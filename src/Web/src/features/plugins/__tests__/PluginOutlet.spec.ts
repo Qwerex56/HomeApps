@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, nextTick } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
-import { createPinia } from 'pinia'
+import { createPinia, setActivePinia, type Pinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice'
 import { useHost, type PluginManifest } from '@homeapps/plugin-sdk'
 import { i18n } from '@/shared/i18n'
+import { useSessionStore } from '@/features/auth/session'
 import PluginOutlet from '../PluginOutlet.vue'
 import type { LoadedPlugin } from '../registry'
 
@@ -31,7 +32,7 @@ const Page = defineComponent({
   },
 })
 
-function render(component: unknown, role: 'Guest' | 'Member' = 'Member') {
+function render(component: unknown, role: 'Guest' | 'Member' = 'Member', pinia: Pinia = createPinia()) {
   return mount(PluginOutlet, {
     props: {
       plugin,
@@ -39,7 +40,7 @@ function render(component: unknown, role: 'Guest' | 'Member' = 'Member') {
       household: { id: 'h1', name: 'Dom', myRole: role },
       componentProps: { extra: 'x' },
     },
-    global: { plugins: [createPinia(), i18n, PrimeVue, ToastService] },
+    global: { plugins: [pinia, i18n, PrimeVue, ToastService] },
   })
 }
 
@@ -70,5 +71,26 @@ describe('PluginOutlet', () => {
     await nextTick()
 
     expect(wrapper.text()).toBe(i18n.global.t('plugins.failed'))
+  })
+
+  it('hands the plugin the current access token for its realtime hub, or rejects when signed out', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const session = useSessionStore()
+    let accessToken: () => Promise<string> = () => Promise.reject(new Error('not rendered'))
+    const Hub = defineComponent({
+      setup() {
+        accessToken = useHost().accessToken
+        return () => h('p')
+      },
+    })
+    render(Hub, 'Member', pinia)
+
+    const refresh = vi.spyOn(session, 'refresh').mockResolvedValue(null)
+    await expect(accessToken()).rejects.toThrow()
+    expect(refresh).toHaveBeenCalled()
+
+    refresh.mockResolvedValue('fresh-token')
+    expect(await accessToken()).toBe('fresh-token')
   })
 })

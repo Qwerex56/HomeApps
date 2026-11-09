@@ -41,6 +41,13 @@ public sealed record PluginManifest
     /// <summary>Compact JSON for e-paper and small screens (jarvis-hub.md 9b.2).</summary>
     public IReadOnlyList<DisplayScreen> Display { get; init; } = [];
 
+    /// <summary>
+    /// The plugin's realtime hub (SignalR or a plain WebSocket) relative to <see cref="BasePath"/>, e.g. <c>hub</c>, or
+    /// <c>null</c> without one. The plugin maps the hub itself; the kit lets the hub's requests carry the access token
+    /// as <c>?access_token=</c>, since browsers cannot send headers with a WebSocket (docs/plugins.md, "Realtime").
+    /// </summary>
+    public string? Realtime { get; init; }
+
     /// <summary>The plugin's MCP server for JARVIS; <c>null</c> when it has none.</summary>
     public PluginMcp? Mcp { get; init; }
 

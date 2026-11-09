@@ -35,7 +35,8 @@ is not a member gets `404`, never `403`, so the ids of other households give not
 | `POST /households/{id}/guest-link` | Owner, Admin | A new guest link `{ code }`; the old one stops working. |
 | `DELETE /households/{id}/guest-link` | Owner, Admin | Turn the guest link off. |
 | `GET /households/{id}/members` | Member and up, server admin | Members with names, roles and `isActive` (false: show greyed out). Guests get `403`. |
-| `GET /households/{id}/members/me` | member | My membership. |
+| `GET /households/{id}/members/names` | member (guests too), server admin | Only `{ userId, name, avatarUrl }` per person, `name` being the nickname here or the display name (C4 of the chat plugin: a guest sees who wrote what). |
+| `GET /households/{id}/members/me` | member | My membership: role, nickname, `joinedAt`, `accessUntil`. |
 | `PUT /households/{id}/members/me/nickname` `{ nickname? }` | Member and up | My nickname in this household. |
 | `DELETE /households/{id}/members/me` | member but the Owner | Leave. The Owner hands over first. |
 | `PUT /households/{id}/members/{userId}/nickname` | Owner, Admin | Name someone, for example a guest. |

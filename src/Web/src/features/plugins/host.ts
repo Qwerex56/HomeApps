@@ -18,6 +18,11 @@ export function createHost(manifest: PluginManifest, household: MaybeRefOrGetter
     version: APP_VERSION,
     manifest,
     http,
+    accessToken: async () => {
+      const token = session.accessToken ?? (await session.refresh())
+      if (!token) throw new Error('Signed out')
+      return token
+    },
     apiBase: manifest.endpoints.api,
     household: current,
     user: computed(() => (session.claims ? { id: session.claims.sub, email: session.claims.email ?? null } : null)),

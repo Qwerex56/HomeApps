@@ -4,6 +4,7 @@ using HomeApps.BuildingBlocks.Application.Abstractions;
 using Households.Api.Http;
 using Households.Application.Common;
 using Households.Application.Members;
+using Households.Application.Members.ListMemberNames;
 using Households.Domain.Households;
 using MediatR;
 
@@ -28,6 +29,11 @@ internal sealed class MemberEndpoints : IEndpoint
         members.MapGet("/", async (Guid id, ISender sender, CancellationToken ct) =>
             (await sender.Send(new ListMembersQuery(id), ct)).ToHttpResult())
             .Produces<IReadOnlyList<MemberView>>();
+
+        // C4: names and avatars for everyone with access, guests included (plugins show who wrote what).
+        members.MapGet("/names", async (Guid id, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new ListMemberNamesQuery(id), ct)).ToHttpResult())
+            .Produces<IReadOnlyList<MemberNameView>>();
 
         members.MapGet("/me", async (Guid id, ISender sender, CancellationToken ct) =>
             (await sender.Send(new GetMyMembershipQuery(id), ct)).ToHttpResult())

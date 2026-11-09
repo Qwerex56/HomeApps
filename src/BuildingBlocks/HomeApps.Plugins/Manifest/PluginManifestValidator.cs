@@ -8,6 +8,9 @@ public static partial class PluginManifestValidator
     /// <summary>First path segments the core services and the web app already use.</summary>
     private static readonly string[] ReservedIds = ["auth", "users", "admin", "households", "invites", "homes", "join", "wall", "account", "openapi", "notifications"];
 
+    /// <summary>First path segments the kit serves under <c>/plugins/{id}</c>.</summary>
+    private static readonly string[] ReservedPaths = ["api", "ui", "manifest", "openapi", "health", "mcp"];
+
     public static IReadOnlyList<string> Validate(PluginManifest manifest)
     {
         ArgumentNullException.ThrowIfNull(manifest);
@@ -105,6 +108,18 @@ public static partial class PluginManifestValidator
             Unique(problems, "MCP tool", manifest.Mcp.Tools);
         }
 
+        if (manifest.Realtime is not null)
+        {
+            if (!RealtimePattern().IsMatch(manifest.Realtime))
+            {
+                problems.Add("Realtime must be a relative path of lower-case letters, digits, '-' and '/', e.g. 'hub'.");
+            }
+            else if (ReservedPaths.Contains(manifest.Realtime.Split('/')[0]))
+            {
+                problems.Add($"Realtime path '{manifest.Realtime}' collides with a path the kit serves.");
+            }
+        }
+
         foreach (var category in manifest.Notifications)
         {
             if (!IdPattern().IsMatch(category.Id))
@@ -154,6 +169,9 @@ public static partial class PluginManifestValidator
 
     [GeneratedRegex(@"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$")]
     private static partial Regex PermissionPattern();
+
+    [GeneratedRegex("^[a-z0-9-]+(/[a-z0-9-]+)*$")]
+    private static partial Regex RealtimePattern();
 
     [GeneratedRegex(@"^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$")]
     private static partial Regex VersionPattern();

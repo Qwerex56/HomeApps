@@ -11,16 +11,18 @@ public sealed class AccessCacheTests
     private readonly Guid _household = Guid.NewGuid();
     private readonly Guid _user = Guid.NewGuid();
 
+    private static HouseholdMembership As(HouseholdRole role) => new(role, new DateTimeOffset(2026, 10, 1, 0, 0, 0, TimeSpan.Zero), null);
+
     public AccessCacheTests() => _cache = new HouseholdAccessCache(_time, Options.Create(new PluginHostingOptions()));
 
     [Fact]
-    public void A_role_is_kept_for_a_minute()
+    public void A_membership_is_kept_for_a_minute()
     {
-        _cache.Set(_household, _user, HouseholdRole.Member);
+        _cache.Set(_household, _user, As(HouseholdRole.Member));
 
         _time.Advance(TimeSpan.FromSeconds(59));
-        Assert.True(_cache.TryGet(_household, _user, out var role));
-        Assert.Equal(HouseholdRole.Member, role);
+        Assert.True(_cache.TryGet(_household, _user, out var membership));
+        Assert.Equal(HouseholdRole.Member, membership!.Role);
 
         _time.Advance(TimeSpan.FromSeconds(1));
         Assert.False(_cache.TryGet(_household, _user, out _));
@@ -42,9 +44,9 @@ public sealed class AccessCacheTests
     public void Forgetting_a_household_drops_all_its_members_only()
     {
         var other = Guid.NewGuid();
-        _cache.Set(_household, _user, HouseholdRole.Member);
-        _cache.Set(_household, Guid.NewGuid(), HouseholdRole.Admin);
-        _cache.Set(other, _user, HouseholdRole.Owner);
+        _cache.Set(_household, _user, As(HouseholdRole.Member));
+        _cache.Set(_household, Guid.NewGuid(), As(HouseholdRole.Admin));
+        _cache.Set(other, _user, As(HouseholdRole.Owner));
 
         _cache.Forget(_household);
 

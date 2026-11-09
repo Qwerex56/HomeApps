@@ -48,7 +48,8 @@ public sealed record PluginManifestDocument(
                 api,
                 $"{basePath}/openapi/v1.json",
                 manifest.Mcp is null ? null : $"{basePath}/mcp",
-                $"{basePath}/health/ready"),
+                $"{basePath}/health/ready",
+                manifest.Realtime is null ? null : $"{basePath}/{manifest.Realtime}"),
             manifest.Ui is null
                 ? null
                 : new PluginUiDocument($"{basePath}/ui/entry.js", $"{basePath}/ui/entry.css", manifest.Ui.Routes, manifest.Ui.Widgets, manifest.Ui.Settings),
@@ -68,7 +69,8 @@ public sealed record PluginRequirementsDocument(string HomeApps);
 public sealed record PluginEnablementDocument(DataScope Scope, HouseholdRole MinRole, string Path);
 
 /// <param name="Mcp"><c>null</c> when the plugin has no MCP server.</param>
-public sealed record PluginEndpointsDocument(string Api, string OpenApi, string? Mcp, string Health);
+/// <param name="Realtime">The realtime hub; <c>null</c> without one. Added in HomeApps 2.2.0.</param>
+public sealed record PluginEndpointsDocument(string Api, string OpenApi, string? Mcp, string Health, string? Realtime = null);
 
 /// <param name="Entry">The ES module the web app imports (docs/plugins.md, "UI").</param>
 /// <param name="Style">Its stylesheet, when the build produced one.</param>

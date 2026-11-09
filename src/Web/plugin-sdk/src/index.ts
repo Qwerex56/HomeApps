@@ -17,11 +17,17 @@ export interface PluginHousehold {
  * The plugin never signs in by itself: http carries the user's token and refreshes it like the rest of the app.
  */
 export interface HostApi {
-  /** HomeApps' version, e.g. 2.1.0. */
+  /** HomeApps' version, e.g. 2.2.0. */
   version: string
   manifest: PluginManifest
   /** Axios with the access token; paths are absolute on the HomeApps host, e.g. `${apiBase}/households/...`. */
   http: AxiosInstance
+  /**
+   * The current access token, for what cannot use http: the realtime hub (SignalR's accessTokenFactory, or
+   * `?access_token=` on a WebSocket). Refreshed when needed; never store it. Rejects when the session is over.
+   * Since HomeApps 2.2.0.
+   */
+  accessToken: () => Promise<string>
   /** manifest.endpoints.api, e.g. /plugins/todo/api. */
   apiBase: string
   /** The household on screen; null on pages outside a household. */

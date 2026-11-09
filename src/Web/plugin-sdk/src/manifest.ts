@@ -48,7 +48,14 @@ export interface PluginManifest {
   scopes: DataScope[]
   enablement: { scope: 'Household'; minRole: HouseholdRole; path: string } | null
   permissions: PluginPermission[]
-  endpoints: { api: string; openApi: string; mcp: string | null; health: string }
+  endpoints: {
+    api: string
+    openApi: string
+    mcp: string | null
+    health: string
+    /** The realtime hub, e.g. /plugins/chat/hub; missing or null without one (HomeApps 2.2.0+). */
+    realtime?: string | null
+  }
   ui: {
     entry: string
     style: string

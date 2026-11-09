@@ -11,6 +11,9 @@ namespace HomeApps.Plugins.Tests;
 public sealed class FakeHouseholds : HttpMessageHandler
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
+    /// <summary>When everyone set with <see cref="SetRole"/> joined.</summary>
+    public static readonly DateTimeOffset JoinedAt = new(2026, 11, 1, 18, 0, 0, TimeSpan.Zero);
+
     private readonly ConcurrentDictionary<(Guid, Guid), HouseholdRole> _roles = new();
     private int _calls;
 
@@ -40,7 +43,7 @@ public sealed class FakeHouseholds : HttpMessageHandler
         var userId = Guid.Parse(TestUser.Of(LastAuthorization));
 
         return Task.FromResult(_roles.TryGetValue((householdId, userId), out var role)
-            ? new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(new { householdId, role }, options: Json) }
+            ? new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(new { householdId, role, nickname = (string?)null, joinedAt = JoinedAt, accessUntil = (DateTimeOffset?)null }, options: Json) }
             : new HttpResponseMessage(HttpStatusCode.NotFound));
     }
 }

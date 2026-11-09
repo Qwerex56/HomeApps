@@ -90,12 +90,32 @@ public sealed class ManifestTests
     }
 
     [Fact]
-    public void Without_an_MCP_server_or_UI_those_fields_are_null()
+    public void Without_an_MCP_server_UI_or_hub_those_fields_are_null()
     {
         var document = PluginManifestDocument.From(TestManifests.Valid with { Mcp = null, Ui = null });
 
         Assert.Null(document.Endpoints.Mcp);
+        Assert.Null(document.Endpoints.Realtime);
         Assert.Null(document.Ui);
+    }
+
+    [Theory]
+    [InlineData("hub", true)]
+    [InlineData("live/chat", true)]
+    [InlineData("/hub", false)]
+    [InlineData("Hub", false)]
+    [InlineData("api/hub", false)]
+    [InlineData("ui", false)]
+    [InlineData("", false)]
+    public void The_realtime_hub_is_a_relative_path_of_its_own(string path, bool valid)
+    {
+        var problems = PluginManifestValidator.Validate(TestManifests.Valid with { Realtime = path });
+
+        Assert.Equal(valid, problems.Count == 0);
+        if (valid)
+        {
+            Assert.Equal($"/plugins/todo/{path}", PluginManifestDocument.From(TestManifests.Valid with { Realtime = path }).Endpoints.Realtime);
+        }
     }
 
     [Fact]

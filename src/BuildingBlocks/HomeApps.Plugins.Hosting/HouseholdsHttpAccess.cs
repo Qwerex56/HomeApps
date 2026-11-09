@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using HomeApps.BuildingBlocks.Application.Abstractions;
-using HomeApps.Contracts.Households;
+using HomeApps.Plugins.Manifest;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 
@@ -11,15 +11,16 @@ namespace HomeApps.Plugins.Hosting;
 
 /// <summary>
 /// <see cref="IHouseholdAccess"/> through <c>GET /households/{id}/members/me</c> on Households, sent with the caller's
-/// own access token, so Households applies exactly its own rules (archived, guest access ended). Any other answer than
+/// own access token (from the Authorization header, or from the realtime hub's <c>?access_token=</c>), so Households applies exactly its own rules (archived, guest access ended). Any other answer than
 /// 200, 403 or 404 throws: a plugin refuses rather than guesses when Households is down.
 /// </summary>
 internal sealed class HouseholdsHttpAccess(
-    HttpClient http, IHttpContextAccessor accessor, ICurrentUser currentUser, HouseholdAccessCache cache) : IHouseholdAccess
+    HttpClient http, IHttpContextAccessor accessor, ICurrentUser currentUser, HouseholdAccessCache cache, PluginManifest manifest)
+    : IHouseholdAccess
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
 
-    public async Task<HouseholdRole?> GetRoleAsync(Guid householdId, CancellationToken cancellationToken)
+    public async Task<HouseholdMembership?> GetMembershipAsync(Guid householdId, CancellationToken cancellationToken)
     {
         var userId = currentUser.RequiredUserId;
         if (cache.TryGet(householdId, userId, out var cached))
@@ -27,8 +28,8 @@ internal sealed class HouseholdsHttpAccess(
             return cached;
         }
 
-        var authorization = accessor.HttpContext?.Request.Headers[HeaderNames.Authorization].ToString();
-        if (string.IsNullOrEmpty(authorization))
+        var authorization = Authorization();
+        if (authorization is null)
         {
             throw new InvalidOperationException("Household access needs the caller's access token; there is no HTTP request with one.");
         }
@@ -37,17 +38,31 @@ internal sealed class HouseholdsHttpAccess(
         request.Headers.TryAddWithoutValidation(HeaderNames.Authorization, authorization);
 
         using var response = await http.SendAsync(request, cancellationToken);
-        HouseholdRole? role = response.StatusCode switch
+        HouseholdMembership? membership = response.StatusCode switch
         {
-            HttpStatusCode.OK => (await response.Content.ReadFromJsonAsync<Membership>(Json, cancellationToken))!.Role,
+            HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<HouseholdMembership>(Json, cancellationToken),
             HttpStatusCode.NotFound or HttpStatusCode.Forbidden => null,
             _ => throw new HttpRequestException(
                 $"Households answered {(int)response.StatusCode} when asked about household {householdId}.", null, response.StatusCode),
         };
 
-        cache.Set(householdId, userId, role);
-        return role;
+        cache.Set(householdId, userId, membership);
+        return membership;
     }
 
-    private sealed record Membership(HouseholdRole Role);
+    private string? Authorization()
+    {
+        if (accessor.HttpContext?.Request is not { } request)
+        {
+            return null;
+        }
+
+        var header = request.Headers[HeaderNames.Authorization].ToString();
+        if (!string.IsNullOrEmpty(header))
+        {
+            return header;
+        }
+
+        return RealtimeAccessToken.Read(request, manifest) is { } token ? $"Bearer {token}" : null;
+    }
 }

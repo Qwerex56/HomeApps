@@ -5,6 +5,7 @@ using HomeApps.BuildingBlocks.Infrastructure;
 using HomeApps.BuildingBlocks.Infrastructure.Options;
 using HomeApps.Plugins.Manifest;
 using MassTransit;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -48,6 +49,21 @@ public static class PluginHostingExtensions
         services.AddSingleton<HouseholdAccessCache>();
         services.AddHttpClient<IHouseholdAccess, HouseholdsHttpAccess>((sp, http) =>
             http.BaseAddress = new Uri(sp.GetRequiredService<IOptions<PluginHostingOptions>>().Value.HouseholdsUrl.TrimEnd('/') + "/"));
+
+        if (manifest.Realtime is not null)
+        {
+            // The realtime hub's browsers send the token in the query (RealtimeAccessToken); everything else keeps
+            // reading the header only.
+            services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, bearer =>
+            {
+                var previous = bearer.Events.OnMessageReceived;
+                bearer.Events.OnMessageReceived = async context =>
+                {
+                    await previous(context);
+                    context.Token ??= RealtimeAccessToken.Read(context.Request, manifest);
+                };
+            });
+        }
 
         return builder;
     }

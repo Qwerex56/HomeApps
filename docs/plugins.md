@@ -76,7 +76,8 @@ What clients get (abridged):
     "api": "/plugins/todo/api",
     "openApi": "/plugins/todo/openapi/v1.json",
     "mcp": "/plugins/todo/mcp",
-    "health": "/plugins/todo/health/ready"
+    "health": "/plugins/todo/health/ready",
+    "realtime": null
   },
   "ui": {
     "entry": "/plugins/todo/ui/entry.js",
@@ -99,7 +100,7 @@ What clients get (abridged):
 | `scopes` | Whose data: `User`, `Household`, `Application` (whole instance) or `HouseholdUser` (in a household, but items may be private). |
 | `enablement` | Who switches the plugin on in a household. Required for household data; absent means always on. |
 | `permissions` | Named permissions, each with the lowest household role that has it. The web app hides what the role cannot do; the plugin checks the same thing. |
-| `endpoints` | API, OpenAPI (always served, anonymous), MCP server (`null` without one) and readiness. |
+| `endpoints` | API, OpenAPI (always served, anonymous), MCP server (`null` without one), readiness and the realtime hub (`realtime`, HomeApps 2.2.0+, `null` without one). |
 | `ui` | The ES module the web app imports, its pages inside a household (`/homes/{id}/apps/{plugin}/{path}`) and its widgets with where they may stand. |
 | `display` | Compact JSON for e-paper and small screens, with how often to fetch it. |
 | `mcp.tools` | Tool names, so JARVIS knows what to expect before it connects. |
@@ -137,8 +138,13 @@ public sealed record AddTaskCommand(Guid HouseholdId, Guid ListId, string Title)
 | The role is below the permission's `minRole` | 403 | `plugin.forbidden` |
 
 A permission the manifest does not declare is a bug and throws. Rules that depend on the data itself ("only the
-author sees a private list") stay in the domain; the handler can ask `IHouseholdAccess.GetRoleAsync` for the role
-again, which is cached.
+author sees a private list") stay in the domain; the handler can ask `IHouseholdAccess` again, which is cached:
+`GetRoleAsync` for the role, `GetMembershipAsync` for the role, `JoinedAt` and a guest's `AccessUntil` (the chat
+shows a guest messages only from `JoinedAt` on).
+
+Names and avatars of everyone in the household, for showing who did what, come from Households'
+`GET /households/{id}/members/names` with the caller's token. It answers every member, guests included; the full
+member list (`/members`) stays for Member and up. The plugin asks it from its UI or its API; it keeps no copy.
 
 `IHouseholdAccess` calls Households' `GET /households/{id}/members/me` with the caller's own token, so Households
 applies its own rules. Roles are cached for 60 seconds and "no access" for 5 seconds (`Plugin:AccessCacheSeconds`,
@@ -146,6 +152,39 @@ applies its own rules. Roles are cached for 60 seconds and "no access" for 5 sec
 `HouseholdArchived` and `HouseholdRestored` drop the cached answers at once. With several copies of one plugin running,
 only one of them hears those events; the others catch up when their cache expires. When Households is down, the
 plugin refuses (500) rather than guesses.
+
+## Realtime
+
+A plugin that pushes changes to open pages (the chat's new messages) runs its own hub, SignalR or a plain WebSocket,
+and names its path in the manifest: `Realtime = "hub"` becomes `endpoints.realtime: "/plugins/chat/hub"`. The kit
+does not bring SignalR; the plugin maps the hub itself after `UseHomeAppsPlugin()`:
+
+```csharp
+builder.Services.AddSignalR();
+// ...
+app.UseHomeAppsPlugin();
+app.MapHub<ChatHub>("/hub").RequireAuthorization();
+```
+
+Browsers cannot send an Authorization header with a WebSocket, so the hub's requests carry the token as
+`?access_token=`. The kit accepts it **only on the hub's path** (anywhere else a token in the query is ignored),
+and `IHouseholdAccess` passes it on to Households, so `GetMembershipAsync` works in the hub as in the API. A
+connection keeps the token it started with: check membership when someone connects or joins a household's group,
+and send changes through the API, which always has a fresh token. Traefik and Cloudflare Tunnel pass WebSockets
+through without settings; Traefik's access log, when turned on, would show the query, so leave it off or drop the
+query there.
+
+In the UI `useHost().accessToken()` gives the current token, refreshed when needed:
+
+```ts
+const host = useHost()
+const connection = new HubConnectionBuilder()
+  .withUrl(host.manifest.endpoints.realtime!, { accessTokenFactory: host.accessToken })
+  .withAutomaticReconnect()
+  .build()
+```
+
+`accessTokenFactory` runs on every (re)connect, so a reconnect after an hour uses a new token.
 
 ## Notifications
 
@@ -234,7 +273,7 @@ export default definePlugin({
 ```
 
 Inside its components the plugin calls `useHost()`: `http` (Axios with the user's token and the app's refresh),
-`apiBase`, `household` (id, name, `myRole`), `user`, `can('tasks.write')` (the manifest's permissions for the role),
+`accessToken()` (the token itself, for a realtime hub), `apiBase`, `household` (id, name, `myRole`), `user`, `can('tasks.write')` (the manifest's permissions for the role),
 `t('title', { … })` (its own `messages`), `notify(...)` and `errorMessage(error)`. Widgets get `householdId` and
 `place` as props.
 
