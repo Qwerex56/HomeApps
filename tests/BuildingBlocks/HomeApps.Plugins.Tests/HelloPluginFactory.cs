@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.BuildingBlocks.Testing;
 using HomeApps.Plugins.Hello;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +11,12 @@ public sealed class HelloPluginFactory : HomeAppsApiFactory<Program, HelloDbCont
 {
     public FakeHouseholds Households { get; } = new();
 
-    protected override void ConfigureServices(IServiceCollection services) =>
+    /// <summary>Every integration message the plugin published, in order.</summary>
+    public ConcurrentQueue<object> Published { get; } = new();
+
+    protected override void ConfigureServices(IServiceCollection services)
+    {
         services.AddHttpClient(nameof(IHouseholdAccess)).ConfigurePrimaryHttpMessageHandler(() => Households);
+        services.AddScoped<IEventBus>(sp => new RecordingEventBus(sp.GetRequiredService<MassTransit.IPublishEndpoint>(), Published));
+    }
 }

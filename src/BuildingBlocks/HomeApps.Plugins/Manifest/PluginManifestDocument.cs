@@ -22,7 +22,8 @@ public sealed record PluginManifestDocument(
     PluginUiDocument? Ui,
     IReadOnlyList<DisplayScreen> Display,
     PluginMcp? Mcp,
-    PluginEventsDocument Events)
+    PluginEventsDocument Events,
+    IReadOnlyList<PluginNotificationCategory> Notifications)
 {
     public const int CurrentVersion = 1;
 
@@ -55,7 +56,8 @@ public sealed record PluginManifestDocument(
             manifest.Mcp,
             new PluginEventsDocument(
                 manifest.Events.Publishes.Select(t => t.FullName!).ToList(),
-                manifest.Events.Consumes.Select(t => t.FullName!).ToList()));
+                manifest.Events.Consumes.Select(t => t.FullName!).ToList()),
+            manifest.Notifications);
     }
 }
 

@@ -116,6 +116,15 @@ expect 200 "Owner lists members"
 [[ $count -ge 2 ]] || fail "expected 2 members, got $count"
 echo "ok  $count members"
 
+step "Notifications"
+call owner GET /notifications/vapid-public-key '' "$access" | jq -e '.publicKey | length == 87' >/dev/null
+expect 200 "the instance's VAPID public key"
+call owner PUT /notifications/mutes "{\"householdId\":\"$household\",\"source\":null}" "$access" >/dev/null
+expect 2xx "Owner mutes the household"
+call owner GET /notifications/settings '' "$access" | jq -e --arg h "$household" '.mutes[0].householdId == $h' >/dev/null
+expect 200 "the mute is in the settings"
+call owner POST /notifications/test '' "$access" >/dev/null; expect 409 "a test notification without devices"
+
 step "Sign out"
 call owner POST /auth/logout '{}' >/dev/null; expect 204 "Owner signs out"
 call owner POST /auth/refresh "{\"clientId\":\"$client\"}" >/dev/null; expect 401 "refresh after sign-out is refused"

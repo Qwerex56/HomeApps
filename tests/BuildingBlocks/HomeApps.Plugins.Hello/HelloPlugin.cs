@@ -7,12 +7,13 @@ public static class HelloPlugin
 {
     public const string Read = "greetings.read";
     public const string Write = "greetings.write";
+    public const string GreetingCategory = "greeting";
 
     public static PluginManifest Manifest { get; } = new()
     {
         Id = "hello",
         Version = "1.0.0",
-        MinHomeAppsVersion = "2.1.0",
+        MinHomeAppsVersion = "2.2.0",
         Name = new LocalizedText("Powitania", "Greetings"),
         Description = new LocalizedText("Przykładowy plugin", "Sample plugin"),
         Icon = "pi-face-smile",
@@ -30,5 +31,6 @@ public static class HelloPlugin
         },
         Display = [new DisplayScreen("latest", new LocalizedText("Powitanie", "Greeting"), "households/{householdId}/greetings/latest", 300)],
         Events = new PluginEvents([], [typeof(MemberLeft)]),
+        Notifications = [new PluginNotificationCategory(GreetingCategory, new LocalizedText("Powitania", "Greetings"))],
     };
 }

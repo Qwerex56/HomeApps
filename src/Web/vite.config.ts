@@ -5,20 +5,6 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import pkg from './package.json' with { type: 'json' }
 
-// Paths that belong to the services behind Traefik. The service worker must never answer them with index.html,
-// above all /auth/external/google, which is a full page navigation to Auth (frontend.md, section 4).
-const servicePaths = [
-  /^\/auth\//,
-  /^\/\.well-known\//,
-  /^\/users(\/|$)/,
-  /^\/admin\/users(\/|$)/,
-  /^\/households(\/|$)/,
-  /^\/invites(\/|$)/,
-  /^\/admin\/households(\/|$)/,
-  /^\/openapi\//,
-  /^\/plugins\//,
-]
-
 /** HOMEAPPS_PLUGINS="todo,weather" → ["todo","weather"]; the same rule as the production image (docker/40-plugins-json.sh). */
 function pluginIds(list: string | undefined) {
   return (list ?? '')
@@ -47,6 +33,10 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Our own service worker (src/sw.ts): the app shell as before, plus Web Push (docs/notifications.md).
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'HomeApps',
@@ -65,10 +55,10 @@ export default defineConfig({
           { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
-      // Only the app shell is cached; data always comes from the network (Q7).
-      workbox: {
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: servicePaths,
+      // Only the app shell is cached; data always comes from the network (Q7). The navigation fallback and the
+      // service paths it must skip live in src/sw.ts.
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
       },
     }),
   ],

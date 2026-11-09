@@ -32,6 +32,7 @@ Development is a different file (`compose.dev.yaml`, see
 git clone <the repository> homeapps && cd homeapps
 cp .env.prod.example .env            # fill in every value marked "required"
 scripts/generate-signing-key.sh      # once: secrets/auth-signing.pem
+scripts/generate-vapid-keys.sh       # once: paste the two lines it prints into .env
 docker compose -f compose.prod.yaml up -d --build
 ```
 
@@ -42,7 +43,7 @@ On an empty database Auth sends an invitation to `AUTH_BOOTSTRAP_EMAIL`. That pe
 (or uses Google) and becomes the Owner, the only account above Admin. Sign-up is closed (`Auth:RegistrationOpen`
 is off): everyone else joins through an invitation from an existing account.
 
-Every service creates its database (`homeapps_auth`, `homeapps_accounts`, `homeapps_households`) and applies its
+Every service creates its database (`homeapps_auth`, `homeapps_accounts`, `homeapps_households`, `homeapps_notifications`) and applies its
 migrations on start (`Database:MigrateOnStartup`, set by the compose file). Each runs as a single instance, so two
 copies never migrate at the same time.
 
@@ -54,16 +55,18 @@ copies never migrate at the same time.
 | `ACME_EMAIL` | Optional: the Let's Encrypt account address. `ACME_CA_SERVER` can point at the staging CA for a first try. Not used behind a tunnel. |
 | `CLOUDFLARE_TUNNEL_TOKEN` | Only with `compose.tunnel.yaml`: the token of the tunnel from the Cloudflare dashboard. A secret. |
 | `COMPOSE_FILE` | Optional: `compose.prod.yaml:compose.tunnel.yaml` makes a plain `docker compose ...` use both files, so no command needs `-f`. |
-| `POSTGRES_USER`, `POSTGRES_PASSWORD` | The database account all three services use. |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD` | The database account all the services use. |
 | `RABBITMQ_USER`, `RABBITMQ_PASSWORD` | The message broker account. |
 | `AUTH_BOOTSTRAP_EMAIL` | The first Owner. |
 | `AUTH_GOOGLE_CLIENT_ID`, `AUTH_GOOGLE_CLIENT_SECRET` | Google sign-in; leave empty to turn it off. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM` | The mail server. Auth does not start without `SMTP_HOST`. |
 | `HOUSEHOLDS_MAX_MEMBERS` | Members per household, guests included (100). |
+| `NOTIFICATIONS_VAPID_PUBLIC_KEY`, `NOTIFICATIONS_VAPID_PRIVATE_KEY` | The Web Push keys from `scripts/generate-vapid-keys.sh`. Notifications does not start without them. Back them up and keep them: new keys mean every device has to turn notifications on again. The private key is a secret. |
+| `NOTIFICATIONS_VAPID_SUBJECT` | Optional: how push services can reach you, `mailto:` or `https:` (the site's address by default). |
 
 Anything else a service reads can be set the same way, as an environment variable in `compose.prod.yaml`
-(`Auth__RefreshGraceWindow`, `Auth__RateLimits__PerMinute`, ...); [auth.md](auth.md), [accounts.md](accounts.md)
-and [households.md](households.md) list them.
+(`Auth__RefreshGraceWindow`, `Auth__RateLimits__PerMinute`, ...); [auth.md](auth.md), [accounts.md](accounts.md),
+[households.md](households.md) and [notifications.md](notifications.md) list them.
 
 ### The signing key
 
@@ -94,7 +97,8 @@ In Google Cloud Console create an OAuth client of type "Web application" with th
 
 `compose.smoke.yaml` turns the production stack into a test stack: Mailpit catches the emails (inbox at
 http://localhost:8025) and Traefik uses its own certificate instead of Let's Encrypt. Run it on a machine with
-nothing else on ports 80, 443 and 8025, and with a fresh `.env` (see `.env.prod.example`; `SMTP_HOST` can be anything):
+nothing else on ports 80, 443 and 8025, and with a fresh `.env` (see `.env.prod.example`; `SMTP_HOST` can be anything, the VAPID keys come from
+`scripts/generate-vapid-keys.sh`):
 
 ```bash
 HOMEAPPS_DOMAIN=home-apps.localhost docker compose -f compose.prod.yaml -f compose.smoke.yaml up -d --build
@@ -104,7 +108,7 @@ scripts/smoke.sh
 `scripts/smoke.sh` (bash, curl, jq) needs an empty database. It goes through the whole release over HTTP: the web
 app and a deep link, the Owner from the bootstrap invitation, sign-in, refresh (including a refresh whose answer
 was lost), the profile reaching Accounts, a household and its invite, a second person invited to the app who signs up
-and joins the household, and sign-out. It ends with `SMOKE TEST PASSED`.
+and joins the household, the Notifications service, and sign-out. It ends with `SMOKE TEST PASSED`.
 
 The browser test of the web app runs against the same stack, with an account that exists (the Owner from above):
 
@@ -139,7 +143,8 @@ added with `HOMEAPPS_PLUGINS` in `.env` and switched on per household. Step by s
 ## Backups
 
 All data lives in the `postgres-data` volume; `auth-keys` holds the keys for Google sign-in cookies and
-`letsencrypt` the certificates (both are recreated if lost). Back up the databases and `secrets/`:
+`letsencrypt` the certificates (both are recreated if lost). Back up the databases, `secrets/` and `.env` (it holds the
+VAPID keys):
 
 ```bash
 docker compose -f compose.prod.yaml exec -T postgres pg_dumpall -U homeapps > homeapps-$(date +%F).sql

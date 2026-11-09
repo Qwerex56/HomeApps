@@ -48,6 +48,11 @@ export const router = createRouter({
               component: () => import('@/features/account/pages/SessionsPage.vue'),
             },
             {
+              path: 'notifications',
+              name: 'account-notifications',
+              component: () => import('@/features/notifications/pages/NotificationsPage.vue'),
+            },
+            {
               path: 'invitations',
               name: 'account-invitations',
               component: () => import('@/features/account/pages/InvitationsPage.vue'),

@@ -6,7 +6,7 @@ namespace HomeApps.Plugins.Manifest;
 public static partial class PluginManifestValidator
 {
     /// <summary>First path segments the core services and the web app already use.</summary>
-    private static readonly string[] ReservedIds = ["auth", "users", "admin", "households", "invites", "homes", "join", "wall", "account", "openapi"];
+    private static readonly string[] ReservedIds = ["auth", "users", "admin", "households", "invites", "homes", "join", "wall", "account", "openapi", "notifications"];
 
     public static IReadOnlyList<string> Validate(PluginManifest manifest)
     {
@@ -104,6 +104,18 @@ public static partial class PluginManifestValidator
 
             Unique(problems, "MCP tool", manifest.Mcp.Tools);
         }
+
+        foreach (var category in manifest.Notifications)
+        {
+            if (!IdPattern().IsMatch(category.Id))
+            {
+                problems.Add($"Notification category '{category.Id}' must be 2-32 lower-case letters, digits or '-', starting with a letter.");
+            }
+
+            CheckText(problems, $"Notification category '{category.Id}'", category.Name);
+        }
+
+        Unique(problems, "notification category", manifest.Notifications.Select(c => c.Id));
 
         return problems;
     }

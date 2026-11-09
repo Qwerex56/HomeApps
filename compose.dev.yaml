@@ -2,7 +2,7 @@
 #   docker compose -f compose.dev.yaml up -d                     infrastructure only; run Auth from Rider (Q19)
 #   docker compose -f compose.dev.yaml --profile services up -d  everything in containers
 # Everything is served at https://app.localhost: /auth and /.well-known go to Auth, /users and /admin/users to Accounts,
-# /households, /invites and /admin/households to Households, the rest to Vue (vite on :5173). Services read Auth's keys inside the Docker network (accounts plan Q10).
+# /households, /invites and /admin/households to Households, /notifications to Notifications, the rest to Vue (vite on :5173). Services read Auth's keys inside the Docker network (accounts plan Q10).
 # Values come from .env when present (copy .env.example); the defaults below work without it.
 name: homeapps
 
@@ -160,6 +160,39 @@ services:
       - "traefik.http.routers.households.entrypoints=websecure"
       - "traefik.http.routers.households.tls=true"
       - "traefik.http.services.households.loadbalancer.server.port=8080"
+
+  notifications:
+    profiles: ["services"]
+    build:
+      context: .
+      dockerfile: src/Notifications/Notifications.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Database: "Host=postgres;Database=homeapps_notifications;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: ${RABBITMQ_USER:-guest}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-guest}
+      Jwt__Authority: "http://auth:8080"
+      Jwt__Issuer: "https://app.localhost"
+      Jwt__RequireHttpsMetadata: "false"
+      # Empty: a temporary pair on every start (docs/notifications.md); scripts/generate-vapid-keys.sh makes lasting ones.
+      Notifications__Vapid__PublicKey: ${NOTIFICATIONS_VAPID_PUBLIC_KEY:-}
+      Notifications__Vapid__PrivateKey: ${NOTIFICATIONS_VAPID_PRIVATE_KEY:-}
+      Notifications__Vapid__Subject: ${NOTIFICATIONS_VAPID_SUBJECT:-https://app.localhost}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      auth:
+        condition: service_started
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.notifications.rule=Host(`app.localhost`) && PathPrefix(`/notifications`)"
+      - "traefik.http.routers.notifications.priority=200"
+      - "traefik.http.routers.notifications.entrypoints=websecure"
+      - "traefik.http.routers.notifications.tls=true"
+      - "traefik.http.services.notifications.loadbalancer.server.port=8080"
 
 volumes:
   postgres-data:

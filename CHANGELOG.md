@@ -2,7 +2,30 @@
 
 Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`.
 
-## 2.1.0 (unreleased)
+## 2.2.0 (unreleased)
+
+### Added
+
+- **Notifications:** a new service that sends Web Push notifications to browsers and installed apps, also when
+  HomeApps is closed ([docs/notifications.md](docs/notifications.md)). Devices per person (at most 10), a preview
+  switch for the lock screen, quiet hours in the person's time zone, muting a household or one plugin in it, a test
+  notification. Expired subscriptions are removed; a disabled account loses its devices, an erased one everything.
+  Other services ask for a notification with the `NotificationRequested` message.
+- **Plugins:** `INotifier` sends a notification to chosen people, through the outbox with the command; the manifest
+  lists the plugin's notification categories (`Notifications`, JSON `notifications`).
+- **Web:** a "Powiadomienia" tab on the account page; the service worker shows notifications and opens their page on
+  a click. Signing out forgets this browser's device first.
+- `scripts/generate-vapid-keys.sh` makes the Web Push keys. The smoke test checks the Notifications service.
+
+### Changed
+
+- **Deployment:** `.env` needs `NOTIFICATIONS_VAPID_PUBLIC_KEY` and `NOTIFICATIONS_VAPID_PRIVATE_KEY`
+  (`scripts/generate-vapid-keys.sh`); the stack has a fourth database, `homeapps_notifications`, created on start.
+- The web app has its own service worker (`src/sw.ts`, vite-plugin-pwa `injectManifest`) instead of the generated one;
+  it caches the same app shell.
+- Images in `compose.prod.yaml` are tagged 2.2.0.
+
+## 2.1.0
 
 ### Added
 

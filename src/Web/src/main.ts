@@ -10,6 +10,7 @@ import { installPrimeVue } from './app/primevue'
 import { i18n } from './shared/i18n'
 import { queryClient } from './api/queryClient'
 import { registerPluginComponents, sharePluginModules } from './features/plugins/shared'
+import { listenForNotificationClicks } from './features/notifications/push'
 
 // Before anything loads a plugin: plugins use the app's Vue and friends (docs/plugins.md, "UI").
 sharePluginModules()
@@ -23,5 +24,7 @@ app.use(VueQueryPlugin, { queryClient })
 installPrimeVue(app)
 app.directive('tooltip', Tooltip)
 registerPluginComponents(app)
+
+listenForNotificationClicks(router)
 
 app.mount('#app')

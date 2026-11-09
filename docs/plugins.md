@@ -37,7 +37,7 @@ public static PluginManifest Manifest { get; } = new()
 {
     Id = "todo",                              // also the path prefix and the queue prefix
     Version = "1.0.0",
-    MinHomeAppsVersion = "2.1.0",             // the web app skips the plugin on an older HomeApps
+    MinHomeAppsVersion = "2.2.0",             // the web app skips the plugin on an older HomeApps
     Name = new LocalizedText("Zadania", "Tasks"),
     Icon = "pi-check-square",                 // PrimeIcons
     Scopes = [DataScope.HouseholdUser],
@@ -54,6 +54,7 @@ public static PluginManifest Manifest { get; } = new()
     },
     Display = [new DisplayScreen("today", new LocalizedText("Na dziś", "Today"), "households/{householdId}/display/today", 300)],
     Mcp = new PluginMcp(["add_task", "my_tasks", "complete_task"]),
+    Notifications = [new PluginNotificationCategory("assigned", new LocalizedText("Przydzielone zadania", "Assigned tasks"))],
     Events = new PluginEvents([typeof(TaskCompleted)], [typeof(MemberLeft)]),
 };
 ```
@@ -65,7 +66,7 @@ What clients get (abridged):
   "manifestVersion": 1,
   "id": "todo",
   "version": "1.0.0",
-  "requires": { "homeApps": "2.1.0" },
+  "requires": { "homeApps": "2.2.0" },
   "name": { "pl": "Zadania", "en": "Tasks" },
   "icon": "pi-check-square",
   "scopes": ["HouseholdUser"],
@@ -86,6 +87,7 @@ What clients get (abridged):
   },
   "display": [ { "id": "today", "path": "/plugins/todo/api/households/{householdId}/display/today", "refreshSeconds": 300 } ],
   "mcp": { "tools": ["add_task", "my_tasks", "complete_task"] },
+  "notifications": [ { "id": "assigned", "name": { "pl": "Przydzielone zadania", "en": "Assigned tasks" } } ],
   "events": { "publishes": ["HomeApps.Todo.Contracts.TaskCompleted"], "consumes": ["HomeApps.Contracts.Households.MemberLeft"] }
 }
 ```
@@ -102,6 +104,7 @@ What clients get (abridged):
 | `display` | Compact JSON for e-paper and small screens, with how often to fetch it. |
 | `mcp.tools` | Tool names, so JARVIS knows what to expect before it connects. |
 | `events` | Integration messages it publishes and consumes. Documentation only. |
+| `notifications` | The kinds of notifications it sends (HomeApps 2.2.0+). People mute a plugin per household on their notification settings; only plugins listed here appear there. |
 
 ## Switching a plugin on in a household
 
@@ -143,6 +146,40 @@ applies its own rules. Roles are cached for 60 seconds and "no access" for 5 sec
 `HouseholdArchived` and `HouseholdRestored` drop the cached answers at once. With several copies of one plugin running,
 only one of them hears those events; the others catch up when their cache expires. When Households is down, the
 plugin refuses (500) rather than guesses.
+
+## Notifications
+
+A plugin tells people about something with `INotifier` (registered by the kit); [notifications.md](notifications.md)
+describes the rest. The category must be in the manifest's `Notifications`, otherwise `NotifyAsync` throws:
+
+```csharp
+internal sealed class AssignTaskHandler(TodoDbContext db, INotifier notifier) : ICommandHandler<AssignTaskCommand>
+{
+    public async Task<Result> Handle(AssignTaskCommand command, CancellationToken cancellationToken)
+    {
+        var task = await db.Tasks.SingleAsync(t => t.Id == command.TaskId, cancellationToken);
+        task.AssignTo(command.AssigneeId);
+        await notifier.NotifyAsync(
+            new PluginNotification(
+                UserIds: [command.AssigneeId],
+                Category: "assigned",
+                Title: "Nowe zadanie",
+                Body: task.Title,
+                Url: $"/homes/{command.HouseholdId}/apps/todo",
+                HouseholdId: command.HouseholdId,
+                Tag: $"todo-{command.HouseholdId}"),
+            cancellationToken);
+        return Result.Ok();
+    }
+}
+```
+
+- **The plugin picks the people.** Notifications does not know who belongs where; send to the ids that should hear
+  it and that may see it (members of the room, without the author). An empty list sends nothing.
+- It goes out through the outbox with the handler's transaction: a command that fails notifies nobody.
+- `Url` is a page of the app (it starts with `/`); a click opens it. `Tag` replaces the previous notification with
+  the same tag on a device. `BodyWhenHidden` is what people who hide previews see on the lock screen.
+- Mutes, quiet hours and devices are Notifications' business; the plugin never sees them.
 
 ## Program.cs
 
@@ -227,7 +264,7 @@ scripts/pack.sh     # → ~/.homeapps/packages (HOMEAPPS_PACKAGES to change), ve
 It packs `HomeApps.BuildingBlocks.*`, `HomeApps.Contracts`, `HomeApps.Plugins`, `HomeApps.Plugins.Hosting` and
 `HomeApps.BuildingBlocks.Testing`, and drops that version from the local NuGet cache so a repack is picked up. It also
 packs the UI side as `homeapps-plugin-sdk-<version>.tgz` (run `npm ci` in `src/Web` once first); a plugin's UI
-installs it with `npm install ~/.homeapps/packages/homeapps-plugin-sdk-2.1.0.tgz`. The plugin's `nuget.config`:
+installs it with `npm install ~/.homeapps/packages/homeapps-plugin-sdk-2.2.0.tgz`. The plugin's `nuget.config`:
 
 ```xml
 <configuration>

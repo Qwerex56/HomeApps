@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using HomeApps.Contracts.Households;
+using HomeApps.Contracts.Notifications;
 using HomeApps.Plugins.Hello;
 using HomeApps.Plugins.Hosting;
 using MassTransit.Testing;
@@ -138,6 +139,22 @@ public sealed class HostingTests(HelloPluginFactory factory) : IClassFixture<Hel
 
         var afterwards = await As(_member).PostAsJsonAsync(Greetings, new { text = "Hej" });
         Assert.Equal(HttpStatusCode.Forbidden, afterwards.StatusCode);
+    }
+
+    [Fact]
+    public async Task A_plugin_notifies_through_the_bus_with_its_id_as_the_source()
+    {
+        await GivenSwitchedOn();
+
+        var response = await As(_member).PostAsJsonAsync(Greetings, new { text = "Obiad!", notify = new[] { _owner, _member } });
+
+        response.EnsureSuccessStatusCode();
+        var sent = factory.Published.OfType<NotificationRequested>().Single(m => m.Body == "Obiad!");
+        Assert.Equal("hello", sent.Source);
+        Assert.Equal("greeting", sent.Category);
+        Assert.Equal([_owner], sent.UserIds);
+        Assert.Equal(_household, sent.HouseholdId);
+        Assert.Equal($"/homes/{_household}/apps/hello", sent.Url);
     }
 
     private string Enablement => $"/plugins/hello/api/households/{_household}/enablement";

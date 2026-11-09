@@ -114,6 +114,12 @@
     "plugin": {
       "disabled": "Ta aplikacja nie jest włączona w tym domu.",
       "forbidden": "Twoja rola w tym domu na to nie pozwala."
+    },
+    "notifications": {
+      "no_devices": "Najpierw włącz powiadomienia na jakimś urządzeniu.",
+      "device_not_found": "Nie ma takiego urządzenia.",
+      "quiet_hours_empty": "Godziny ciszy muszą zaczynać się i kończyć o różnych porach.",
+      "unknown_time_zone": "Nieznana strefa czasowa."
     }
   },
   "auth": {
@@ -206,7 +212,8 @@
       "security": "Bezpieczeństwo",
       "sessions": "Urządzenia",
       "invitations": "Zaproszenia",
-      "history": "Historia"
+      "history": "Historia",
+      "notifications": "Powiadomienia"
     },
     "profile": {
       "title": "Profil",
@@ -516,6 +523,46 @@
     "problem": {
       "incompatible": "Wymaga nowszej wersji HomeApps",
       "unavailable": "Chwilowo niedostępna"
+    }
+  },
+  "notifications": {
+    "saved": "Zapisano ustawienia powiadomień.",
+    "device": {
+      "title": "To urządzenie",
+      "subtitle": "Powiadomienia z HomeApps w tej przeglądarce, także gdy aplikacja jest zamknięta.",
+      "toggle": "Powiadomienia na tym urządzeniu",
+      "refused": "Przeglądarka nie pozwoliła na powiadomienia.",
+      "blocked": "Powiadomienia są zablokowane w ustawieniach przeglądarki. Odblokuj je dla tej strony i wróć tutaj.",
+      "needsInstall": "Na iPhonie i iPadzie powiadomienia działają tylko w aplikacji dodanej do ekranu początkowego: Udostępnij, potem „Do ekranu początk.”. Otwórz HomeApps z ekranu i włącz je tutaj.",
+      "unsupported": "Ta przeglądarka nie obsługuje powiadomień."
+    },
+    "test": {
+      "button": "Wyślij próbne",
+      "sent": "Wysłaliśmy powiadomienie próbne.",
+      "nothing": "Żadne urządzenie nie przyjęło powiadomienia."
+    },
+    "settings": {
+      "title": "Ustawienia",
+      "preview": "Pokazuj treść na ekranie blokady",
+      "previewHint": "Wyłączone: zobaczysz tylko „Nowe powiadomienie”, treść po otwarciu aplikacji.",
+      "quiet": "Godziny ciszy",
+      "quietHint": "W tych godzinach powiadomienia nie przychodzą.",
+      "from": "Od",
+      "to": "Do"
+    },
+    "mutes": {
+      "title": "Domy i aplikacje",
+      "subtitle": "Wycisz cały dom albo jedną aplikację w domu.",
+      "household": "Powiadomienia z domu {name}"
+    },
+    "devices": {
+      "title": "Urządzenia z powiadomieniami",
+      "subtitle": "Usuń urządzenie, którego już nie używasz.",
+      "none": "Żadne urządzenie nie ma włączonych powiadomień.",
+      "unknown": "Nieznane urządzenie",
+      "thisOne": "to urządzenie",
+      "since": "od {date}",
+      "remove": "Usuń urządzenie"
     }
   }
 }

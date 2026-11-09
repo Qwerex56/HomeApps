@@ -1,6 +1,7 @@
 # Production: everything at https://${HOMEAPPS_DOMAIN} (home-apps.dev), certificates from Let's Encrypt (release plan Q2).
 #   cp .env.prod.example .env            fill in the values marked "required"
 #   scripts/generate-signing-key.sh      once: secrets/auth-signing.pem, the key Auth signs tokens with
+#   scripts/generate-vapid-keys.sh       once: the Web Push keys for .env (Notifications)
 #   docker compose -f compose.prod.yaml up -d --build
 # Ports 80 and 443 must reach this machine (HTTP-01 challenge). Postgres and RabbitMQ are not published; only Traefik is.
 # No public address (CGNAT)? Add the overlay compose.tunnel.yaml (Cloudflare Tunnel, no open ports).
@@ -82,7 +83,7 @@ services:
 
   auth:
     <<: *service
-    image: homeapps/auth:2.0.0
+    image: homeapps/auth:2.2.0
     build:
       context: .
       dockerfile: src/Auth/Auth.Api/Dockerfile
@@ -117,7 +118,7 @@ services:
 
   accounts:
     <<: *service
-    image: homeapps/accounts:2.0.0
+    image: homeapps/accounts:2.2.0
     build:
       context: .
       dockerfile: src/Accounts/Accounts.Api/Dockerfile
@@ -132,7 +133,7 @@ services:
 
   households:
     <<: *service
-    image: homeapps/households:2.0.0
+    image: homeapps/households:2.2.0
     build:
       context: .
       dockerfile: src/Households/Households.Api/Dockerfile
@@ -146,8 +147,26 @@ services:
       - "traefik.http.routers.households.entrypoints=websecure"
       - "traefik.http.services.households.loadbalancer.server.port=8080"
 
+  notifications:
+    <<: *service
+    image: homeapps/notifications:2.2.0
+    build:
+      context: .
+      dockerfile: src/Notifications/Notifications.Api/Dockerfile
+    environment:
+      <<: [*environment, *jwt]
+      ConnectionStrings__Database: "Host=postgres;Database=homeapps_notifications;Username=${POSTGRES_USER:-homeapps};Password=${POSTGRES_PASSWORD}"
+      Notifications__Vapid__PublicKey: ${NOTIFICATIONS_VAPID_PUBLIC_KEY:?set NOTIFICATIONS_VAPID_PUBLIC_KEY in .env (scripts/generate-vapid-keys.sh)}
+      Notifications__Vapid__PrivateKey: ${NOTIFICATIONS_VAPID_PRIVATE_KEY:?set NOTIFICATIONS_VAPID_PRIVATE_KEY in .env (scripts/generate-vapid-keys.sh)}
+      Notifications__Vapid__Subject: ${NOTIFICATIONS_VAPID_SUBJECT:-https://${HOMEAPPS_DOMAIN}}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.notifications.rule=Host(`${HOMEAPPS_DOMAIN}`) && PathPrefix(`/notifications`)"
+      - "traefik.http.routers.notifications.entrypoints=websecure"
+      - "traefik.http.services.notifications.loadbalancer.server.port=8080"
+
   web:
-    image: homeapps/web:2.0.0
+    image: homeapps/web:2.2.0
     restart: unless-stopped
     build:
       context: src/Web

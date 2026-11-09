@@ -5,6 +5,7 @@ import { toProblem } from '@/api/problem'
 import { queryClient } from '@/api/queryClient'
 import { authApi, type TokenResponse } from './api'
 import { readClaims } from './claims'
+import { forgetPushBeforeSignOut } from '@/features/notifications/push'
 
 export type SessionStatus = 'unknown' | 'guest' | 'signedIn'
 
@@ -105,6 +106,8 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   async function signOut(everywhere = false) {
+    // While the token still works: the next person on this browser must not get my notifications.
+    await forgetPushBeforeSignOut()
     try {
       await (everywhere ? authApi.logoutEverywhere() : authApi.logout())
     } finally {

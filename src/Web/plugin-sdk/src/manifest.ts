@@ -30,6 +30,12 @@ export interface PluginWidget {
   places: WidgetPlace[]
 }
 
+/** A kind of notification the plugin sends (INotifier); people mute the plugin per household. */
+export interface PluginNotificationCategory {
+  id: string
+  name: LocalizedText
+}
+
 export interface PluginManifest {
   manifestVersion: number
   id: string
@@ -53,6 +59,8 @@ export interface PluginManifest {
   display: { id: string; title: LocalizedText; path: string; refreshSeconds: number }[]
   mcp: { tools: string[] } | null
   events: { publishes: string[]; consumes: string[] }
+  /** Missing in manifests from plugins built before HomeApps 2.2.0. */
+  notifications?: PluginNotificationCategory[]
 }
 
 export interface PluginEnablement {

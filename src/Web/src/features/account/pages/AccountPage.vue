@@ -8,6 +8,7 @@ const tabs = [
   { name: 'account-profile', label: 'account.tabs.profile', icon: 'pi pi-user' },
   { name: 'account-security', label: 'account.tabs.security', icon: 'pi pi-lock' },
   { name: 'account-sessions', label: 'account.tabs.sessions', icon: 'pi pi-desktop' },
+  { name: 'account-notifications', label: 'account.tabs.notifications', icon: 'pi pi-bell' },
   { name: 'account-invitations', label: 'account.tabs.invitations', icon: 'pi pi-send' },
   { name: 'account-history', label: 'account.tabs.history', icon: 'pi pi-history' },
 ]

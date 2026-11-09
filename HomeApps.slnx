@@ -66,6 +66,18 @@
 		<Project Path="tests/Households/Households.Infrastructure.Tests/Households.Infrastructure.Tests.csproj" />
 	</Folder>
 
+	<Folder Name="/Notifications/">
+		<Project Path="src/Notifications/Notifications.Api/Notifications.Api.csproj" />
+		<Project Path="src/Notifications/Notifications.Application/Notifications.Application.csproj" />
+		<Project Path="src/Notifications/Notifications.Domain/Notifications.Domain.csproj" />
+		<Project Path="src/Notifications/Notifications.Infrastructure/Notifications.Infrastructure.csproj" />
+	</Folder>
+	<Folder Name="/Notifications/tests/">
+		<Project Path="tests/Notifications/Notifications.Api.Tests/Notifications.Api.Tests.csproj" />
+		<Project Path="tests/Notifications/Notifications.Domain.Tests/Notifications.Domain.Tests.csproj" />
+		<Project Path="tests/Notifications/Notifications.Infrastructure.Tests/Notifications.Infrastructure.Tests.csproj" />
+	</Folder>
+
 	<Folder Name="/Contracts/">
 		<Project Path="src/Contracts/HomeApps.Contracts/HomeApps.Contracts.csproj" />
 	</Folder>

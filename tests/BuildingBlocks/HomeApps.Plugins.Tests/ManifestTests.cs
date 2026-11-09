@@ -71,6 +71,25 @@ public sealed class ManifestTests
     }
 
     [Fact]
+    public void Notification_categories_are_checked_and_listed()
+    {
+        var manifest = TestManifests.Valid with
+        {
+            Notifications =
+            [
+                new PluginNotificationCategory("reminder", new LocalizedText("Przypomnienia", "Reminders")),
+                new PluginNotificationCategory("reminder", new LocalizedText("Przypomnienia", "")),
+                new PluginNotificationCategory("Due Soon", new LocalizedText("a", "b")),
+            ],
+        };
+
+        Assert.Equal(3, PluginManifestValidator.Validate(manifest).Count);
+        var valid = TestManifests.Valid with { Notifications = [new PluginNotificationCategory("reminder", new LocalizedText("Przypomnienia", "Reminders"))] };
+        Assert.Equal("reminder", Assert.Single(PluginManifestDocument.From(valid).Notifications).Id);
+        Assert.Contains("notifications", PluginManifestValidator.Validate(TestManifests.Valid with { Id = "notifications" }).Single(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Without_an_MCP_server_or_UI_those_fields_are_null()
     {
         var document = PluginManifestDocument.From(TestManifests.Valid with { Mcp = null, Ui = null });

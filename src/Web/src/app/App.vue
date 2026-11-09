@@ -6,6 +6,7 @@ import ConfirmDialog from 'primevue/confirmdialog'
 import ProgressSpinner from 'primevue/progressspinner'
 import { useColorScheme } from '@/shared/composables/useColorScheme'
 import { useSessionStore } from '@/features/auth/session'
+import { syncPush } from '@/features/notifications/push'
 
 useColorScheme()
 
@@ -20,7 +21,12 @@ watch(
     if (status === 'guest' && route.matched.some((r) => r.meta.requiresAuth)) {
       void router.replace({ name: 'login' })
     }
+    // Signed in (also on page load): this browser's notifications go to whoever is signed in now.
+    if (status === 'signedIn') {
+      void syncPush()
+    }
   },
+  { immediate: true },
 )
 </script>
 

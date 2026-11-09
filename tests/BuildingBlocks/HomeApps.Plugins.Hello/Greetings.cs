@@ -3,6 +3,7 @@ using FluentValidation;
 using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.BuildingBlocks.Application.Messaging;
 using HomeApps.Plugins.Hosting;
+using HomeApps.Plugins.Notifications;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,7 +36,8 @@ public sealed class HelloDbContext(DbContextOptions<HelloDbContext> options, IPu
     public DbSet<Greeting> Greetings => Set<Greeting>();
 }
 
-public sealed record SayHelloCommand(Guid HouseholdId, string Text) : ICommand<Guid>, IHouseholdRequest
+/// <param name="Notify">People to tell about it (docs/notifications.md); the plugin does not check them, as a real plugin would.</param>
+public sealed record SayHelloCommand(Guid HouseholdId, string Text, IReadOnlyList<Guid>? Notify = null) : ICommand<Guid>, IHouseholdRequest
 {
     public string Permission => HelloPlugin.Write;
 }
@@ -45,13 +47,28 @@ internal sealed class SayHelloValidator : AbstractValidator<SayHelloCommand>
     public SayHelloValidator() => RuleFor(c => c.Text).NotEmpty().MaximumLength(100);
 }
 
-internal sealed class SayHelloHandler(HelloDbContext db, ICurrentUser user) : ICommandHandler<SayHelloCommand, Guid>
+internal sealed class SayHelloHandler(HelloDbContext db, ICurrentUser user, INotifier notifier) : ICommandHandler<SayHelloCommand, Guid>
 {
-    public Task<Result<Guid>> Handle(SayHelloCommand command, CancellationToken cancellationToken)
+    public async Task<Result<Guid>> Handle(SayHelloCommand command, CancellationToken cancellationToken)
     {
         var greeting = Greeting.Say(command.HouseholdId, command.Text, user.RequiredUserId);
         db.Greetings.Add(greeting);
-        return Task.FromResult(Result.Ok(greeting.Id));
+        if (command.Notify is { Count: > 0 } people)
+        {
+            await notifier.NotifyAsync(
+                new PluginNotification(
+                    people.Where(id => id != user.RequiredUserId).ToList(),
+                    HelloPlugin.GreetingCategory,
+                    "Powitanie",
+                    command.Text,
+                    $"/homes/{command.HouseholdId}/apps/hello",
+                    command.HouseholdId,
+                    Tag: $"hello-{command.HouseholdId}",
+                    BodyWhenHidden: "Nowe powitanie"),
+                cancellationToken);
+        }
+
+        return Result.Ok(greeting.Id);
     }
 }
 

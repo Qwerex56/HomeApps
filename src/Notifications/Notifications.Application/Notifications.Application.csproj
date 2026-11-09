@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Notifications use cases: one folder per command or query (Command/Query, Validator, Handler), ports for Infrastructure. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Notifications.Domain\Notifications.Domain.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Application\HomeApps.BuildingBlocks.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Notifications.Application.Tests" />
+    <InternalsVisibleTo Include="Notifications.Api.Tests" />
+  </ItemGroup>
+
+</Project>

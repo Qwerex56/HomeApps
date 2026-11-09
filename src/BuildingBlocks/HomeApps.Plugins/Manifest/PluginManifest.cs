@@ -47,11 +47,17 @@ public sealed record PluginManifest
     /// <summary>Integration messages the plugin publishes and consumes. Documentation only, not enforced.</summary>
     public PluginEvents Events { get; init; } = PluginEvents.None;
 
+    /// <summary>Kinds of notifications the plugin sends through <c>INotifier</c> (docs/notifications.md).</summary>
+    public IReadOnlyList<PluginNotificationCategory> Notifications { get; init; } = [];
+
     /// <summary>Where everything of this plugin lives behind Traefik.</summary>
     public string BasePath => $"/plugins/{Id}";
 
     public PluginPermission? FindPermission(string id) =>
         Permissions.FirstOrDefault(p => string.Equals(p.Id, id, StringComparison.Ordinal));
+
+    public PluginNotificationCategory? FindNotificationCategory(string id) =>
+        Notifications.FirstOrDefault(c => string.Equals(c.Id, id, StringComparison.Ordinal));
 }
 
 /// <summary>A text in every language of the web app (frontend.md: Polish and English).</summary>

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Notifications adapters: Postgres with the outbox, Web Push with VAPID, the consumers of NotificationRequested and of Accounts' events. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Notifications.Application\Notifications.Application.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Infrastructure\HomeApps.BuildingBlocks.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lib.Net.Http.WebPush" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Notifications.Infrastructure.Tests" />
+    <InternalsVisibleTo Include="Notifications.Api.Tests" />
+  </ItemGroup>
+
+</Project>

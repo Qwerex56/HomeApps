@@ -15,12 +15,14 @@ Wersja 2.0.0 to rdzeń systemu, napisany od nowa ([CHANGELOG.md](CHANGELOG.md)).
   (wyszukiwanie, edycja, wyłączanie, role User / Admin / Owner, trwałe usunięcie na żądanie).
 - **Domy (Households):** dowolna liczba domów na konto, role Owner / Admin / Member / Guest, zaproszenia kodem lub
   linkiem, stały link dla gości, przekazanie własności (także automatyczne), archiwum.
+- **Powiadomienia (Notifications):** Web Push na telefon i komputer, także przy zamkniętej aplikacji; godziny ciszy,
+  ukrywanie treści na ekranie blokady, wyciszanie domu albo jednej aplikacji. Pluginy wysyłają je przez `INotifier`.
 - **Aplikacja (Vue 3, PWA):** wszystko powyżej w przeglądarce i na telefonie, po polsku, jasny i ciemny motyw, tryb
   tabletu na ścianę (`/wall`).
 
 ## Jak to jest zbudowane
 
-Trzy mikroserwisy .NET 10 (Minimal APIs, MediatR, FluentValidation, FluentResults, EF Core + PostgreSQL), które
+Cztery mikroserwisy .NET 10 (Minimal APIs, MediatR, FluentValidation, FluentResults, EF Core + PostgreSQL), które
 rozmawiają przez RabbitMQ (MassTransit, outbox). Każdy ma bogatą domenę i podział Domain / Application /
 Infrastructure / Api. Wspólny kod to mały kit w `src/BuildingBlocks` i kontrakty wiadomości w `src/Contracts`.
 Przed wszystkim stoi Traefik; front to Vue 3 + TypeScript, PrimeVue i Tailwind.
@@ -30,6 +32,7 @@ Przed wszystkim stoi Traefik; front to Vue 3 + TypeScript, PrimeVue i Tailwind.
 - [docs/plugin-todo.md](docs/plugin-todo.md): podłączenie pluginu Todo do działającej instancji i jak go sprawdzić
 - [docs/adr](docs/adr/README.md): decyzje architektoniczne
 - [docs/auth.md](docs/auth.md), [docs/accounts.md](docs/accounts.md), [docs/households.md](docs/households.md),
+  [docs/notifications.md](docs/notifications.md),
   [docs/web.md](docs/web.md): poszczególne części
 
 ## Uruchomienie

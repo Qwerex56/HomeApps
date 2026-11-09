@@ -15,8 +15,8 @@ internal sealed class GreetingEndpoints : IEndpoint
             .Produces<IReadOnlyList<GreetingView>>();
 
         greetings.MapPost("/", async (Guid householdId, SayHelloRequest body, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new SayHelloCommand(householdId, body.Text), ct)).ToHttpResult());
+            (await sender.Send(new SayHelloCommand(householdId, body.Text, body.Notify), ct)).ToHttpResult());
     }
 }
 
-internal sealed record SayHelloRequest(string Text);
+internal sealed record SayHelloRequest(string Text, IReadOnlyList<Guid>? Notify = null);

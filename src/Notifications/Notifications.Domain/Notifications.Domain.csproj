@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Notifications domain: who gets notifications on which devices, and what they muted. Only the kit's domain building blocks and FluentResults. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Domain\HomeApps.BuildingBlocks.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentResults" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Notifications.Domain.Tests" />
+  </ItemGroup>
+
+</Project>

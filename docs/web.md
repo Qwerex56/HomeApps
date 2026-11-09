@@ -184,9 +184,15 @@ On a phone the main menu moves to a tab bar at the bottom of the screen.
 ## PWA and the wall tablet
 
 The app installs on phones and tablets (`vite-plugin-pwa`, manifest in `vite.config.ts`, icons in `public/`). The
-service worker caches only the app itself and updates it on its own. It never answers the services' paths with
-the app (`servicePaths` in `vite.config.ts`), above all `/auth/external/google`, which must reach Auth. Add a new
-service's path prefix there (plugins are covered by `/plugins/`). Data is never served offline.
+service worker is our own, `src/sw.ts` (strategy `injectManifest`, its own `tsconfig.sw.json`): it caches only the
+app itself and updates it on its own. It never answers the services' paths with the app (`src/app/servicePaths.ts`),
+above all `/auth/external/google`, which must reach Auth. Add a new service's path prefix there (plugins are covered
+by `/plugins/`). Data is never served offline.
+
+It also shows Web Push notifications ([notifications.md](notifications.md)) and opens their page on a click: in an
+open window through a `homeapps.navigate` message to the router (`features/notifications/push.ts`), otherwise in a
+new one. `features/notifications` holds the account tab "Powiadomienia", turning push on and off in this browser,
+registering it again after sign-in and forgetting it before sign-out.
 
 ## Plugins
 
