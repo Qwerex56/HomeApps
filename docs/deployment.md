@@ -137,8 +137,8 @@ Migrations run as the new containers start. Read [CHANGELOG.md](../CHANGELOG.md)
 ## Plugins
 
 Apps beyond the core run from their own repositories and compose files and join this stack's network. Each one is
-added with `HOMEAPPS_PLUGINS` in `.env` and switched on per household. Step by step for the first one:
-[the Todo plugin in HomeApps](plugin-todo.md).
+added with `HOMEAPPS_PLUGINS` in `.env` and switched on per household. Step by step:
+[the Todo plugin](plugin-todo.md) and [the chat plugin](plugin-chat.md).
 
 ## Backups
 
@@ -152,6 +152,43 @@ docker compose -f compose.prod.yaml exec -T postgres pg_dumpall -U homeapps > ho
 
 Restore into an empty stack with `docker compose -f compose.prod.yaml exec -T postgres psql -U homeapps < file.sql`
 before the services start (`up -d postgres` first).
+
+### Encrypted backups (with the chat plugin)
+
+With the [chat plugin](plugin-chat.md) the backup holds family conversations, photos and films, so it is encrypted
+before it leaves the machine (chat plan C14: no end-to-end encryption in 1.0, encrypted backups instead). Photos and
+films are not in Postgres but in the Docker volume `homeapps_chat_media`; take both at the same moment, so messages
+and their files match. The passphrase lives in a file only you can read, kept also somewhere outside the machine
+(a password manager): without it the backup cannot be read, by anyone.
+
+```bash
+# Once: the passphrase file.
+openssl rand -base64 32 > ~/.homeapps-backup-pass && chmod 600 ~/.homeapps-backup-pass
+
+# Each backup (in HomeApps): every database, then the chat's files, each encrypted with AES-256.
+day=$(date +%F)
+docker compose -f compose.prod.yaml exec -T postgres pg_dumpall -U homeapps \
+  | gzip | openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt -pass file:$HOME/.homeapps-backup-pass \
+  > homeapps-$day.sql.gz.enc
+docker run --rm -v homeapps_chat_media:/media:ro alpine:3 tar -C /media -czf - . \
+  | openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt -pass file:$HOME/.homeapps-backup-pass \
+  > homeapps-chat-media-$day.tar.gz.enc
+```
+
+Copy the two `.enc` files, `secrets/` and `.env` off the machine (`.env` and `secrets/` are not encrypted by this:
+keep them where only you can reach). The chat's files need room: up to 10 GB per household by default.
+
+Restore, into an empty stack (HomeApps' `postgres` up, the chat plugin stopped):
+
+```bash
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass file:$HOME/.homeapps-backup-pass -in homeapps-<day>.sql.gz.enc \
+  | gunzip | docker compose -f compose.prod.yaml exec -T postgres psql -U homeapps
+docker volume create homeapps_chat_media
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass file:$HOME/.homeapps-backup-pass -in homeapps-chat-media-<day>.tar.gz.enc \
+  | docker run --rm -i -v homeapps_chat_media:/media alpine:3 sh -c 'tar -C /media -xzf - && chown -R 1654 /media'
+```
+
+`1654` is the user the plugin's image runs as (`$APP_UID` of the .NET images). Then start the chat plugin as usual.
 
 ## Cloudflare Tunnel (no open ports)
 
