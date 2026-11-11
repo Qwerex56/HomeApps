@@ -15,6 +15,7 @@ projects=(
     src/BuildingBlocks/HomeApps.BuildingBlocks.Application/HomeApps.BuildingBlocks.Application.csproj
     src/BuildingBlocks/HomeApps.BuildingBlocks.Infrastructure/HomeApps.BuildingBlocks.Infrastructure.csproj
     src/BuildingBlocks/HomeApps.BuildingBlocks.Api/HomeApps.BuildingBlocks.Api.csproj
+    src/BuildingBlocks/HomeApps.BuildingBlocks.Mcp/HomeApps.BuildingBlocks.Mcp.csproj
     src/BuildingBlocks/HomeApps.Plugins/HomeApps.Plugins.csproj
     src/BuildingBlocks/HomeApps.Plugins.Hosting/HomeApps.Plugins.Hosting.csproj
     src/Contracts/HomeApps.Contracts/HomeApps.Contracts.csproj

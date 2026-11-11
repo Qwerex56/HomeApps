@@ -97,7 +97,13 @@ public class HouseholdsApiFactory : WebApplicationFactory<Program>, IAsyncLifeti
     }
 
     /// <summary>An access token as Auth signs it.</summary>
-    public string AccessToken(Guid userId, string role = "User", string audience = "homeapps")
+    public string AccessToken(Guid userId, string role = "User", string audience = "homeapps") =>
+        Token(userId, role, audience, actor: null);
+
+    /// <summary>A token Auth delegates to an assistant acting for the person (jarvis-v1.md, JV3).</summary>
+    public string AssistantToken(Guid userId, string role = "User") => Token(userId, role, "homeapps", "jarvis-service");
+
+    private string Token(Guid userId, string role, string audience, string? actor)
     {
         var now = DateTime.UtcNow;
         return new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor
@@ -108,14 +114,26 @@ public class HouseholdsApiFactory : WebApplicationFactory<Program>, IAsyncLifeti
             IssuedAt = now,
             NotBefore = now,
             Expires = now.AddMinutes(10),
-            Claims = new Dictionary<string, object>
-            {
-                ["sub"] = userId.ToString(),
-                ["email"] = "someone@example.com",
-                ["role"] = role,
-            },
+            Claims = Claims(userId, role, actor),
             SigningCredentials = new SigningCredentials(_key, SecurityAlgorithms.RsaSha256),
         });
+    }
+
+    private static Dictionary<string, object> Claims(Guid userId, string role, string? actor)
+    {
+        var claims = new Dictionary<string, object>
+        {
+            ["sub"] = userId.ToString(),
+            ["email"] = "someone@example.com",
+            ["role"] = role,
+        };
+        if (actor is not null)
+        {
+            claims["act"] = new Dictionary<string, object> { ["sub"] = actor };
+            claims["amr"] = new[] { "delegated" };
+        }
+
+        return claims;
     }
 
     public HttpClient ClientWith(string token)

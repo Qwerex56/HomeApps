@@ -10,11 +10,14 @@ internal sealed record ResolvedClient(RegisteredClient Registered, ClientInfo In
 
 internal static class ClientRegistryExtensions
 {
-    /// <summary>Unknown clients get <c>client.unknown</c> before anything else happens.</summary>
+    /// <summary>
+    /// Unknown clients get <c>client.unknown</c> before anything else happens; so do service clients, which never
+    /// sign anyone in.
+    /// </summary>
     public static Result<ResolvedClient> Resolve(this IClientRegistry clients, string clientId, string? userAgent)
     {
         var registered = clients.Find(clientId);
-        if (registered is null)
+        if (registered is null || registered.Type == ClientType.Service)
         {
             return Result.Fail<ResolvedClient>(CommonErrors.ClientInvalid);
         }

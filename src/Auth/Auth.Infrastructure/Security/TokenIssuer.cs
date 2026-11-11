@@ -15,6 +15,7 @@ internal sealed class TokenIssuer(SigningKeys keys, IOptions<SigningOptions> opt
 {
     public static readonly TimeSpan AccessTokenLifetime = TimeSpan.FromMinutes(15);
     public static readonly TimeSpan TicketLifetime = TimeSpan.FromMinutes(10);
+    public static readonly TimeSpan DelegatedTokenLifetime = TimeSpan.FromMinutes(5);
 
     public const string TicketAudience = "homeapps-ticket";
     private static readonly TimeSpan ClockSkew = TimeSpan.FromSeconds(30);
@@ -25,6 +26,8 @@ internal sealed class TokenIssuer(SigningKeys keys, IOptions<SigningOptions> opt
     private const string Scope = "scope";
     private const string ReactivationScope = "reactivation";
     private const string ExternalLinkScope = "external_link";
+
+    private static readonly string[] DelegatedMethods = ["delegated"];
 
     private static readonly JsonWebTokenHandler Handler = new() { SetDefaultTimesOnTokenCreation = false };
 
@@ -43,6 +46,28 @@ internal sealed class TokenIssuer(SigningKeys keys, IOptions<SigningOptions> opt
             ["role"] = identity.Role.ToString(),
             ["client_id"] = client.ClientId,
             [JwtRegisteredClaimNames.AuthTime] = session.AuthenticatedAt.ToUnixTimeSeconds(),
+            [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
+        });
+        return new AccessToken(Handler.CreateToken(descriptor), expires);
+    }
+
+    public AccessToken IssueDelegatedToken(Identity identity, RegisteredClient service, string actor)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentException.ThrowIfNullOrWhiteSpace(actor);
+
+        var now = time.GetUtcNow();
+        var expires = now + DelegatedTokenLifetime;
+        var descriptor = Descriptor(AccessTokenType, service.Audiences, now, expires, new Dictionary<string, object>
+        {
+            [JwtRegisteredClaimNames.Sub] = identity.Id.ToString(),
+            [JwtRegisteredClaimNames.Email] = identity.Email.Value,
+            ["role"] = identity.Role.ToString(),
+            ["client_id"] = service.ClientId,
+            [JwtRegisteredClaimNames.AuthTime] = now.ToUnixTimeSeconds(),
+            ["act"] = new Dictionary<string, object> { [JwtRegisteredClaimNames.Sub] = actor },
+            [JwtRegisteredClaimNames.Amr] = DelegatedMethods,
             [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
         });
         return new AccessToken(Handler.CreateToken(descriptor), expires);

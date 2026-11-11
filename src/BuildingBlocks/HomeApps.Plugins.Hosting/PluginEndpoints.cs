@@ -1,4 +1,5 @@
 using FluentResults;
+using HomeApps.BuildingBlocks.Api.Assistant;
 using HomeApps.BuildingBlocks.Api.Results;
 using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.Plugins.Manifest;
@@ -66,6 +67,7 @@ internal static class PluginEndpoints
             return Results.Ok(EnablementView.Of(householdId, found));
         })
         .Produces<EnablementView>()
+        .DenyAssistant() // switching plugins is a household setting, the person's own decision (JV13)
         .WithName("SetPluginEnablement");
     }
 }

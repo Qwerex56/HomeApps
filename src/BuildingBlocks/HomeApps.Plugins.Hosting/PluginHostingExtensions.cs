@@ -1,8 +1,10 @@
 using System.Reflection;
 using System.Text.Json.Serialization;
 using HomeApps.BuildingBlocks.Api;
+using HomeApps.BuildingBlocks.Api.Assistant;
 using HomeApps.BuildingBlocks.Infrastructure;
 using HomeApps.BuildingBlocks.Infrastructure.Options;
+using HomeApps.BuildingBlocks.Mcp;
 using HomeApps.Plugins.Manifest;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -32,6 +34,9 @@ public static class PluginHostingExtensions
     /// <summary>
     /// <see cref="HomeAppsApiExtensions.AddHomeAppsDefaults"/> plus the plugin's manifest, enums as strings like the
     /// core services, and <see cref="IHouseholdAccess"/> over HTTP with its cache (section <c>Plugin</c>).
+    /// An assistant acting for a person (JARVIS) may change plugin data with the person's rights, so writes are not
+    /// refused by default as in the core services. With <see cref="PluginManifest.Mcp"/>, the MCP server and every
+    /// tool type in <paramref name="endpointsAssembly"/>.
     /// </summary>
     public static WebApplicationBuilder AddHomeAppsPlugin(this WebApplicationBuilder builder, PluginManifest manifest, Assembly endpointsAssembly)
     {
@@ -42,6 +47,12 @@ public static class PluginHostingExtensions
         var services = builder.Services;
 
         services.TryAddSingleton(manifest);
+        services.Configure<AssistantGuardOptions>(options => options.DenyWritesByDefault = false);
+        if (manifest.Mcp is not null)
+        {
+            builder.AddHomeAppsMcp($"homeapps-{manifest.Id}", endpointsAssembly);
+        }
+
         services.ConfigureHttpJsonOptions(json => json.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
         services.AddValidatedOptions<PluginHostingOptions>(PluginHostingOptions.SectionName);
@@ -95,7 +106,8 @@ public static class PluginHostingExtensions
     /// Everything under <c>/plugins/{id}</c>, the prefix Traefik routes to the plugin (it does not strip it):
     /// the plugin's endpoints under <c>/api</c>, the manifest at <c>/manifest</c>, OpenAPI at <c>/openapi/v1.json</c>
     /// (always, the web app and JARVIS read it), health at <c>/health/*</c> and the built UI from <c>wwwroot/ui</c>
-    /// at <c>/ui</c>, anonymous and never cached, since <c>entry.js</c> keeps its name between versions.
+    /// at <c>/ui</c>, anonymous and never cached, since <c>entry.js</c> keeps its name between versions, and the
+    /// MCP server at <c>/mcp</c> when the manifest declares one (its tools must be exactly the manifest's).
     /// </summary>
     public static WebApplication UseHomeAppsPlugin(this WebApplication app)
     {
@@ -123,7 +135,37 @@ public static class PluginHostingExtensions
         }
 
         app.MapPluginEndpoints(manifest);
+        if (manifest.Mcp is not null)
+        {
+            EnsureToolsMatchManifest(manifest, McpToolNames.Registered(app.Services));
+            app.MapHomeAppsMcp();
+        }
 
         return app;
+    }
+
+    /// <summary>The manifest tells JARVIS which tools to expect, so a missing or extra one fails on start.</summary>
+    internal static void EnsureToolsMatchManifest(PluginManifest manifest, IReadOnlyList<string> registered)
+    {
+        var declared = manifest.Mcp!.Tools;
+        var missing = declared.Except(registered, StringComparer.Ordinal).ToList();
+        var extra = registered.Except(declared, StringComparer.Ordinal).ToList();
+        if (missing.Count == 0 && extra.Count == 0)
+        {
+            return;
+        }
+
+        var problems = new List<string>();
+        if (missing.Count > 0)
+        {
+            problems.Add($"declared in the manifest but not registered: {string.Join(", ", missing)}");
+        }
+
+        if (extra.Count > 0)
+        {
+            problems.Add($"registered but not in the manifest: {string.Join(", ", extra)}");
+        }
+
+        throw new InvalidOperationException($"Plugin '{manifest.Id}' MCP tools do not match its manifest; {string.Join("; ", problems)}.");
     }
 }

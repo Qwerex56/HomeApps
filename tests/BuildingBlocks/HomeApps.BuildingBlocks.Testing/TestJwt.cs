@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using HomeApps.BuildingBlocks.Api.Auth;
 using Microsoft.IdentityModel.Tokens;
 
@@ -18,7 +19,17 @@ public static class TestJwt
     public static SymmetricSecurityKey SigningKey { get; } =
         new(Encoding.UTF8.GetBytes("homeapps-integration-tests-signing-key-not-a-secret"));
 
-    public static string CreateToken(Guid userId, string? email = null, params string[] roles)
+    public static string CreateToken(Guid userId, string? email = null, params string[] roles) =>
+        Create(userId, email, roles, actor: null);
+
+    /// <summary>
+    /// A token like the one Auth delegates to an assistant acting for <paramref name="userId"/>: the person's own
+    /// claims plus <c>act</c> = <paramref name="actor"/> and <c>amr</c> = <c>delegated</c> (jarvis-v1.md, JV3).
+    /// </summary>
+    public static string CreateDelegatedToken(Guid userId, string actor = "jarvis-service", string? email = null, params string[] roles) =>
+        Create(userId, email, roles, actor);
+
+    private static string Create(Guid userId, string? email, string[] roles, string? actor)
     {
         ArgumentNullException.ThrowIfNull(roles);
 
@@ -33,6 +44,11 @@ public static class TestJwt
         }
 
         claims.AddRange(roles.Select(r => new Claim(ClaimNames.Role, r)));
+        if (actor is not null)
+        {
+            claims.Add(new Claim(ClaimNames.Actor, JsonSerializer.Serialize(new Dictionary<string, string> { ["sub"] = actor }), JsonClaimValueTypes.Json));
+            claims.Add(new Claim(ClaimNames.AuthenticationMethods, "delegated"));
+        }
 
         var token = new JwtSecurityToken(
             Issuer,

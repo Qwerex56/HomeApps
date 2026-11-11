@@ -87,6 +87,49 @@ public sealed class SecurityTests : IDisposable
     }
 
     [Fact]
+    public async Task A_delegated_token_is_the_persons_with_the_actor_and_lives_five_minutes()
+    {
+        var registration = A.Registered(_time, "adam@example.com");
+        var service = new RegisteredClient("jarvis-service", "JARVIS", ClientType.Service, [], ["homeapps"]);
+
+        var token = _issuer.IssueDelegatedToken(registration.Identity, service, "jarvis-service");
+
+        var result = await new JsonWebTokenHandler().ValidateTokenAsync(token.Value, new TokenValidationParameters
+        {
+            ValidIssuer = Issuer,
+            ValidAudience = "homeapps",
+            IssuerSigningKeys = _keys.Jwks.Keys,
+            ValidateLifetime = false,
+        });
+        Assert.True(result.IsValid, result.Exception?.Message);
+        var jwt = (JsonWebToken)result.SecurityToken;
+        Assert.Equal("at+jwt", jwt.Typ);
+        Assert.Equal(registration.Identity.Id.ToString(), jwt.Subject);
+        Assert.Equal("jarvis-service", jwt.GetClaim("client_id").Value);
+        Assert.Equal("jarvis-service", jwt.GetPayloadValue<System.Text.Json.JsonElement>("act").GetProperty("sub").GetString());
+        Assert.Equal(["delegated"], jwt.GetPayloadValue<string[]>("amr"));
+        Assert.Equal(A.Now + TokenIssuer.DelegatedTokenLifetime, token.ExpiresAt);
+    }
+
+    [Fact]
+    public void Service_clients_need_a_long_secret_and_prove_themselves_with_it()
+    {
+        const string secret = "a-long-enough-secret-for-the-jarvis-service";
+        var options = new ClientsOptions();
+        options.Clients.Add(new ClientOptions { ClientId = "jarvis-service", Name = "JARVIS", Type = ClientType.Service, Secret = secret });
+        options.Clients.Add(new ClientOptions { ClientId = "jarvis", Name = "JARVIS", Type = ClientType.Native });
+        var registry = new ClientRegistry(Options.Create(options));
+
+        Assert.Equal("jarvis-service", registry.AuthenticateService("jarvis-service", secret)!.ClientId);
+        Assert.Null(registry.AuthenticateService("jarvis-service", secret + "x"));
+        Assert.Null(registry.AuthenticateService("jarvis", secret));
+
+        var weak = new ClientsOptions();
+        weak.Clients.Add(new ClientOptions { ClientId = "jarvis-service", Name = "JARVIS", Type = ClientType.Service, Secret = "short" });
+        Assert.Throws<InvalidOperationException>(() => new ClientRegistry(Options.Create(weak)));
+    }
+
+    [Fact]
     public async Task Tickets_round_trip_and_expire_after_ten_minutes()
     {
         var reactivation = new ReactivationTicket(Guid.NewGuid(), AuthMethod.Google);

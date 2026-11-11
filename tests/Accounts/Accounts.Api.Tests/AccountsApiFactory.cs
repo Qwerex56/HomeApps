@@ -105,6 +105,17 @@ public class AccountsApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             ["role"] = role,
         });
 
+    /// <summary>A token Auth delegates to an assistant acting for the person (jarvis-v1.md, JV3).</summary>
+    public string AssistantToken(Guid userId) =>
+        Sign("at+jwt", "homeapps", new Dictionary<string, object>
+        {
+            ["sub"] = userId.ToString(),
+            ["email"] = "someone@example.com",
+            ["role"] = "User",
+            ["act"] = new Dictionary<string, object> { ["sub"] = "jarvis-service" },
+            ["amr"] = "delegated",
+        });
+
     /// <summary>A reactivation ticket as Auth signs it (or, with another scope, some other ticket).</summary>
     public string Ticket(Guid userId, string scope = ReactivationTicket.Scope) =>
         Sign(ReactivationTicket.TokenType, ReactivationTicket.Audience, new Dictionary<string, object>

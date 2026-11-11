@@ -47,6 +47,11 @@
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
   </ItemGroup>
 
+  <ItemGroup Label="MCP">
+    <!-- Official C# SDK for the Model Context Protocol (Apache 2.0), servers for JARVIS (jarvis-v1.md). -->
+    <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.4.0" />
+  </ItemGroup>
+
   <ItemGroup Label="Messaging">
     <PackageVersion Include="MassTransit" Version="8.5.11" />
     <PackageVersion Include="MassTransit.RabbitMQ" Version="8.5.11" />

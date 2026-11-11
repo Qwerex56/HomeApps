@@ -220,6 +220,13 @@ internal sealed class AssignTaskHandler(TodoDbContext db, INotifier notifier) : 
   the same tag on a device. `BodyWhenHidden` is what people who hide previews see on the lock screen.
 - Mutes, quiet hours and devices are Notifications' business; the plugin never sees them.
 
+## MCP
+
+With `Mcp = new PluginMcp(["add_task", ...])` in the manifest (HomeApps 2.3.0+), the kit serves the plugin's MCP
+server at `/plugins/{id}/mcp` from the tool classes in the API assembly, and refuses to start when they differ from
+the manifest's list. JARVIS calls the tools with the person's delegated token: the same permission checks as HTTP,
+plugin data may change, switching the plugin may not. How to write a tool: [mcp.md](mcp.md).
+
 ## Program.cs
 
 ```csharp

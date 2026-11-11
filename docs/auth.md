@@ -56,7 +56,7 @@ Without Google settings the Google endpoints answer `external_login.provider_dis
 | `Auth:Signing:Issuer` | Auth's public address, e.g. `https://app.localhost`; the `iss` of every token. |
 | `Jwt:Authority` | Where Auth validates its own tokens from; the same public address. |
 | `Auth:Signing:PrivateKeyPem` | RSA key in PEM. Required outside Development. When changing keys, put the old public key in `PreviousPublicKeyPem` for 15 minutes. |
-| `Auth:Clients` | The apps that may ask for tokens. `Browser` gets the refresh token in a cookie, `Native` gets it in the body. `RedirectUris` limits where Google sign-in may return. |
+| `Auth:Clients` | The apps that may ask for tokens. `Browser` gets the refresh token in a cookie, `Native` gets it in the body. `RedirectUris` limits where Google sign-in may return. `Service` (with a `Secret` of 32+ characters) never signs anyone in: it asks `POST /internal/delegation` for a 5-minute token to act for one person, with `act` and `amr: delegated` ([mcp.md](mcp.md)). |
 | `Auth:RegistrationOpen` | Sign-up without an invitation. Off by default. |
 | `Auth:Bootstrap:Email` | The first Owner (see above). |
 | `Auth:Google:ClientId`, `ClientSecret` | Google sign-in. Secrets, never committed. |

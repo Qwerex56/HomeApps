@@ -1,4 +1,5 @@
 using System.Reflection;
+using HomeApps.BuildingBlocks.Api.Assistant;
 using HomeApps.BuildingBlocks.Api.Auth;
 using HomeApps.BuildingBlocks.Api.Endpoints;
 using HomeApps.BuildingBlocks.Api.Errors;
@@ -47,6 +48,8 @@ public static class HomeAppsApiExtensions
         services.AddAuthorizationBuilder()
             .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
+        services.AddOptions<AssistantGuardOptions>();
+
         services.AddHealthChecks().AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"]);
         services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 
@@ -56,7 +59,8 @@ public static class HomeAppsApiExtensions
     }
 
     /// <summary>
-    /// The matching middleware pipeline. Health checks are anonymous: <c>/health/live</c> (process up) and
+    /// The matching middleware pipeline. Requests by an assistant acting for a person are checked right after
+    /// authorization (<see cref="AssistantGuardOptions"/>). Health checks are anonymous: <c>/health/live</c> (process up) and
     /// <c>/health/ready</c> (dependencies such as the database). OpenAPI is served at <c>/openapi/v1.json</c> in Development.
     /// </summary>
     /// <param name="endpointsPrefix">Maps the <see cref="IEndpoint"/>s under this prefix, e.g. <c>/api</c> for a plugin.</param>
@@ -69,6 +73,7 @@ public static class HomeAppsApiExtensions
 
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseMiddleware<AssistantGuardMiddleware>();
 
         app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = c => c.Tags.Contains("live") }).AllowAnonymous();
         app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = c => c.Tags.Contains("ready") }).AllowAnonymous();

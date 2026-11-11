@@ -64,8 +64,12 @@ public class AuthHost : WebApplicationFactory<Program>, IAsyncLifetime
         }
 
         var mailHost = Environment.GetEnvironmentVariable("AUTH_TEST_MAILPIT");
-        var mailApi = new Uri($"http://{mailHost}:8025");
-        if (string.IsNullOrWhiteSpace(mailHost))
+        Uri mailApi;
+        if (!string.IsNullOrWhiteSpace(mailHost))
+        {
+            mailApi = new Uri($"http://{mailHost}:8025");
+        }
+        else
         {
             var mailpit = new ContainerBuilder("axllent/mailpit:v1.27")
                 .WithPortBinding(1025, true)

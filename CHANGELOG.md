@@ -2,6 +2,24 @@
 
 Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`.
 
+## 2.3.0 (unreleased)
+
+### Added
+
+- **MCP:** the kit package `HomeApps.BuildingBlocks.Mcp` serves a service's use cases as MCP tools for JARVIS and other
+  MCP clients (`AddHomeAppsMcp`, `MapHomeAppsMcp`, `ToolResult`), see [docs/mcp.md](docs/mcp.md). Households serves
+  `my_households` and `household_members`, Accounts `my_profile`, at `/mcp` inside the Docker network.
+- **Plugins:** a manifest with `Mcp` gets its MCP server at `/plugins/{id}/mcp`; the tools must match the manifest.
+- **Auth:** `Service` clients and `POST /internal/delegation`, a 5-minute token to act for one person
+  (`act`, `amr: delegated`), only on the internal network.
+- **Kit:** the assistant guard: a token with `act` only reads in Auth, Accounts and Households (403
+  `assistant.not_allowed` on every change); plugins let it change their data, but not switch the plugin.
+- **Testing:** `TestJwt.CreateDelegatedToken`, `CreateAssistantClient`, `McpTestClient`.
+
+### Fixed
+
+- `Auth.IntegrationTests` started without `AUTH_TEST_MAILPIT` again (the Mailpit address was read before it was set).
+
 ## 2.2.0 (unreleased)
 
 ### Added

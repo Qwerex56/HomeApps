@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Accounts.Infrastructure\Accounts.Infrastructure.csproj" />
     <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Api\HomeApps.BuildingBlocks.Api.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Mcp\HomeApps.BuildingBlocks.Mcp.csproj" />
   </ItemGroup>
 
   <ItemGroup>

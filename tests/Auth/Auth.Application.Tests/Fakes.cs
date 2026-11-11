@@ -93,7 +93,15 @@ internal sealed class FakeClients : IClientRegistry
 
     public static readonly RegisteredClient Jarvis = new("jarvis", "JARVIS", ClientType.Native, [], ["homeapps"]);
 
-    public RegisteredClient? Find(string clientId) => new[] { Web, Jarvis }.FirstOrDefault(c => c.ClientId == clientId);
+    public static readonly RegisteredClient JarvisService = new("jarvis-service", "JARVIS (service)", ClientType.Service, [], ["homeapps"]);
+
+    public const string JarvisServiceSecret = "jarvis-service-secret-for-tests-0123456789";
+
+    public RegisteredClient? Find(string clientId) =>
+        new[] { Web, Jarvis, JarvisService }.FirstOrDefault(c => c.ClientId == clientId);
+
+    public RegisteredClient? AuthenticateService(string clientId, string secret) =>
+        clientId == JarvisService.ClientId && secret == JarvisServiceSecret ? JarvisService : null;
 }
 
 /// <summary>Access tokens name the identity and session; tickets are handles to the records kept here.</summary>
@@ -103,6 +111,9 @@ internal sealed class FakeTokens : ITokenIssuer
 
     public AccessToken IssueAccessToken(Identity identity, IssuedRefreshToken session, RegisteredClient client) =>
         new($"access:{identity.Id}:{identity.Role}:{session.SessionId}", session.AuthenticatedAt.AddMinutes(15));
+
+    public AccessToken IssueDelegatedToken(Identity identity, RegisteredClient service, string actor) =>
+        new($"delegated:{identity.Id}:{service.ClientId}:{actor}", DateTimeOffset.UnixEpoch);
 
     public string IssueTicket(Ticket ticket)
     {

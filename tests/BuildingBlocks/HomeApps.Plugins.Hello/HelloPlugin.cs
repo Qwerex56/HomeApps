@@ -33,5 +33,6 @@ public static class HelloPlugin
         Display = [new DisplayScreen("latest", new LocalizedText("Powitanie", "Greeting"), "households/{householdId}/greetings/latest", 300)],
         Events = new PluginEvents([], [typeof(MemberLeft)]),
         Notifications = [new PluginNotificationCategory(GreetingCategory, new LocalizedText("Powitania", "Greetings"))],
+        Mcp = new PluginMcp(["list_greetings", "say_hello"]),
     };
 }

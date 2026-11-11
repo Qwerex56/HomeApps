@@ -11,6 +11,14 @@ public interface ITokenIssuer
     /// </summary>
     AccessToken IssueAccessToken(Identity identity, IssuedRefreshToken session, RegisteredClient client);
 
+    /// <summary>
+    /// A 5-minute access token for an assistant acting for the person (jarvis-v1.md, JV3): the person's own
+    /// <c>sub</c>, <c>email</c> and <c>role</c>, <c>client_id</c> of the service, <c>act</c> = <paramref name="actor"/>
+    /// (RFC 8693) and <c>amr</c> = <c>delegated</c>. Services read data for it like for the person; Auth, Accounts and
+    /// Households refuse its changes.
+    /// </summary>
+    AccessToken IssueDelegatedToken(Identity identity, RegisteredClient service, string actor);
+
     /// <summary>A 10-minute signed ticket with its own <c>scope</c>; never accepted as an access token.</summary>
     string IssueTicket(Ticket ticket);
 

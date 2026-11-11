@@ -13,6 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\HomeApps.Plugins\HomeApps.Plugins.csproj" />
     <ProjectReference Include="..\HomeApps.BuildingBlocks.Api\HomeApps.BuildingBlocks.Api.csproj" />
+    <ProjectReference Include="..\HomeApps.BuildingBlocks.Mcp\HomeApps.BuildingBlocks.Mcp.csproj" />
     <ProjectReference Include="..\HomeApps.BuildingBlocks.Infrastructure\HomeApps.BuildingBlocks.Infrastructure.csproj" />
   </ItemGroup>
 

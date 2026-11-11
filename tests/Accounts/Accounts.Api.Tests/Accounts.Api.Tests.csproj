@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Accounts\Accounts.Api\Accounts.Api.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Testing\HomeApps.BuildingBlocks.Testing.csproj" />
   </ItemGroup>
 
   <ItemGroup>

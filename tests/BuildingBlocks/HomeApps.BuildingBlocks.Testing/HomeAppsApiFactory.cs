@@ -49,6 +49,15 @@ public class HomeAppsApiFactory<TProgram, TDbContext> : WebApplicationFactory<TP
         return client;
     }
 
+    /// <summary>A client that sends a delegated token: an assistant acting for <paramref name="userId"/>.</summary>
+    public HttpClient CreateAssistantClient(Guid userId, string? email = null, params string[] roles)
+    {
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", TestJwt.CreateDelegatedToken(userId, email: email, roles: roles));
+        return client;
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
