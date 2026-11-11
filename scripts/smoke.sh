@@ -23,18 +23,20 @@ curl_base=(curl -sS -k --noproxy '*' --resolve "$domain:443:${TRAEFIK_IP:-127.0.
 step() { printf '\n== %s\n' "$*"; }
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 
-# call <jar> <method> <path> [json] [token]: prints the body, sets $status.
+# call <jar> <method> <path> [json] [token]: prints the body, sets $status. In a pipeline (call ... | jq) $status is
+# set only in the pipeline's subshell, so the status also goes to a file that expect reads.
 call() {
     local jar=$1 method=$2 path=$3 body=${4:-} token=${5:-}
     local args=("${curl_base[@]}" -b "$work/$jar" -c "$work/$jar" -o "$work/body" -w '%{http_code}' -X "$method")
     [[ -n $body ]] && args+=(-H 'Content-Type: application/json' --data "$body")
     [[ -n $token ]] && args+=(-H "Authorization: Bearer $token")
     status=$("${args[@]}" "$base$path")
+    echo "$status" > "$work/status"
     cat "$work/body"
 }
 
 # expect <status> <what>; "2xx" accepts any success.
-expect() { [[ $status == "$1" || ( $1 == 2xx && $status == 2* ) ]] || fail "$2: expected $1, got $status: $(cat "$work/body")"; echo "ok  $2 ($status)"; }
+expect() { status=$(cat "$work/status"); [[ $status == "$1" || ( $1 == 2xx && $status == 2* ) ]] || fail "$2: expected $1, got $status: $(cat "$work/body")"; echo "ok  $2 ($status)"; }
 
 # waits for an email to <address> and prints the first link to <base>/<route>/...
 mail_link() {
