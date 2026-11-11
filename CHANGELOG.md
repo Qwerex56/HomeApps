@@ -15,6 +15,10 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 - **Kit:** the assistant guard: a token with `act` only reads in Auth, Accounts and Households (403
   `assistant.not_allowed` on every change); plugins let it change their data, but not switch the plugin.
 - **Testing:** `TestJwt.CreateDelegatedToken`, `CreateAssistantClient`, `McpTestClient`.
+- **Auth: connected apps (OAuth 2.1).** Discovery (RFC 8414), dynamic registration (RFC 7591), authorization code with
+  PKCE and `resource`, refresh with rotation, revocation (RFC 7009); tokens only for the configured resource
+  (`Auth:ConnectedApps:Resources`, off when empty). Database migration `ConnectedApps`. See docs/auth.md.
+- **Web:** the consent screen `/connect` and "Connected apps" in the account settings.
 
 ### Fixed
 

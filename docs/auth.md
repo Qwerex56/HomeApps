@@ -57,6 +57,7 @@ Without Google settings the Google endpoints answer `external_login.provider_dis
 | `Jwt:Authority` | Where Auth validates its own tokens from; the same public address. |
 | `Auth:Signing:PrivateKeyPem` | RSA key in PEM. Required outside Development. When changing keys, put the old public key in `PreviousPublicKeyPem` for 15 minutes. |
 | `Auth:Clients` | The apps that may ask for tokens. `Browser` gets the refresh token in a cookie, `Native` gets it in the body. `RedirectUris` limits where Google sign-in may return. `Service` (with a `Secret` of 32+ characters) never signs anyone in: it asks `POST /internal/delegation` for a 5-minute token to act for one person, with `act` and `amr: delegated` ([mcp.md](mcp.md)). |
+| `Auth:ConnectedApps:Resources` | The resources apps may connect to through OAuth, e.g. `https://home-apps.dev/jarvis/mcp` (see "Connected apps" below). Empty (the default): OAuth is off and registration refuses every app. `MaxClients` (500) caps how many apps may be registered. |
 | `Auth:RegistrationOpen` | Sign-up without an invitation. Off by default. |
 | `Auth:Bootstrap:Email` | The first Owner (see above). |
 | `Auth:Google:ClientId`, `ClientSecret` | Google sign-in. Secrets, never committed. |
@@ -65,6 +66,54 @@ Without Google settings the Google endpoints answer `external_login.provider_dis
 | `Auth:Proxy:KnownNetworks`, `ForwardLimit` | Proxies whose `X-Forwarded-For` is trusted (Traefik), so rate limits see the real caller, and how many of them stand in front of Auth: 1 (Traefik) by default, 2 behind a Cloudflare Tunnel (cloudflared, then Traefik). |
 | `Auth:RefreshGraceWindow` | How long a just-rotated refresh token still works, `00:00:10` by default (R6a). A browser that reloads the page in the middle of a refresh never gets the new token and comes back with the old one; inside the window that gets a new token, after it (or from another client) it counts as theft and ends the session (R7). |
 | `Auth:RateLimits:*` | Anonymous attempts per IP and minute (`PerMinute`, 10); token refreshes per IP and minute (`RefreshPerMinute`, 60, a separate budget so open tabs never use up sign-in attempts); emails per IP and per address and hour. |
+
+## Connected apps (OAuth 2.1)
+
+Apps that act for a person, such as Claude Code or claude.ai connected to the JARVIS gateway (jarvis-v1.md 3.1),
+use OAuth 2.1 the way the MCP authorization specification asks. Auth implements it itself, on its own sessions and
+refresh tokens:
+
+```mermaid
+sequenceDiagram
+    participant A as App (Claude Code)
+    participant B as Browser
+    participant V as Vue /connect
+    participant Au as Auth
+    A->>Au: GET /.well-known/oauth-authorization-server
+    A->>Au: POST /auth/oauth/register (client_name, redirect_uris)
+    Au-->>A: client_id (public, no secret)
+    A->>B: open /auth/oauth/authorize?...&code_challenge&resource
+    B->>V: redirect /connect?... (sign in first if needed)
+    V->>Au: GET /auth/oauth/consent (what to show)
+    V->>Au: POST /auth/oauth/consent {allow}
+    Au-->>B: redirect_uri?code&state
+    A->>Au: POST /auth/oauth/token (code, code_verifier)
+    Au-->>A: access_token (aud = resource, 15 min) + refresh_token
+```
+
+| Endpoint | |
+| --- | --- |
+| `GET /.well-known/oauth-authorization-server` | RFC 8414 metadata; the OAuth addresses are built from `Auth:Signing:Issuer`. |
+| `POST /auth/oauth/register` | RFC 7591, anonymous, rate limited. Public clients only (`token_endpoint_auth_method: none`), redirect URIs `https` or `http://localhost`. An app that gets no tokens for 30 days is removed by the daily cleanup. |
+| `GET /auth/oauth/authorize` | Redirects the browser to `/connect` in Vue with the same query. Vue makes the person sign in, then shows what the app may and may not do and where the browser goes back to. |
+| `GET` / `POST /auth/oauth/consent` | The consent screen's preview and decision (signed in). An assistant's token cannot decide. |
+| `POST /auth/oauth/token` | `authorization_code` (with PKCE S256, always) and `refresh_token`, form-encoded, answers in OAuth's shape (`error`, `error_description`). |
+| `POST /auth/oauth/revoke` | RFC 7009: gives back a refresh token, which ends the app's session. |
+| `GET /auth/me/apps` | "Connected apps" in the account settings; `DELETE /auth/me/sessions/{id}` disconnects one. |
+
+What the person gets:
+
+- **One app, one session.** The code (one minute, single use, bound to the app, the redirect URI and the PKCE
+  verifier) starts a session of the person's identity with the app's `client_id`. Refresh tokens rotate with reuse
+  detection, like HomeApps' own sessions. A code coming back a second time ends the session it started.
+- **Tokens only for the resource.** The access token's `aud` is the resource (`Auth:ConnectedApps:Resources`), not
+  `homeapps`, so no service accepts it directly; the JARVIS gateway exchanges it for a delegated token (J2). It has
+  `scope: homeapps`, the person's `sub`, `email` and `role`, and the app's `client_id`.
+- **Always revocable.** Connected apps are listed apart from devices; disconnecting, signing out everywhere, a password
+  change or a disabled account ends their sessions.
+
+Try it with the MCP Inspector or Claude Code once the gateway exists (J2); until then the API tests in
+`ConnectedAppTests` walk the whole flow.
 
 ## How other services trust Auth
 
