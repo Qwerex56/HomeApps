@@ -12,14 +12,17 @@ public sealed class Session
 
     private Session() { }
 
-    private Session(Guid id, Guid identityId, ClientInfo client, AuthMethod method, DateTimeOffset startedAt)
+    private Session(Guid id, Guid identityId, ClientInfo client, AuthMethod method, DateTimeOffset startedAt, string? audience)
     {
         Id = id;
         IdentityId = identityId;
         Client = client;
         Method = method;
         StartedAt = startedAt;
+        Audience = audience;
     }
+
+    public const int AudienceMaxLength = 256;
 
     public Guid Id { get; private set; }
 
@@ -34,6 +37,14 @@ public sealed class Session
 
     public DateTimeOffset? RevokedAt { get; private set; }
 
+    /// <summary>
+    /// A connected app's session (OAuth): the one resource its access tokens are for, e.g. the JARVIS gateway. Null for
+    /// HomeApps' own clients, whose tokens are for the services.
+    /// </summary>
+    public string? Audience { get; private set; }
+
+    public bool IsConnectedApp => Audience is not null;
+
     public IReadOnlyList<RefreshToken> RefreshTokens => _refreshTokens;
 
     public bool IsActive(DateTimeOffset now) => RevokedAt is null && _refreshTokens.Any(t => t.IsUsable(now));
@@ -44,9 +55,9 @@ public sealed class Session
     internal RefreshToken? FindToken(string tokenHash) => _refreshTokens.Find(t => t.TokenHash == tokenHash);
 
     internal static (Session Session, IssuedRefreshToken Token) Start(
-        Guid identityId, ClientInfo client, AuthMethod method, DateTimeOffset now)
+        Guid identityId, ClientInfo client, AuthMethod method, DateTimeOffset now, string? audience = null)
     {
-        var session = new Session(Guid.CreateVersion7(now), identityId, client, method, now);
+        var session = new Session(Guid.CreateVersion7(now), identityId, client, method, now, audience);
         return (session, session.IssueToken(now));
     }
 
@@ -55,7 +66,7 @@ public sealed class Session
         var (raw, hash) = OpaqueToken.New();
         var token = RefreshToken.Create(Id, hash, now);
         _refreshTokens.Add(token);
-        return new IssuedRefreshToken(raw, Id, token.ExpiresAt, StartedAt);
+        return new IssuedRefreshToken(raw, Id, token.ExpiresAt, StartedAt, Audience);
     }
 
     internal void Revoke(DateTimeOffset now) => RevokedAt ??= now;

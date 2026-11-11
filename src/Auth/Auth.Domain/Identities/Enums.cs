@@ -29,6 +29,12 @@ public enum AuthMethod
     Password = 0,
     Google = 1,
     Apple = 2,
+
+    /// <summary>
+    /// The person allowed a connected app (OAuth, jarvis-v1.md 3.1) while signed in to HomeApps; the app's session
+    /// then lives on its own refresh tokens.
+    /// </summary>
+    ConnectedApp = 3,
 }
 
 public enum EmailTokenPurpose
