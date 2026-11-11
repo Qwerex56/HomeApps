@@ -1,3 +1,4 @@
+using Auth.Domain.ConnectedApps;
 using Auth.Domain.Identities;
 using Auth.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,9 @@ internal static class AuthCleanup
 {
     /// <summary>How long dead sessions and tokens stay visible (for "my sessions" and reuse detection) before deletion.</summary>
     public static readonly TimeSpan Retention = TimeSpan.FromDays(7);
+
+    /// <summary>An app that got no tokens for this long is forgotten (jarvis-v1.md 3.1); its refresh tokens are dead by then.</summary>
+    public static readonly TimeSpan UnusedAppRetention = TimeSpan.FromDays(30);
 
     public static async Task<CleanupResult> RunAsync(AuthDbContext db, DateTimeOffset now, CancellationToken cancellationToken)
     {
@@ -34,11 +38,20 @@ internal static class AuthCleanup
             .Where(i => i.EmailToken != null && i.EmailToken.ExpiresAt < now)
             .ExecuteUpdateAsync(set => set.SetProperty(i => i.EmailToken, (EmailToken?)null), cancellationToken);
 
-        return new CleanupResult(tokens, sessions, links);
+        var codes = await db.AuthorizationCodes
+            .Where(c => c.ExpiresAt < cutoff)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        var appCutoff = now - UnusedAppRetention;
+        var apps = await db.AppClients
+            .Where(c => (c.LastUsedAt ?? c.RegisteredAt) < appCutoff)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        return new CleanupResult(tokens, sessions, links, codes, apps);
     }
 }
 
-internal sealed record CleanupResult(int RefreshTokens, int Sessions, int EmailLinks);
+internal sealed record CleanupResult(int RefreshTokens, int Sessions, int EmailLinks, int AuthorizationCodes, int AppClients);
 
 /// <summary>Runs <see cref="AuthCleanup"/> at start and then once a day.</summary>
 internal sealed partial class DailyCleanup(IServiceScopeFactory scopes, TimeProvider time, ILogger<DailyCleanup> logger) : BackgroundService
@@ -53,7 +66,7 @@ internal sealed partial class DailyCleanup(IServiceScopeFactory scopes, TimeProv
                 await using var scope = scopes.CreateAsyncScope();
                 var db = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
                 var result = await AuthCleanup.RunAsync(db, time.GetUtcNow(), stoppingToken);
-                LogCleaned(logger, result.RefreshTokens, result.Sessions, result.EmailLinks);
+                LogCleaned(logger, result.RefreshTokens, result.Sessions, result.EmailLinks, result.AuthorizationCodes, result.AppClients);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
@@ -65,8 +78,8 @@ internal sealed partial class DailyCleanup(IServiceScopeFactory scopes, TimeProv
     }
 
     [LoggerMessage(Level = LogLevel.Information,
-        Message = "Cleanup removed {RefreshTokens} refresh tokens, {Sessions} sessions and {EmailLinks} expired email links")]
-    private static partial void LogCleaned(ILogger logger, int refreshTokens, int sessions, int emailLinks);
+        Message = "Cleanup removed {RefreshTokens} refresh tokens, {Sessions} sessions, {EmailLinks} expired email links, {AuthorizationCodes} authorization codes and {AppClients} unused apps")]
+    private static partial void LogCleaned(ILogger logger, int refreshTokens, int sessions, int emailLinks, int authorizationCodes, int appClients);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Cleanup failed; it runs again tomorrow")]
     private static partial void LogFailed(ILogger logger, Exception exception);

@@ -26,6 +26,7 @@ internal sealed class TokenIssuer(SigningKeys keys, IOptions<SigningOptions> opt
     private const string Scope = "scope";
     private const string ReactivationScope = "reactivation";
     private const string ExternalLinkScope = "external_link";
+    private const string AppScope = "homeapps";
 
     private static readonly string[] DelegatedMethods = ["delegated"];
 
@@ -68,6 +69,31 @@ internal sealed class TokenIssuer(SigningKeys keys, IOptions<SigningOptions> opt
             [JwtRegisteredClaimNames.AuthTime] = now.ToUnixTimeSeconds(),
             ["act"] = new Dictionary<string, object> { [JwtRegisteredClaimNames.Sub] = actor },
             [JwtRegisteredClaimNames.Amr] = DelegatedMethods,
+            [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
+        });
+        return new AccessToken(Handler.CreateToken(descriptor), expires);
+    }
+
+    public AccessToken IssueAppAccessToken(Identity identity, IssuedRefreshToken session, string clientId)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentException.ThrowIfNullOrWhiteSpace(clientId);
+        if (session.Audience is null)
+        {
+            throw new ArgumentException("Only a connected app's session has an audience of its own.", nameof(session));
+        }
+
+        var now = time.GetUtcNow();
+        var expires = now + AccessTokenLifetime;
+        var descriptor = Descriptor(AccessTokenType, [session.Audience], now, expires, new Dictionary<string, object>
+        {
+            [JwtRegisteredClaimNames.Sub] = identity.Id.ToString(),
+            [JwtRegisteredClaimNames.Email] = identity.Email.Value,
+            ["role"] = identity.Role.ToString(),
+            ["client_id"] = clientId,
+            [Scope] = AppScope,
+            [JwtRegisteredClaimNames.AuthTime] = session.AuthenticatedAt.ToUnixTimeSeconds(),
             [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
         });
         return new AccessToken(Handler.CreateToken(descriptor), expires);

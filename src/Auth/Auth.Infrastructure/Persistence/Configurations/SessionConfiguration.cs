@@ -12,6 +12,7 @@ internal sealed class SessionConfiguration : IEntityTypeConfiguration<Session>
         builder.HasKey(s => s.Id);
         builder.Property(s => s.Id).ValueGeneratedNever();
         builder.Property(s => s.Method).HasConversion<string>().HasMaxLength(Converters.EnumLength);
+        builder.Property(s => s.Audience).HasMaxLength(Session.AudienceMaxLength);
 
         builder.ComplexProperty(s => s.Client, client =>
         {
