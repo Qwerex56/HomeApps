@@ -120,6 +120,13 @@
       "device_not_found": "Nie ma takiego urządzenia.",
       "quiet_hours_empty": "Godziny ciszy muszą zaczynać się i kończyć o różnych porach.",
       "unknown_time_zone": "Nieznana strefa czasowa."
+    },
+    "oauth": {
+      "invalid_client": "Ta aplikacja nie jest zarejestrowana w HomeApps.",
+      "invalid_redirect_uri": "Aplikacja chce wrócić pod adres, którego nie zarejestrowała.",
+      "invalid_request": "Aplikacja wysłała niepełną prośbę o połączenie.",
+      "invalid_target": "Aplikacja prosi o dostęp do czegoś, czego ten serwer nie udostępnia.",
+      "access_denied": "Łączenie aplikacji jest na tym serwerze wyłączone."
     }
   },
   "auth": {
@@ -211,6 +218,7 @@
       "profile": "Profil",
       "security": "Bezpieczeństwo",
       "sessions": "Urządzenia",
+      "apps": "Połączone aplikacje",
       "invitations": "Zaproszenia",
       "history": "Historia",
       "notifications": "Powiadomienia"
@@ -266,6 +274,14 @@
         "Google": "Google",
         "Apple": "Apple"
       }
+    },
+    "apps": {
+      "title": "Połączone aplikacje",
+      "subtitle": "Aplikacje, którym pozwoliłeś działać w HomeApps w Twoim imieniu, np. Claude.",
+      "empty": "Nie połączyłeś jeszcze żadnej aplikacji.",
+      "connected": "połączona {date}",
+      "disconnect": "Odłącz",
+      "disconnectText": "{app} straci dostęp do HomeApps. Żeby znów z niej korzystać, trzeba będzie połączyć ją od nowa."
     },
     "invitations": {
       "title": "Zaproś do HomeApps",
@@ -564,5 +580,25 @@
       "since": "od {date}",
       "remove": "Usuń urządzenie"
     }
+  },
+  "connect": {
+    "title": "Połączyć aplikację?",
+    "intro": "{app} chce działać w HomeApps w Twoim imieniu.",
+    "canTitle": "Będzie mogła",
+    "can": {
+      "read": "czytać Twoje konto, domy i ich członków,",
+      "apps": "czytać i zmieniać dane aplikacji w Twoich domach (np. zadania, czat), zawsze tylko tyle, ile wolno Tobie."
+    },
+    "cannotTitle": "Nie będzie mogła",
+    "cannot": {
+      "password": "zobaczyć Twojego hasła ani zmienić ustawień bezpieczeństwa,",
+      "core": "zmieniać Twojego konta, domów, ich członków ani włączać i wyłączać aplikacji w domach."
+    },
+    "unverified": "Nazwę „{app}” podała sama aplikacja. Po decyzji wrócisz do: {host}. Jeśli nie rozpoznajesz tego adresu, odmów.",
+    "revokeHint": "Dostęp odbierzesz w każdej chwili w Konto → Połączone aplikacje.",
+    "allow": "Zezwól",
+    "deny": "Odmów",
+    "errorHint": "Ten link do połączenia aplikacji jest niepoprawny. Wróć do aplikacji i spróbuj połączyć się od nowa.",
+    "backHome": "Wróć do HomeApps"
   }
 }

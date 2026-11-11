@@ -53,6 +53,11 @@ export const router = createRouter({
               component: () => import('@/features/notifications/pages/NotificationsPage.vue'),
             },
             {
+              path: 'apps',
+              name: 'account-apps',
+              component: () => import('@/features/account/pages/ConnectedAppsPage.vue'),
+            },
+            {
               path: 'invitations',
               name: 'account-invitations',
               component: () => import('@/features/account/pages/InvitationsPage.vue'),
@@ -172,6 +177,13 @@ export const router = createRouter({
           name: 'reactivate',
           meta: { guestOnly: true },
           component: () => import('@/features/auth/pages/ReactivatePage.vue'),
+        },
+        // OAuth consent (jarvis-v1.md 3.1): Auth's /auth/oauth/authorize redirects here; signing in comes first.
+        {
+          path: 'connect',
+          name: 'connect',
+          meta: { requiresAuth: true },
+          component: () => import('@/features/auth/pages/ConnectPage.vue'),
         },
         // The links from Auth's emails: these paths are fixed by Auth's email templates.
         { path: 'invite/:token', name: 'invite', component: () => import('@/features/auth/pages/InvitePage.vue') },
