@@ -19,6 +19,13 @@ public interface ITokenIssuer
     /// </summary>
     AccessToken IssueDelegatedToken(Identity identity, RegisteredClient service, string actor);
 
+    /// <summary>
+    /// A 15-minute access token for a connected app (jarvis-v1.md 3.1): the person's <c>sub</c>, <c>email</c> and
+    /// <c>role</c>, the app's <c>client_id</c>, <c>scope</c> <c>homeapps</c> and <c>aud</c> = the session's resource
+    /// (<see cref="IssuedRefreshToken.Audience"/>), so only that resource (the JARVIS gateway) accepts it.
+    /// </summary>
+    AccessToken IssueAppAccessToken(Identity identity, IssuedRefreshToken session, string clientId);
+
     /// <summary>A 10-minute signed ticket with its own <c>scope</c>; never accepted as an access token.</summary>
     string IssueTicket(Ticket ticket);
 

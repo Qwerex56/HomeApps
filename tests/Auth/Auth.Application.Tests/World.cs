@@ -21,6 +21,10 @@ internal sealed class World
 
     public InMemoryInvitations Invitations { get; } = new();
 
+    public InMemoryAppClients AppClients { get; } = new();
+
+    public InMemoryAuthorizationCodes AuthorizationCodes { get; } = new();
+
     public FakeClients Clients { get; } = new();
 
     public FakeTokens Tokens { get; } = new();

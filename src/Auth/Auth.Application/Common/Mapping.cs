@@ -31,6 +31,9 @@ internal static class Mapping
         AuthMethod.Password => Contracts.SignInMethod.Password,
         AuthMethod.Google => Contracts.SignInMethod.Google,
         AuthMethod.Apple => Contracts.SignInMethod.Apple,
+
+        // Never raised: connecting an app counts as activity, like a refresh (Identity.ConnectApp).
+        AuthMethod.ConnectedApp => Contracts.SignInMethod.Refresh,
         _ => throw new ArgumentOutOfRangeException(nameof(method), method, null),
     };
 }

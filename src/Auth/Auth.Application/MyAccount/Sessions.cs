@@ -6,7 +6,7 @@ using HomeApps.BuildingBlocks.Application.Messaging;
 
 namespace Auth.Application.MyAccount;
 
-/// <summary>A-14: my active sessions, most recently used first.</summary>
+/// <summary>A-14: my active sessions, most recently used first. Connected apps have their own list.</summary>
 public sealed record ListSessionsQuery : IQuery<IReadOnlyList<SessionView>>;
 
 public sealed record SessionView(
@@ -23,7 +23,7 @@ internal sealed class ListSessionsHandler(IIdentityRepository identities, ICurre
             return Result.Fail<IReadOnlyList<SessionView>>(IdentityErrors.CannotSignIn);
         }
 
-        return identity.ActiveSessions(time.GetUtcNow())
+        return identity.DeviceSessions(time.GetUtcNow())
             .Select(s => new SessionView(s.Id, s.Client.ClientId, s.Client.UserAgent, s.Method, s.StartedAt, s.LastUsedAt))
             .ToList();
     }

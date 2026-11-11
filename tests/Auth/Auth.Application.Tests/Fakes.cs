@@ -115,6 +115,9 @@ internal sealed class FakeTokens : ITokenIssuer
     public AccessToken IssueDelegatedToken(Identity identity, RegisteredClient service, string actor) =>
         new($"delegated:{identity.Id}:{service.ClientId}:{actor}", DateTimeOffset.UnixEpoch);
 
+    public AccessToken IssueAppAccessToken(Identity identity, IssuedRefreshToken session, string clientId) =>
+        new($"app:{identity.Id}:{clientId}:{session.Audience}", session.AuthenticatedAt.AddMinutes(15));
+
     public string IssueTicket(Ticket ticket)
     {
         var value = $"ticket-{_tickets.Count + 1}";

@@ -28,6 +28,8 @@ public sealed class WiringTests
         services.AddAuthApplication(configuration);
         services.AddSingleton<IIdentityRepository>(w.Identities);
         services.AddSingleton<IInvitationRepository>(w.Invitations);
+        services.AddSingleton<IAppClientRepository>(w.AppClients);
+        services.AddSingleton<IAuthorizationCodeRepository>(w.AuthorizationCodes);
         services.AddSingleton<IClientRegistry>(w.Clients);
         services.AddSingleton<ITokenIssuer>(w.Tokens);
         services.AddSingleton<IExternalIdentityVerifier>(w.Verifier);

@@ -12,6 +12,7 @@ public static class DependencyInjection
     {
         services.AddHomeAppsApplication(typeof(DependencyInjection).Assembly);
         services.AddOptions<AuthOptions>().Bind(configuration.GetSection(AuthOptions.SectionName));
+        services.AddOptions<ConnectedAppsOptions>().Bind(configuration.GetSection(ConnectedAppsOptions.SectionName));
         services.AddSingleton(TimeProvider.System);
         return services;
     }
