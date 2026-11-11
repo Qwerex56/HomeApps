@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Auth.Api.ConnectedApps;
 using Auth.Api.Http;
 using Auth.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -56,6 +57,7 @@ internal static class DependencyInjection
         });
 
         services.AddAuthRateLimits();
+        services.AddOAuthCors();
 
         return services;
     }

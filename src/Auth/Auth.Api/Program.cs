@@ -15,6 +15,7 @@ builder.Services.AddAuthApi(builder.Configuration, builder.Environment);
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+app.UseCors();
 app.UseRateLimiter();
 app.UseHomeAppsDefaults();
 
