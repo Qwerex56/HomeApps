@@ -60,6 +60,11 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
   Notifications to people of the add-on's household, limited per installation; Pomodoro pushes the end of a focus.
 - **HomeMix (A5), Owner:** Administracja → "Dodatki" lists every installation and blocks an add-on by id or SHA-256
   from the web app (`/homemix/api/admin/*`, Owner only), next to `HomeMix:Blocked`.
+- **HomeMix (A6), JARVIS:** `tools` and `summary` in `homemix.json` become MCP tools `{id}_{name}` and `{id}_summary`
+  at `http://homemix:8080/mcp`, per person: only where the installer agreed to JARVIS, only for roles the tool's
+  permission and the data's write rule allow, with a `household` argument when the add-on is in more than one place.
+  They run the bridge's data use cases; `delete` is destructive, the rest read-only or not destructive. `homemix check`
+  checks them; Pomodoro 1.2.0 offers its timer (summary) and `pomodoro_stats`.
 
 ### Fixed
 

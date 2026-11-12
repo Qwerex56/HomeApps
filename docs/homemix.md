@@ -9,7 +9,7 @@ narrow bridge, keeps its data in the core service HomeMix and can give JARVIS to
 > order agreed with JARVIS in `plans/features/jarvis-v1.md` 10a). Sections say which stage brings them. Built so far:
 > A1, the service with packages, installations and the sandbox; A2, the data; A3, the web app, the bridge, the
 > tooling and Pomodoro; A4, the Owner's read-only "Pluginy serwera" view; A5, the store, Pogoda, `notify.push` and the
-> Owner's blocks.
+> Owner's blocks; A6, declared tools for JARVIS.
 
 ## Plugin or HomeMix
 
@@ -63,7 +63,7 @@ A zip of at most 5 MB (`HomeMix:MaxPackageBytes`) with `homemix.json` at its roo
 | `capabilities` | What the bridge will offer (see below). Shown to the installer. |
 | `network` | `https://` origins (no wildcards, no paths) the add-on may `fetch`. Shown to the installer as "may send data to". |
 | `permissions` | Named permissions with the lowest household role that has them, as in plugins. |
-| `tools` | Declared tools for JARVIS (A6). |
+| `tools`, `summary` | Declared tools and a summary for JARVIS (A6, see "JARVIS"). |
 | `jarvis` | Whether it offers JARVIS anything; the installer agrees separately. |
 
 `homemix check` (A3) and the server run the same validation and report every problem at once.
@@ -251,17 +251,25 @@ an hourly job deletes it.
 
 ## JARVIS (A6, A7)
 
-The HomeMix service serves MCP at `http://homemix:8080/mcp` inside the Docker network (empty from A1, so the JARVIS
-gateway can list it as a source from J2 on). For JARVIS a HomeMix tool is an ordinary MCP tool:
+The HomeMix service serves MCP at `http://homemix:8080/mcp` inside the Docker network; the JARVIS gateway lists it as
+a source with no prefix of its own. For JARVIS a HomeMix tool is an ordinary MCP tool:
 
-- `tools/list` answers **per person**: only installations the delegated token can reach, only tools its role allows,
-  and only where the installer agreed to JARVIS.
-- Names carry the add-on id (`pomodoro_add_session`); the gateway adds no prefix of its own for this source. When the
-  same add-on is in two households, the tool gets a `household` argument (a name or an id, `HouseholdLookup` from the
-  kit).
-- `delete` tools are `Destructive = true`, so JARVIS asks the person first. Answers are short plain text, as in
-  [mcp.md](mcp.md).
-- A summary for context is a tool `{id}_summary` with `ReadOnly = true`.
+- `tools/list` answers **per person**: the person's households (`GET /households/` with the delegated token) and their
+  own account, the installations there that are active, not blocked, agreed to JARVIS by the installer
+  (`jarvis` in the consent) and declare `tools` or a `summary`. A tool is listed only when the person's role passes its
+  `permission` (`minRole`) and, for a change to shared data, the role that may write it (see "Data"). The account
+  counts as Owner.
+- Names carry the add-on id (`pomodoro_stats`). When the same add-on is in more than one place, every tool gets a
+  `household` argument: a household's name or id, or "my account" (`NameLookup` from the kit). Without it the
+  answer asks "Which household?" and names the places.
+- Hints for the gateway's confirmation: `list`, `get` and the summary are `ReadOnly`; `add` and `update` are not
+  destructive, so JARVIS does them without asking; `delete` is `Destructive`, so JARVIS asks the person first.
+- A tool runs the same use cases as the bridge (`storage.*` with the person's token), so roles, limits and
+  `data.changed` for open frames hold as for a person clicking.
+- Answers are short plain text, as in [mcp.md](mcp.md): a change says the `answer` (or "Added {key}.", "Updated {key}.", "Deleted {key}."),
+  a `list` gives the newest 30 entries as `- key: field: value, ...`, everything cut at 4000 characters. Wrong
+  arguments come back as errors before anything is written.
+- A summary for context is a tool `{id}_summary` (`ReadOnly`) listing one collection, from `summary`.
 
 **Declared tools (A6)** work on collections without any add-on code on the server:
 
@@ -272,10 +280,21 @@ gateway can list it as a source from J2 on). For JARVIS a HomeMix tool is an ord
                 "minutes": { "type": "integer", "default": 25 } },
     "permission": "sessions.write", "answer": "Started \"{task}\" for {minutes} min." },
   { "name": "my_sessions", "description": "Lists today's sessions.", "collection": "sessions", "action": "list", "scope": "user" }
-]
+],
+"summary": { "collection": "timer", "scope": "household", "description": "The shared timer." }
 ```
 
-Actions: `add`, `list`, `get`, `update`, `delete`.
+| Field | Rule |
+|---|---|
+| `name` | `[a-z][a-z0-9_]{0,39}`, not `summary`; `{id}_{name}` at most 64 characters. At most 20 tools. |
+| `description` | Required, at most 500 characters: JARVIS picks the tool by it. |
+| `collection`, `scope` | A collection name; `household` (default) or `user`, which needs the matching `storage.*` capability. |
+| `action` | `add` (a new entry, key `yyyyMMddHHmmss-xxxxxx`), `list`, `get`, `update` (merges the fields into the entry), `delete`. `get`, `update` and `delete` take a `key` argument. |
+| `fields` | Only `add` and `update`, at most 20: `type` `string`, `integer`, `number` or `boolean`, optional `description`, `required`, `default` (of that type). Not `key` or `household`. |
+| `permission` | One of the add-on's `permissions`; the tool is listed only for roles that have it. |
+| `answer` | At most 300 characters; `{key}` and `{field}` are filled in. |
+
+`tools` and `summary` need `"jarvis": true`. `homemix check` makes the same checks.
 
 **Tool scripts (A7)** for anything that needs logic or a fetch: `tools/{name}.js` exports one function, run in Jint
 with 2 s, 10 MB and a statement and recursion limit. `ctx` is the bridge's contract (`storage`, `members`, `context`,
@@ -315,7 +334,7 @@ Optional, light tooling, versioned with HomeApps, in `src/Web/homemix` (npm work
   `dev` (a fake host at http://localhost:5180 with a household, roles, data in memory and the sandbox headers),
   `check`, `pack` (`addon.zip` + SHA-256). The template has a GitHub Actions workflow that attaches `addon.zip` to a
   release on a `v*` tag, which is what HomeMix installs from a repository link and what the store reads.
-  `homemix tool` comes with the tool scripts (A6).
+  `homemix tool` comes with the tool scripts (A7).
 
 To work on them: `cd src/Web && npm ci`, then `cd homemix && npm install && npm run build`.
 
