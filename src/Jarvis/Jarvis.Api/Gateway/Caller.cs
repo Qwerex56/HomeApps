@@ -1,5 +1,6 @@
 using HomeApps.BuildingBlocks.Api.Auth;
 using Jarvis.Application.Gateway;
+using Jarvis.Infrastructure.Gateway;
 using Microsoft.Net.Http.Headers;
 
 namespace Jarvis.Api.Gateway;
@@ -15,6 +16,18 @@ internal sealed class Caller(IHttpContextAccessor accessor, IDelegation delegati
 
     private string? _token;
 
+    public Guid UserId => Guid.Parse(User.FindFirst(ClaimNames.Subject)!.Value);
+
+    /// <summary>JARVIS's own run (<see cref="RunHeader"/>): only with a delegated token, which only JARVIS and Auth make.</summary>
+    public Guid? RunId =>
+        User.HasClaim(c => c.Type == ClaimNames.Actor)
+        && Guid.TryParse(Context.Request.Headers[RunHeader.Name].ToString(), out var run) ? run : null;
+
+    private HttpContext Context =>
+        accessor.HttpContext ?? throw new InvalidOperationException("The gateway runs only inside an HTTP request.");
+
+    private System.Security.Claims.ClaimsPrincipal User => Context.User;
+
     public async Task<string> SourceTokenAsync(CancellationToken cancellationToken)
     {
         if (_token is not null)
@@ -22,18 +35,14 @@ internal sealed class Caller(IHttpContextAccessor accessor, IDelegation delegati
             return _token;
         }
 
-        var context = accessor.HttpContext ?? throw new InvalidOperationException("The gateway runs only inside an HTTP request.");
-        var user = context.User;
-        if (user.HasClaim(c => c.Type == ClaimNames.Actor))
+        if (User.HasClaim(c => c.Type == ClaimNames.Actor))
         {
-            var header = context.Request.Headers[HeaderNames.Authorization].ToString();
-            _token = header["Bearer ".Length..].Trim();
+            _token = Context.Request.Headers[HeaderNames.Authorization].ToString()["Bearer ".Length..].Trim();
             return _token;
         }
 
-        var userId = Guid.Parse(user.FindFirst(ClaimNames.Subject)!.Value);
-        var client = user.FindFirst(ClaimNames.ClientId)?.Value ?? DirectClient;
-        _token = await delegation.TokenForAsync(userId, client, cancellationToken);
+        var client = User.FindFirst(ClaimNames.ClientId)?.Value ?? DirectClient;
+        _token = await delegation.TokenForAsync(UserId, "mcp", client, cancellationToken);
         return _token;
     }
 }

@@ -1,4 +1,12 @@
+using System.Text.Json;
+using HomeApps.BuildingBlocks.Mcp;
 using Jarvis.Application.Gateway;
+using Jarvis.Application.ToolCalls.AwaitConfirmation;
+using Jarvis.Application.ToolCalls.CheckRun;
+using Jarvis.Application.ToolCalls.RecordCall;
+using Jarvis.Infrastructure.Tools;
+using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Jarvis.Infrastructure.Gateway;
 using ModelContextProtocol;
 using ModelContextProtocol.Client;
@@ -12,7 +20,13 @@ namespace Jarvis.Api.Gateway;
 /// source's prefix (<c>todo_add_task</c>), a second tool with a name already taken is left out and logged; calls and
 /// resource reads go to the source that owns the name. A source that does not answer leaves out only its own tools.
 /// </summary>
-internal sealed partial class McpGateway(IToolSources sources, SourceConnector connector, Caller caller, ILogger<McpGateway> logger)
+/// <para>
+/// In JARVIS's own run (<see cref="Caller.RunId"/>) every call is logged into the run, and a tool that is not marked
+/// read-only or explicitly non-destructive is not called but waits for the person's confirmation (JV9): MCP's
+/// <c>destructiveHint</c> defaults to true, so an unmarked change counts as destructive.
+/// </para>
+internal sealed partial class McpGateway(
+    IToolSources sources, SourceConnector connector, Caller caller, ISender sender, IMemoryCache cache, ILogger<McpGateway> logger)
 {
     public async ValueTask<ListToolsResult> ListToolsAsync(CancellationToken cancellationToken)
     {
@@ -59,7 +73,13 @@ internal sealed partial class McpGateway(IToolSources sources, SourceConnector c
 
             try
             {
-                await using var client = await connector.ConnectAsync(source, await caller.SourceTokenAsync(cancellationToken), cancellationToken);
+                var token = await caller.SourceTokenAsync(cancellationToken);
+                if (caller.RunId is { } runId)
+                {
+                    return await CallInRunAsync(runId, source, own, request, token, cancellationToken);
+                }
+
+                await using var client = await connector.ConnectAsync(source, token, cancellationToken);
                 return await client.CallToolAsync(
                     new CallToolRequestParams { Name = own, Arguments = request.Arguments, Meta = request.Meta }, cancellationToken);
             }
@@ -75,6 +95,51 @@ internal sealed partial class McpGateway(IToolSources sources, SourceConnector c
         }
 
         return Failed($"There is no tool named {request.Name}.");
+    }
+
+    private async Task<CallToolResult> CallInRunAsync(
+        Guid runId, ToolSource source, string own, CallToolRequestParams request, string token, CancellationToken cancellationToken)
+    {
+        var userId = caller.UserId;
+        var run = await sender.Send(new CheckRunQuery(runId, userId), cancellationToken);
+        if (run.IsFailed)
+        {
+            return Failed(ToolResult.Describe(run.Errors));
+        }
+
+        var arguments = request.Arguments is null ? null : JsonSerializer.Serialize(request.Arguments);
+        var annotations = await AnnotationsAsync(source, own, token, userId, cancellationToken);
+        var readOnly = annotations?.ReadOnlyHint == true;
+        if (!readOnly && annotations?.DestructiveHint != false)
+        {
+            var waiting = await sender.Send(new AwaitConfirmationCommand(runId, userId, request.Name, arguments), cancellationToken);
+            return waiting.IsFailed
+                ? Failed(ToolResult.Describe(waiting.Errors))
+                : ToolResult.Text($"Not done yet: this waits for the person's confirmation on the action card (action {waiting.Value}).");
+        }
+
+        await using var client = await connector.ConnectAsync(source, token, cancellationToken);
+        var result = await client.CallToolAsync(
+            new CallToolRequestParams { Name = own, Arguments = request.Arguments, Meta = request.Meta }, cancellationToken);
+        await sender.Send(
+            new RecordCallCommand(runId, userId, request.Name, arguments, GatewayToolExecutor.TextOf(result), result.IsError == true, readOnly),
+            cancellationToken);
+        return result;
+    }
+
+    /// <summary>The tool's hints, from the source's list for this person; kept a few minutes per person.</summary>
+    private async Task<ToolAnnotations?> AnnotationsAsync(ToolSource source, string own, string token, Guid userId, CancellationToken cancellationToken)
+    {
+        var key = (nameof(AnnotationsAsync), userId, source.Name, own);
+        if (cache.TryGetValue(key, out ToolAnnotations? known))
+        {
+            return known;
+        }
+
+        var tools = await ToolsOfAsync(source, token, cancellationToken);
+        var annotations = tools.FirstOrDefault(t => t.Tool.Name == own).Tool?.Annotations;
+        cache.Set(key, annotations, TimeSpan.FromMinutes(5));
+        return annotations;
     }
 
     public async ValueTask<ListResourcesResult> ListResourcesAsync(CancellationToken cancellationToken)
