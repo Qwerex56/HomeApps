@@ -28,7 +28,7 @@ internal sealed class HouseholdsHttpAccess(
             return cached;
         }
 
-        var authorization = Authorization();
+        var authorization = CallerAuthorization.Read(accessor, manifest);
         if (authorization is null)
         {
             throw new InvalidOperationException("Household access needs the caller's access token; there is no HTTP request with one.");
@@ -48,21 +48,5 @@ internal sealed class HouseholdsHttpAccess(
 
         cache.Set(householdId, userId, membership);
         return membership;
-    }
-
-    private string? Authorization()
-    {
-        if (accessor.HttpContext?.Request is not { } request)
-        {
-            return null;
-        }
-
-        var header = request.Headers[HeaderNames.Authorization].ToString();
-        if (!string.IsNullOrEmpty(header))
-        {
-            return header;
-        }
-
-        return RealtimeAccessToken.Read(request, manifest) is { } token ? $"Bearer {token}" : null;
     }
 }

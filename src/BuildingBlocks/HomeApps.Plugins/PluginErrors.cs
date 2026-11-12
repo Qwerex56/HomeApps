@@ -12,4 +12,11 @@ public static class PluginErrors
     public static Error Disabled => new AppError("plugin.disabled", "This app is not switched on in the household.", ErrorKind.NotFound);
 
     public static Error Forbidden => new AppError("plugin.forbidden", "Your role in this household does not allow this.", ErrorKind.Forbidden);
+
+    /// <summary>
+    /// The plugin is off in the household, or the caller's role may not do this: a tool that looks through all of
+    /// someone's households skips such a household instead of failing.
+    /// </summary>
+    public static bool IsOffOrForbidden(IEnumerable<IError> errors) =>
+        errors.OfType<AppError>().Any(e => e.Code is "plugin.disabled" or "plugin.forbidden");
 }

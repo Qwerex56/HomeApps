@@ -60,6 +60,8 @@ public static class PluginHostingExtensions
         services.AddSingleton<HouseholdAccessCache>();
         services.AddHttpClient<IHouseholdAccess, HouseholdsHttpAccess>((sp, http) =>
             http.BaseAddress = new Uri(sp.GetRequiredService<IOptions<PluginHostingOptions>>().Value.HouseholdsUrl.TrimEnd('/') + "/"));
+        services.AddHttpClient<IHouseholdDirectory, HouseholdsHttpDirectory>((sp, http) =>
+            http.BaseAddress = new Uri(sp.GetRequiredService<IOptions<PluginHostingOptions>>().Value.HouseholdsUrl.TrimEnd('/') + "/"));
 
         if (manifest.Realtime is not null)
         {
