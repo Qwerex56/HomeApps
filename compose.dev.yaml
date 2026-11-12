@@ -2,7 +2,7 @@
 #   docker compose -f compose.dev.yaml up -d                     infrastructure only; run Auth from Rider (Q19)
 #   docker compose -f compose.dev.yaml --profile services up -d  everything in containers
 # Everything is served at https://app.localhost: /auth and /.well-known go to Auth, /users and /admin/users to Accounts,
-# /households, /invites and /admin/households to Households, /notifications to Notifications, the rest to Vue (vite on :5173). Services read Auth's keys inside the Docker network (accounts plan Q10).
+# /households, /invites and /admin/households to Households, /notifications to Notifications, /homemix to HomeMix, the rest to Vue (vite on :5173). Services read Auth's keys inside the Docker network (accounts plan Q10).
 # Values come from .env when present (copy .env.example); the defaults below work without it.
 name: homeapps
 
@@ -194,6 +194,43 @@ services:
       - "traefik.http.routers.notifications.tls=true"
       - "traefik.http.services.notifications.loadbalancer.server.port=8080"
 
+  homemix:
+    profiles: ["services"]
+    build:
+      context: .
+      dockerfile: src/HomeMix/HomeMix.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Database: "Host=postgres;Database=homeapps_homemix;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: ${RABBITMQ_USER:-guest}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-guest}
+      Jwt__Authority: "http://auth:8080"
+      Jwt__Issuer: "https://app.localhost"
+      Jwt__RequireHttpsMetadata: "false"
+      # Add-ons may not take the ids of the instance's plugins (docs/homemix.md).
+      HomeMix__Plugins: ${HOMEAPPS_PLUGINS:-}
+      HomeMix__PackagesPath: /data/packages
+      HomeMix__HouseholdsUrl: "http://households:8080"
+    volumes:
+      - homemix-packages:/data/packages
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      auth:
+        condition: service_started
+    labels:
+      - "traefik.enable=true"
+      # Not /mcp: the MCP server is reached only inside the Docker network (through the JARVIS gateway).
+      - "traefik.http.routers.homemix.rule=Host(`app.localhost`) && (PathPrefix(`/homemix/api`) || PathPrefix(`/homemix/run`))"
+      - "traefik.http.routers.homemix.priority=200"
+      - "traefik.http.routers.homemix.entrypoints=websecure"
+      - "traefik.http.routers.homemix.tls=true"
+      - "traefik.http.services.homemix.loadbalancer.server.port=8080"
+
 volumes:
   postgres-data:
   auth-keys:
+  homemix-packages:

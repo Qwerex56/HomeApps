@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- HomeMix domain: add-on packages, their manifest (homemix.json) and installations in a household or an account. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Domain\HomeApps.BuildingBlocks.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentResults" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="HomeMix.Domain.Tests" />
+  </ItemGroup>
+
+</Project>

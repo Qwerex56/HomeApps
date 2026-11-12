@@ -16,3 +16,6 @@ secrets/
 
 # Routes to plugins running from an IDE during development (docs/plugins.md); each plugin has its own.
 dynamic/plugin-*.yaml
+
+# HomeMix packages when the service runs from Rider (appsettings.Development.json)
+.homemix-packages/

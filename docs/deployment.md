@@ -144,7 +144,9 @@ added with `HOMEAPPS_PLUGINS` in `.env` and switched on per household. Step by s
 
 All data lives in the `postgres-data` volume; `auth-keys` holds the keys for Google sign-in cookies and
 `letsencrypt` the certificates (both are recreated if lost). Back up the databases, `secrets/` and `.env` (it holds the
-VAPID keys):
+VAPID keys). HomeMix add-ons' files are in the volume `homeapps_homemix-packages`; back it up with the databases
+(`docker run --rm -v homeapps_homemix-packages:/p -v "$PWD":/b alpine tar czf /b/homemix-packages.tar.gz -C /p .`), or
+people reinstall their add-ons after a restore:
 
 ```bash
 docker compose -f compose.prod.yaml exec -T postgres pg_dumpall -U homeapps > homeapps-$(date +%F).sql
