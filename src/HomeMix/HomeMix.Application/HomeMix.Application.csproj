@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- HomeMix use cases: one folder per command or query (Command/Query, Validator, Handler), ports for Infrastructure. -->
+  <ItemGroup>
+    <ProjectReference Include="..\HomeMix.Domain\HomeMix.Domain.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Application\HomeApps.BuildingBlocks.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="HomeMix.Application.Tests" />
+    <InternalsVisibleTo Include="HomeMix.Api.Tests" />
+  </ItemGroup>
+
+</Project>
