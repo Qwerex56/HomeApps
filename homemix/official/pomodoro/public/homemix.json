@@ -1,0 +1,20 @@
+{
+  "homemixVersion": 1,
+  "id": "pomodoro",
+  "version": "1.0.0",
+  "requires": { "homeApps": "2.3.0" },
+  "name": { "pl": "Pomodoro", "en": "Pomodoro" },
+  "description": {
+    "pl": "Wspólny minutnik do pracy i przerw, widoczny dla całego domu i na tablecie.",
+    "en": "A shared focus and break timer for the whole household and the wall tablet."
+  },
+  "icon": "pi-stopwatch",
+  "entry": "index.html",
+  "pages": [{ "path": "", "title": { "pl": "Pomodoro", "en": "Pomodoro" }, "menu": true }],
+  "widgets": [
+    { "id": "timer", "title": { "pl": "Pomodoro", "en": "Pomodoro" }, "size": "Small", "places": ["Household", "Wall", "Account"] }
+  ],
+  "capabilities": ["storage.household", "storage.user", "notify"],
+  "network": [],
+  "permissions": [{ "id": "settings.write", "minRole": "Admin" }]
+}
