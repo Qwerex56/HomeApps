@@ -61,6 +61,16 @@ internal static class AddonZip
           "summary": { "collection": "notes" }
         """));
 
+    /// <summary>An add-on with script tools (A7), each <c>tools/{name}.js</c> given as (name, source).</summary>
+    public static byte[] Scripts(string version, string tools, params (string Name, string Source)[] scripts) => Create(
+        Manifest(id: "calc", version: version, capabilities: """["storage.household", "household.members"]""",
+            network: """["https://api.example.com"]""", extra: $$"""
+              "jarvis": true,
+              "permissions": [{ "id": "admin", "minRole": "Admin" }],
+              "tools": {{tools}}
+            """),
+        [("index.html", Index), .. scripts.Select(s => ($"tools/{s.Name}.js", s.Source))]);
+
     private static void Add(ZipArchive zip, string path, string content)
     {
         using var stream = zip.CreateEntry(path).Open();

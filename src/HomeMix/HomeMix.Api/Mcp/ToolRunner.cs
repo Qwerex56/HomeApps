@@ -18,7 +18,7 @@ namespace HomeMix.Api.Mcp;
 /// and answers in plain text: the tool's <c>answer</c> with <c>{field}</c> and <c>{key}</c> filled in, or a short
 /// default. Entries are listed newest first, at most <see cref="MaxListed"/>.
 /// </summary>
-internal sealed class ToolRunner(ToolCatalog catalog, ISender sender, TimeProvider time)
+internal sealed class ToolRunner(ToolCatalog catalog, ISender sender, ScriptRunner scripts, TimeProvider time)
 {
     public const int MaxListed = 30;
     private const int MaxAnswer = 4000;
@@ -82,6 +82,9 @@ internal sealed class ToolRunner(ToolCatalog catalog, ISender sender, TimeProvid
                 var deleted = await sender.Send(new DeleteDocumentCommand(id, tool.Scope, tool.Collection, call.Key!, null), cancellationToken);
                 return deleted.IsFailed ? deleted : Result.Ok(Fill(tool.Answer ?? "Deleted {key}.", call.Key, call.Fields));
             }
+
+            case ToolAction.Script:
+                return (await scripts.RunAsync(call, cancellationToken)).Map(Cut);
 
             default:
                 throw new InvalidOperationException($"Unknown action {tool.Action}.");

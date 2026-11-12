@@ -16,6 +16,12 @@ internal static class HomeMixMcp
     {
         services.AddScoped<ToolCatalog>();
         services.AddScoped<ToolRunner>();
+        services.AddScoped<ScriptRunner>();
+        services.AddScoped<ScriptBridge>();
+
+        // ctx.fetch: only to the add-on's network origins, checked per call; never follows a redirect elsewhere.
+        services.AddHttpClient(ScriptBridge.HttpClientName, http => http.Timeout = ScriptLimits.FetchTime)
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false });
         services.Configure<McpServerOptions>(mcp =>
         {
             mcp.Handlers.ListToolsHandler = ListAsync;

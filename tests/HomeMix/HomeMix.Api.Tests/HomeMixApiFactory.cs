@@ -1,3 +1,4 @@
+using HomeMix.Api.Mcp;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using HomeApps.Contracts.Households;
@@ -42,6 +43,8 @@ public sealed class HomeMixApiFactory : WebApplicationFactory<Program>, IAsyncLi
     public FakeGitHubReleases GitHub { get; } = new();
 
     public FakeStoreIndex Store { get; } = new();
+
+    public FakeWeb Web { get; } = new();
 
     /// <summary>The one official add-on of the test instance, as <c>homemix/official</c> would ship it.</summary>
     public static byte[] OfficialWeather { get; } = AddonZip.Create(AddonZip.Manifest(id: "weather", version: "1.0.0",
@@ -115,6 +118,7 @@ public sealed class HomeMixApiFactory : WebApplicationFactory<Program>, IAsyncLi
             services.AddSingleton<IGitHubReleases>(GitHub);
             services.RemoveAll<IStoreIndex>();
             services.AddSingleton<IStoreIndex>(Store);
+            services.AddHttpClient(ScriptBridge.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => Web);
             services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, bearer =>
             {
                 var configuration = new OpenIdConnectConfiguration { Issuer = Issuer };

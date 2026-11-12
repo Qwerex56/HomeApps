@@ -7,6 +7,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Jint" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="HomeMix.Api.Tests" />
   </ItemGroup>
 

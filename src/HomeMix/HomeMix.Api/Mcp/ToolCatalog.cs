@@ -53,7 +53,8 @@ public sealed class ToolCatalog(
                 {
                     tools.Add(new CatalogTool(
                         Exposed(manifest, tool.Name), $"{manifest.Name.En}: {tool.Name.Replace('_', ' ')}", tool.Description,
-                        Schema(tool, allowed.Count > 1), ReadOnly: !tool.Changes, Destructive: tool.Action == ToolAction.Delete));
+                        Schema(tool, allowed.Count > 1), ReadOnly: !tool.Changes,
+                        Destructive: tool.Action == ToolAction.Delete || (tool.Action == ToolAction.Script && tool.Changes)));
                 }
             }
         }
@@ -117,11 +118,11 @@ public sealed class ToolCatalog(
 
                 fields[field.Name] = value;
             }
-            else if (tool!.Action == ToolAction.Add && field.Default is { } fallback)
+            else if (tool!.Creates && field.Default is { } fallback)
             {
                 fields[field.Name] = fallback;
             }
-            else if (tool.Action == ToolAction.Add && field.Required)
+            else if (tool.Creates && field.Required)
             {
                 return Result.Fail(ToolErrors.Argument($"{field.Name} is required."));
             }
@@ -172,7 +173,9 @@ public sealed class ToolCatalog(
             return false;
         }
 
-        return !tool.Changes || tool.Scope == DataScope.User || place.Role >= DataAccess.WriteRole(place.Manifest, tool.Collection);
+        // A script's writes are checked as it makes them; a declared change needs the collection's write role up front.
+        return !tool.Changes || tool.Action == ToolAction.Script || tool.Scope == DataScope.User
+            || place.Role >= DataAccess.WriteRole(place.Manifest, tool.Collection);
     }
 
     private static string Exposed(AddonManifest manifest, string name) => $"{manifest.Id}_{name}";
@@ -211,7 +214,7 @@ public sealed class ToolCatalog(
             }
 
             properties[field.Name] = property;
-            if (tool!.Action == ToolAction.Add && field.Required && field.Default is null)
+            if (tool!.Creates && field.Required && field.Default is null)
             {
                 required.Add(field.Name);
             }

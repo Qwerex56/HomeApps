@@ -54,4 +54,20 @@ internal static class Requests
 
     /// <summary>The same without JARVIS.</summary>
     public static readonly object NotesWithoutJarvis = new { capabilities = new[] { "storage.household", "storage.user" }, jarvis = false };
+
+    /// <summary>Consent for <see cref="AddonZip.Scripts"/>.</summary>
+    public static readonly object ScriptsForJarvis = new
+    {
+        capabilities = new[] { "storage.household", "household.members" },
+        network = new[] { "https://api.example.com" },
+        jarvis = true,
+    };
+
+    /// <summary>Consent for the official Pogoda, JARVIS included.</summary>
+    public static readonly object PogodaForJarvis = new
+    {
+        capabilities = new[] { "storage.household" },
+        network = new[] { "https://api.open-meteo.com", "https://geocoding-api.open-meteo.com" },
+        jarvis = true,
+    };
 }

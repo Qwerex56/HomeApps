@@ -50,6 +50,7 @@
   <ItemGroup Label="MCP">
     <!-- Official C# SDK for the Model Context Protocol (Apache 2.0), servers for JARVIS (jarvis-v1.md). -->
     <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.4.0" />
+    <PackageVersion Include="Jint" Version="4.16.4" />
   </ItemGroup>
 
   <ItemGroup Label="Messaging">
