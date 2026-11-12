@@ -12,5 +12,10 @@ internal sealed class ToolCallRepository(JarvisDbContext db) : IToolCallReposito
     public async Task<IReadOnlyList<ToolCall>> ListForRunAsync(Guid runId, CancellationToken cancellationToken) =>
         await db.ToolCalls.Where(c => c.RunId == runId).OrderBy(c => c.CalledAt).ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<ToolCall>> ListForRunsAsync(IReadOnlyCollection<Guid> runIds, CancellationToken cancellationToken) =>
+        runIds.Count == 0
+            ? []
+            : await db.ToolCalls.Where(c => runIds.Contains(c.RunId)).OrderBy(c => c.CalledAt).ToListAsync(cancellationToken);
+
     public void Add(ToolCall toolCall) => db.ToolCalls.Add(toolCall);
 }

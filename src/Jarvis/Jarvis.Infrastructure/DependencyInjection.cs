@@ -1,4 +1,5 @@
 using HomeApps.BuildingBlocks.Infrastructure;
+using Jarvis.Infrastructure.Live;
 using Jarvis.Infrastructure.Messaging;
 using Jarvis.Application.Abstractions;
 using Jarvis.Application.Gateway;
@@ -25,6 +26,9 @@ public static class DependencyInjection
         services.AddHomeAppsInfrastructure<JarvisDbContext>(configuration, "jarvis", typeof(DependencyInjection).Assembly);
         services.AddScoped<IRunRepository, RunRepository>();
         services.AddScoped<IToolCallRepository, ToolCallRepository>();
+        services.AddScoped<IConversationRepository, ConversationRepository>();
+        services.AddSingleton<RunFeed>();
+        services.AddSingleton<IRunFeed>(sp => sp.GetRequiredService<RunFeed>());
 
         services.AddOptions<GatewayOptions>()
             .BindConfiguration(GatewayOptions.SectionName)
