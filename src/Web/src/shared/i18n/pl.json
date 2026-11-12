@@ -127,6 +127,21 @@
       "invalid_request": "Aplikacja wysłała niepełną prośbę o połączenie.",
       "invalid_target": "Aplikacja prosi o dostęp do czegoś, czego ten serwer nie udostępnia.",
       "access_denied": "Łączenie aplikacji jest na tym serwerze wyłączone."
+    },
+    "homemix": {
+      "manifest_invalid": "Plik homemix.json jest niepoprawny.",
+      "package_invalid": "To nie jest poprawna paczka dodatku.",
+      "package_too_large": "Paczka dodatku jest za duża.",
+      "id_reserved": "Ten identyfikator należy do HomeApps albo pluginu serwera.",
+      "needs_newer_homeapps": "Ten dodatek wymaga nowszej wersji HomeApps.",
+      "download_failed": "Nie udało się pobrać dodatku z GitHuba.",
+      "blocked": "Właściciel serwera zablokował ten dodatek.",
+      "uploads_disabled": "Dodawanie dodatków jest wyłączone na tym serwerze.",
+      "forbidden": "Dodatki zmieniają administratorzy domu.",
+      "already_installed": "Ten dodatek jest już zainstalowany. Zaktualizuj go.",
+      "target_not_supported": "Tego dodatku nie da się zainstalować w tym miejscu.",
+      "consent_required": "Nowa wersja prosi o więcej uprawnień i wymaga zgody.",
+      "installation_not_found": "Ten dodatek nie jest tu zainstalowany."
     }
   },
   "auth": {
@@ -600,5 +615,51 @@
     "deny": "Odmów",
     "errorHint": "Ten link do połączenia aplikacji jest niepoprawny. Wróć do aplikacji i spróbuj połączyć się od nowa.",
     "backHome": "Wróć do HomeApps"
+  },
+  "homemix": {
+    "title": "Dodatki HomeMix",
+    "mine": "Moje aplikacje",
+    "empty": "Nie ma tu jeszcze żadnych dodatków.",
+    "open": "Otwórz",
+    "fromZip": "z pliku zip",
+    "since": "od {date}",
+    "installed": "Zainstalowano: {name}",
+    "frameTitle": "Dodatek HomeMix: {name}",
+    "caption": "HomeMix: {name} działa w osobnej, zamkniętej ramce",
+    "notInstalled": "Ten dodatek nie jest tu zainstalowany.",
+    "loadFailed": "Nie udało się wczytać dodatków.",
+    "targetNotSupported": "Tego dodatku nie da się zainstalować w tym miejscu.",
+    "add": {
+      "title": "Dodaj dodatek",
+      "github": "Link do GitHuba",
+      "zip": "Plik zip",
+      "hint": "Dodatek z GitHuba to najnowsze wydanie repozytorium z plikiem addon.zip. Najpierw zobaczysz, o co prosi.",
+      "read": "Dalej",
+      "install": "Zgadzam się i instaluję"
+    },
+    "update": {
+      "title": "Nowa wersja prosi o więcej",
+      "check": "Sprawdź aktualizację",
+      "current": "To najnowsza wersja.",
+      "done": "Zaktualizowano do {version}",
+      "accept": "Zgadzam się i aktualizuję"
+    },
+    "remove": {
+      "title": "Odinstaluj",
+      "text": "Odinstalować {name}? Dane dodatku zostaną zachowane przez 30 dni i wrócą po ponownej instalacji."
+    },
+    "consent": {
+      "may": "Ten dodatek może:",
+      "always": "działać na swojej stronie i w kafelkach, znać nazwę domu, Twoje imię i Twoją rolę",
+      "network": "Może wysyłać dane do:",
+      "jarvis": "Pozwól JARVIS-owi korzystać z tego dodatku",
+      "never": "Nigdy nie dostanie Twojego tokenu, emaila, danych innych domów ani ustawień serwera."
+    },
+    "capability": {
+      "storage.household": "zapisywać wspólne dane w tym miejscu",
+      "storage.user": "zapisywać prywatne dane każdej osoby",
+      "household.members": "widzieć imiona i zdjęcia domowników",
+      "notify": "pokazywać powiadomienia w aplikacji"
+    }
   }
 }

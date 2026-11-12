@@ -12,4 +12,5 @@ export const servicePaths = [
   /^\/notifications(\/|$)/,
   /^\/openapi\//,
   /^\/plugins\//,
+  /^\/homemix\//,
 ]

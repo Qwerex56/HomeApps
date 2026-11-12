@@ -1,13 +1,15 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "plugin-sdk/src/index.ts", "plugin-sdk/src/manifest.ts"],
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "plugin-sdk/src/index.ts", "plugin-sdk/src/manifest.ts", "homemix/sdk/src/**/*.ts"],
   "exclude": ["src/**/__tests__/*", "src/sw.ts"],
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "paths": {
       "@/*": ["./src/*"],
       "@homeapps/plugin-sdk": ["./plugin-sdk/src/index.ts"],
-      "@homeapps/plugin-sdk/vite": ["./plugin-sdk/src/vite.ts"]
+      "@homeapps/plugin-sdk/vite": ["./plugin-sdk/src/vite.ts"],
+      "@homemix/sdk": ["./homemix/sdk/src/index.ts"],
+      "@homemix/sdk/host": ["./homemix/sdk/src/host.ts"]
     }
   }
 }

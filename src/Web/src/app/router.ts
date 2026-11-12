@@ -17,7 +17,7 @@ declare module 'vue-router' {
 
 // History mode: the URL fragment stays free for the result of Google sign-in (frontend.md, section 4).
 // The routes the emails link to (/invite/:token, /reset-password, /confirm-password, /confirm-email) are fixed by Auth.
-// No route may start with /auth, /users, /admin/users, /households, /invites, /admin/households or /plugins: Traefik
+// No route may start with /auth, /users, /admin/users, /households, /invites, /admin/households, /plugins or /homemix: Traefik
 // sends those paths to the services and plugins.
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -67,7 +67,19 @@ export const router = createRouter({
               name: 'account-history',
               component: () => import('@/features/account/pages/HistoryPage.vue'),
             },
+            // "Moje aplikacje": HomeMix add-ons on my account (docs/homemix.md).
+            {
+              path: 'mix',
+              name: 'account-mix',
+              component: () => import('@/features/homemix/MyMixesPage.vue'),
+            },
           ],
+        },
+        {
+          path: 'me/mix/:addon/:path(.*)?',
+          name: 'my-mix',
+          props: true,
+          component: () => import('@/features/homemix/MixPage.vue'),
         },
         // /homes, /join and /admin/homes: /households, /invites and /admin/households belong to the service.
         {
@@ -102,6 +114,13 @@ export const router = createRouter({
               name: 'household-app',
               props: true,
               component: () => import('@/features/plugins/PluginPage.vue'),
+            },
+            // A HomeMix add-on's pages, in a sandboxed frame (docs/homemix.md).
+            {
+              path: 'mix/:addon/:path(.*)?',
+              name: 'household-mix',
+              props: true,
+              component: () => import('@/features/homemix/MixPage.vue'),
             },
           ],
         },

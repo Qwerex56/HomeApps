@@ -2,3 +2,6 @@ node_modules
 dist
 coverage
 *.local
+# The HomeMix packages have their own node_modules and builds; the app uses only their source.
+homemix/**/node_modules
+homemix/**/dist

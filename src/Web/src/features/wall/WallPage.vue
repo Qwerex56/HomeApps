@@ -6,6 +6,7 @@ import { householdKeys, householdPermissions, householdsApi } from '@/features/h
 import { useCurrentHousehold } from '@/features/households/useCurrentHousehold'
 import { useWakeLock } from './useWakeLock'
 import PluginWidgets from '@/features/plugins/PluginWidgets.vue'
+import MixWidgets from '@/features/homemix/MixWidgets.vue'
 import { useHouseholdPlugins } from '@/features/plugins/registry'
 
 // Q7, Q11: the wall tablet. Full screen, big type, no menu; the screen stays on. Plugins add tiles later.
@@ -119,6 +120,13 @@ onBeforeUnmount(() => document.removeEventListener('fullscreenchange', onFullscr
           </div>
         </div>
       </section>
+      <MixWidgets
+        v-if="current?.myRole"
+        class="lg:col-span-3"
+        :household="{ id: current.id, name: current.name, myRole: current.myRole }"
+        place="Wall"
+        dark
+      />
     </main>
 
     <footer v-if="!awake" class="text-sm text-surface-500">{{ t('wall.noWakeLock') }}</footer>

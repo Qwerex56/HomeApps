@@ -9,6 +9,7 @@ const services = {
   accounts: process.env.ACCOUNTS_OPENAPI ?? 'http://localhost:5200/openapi/v1.json',
   households: process.env.HOUSEHOLDS_OPENAPI ?? 'http://localhost:5300/openapi/v1.json',
   notifications: process.env.NOTIFICATIONS_OPENAPI ?? 'http://localhost:5500/openapi/v1.json',
+  homemix: process.env.HOMEMIX_OPENAPI ?? 'http://localhost:5600/openapi/v1.json',
 }
 
 for (const [name, url] of Object.entries(services)) {

@@ -12,6 +12,8 @@ import { useSessionStore } from '@/features/auth/session'
 import OwnershipBanner from '../components/OwnershipBanner.vue'
 import PluginWidgets from '@/features/plugins/PluginWidgets.vue'
 import { localized, useHouseholdPlugins } from '@/features/plugins/registry'
+import MixWidgets from '@/features/homemix/MixWidgets.vue'
+import { useInstallations } from '@/features/homemix/api'
 import { householdKeys, householdPermissions, householdsApi } from '../api'
 import { roleSeverity } from '../tags'
 import { useCurrentHousehold } from '../useCurrentHousehold'
@@ -44,6 +46,7 @@ watch(
     const allowed =
       name === 'household-settings' ||
       name === 'household-app' ||
+      name === 'household-mix' ||
       (name === 'household-invites' ? can.value.invite : can.value.seeMembers)
     if (value && !allowed) {
       void router.replace({ name: 'household-settings', params: { id: props.id } })
@@ -67,12 +70,32 @@ const pluginTabs = computed(() =>
   ),
 )
 
+// HomeMix add-ons installed here add their menu pages the same way (docs/homemix.md).
+const { data: mixes } = useInstallations(() => ({ kind: 'Household', householdId: props.id }))
+const mixTabs = computed(() =>
+  (mixes.value ?? []).flatMap((mix) =>
+    mix.pages
+      .filter((p) => p.menu)
+      .map((p) => ({
+        key: `mix/${mix.addonId}/${p.path}`,
+        to: { name: 'household-mix', params: { id: props.id, addon: mix.addonId, path: p.path } },
+        label: localized(p.title),
+        icon: `pi ${mix.icon}`,
+      })),
+  ),
+)
+
+const mixHousehold = computed(() =>
+  household.value?.myRole
+    ? { id: household.value.id, name: household.value.name, myRole: household.value.myRole }
+    : null,
+)
+
 const tabs = computed(() => [
-  ...(can.value.seeMembers
-    ? [tab('household-members', t('households.tabs.members'), 'pi pi-users')]
-    : []),
+  ...(can.value.seeMembers ? [tab('household-members', t('households.tabs.members'), 'pi pi-users')] : []),
   ...(can.value.invite ? [tab('household-invites', t('households.tabs.invites'), 'pi pi-send')] : []),
   ...pluginTabs.value,
+  ...mixTabs.value,
   tab('household-settings', t('households.tabs.settings'), 'pi pi-cog'),
 ])
 
@@ -81,9 +104,7 @@ function tab(name: string, label: string, icon: string) {
 }
 
 // Widgets stand on the household's first page: the members, or the settings for a guest, who has no members tab.
-const showWidgets = computed(
-  () => route.name === (can.value.seeMembers ? 'household-members' : 'household-settings'),
-)
+const showWidgets = computed(() => route.name === (can.value.seeMembers ? 'household-members' : 'household-settings'))
 
 const pluginHousehold = computed(() =>
   household.value ? { id: household.value.id, name: household.value.name, myRole: household.value.myRole } : null,
@@ -114,6 +135,7 @@ const pluginHousehold = computed(() =>
       </div>
       <OwnershipBanner v-if="household.ownershipReceivedAt" :household-id="household.id" :name="household.name" />
       <PluginWidgets v-if="pluginHousehold && showWidgets" :household="pluginHousehold" place="Household" />
+      <MixWidgets v-if="mixHousehold && showWidgets" :household="mixHousehold" place="Household" />
 
       <div class="flex flex-col gap-6 md:flex-row">
         <nav :aria-label="household.name" class="flex gap-1 overflow-x-auto md:w-52 md:shrink-0 md:flex-col">
