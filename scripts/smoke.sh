@@ -53,6 +53,18 @@ mail_link() {
     fail "no email to $address"
 }
 
+# mcp <method> <params> [token]: one JSON-RPC call to the JARVIS gateway (stateless, so no initialize); prints the
+# result, from plain JSON or from the "data:" line of an event stream.
+mcp() {
+    local args=("${curl_base[@]}" -o "$work/body" -w '%{http_code}' -X POST -H 'Content-Type: application/json'
+        -H 'Accept: application/json, text/event-stream'
+        --data "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"$1\",\"params\":$2}")
+    [[ -n ${3:-} ]] && args+=(-H "Authorization: Bearer $3")
+    status=$("${args[@]}" "$base/jarvis/mcp")
+    echo "$status" > "$work/status"
+    sed -n 's/^data: //p' "$work/body" | grep . || cat "$work/body"
+}
+
 # waits until <path> answers 200 for <token> (events between services are asynchronous).
 eventually_ok() {
     local path=$1 token=$2 what=$3
@@ -126,6 +138,44 @@ expect 2xx "Owner mutes the household"
 call owner GET /notifications/settings '' "$access" | jq -e --arg h "$household" '.mutes[0].householdId == $h' >/dev/null
 expect 200 "the mute is in the settings"
 call owner POST /notifications/test '' "$access" >/dev/null; expect 409 "a test notification without devices"
+
+step "HomeMix"
+call owner GET /homemix/api/store '' "$access" | jq -e 'any(.[]; .official and .addonId == "pogoda")' >/dev/null
+expect 200 "the store lists the official Pogoda"
+sha=$(call owner POST /homemix/api/packages/official/pogoda '' "$access" | jq -r .sha256)
+expect 2xx "Owner adds the official Pogoda package"
+consent='{"capabilities":["storage.household"],"network":["https://api.open-meteo.com","https://geocoding-api.open-meteo.com"],"jarvis":true}'
+call owner POST "/homemix/api/households/$household/installations" "{\"sha256\":\"$sha\",\"consent\":$consent}" "$access" >/dev/null
+expect 2xx "Owner installs Pogoda in the household, JARVIS allowed"
+call owner GET "/homemix/api/households/$household/installations" '' "$access" | jq -e 'any(.[]; .addonId == "pogoda")' >/dev/null
+expect 200 "the household lists Pogoda"
+
+step "JARVIS"
+call x GET /.well-known/oauth-protected-resource/jarvis/mcp | jq -e --arg r "$base/jarvis/mcp" '.resource == $r' >/dev/null
+expect 200 "the gateway's resource metadata (RFC 9728)"
+call x GET /.well-known/oauth-authorization-server | jq -e '.registration_endpoint | endswith("/auth/oauth/register")' >/dev/null
+expect 200 "Auth offers dynamic registration for connected apps"
+mcp tools/list '{}' >/dev/null; expect 401 "the gateway without a token"
+grep -qi 'resource_metadata' <("${curl_base[@]}" -o /dev/null -D - -X POST -H 'Content-Type: application/json' \
+    -H 'Accept: application/json, text/event-stream' --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' "$base/jarvis/mcp") \
+    || fail "401 without WWW-Authenticate resource_metadata"
+echo "ok  401 names the resource metadata"
+tools=$(mcp tools/list '{}' "$access" | jq -r '.result.tools[].name')
+expect 200 "tools/list through the gateway"
+for name in households_my_households accounts_my_profile pogoda_forecast; do
+    grep -qx "$name" <<<"$tools" || fail "the gateway has no $name: $(tr '\n' ' ' <<<"$tools")"
+    echo "ok  tool $name"
+done
+mcp tools/call '{"name":"households_my_households","arguments":{}}' "$access" | grep -q 'Dom testowy' \
+    || fail "households_my_households through the gateway: $(cat "$work/body")"
+echo "ok  a tool call through the gateway (as an assistant, delegated token)"
+conversation=$(call owner POST /jarvis/api/conversations '{}' "$access" | jq -r .id)
+expect 2xx "Owner starts a conversation"
+call owner POST "/jarvis/api/conversations/$conversation/messages" \
+    "{\"text\":\"Jarvis, jaka jutro pogoda?\",\"householdId\":\"$household\"}" "$access" > "$work/answer"
+expect 200 "a message to JARVIS (server-sent events)"
+grep -q '^event: message' "$work/answer" || fail "no answer from JARVIS: $(cat "$work/answer")"
+echo "ok  JARVIS answers: $(sed -n '/^event: message/{n;p}' "$work/answer" | sed 's/^data: //' | jq -r '.text' | head -c 300)"
 
 step "Sign out"
 call owner POST /auth/logout '{}' >/dev/null; expect 204 "Owner signs out"
