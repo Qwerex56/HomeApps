@@ -9,6 +9,12 @@ internal sealed class FakeHouseholdRoles(FakeHouseholds households, ICurrentUser
     public Task<HouseholdRole?> GetRoleAsync(Guid householdId, CancellationToken cancellationToken) =>
         Task.FromResult(households.RoleOf(householdId, currentUser.RequiredUserId));
 
+    public Task<IReadOnlyList<HouseholdMember>> GetMembersAsync(Guid householdId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<HouseholdMember>>(households.RoleOf(householdId, currentUser.RequiredUserId) is null
+            ? []
+            : [.. households.MembersOf(householdId)
+                .Select(m => new HouseholdMember(m, $"Person {m.ToString()[..4]}", null, households.RoleOf(householdId, m)!.Value))]);
+
     public Task<IReadOnlyList<MyHousehold>> GetMyHouseholdsAsync(CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<MyHousehold>>([.. households.Of(currentUser.RequiredUserId).Select(h => new MyHousehold(h.Id, h.Name, h.Role))]);
 

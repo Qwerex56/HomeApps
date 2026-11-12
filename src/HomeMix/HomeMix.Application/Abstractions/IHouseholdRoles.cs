@@ -9,6 +9,9 @@ public interface IHouseholdRoles
     Task<HouseholdRole?> GetRoleAsync(Guid householdId, CancellationToken cancellationToken);
 
     /// <summary>Every household the caller can reach (guest access included).</summary>
+    /// <summary>A household's active members, as the caller may see them; empty without access.</summary>
+    Task<IReadOnlyList<HouseholdMember>> GetMembersAsync(Guid householdId, CancellationToken cancellationToken);
+
     Task<IReadOnlyList<MyHousehold>> GetMyHouseholdsAsync(CancellationToken cancellationToken);
 
     /// <summary>Everyone with access to the household (guests included), as the caller may see them.</summary>
