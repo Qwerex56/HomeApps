@@ -30,6 +30,7 @@ Przed wszystkim stoi Traefik; front to Vue 3 + TypeScript, PrimeVue i Tailwind.
 - [docs/how-a-service-is-built.md](docs/how-a-service-is-built.md): jak wygląda serwis i jak dodać kolejny
 - [docs/plugins.md](docs/plugins.md): pluginy poza tym repo (manifest, uprawnienia, paczki kitu)
 - [docs/homemix.md](docs/homemix.md): dodatki HomeMix wgrywane z aplikacji na dom albo konto (piaskownica, most, JARVIS)
+- [docs/jarvis.md](docs/jarvis.md): JARVIS, the MCP gateway `/jarvis/mcp` and connecting Claude Code
 - [docs/plugin-todo.md](docs/plugin-todo.md): podłączenie pluginu Todo do działającej instancji i jak go sprawdzić
 - [docs/plugin-chat.md](docs/plugin-chat.md): podłączenie pluginu Czat (rozmowy, zdjęcia, filmy) i jego kopie zapasowe
 - [docs/adr](docs/adr/README.md): decyzje architektoniczne

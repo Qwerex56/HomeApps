@@ -20,6 +20,9 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 - **Auth: connected apps (OAuth 2.1).** Discovery (RFC 8414), dynamic registration (RFC 7591), authorization code with
   PKCE and `resource`, refresh with rotation, revocation (RFC 7009); tokens only for the configured resource
   (`Auth:ConnectedApps:Resources`, off when empty). Database migration `ConnectedApps`. See docs/auth.md.
+- **JARVIS (J2a):** new service `src/Jarvis` with the MCP gateway `/jarvis/mcp`: the tools of Households, Accounts,
+  HomeMix and the plugins in one server, per person, always with a delegated token; OAuth protected resource metadata
+  for MCP clients. See [docs/jarvis.md](docs/jarvis.md). `TestJwt.CreateAppToken` for tests.
 - **Web:** the consent screen `/connect` and "Connected apps" in the account settings.
 - **HomeMix (A1):** the core service `src/HomeMix` for add-ons from the web app (docs/homemix.md, ADR 0009): packages
   from a zip or a GitHub release (`addon.zip` checked against GitHub's SHA-256), the `homemix.json` validation,
