@@ -17,6 +17,7 @@ const session = useSessionStore()
 const links = computed(() => [
   { to: { name: 'home' }, label: 'app.home', icon: 'pi pi-home', exact: true },
   { to: { name: 'households' }, label: 'app.households', icon: 'pi pi-building' },
+  { to: { name: 'jarvis' }, label: 'app.jarvis', icon: 'pi pi-sparkles' },
   { to: { name: 'account-profile' }, label: 'app.account', icon: 'pi pi-user' },
   ...(session.isAdmin ? [{ to: { name: 'admin-users' }, label: 'app.admin', icon: 'pi pi-users' }] : []),
 ])

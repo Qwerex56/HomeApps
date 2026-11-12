@@ -81,6 +81,13 @@ export const router = createRouter({
           props: true,
           component: () => import('@/features/homemix/MixPage.vue'),
         },
+        // JARVIS in the app (docs/jarvis.md); /jarvis/api and /jarvis/mcp belong to the service.
+        {
+          path: 'jarvis/:conversationId?',
+          name: 'jarvis',
+          props: true,
+          component: () => import('@/features/jarvis/JarvisPage.vue'),
+        },
         // /homes, /join and /admin/homes: /households, /invites and /admin/households belong to the service.
         {
           path: 'homes',

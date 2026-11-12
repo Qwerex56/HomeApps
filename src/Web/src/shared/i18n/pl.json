@@ -7,7 +7,8 @@
     "backHome": "Wróć na pulpit",
     "admin": "Administracja",
     "households": "Domy",
-    "menu": "Menu główne"
+    "menu": "Menu główne",
+    "jarvis": "JARVIS"
   },
   "colorScheme": {
     "label": "Motyw",
@@ -142,6 +143,12 @@
       "target_not_supported": "Tego dodatku nie da się zainstalować w tym miejscu.",
       "consent_required": "Nowa wersja prosi o więcej uprawnień i wymaga zgody.",
       "installation_not_found": "Ten dodatek nie jest tu zainstalowany."
+    },
+    "jarvis": {
+      "conversation_not_found": "Nie ma takiej rozmowy.",
+      "action_not_found": "Nie ma takiej akcji.",
+      "action_not_pending": "Ta akcja już nie czeka na potwierdzenie.",
+      "action_expired": "Czas na potwierdzenie minął. Poproś jeszcze raz."
     }
   },
   "auth": {
@@ -660,6 +667,30 @@
       "storage.user": "zapisywać prywatne dane każdej osoby",
       "household.members": "widzieć imiona i zdjęcia domowników",
       "notify": "pokazywać powiadomienia w aplikacji"
+    }
+  },
+  "jarvis": {
+    "title": "JARVIS",
+    "conversations": "Rozmowy z JARVIS-em",
+    "newConversation": "Nowa rozmowa",
+    "noConversations": "Jeszcze nic. Napisz pierwszą wiadomość.",
+    "intro": "Napisz, czego potrzebujesz, np. „dodaj zadanie kupić mleko na jutro”. JARVIS działa w Twoim imieniu w aplikacjach domu, a zmiany, których nie da się łatwo cofnąć, czekają na Twoje potwierdzenie.",
+    "household": "Dom: {name}",
+    "delete": "Usuń rozmowę",
+    "thinking": "JARVIS myśli…",
+    "placeholder": "Napisz do JARVIS-a",
+    "send": "Wyślij",
+    "actions": "Co zrobił JARVIS",
+    "confirm": "Potwierdź",
+    "cancel": "Anuluj",
+    "until": "do {time}",
+    "expired": "Wygasło, poproś jeszcze raz.",
+    "status": {
+      "Done": "Zrobione",
+      "Failed": "Nie udało się",
+      "NeedsConfirmation": "Czeka na potwierdzenie",
+      "Denied": "Anulowane",
+      "Expired": "Wygasło"
     }
   }
 }
