@@ -168,6 +168,12 @@ export const router = createRouter({
               meta: { owner: true },
               component: () => import('@/features/admin/pages/ServerPluginsPage.vue'),
             },
+            {
+              path: 'addons',
+              name: 'admin-addons',
+              meta: { owner: true },
+              component: () => import('@/features/admin/pages/AddonsPage.vue'),
+            },
           ],
         },
       ],

@@ -122,6 +122,7 @@ export function useMixHost(frame: Ref<HTMLIFrameElement | undefined>, options: (
       })
       return null
     },
+    'notify.push': (notification) => homemixApi.notify(options().installation.id, notification),
   }
 
   onMounted(() => {

@@ -2,13 +2,16 @@ import { useQuery } from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { http } from '@/api/http'
 import type { components } from '@/api/types/homemix'
-import type { Document, Scope } from '@homemix/sdk'
+import type { Document, Push, Scope } from '@homemix/sdk'
 
 type Schemas = components['schemas']
 export type Installation = Schemas['InstallationView']
 export type Package = Schemas['PackageView']
 export type Consent = { capabilities: string[]; network: string[]; jarvis: boolean }
 export type MyAccess = Schemas['MyAccessView']
+export type StoreEntry = Schemas['StoreEntryView']
+export type AdminInstallation = Schemas['AdminInstallationView']
+export type Block = Schemas['BlockView']
 
 /** Where add-ons are installed: a household, or the signed-in person's account. */
 export type MixTarget = { kind: 'Household'; householdId: string } | { kind: 'User' }
@@ -20,6 +23,9 @@ export const mixKeys = {
       ? (['homemix', 'household', target.householdId] as const)
       : (['homemix', 'me'] as const),
   access: (installationId: string) => ['homemix', 'access', installationId] as const,
+  store: ['homemix', 'store'] as const,
+  adminInstallations: ['homemix', 'admin', 'installations'] as const,
+  blocks: ['homemix', 'admin', 'blocks'] as const,
 }
 
 const base = '/homemix/api'
@@ -46,6 +52,29 @@ export const homemixApi = {
   },
   async addGitHub(repository: string, tag?: string) {
     return (await http.post<Package>(`${base}/packages/github`, { repository, tag: tag || null })).data
+  },
+  async addOfficial(addonId: string) {
+    return (await http.post<Package>(`${base}/packages/official/${encodeURIComponent(addonId)}`)).data
+  },
+  async store() {
+    return (await http.get<StoreEntry[]>(`${base}/store`)).data
+  },
+  async notify(installationId: string, notification: Push) {
+    return (await http.post<{ recipients: number }>(`${base}/installations/${installationId}/notify`, notification)).data
+  },
+  admin: {
+    async installations() {
+      return (await http.get<AdminInstallation[]>(`${base}/admin/installations`)).data
+    },
+    async blocks() {
+      return (await http.get<Block[]>(`${base}/admin/blocks`)).data
+    },
+    async block(value: string, reason: string | null) {
+      return (await http.put<Block>(`${base}/admin/blocks/${encodeURIComponent(value)}`, { reason })).data
+    },
+    async unblock(value: string) {
+      await http.delete(`${base}/admin/blocks/${encodeURIComponent(value)}`)
+    },
   },
   async install(target: MixTarget, sha256: string, consent: Consent) {
     return (await http.post<Installation>(listUrl(target), { sha256, consent })).data

@@ -50,7 +50,9 @@ async function done(installation: Installation) {
 async function update(installation: Installation) {
   checking.value = installation.id
   try {
-    const pkg = await homemixApi.addGitHub(installation.repository!)
+    const pkg = installation.official
+      ? await homemixApi.addOfficial(installation.addonId)
+      : await homemixApi.addGitHub(installation.repository!)
     if (pkg.version === installation.version) {
       toast.add({ severity: 'info', summary: t('homemix.update.current'), life: 3000 })
       return
@@ -123,7 +125,7 @@ function remove(installation: Installation) {
               <Tag v-if="i.jarvisAllowed" value="JARVIS" severity="info" />
             </div>
             <div class="text-sm text-muted-color">
-              {{ i.repository ?? t('homemix.fromZip') }} · {{ t('homemix.since', { date: d(i.installedAt, 'short') }) }}
+              {{ i.official ? t('homemix.store.official') : (i.repository ?? t('homemix.fromZip')) }} · {{ t('homemix.since', { date: d(i.installedAt, 'short') }) }}
             </div>
           </div>
           <div class="flex gap-1">
@@ -136,7 +138,7 @@ function remove(installation: Installation) {
               @click="open(i)"
             />
             <Button
-              v-if="canManage && i.repository"
+              v-if="canManage && (i.repository || i.official)"
               :label="t('homemix.update.check')"
               icon="pi pi-refresh"
               size="small"

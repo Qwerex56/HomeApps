@@ -142,7 +142,10 @@
       "already_installed": "Ten dodatek jest już zainstalowany. Zaktualizuj go.",
       "target_not_supported": "Tego dodatku nie da się zainstalować w tym miejscu.",
       "consent_required": "Nowa wersja prosi o więcej uprawnień i wymaga zgody.",
-      "installation_not_found": "Ten dodatek nie jest tu zainstalowany."
+      "installation_not_found": "Ten dodatek nie jest tu zainstalowany.",
+      "not_a_recipient": "Powiadomienie może trafić tylko do osób z tego domu.",
+      "block_not_found": "Ten dodatek nie jest zablokowany.",
+      "block_in_configuration": "Ta blokada pochodzi z konfiguracji serwera (HomeMix:Blocked) i tam się ją zdejmuje."
     },
     "jarvis": {
       "conversation_not_found": "Nie ma takiej rozmowy.",
@@ -407,7 +410,8 @@
     "tabs": {
       "users": "Konta",
       "households": "Domy",
-      "plugins": "Pluginy serwera"
+      "plugins": "Pluginy serwera",
+      "addons": "Dodatki"
     },
     "households": {
       "title": "Wszystkie domy",
@@ -439,6 +443,28 @@
         "notRunning": "Nie działa"
       },
       "howToChange": "Pluginy dodaje się i usuwa na serwerze: wpis w HOMEAPPS_PLUGINS, usługa w compose i restart. Szczegóły w docs/plugins.md."
+    },
+    "addons": {
+      "title": "Dodatki na tym serwerze",
+      "subtitle": "Każda instalacja w domach i na kontach. Zablokowany dodatek przestaje działać wszędzie, a jego dane zostają.",
+      "empty": "Nikt jeszcze nie zainstalował dodatku.",
+      "household": "Dom {id}",
+      "account": "Konto {id}",
+      "blocked": "Zablokowany",
+      "block": "Zablokuj",
+      "blockTitle": "Zablokować {name}?",
+      "blockText": "Dodatek przestanie działać we wszystkich domach i na kontach, nie da się go też dodać ponownie. Dane zostają, a blokadę możesz zdjąć.",
+      "blockId": "Wszystkie wersje ({id})",
+      "blockSha": "Tylko ta wersja ({version})",
+      "reason": "Powód (widzisz go tylko Ty)",
+      "blocks": "Blokady",
+      "noBlocks": "Brak blokad.",
+      "unblock": "Zdejmij blokadę",
+      "fromConfiguration": "z konfiguracji (HomeMix:Blocked)",
+      "blockedDone": "Zablokowano: {value}",
+      "unblockedDone": "Zdjęto blokadę: {value}",
+      "addBlock": "Zablokuj id albo SHA-256",
+      "valuePlaceholder": "np. pomodoro albo 64 znaki SHA-256"
     }
   },
   "households": {
@@ -690,6 +716,21 @@
       "storage.user": "zapisywać prywatne dane każdej osoby",
       "household.members": "widzieć imiona i zdjęcia domowników",
       "notify": "pokazywać powiadomienia w aplikacji"
+    },
+    "store": {
+      "title": "Sklep",
+      "official": "Oficjalny",
+      "choose": "Wybierz",
+      "readme": "Pokaż opis (README)",
+      "hideReadme": "Ukryj opis",
+      "published": "wydano {date}",
+      "empty": "Sklep jest pusty. Dodatek dodasz też z linku do GitHuba albo z pliku zip.",
+      "problem": {
+        "no_release": "To repozytorium nie ma jeszcze wydania.",
+        "no_addon_zip": "Najnowsze wydanie nie ma pliku addon.zip.",
+        "no_digest": "GitHub nie podaje SHA-256 dla addon.zip.",
+        "unavailable": "Nie udało się odczytać repozytorium z GitHuba."
+      }
     }
   },
   "jarvis": {
