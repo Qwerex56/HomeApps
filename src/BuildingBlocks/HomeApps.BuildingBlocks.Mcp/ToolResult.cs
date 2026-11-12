@@ -19,6 +19,9 @@ public static class ToolResult
     public static CallToolResult Error(string text) =>
         new() { Content = [new TextContentBlock { Text = text }], IsError = true };
 
+    /// <summary>A failure, described the same way <see cref="From{TValue}"/> describes one.</summary>
+    public static CallToolResult Error(IEnumerable<IError> errors) => Error(Describe(errors));
+
     public static CallToolResult From<TValue>(Result<TValue> result, Func<TValue, string> describe)
     {
         ArgumentNullException.ThrowIfNull(result);
