@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- JARVIS domain: runs (who asked what, the answer, the cost) and the tool calls in them with confirmations. Only the kit's domain building blocks and FluentResults. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Domain\HomeApps.BuildingBlocks.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentResults" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Jarvis.Domain.Tests" />
+  </ItemGroup>
+
+</Project>

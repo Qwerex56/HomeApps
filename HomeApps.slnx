@@ -69,6 +69,7 @@
 	<Folder Name="/Jarvis/">
 		<Project Path="src/Jarvis/Jarvis.Api/Jarvis.Api.csproj" />
 		<Project Path="src/Jarvis/Jarvis.Application/Jarvis.Application.csproj" />
+		<Project Path="src/Jarvis/Jarvis.Domain/Jarvis.Domain.csproj" />
 		<Project Path="src/Jarvis/Jarvis.Infrastructure/Jarvis.Infrastructure.csproj" />
 	</Folder>
 	<Folder Name="/Jarvis/tests/">
