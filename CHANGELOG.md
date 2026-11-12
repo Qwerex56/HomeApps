@@ -19,6 +19,12 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
   PKCE and `resource`, refresh with rotation, revocation (RFC 7009); tokens only for the configured resource
   (`Auth:ConnectedApps:Resources`, off when empty). Database migration `ConnectedApps`. See docs/auth.md.
 - **Web:** the consent screen `/connect` and "Connected apps" in the account settings.
+- **HomeMix (A1):** the core service `src/HomeMix` for add-ons from the web app (docs/homemix.md, ADR 0009): packages
+  from a zip or a GitHub release (`addon.zip` checked against GitHub's SHA-256), the `homemix.json` validation,
+  installations in a household (Admin and up) or on an account with consent to capabilities and network origins, and
+  the sandbox route `/homemix/run/{installationId}/` (CSP `sandbox`, `connect-src` from the consent). An empty MCP
+  server at `/mcp` for the JARVIS gateway. Compose service `homemix`, database `homeapps_homemix`, volume
+  `homemix-packages`.
 
 ### Fixed
 

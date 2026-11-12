@@ -6,7 +6,8 @@ narrow bridge, keeps its data in the core service HomeMix and can give JARVIS to
 [ADR 0009](adr/0009-homemix-addons-in-a-sandbox.md).
 
 > Status: the contract for HomeApps 2.3.0, built in stages A1-A7 (plan `plans/features/household-apps-upload.md`,
-> order agreed with JARVIS in `plans/features/jarvis-v1.md` 10a). Sections say which stage brings them.
+> order agreed with JARVIS in `plans/features/jarvis-v1.md` 10a). Sections say which stage brings them. Built so far:
+> A1, the service with packages, installations and the sandbox (no web app screens yet).
 
 ## Plugin or HomeMix
 
@@ -76,6 +77,17 @@ A zip of at most 5 MB (`HomeMix:MaxPackageBytes`) with `homemix.json` at its roo
 
 The server keeps only installed packages, one copy per SHA-256, in the `homemix-packages` volume.
 
+Adding a package installs nothing; it answers what the add-on asks for, for the consent screen:
+
+| Endpoint | Body | Answer |
+|---|---|---|
+| `POST /homemix/api/packages` | `multipart/form-data`, field `file` | the package: `sha256`, `id`, `version`, `name`, `targets`, `capabilities`, `network`, `jarvis`, ... |
+| `POST /homemix/api/packages/github` | `{ "repository": "https://github.com/owner/repo", "tag": null }` | the same, with `repository` and `tag` |
+
+Any signed-in person may add one; the same zip is one package. Errors: `homemix.manifest_invalid` (every problem at
+once), `homemix.package_invalid`, `homemix.package_too_large`, `homemix.id_reserved`, `homemix.needs_newer_homeapps`,
+`homemix.download_failed`, `homemix.blocked`, `homemix.uploads_disabled`.
+
 ## Installing (A1)
 
 | Action | Household | Account |
@@ -89,19 +101,37 @@ JARVIS may use it. An update that adds a capability or an origin asks again; oth
 keeps the data for 30 days. An installation is an aggregate `Installation` with `Target` (`Household(id)` or
 `User(id)`), the package, the granted capabilities and origins, and who did what.
 
+| Endpoint | |
+|---|---|
+| `GET`, `POST /homemix/api/households/{householdId}/installations` | list (members) / install (Admin and up) |
+| `GET`, `POST /homemix/api/me/installations` | the same on the caller's account |
+| `GET`, `PUT`, `DELETE /homemix/api/installations/{id}` | one installation; update to another package of the same add-on; uninstall |
+
+Install and update take `{ "sha256": "...", "consent": { "capabilities": [...], "network": [...], "jarvis": false } }`;
+an update needs `consent` only when it answered 409 `homemix.consent_required`. Each answer has `runUrl`, `entry`,
+`pages`, `widgets` and `permissions`, which is what the web app needs to show it. HomeMix asks Households for the
+caller's role with the caller's own token. An assistant acting for a person (JARVIS) reads these but never adds,
+installs, updates or removes (403 `assistant.not_allowed`).
+
 The Owner of the instance can switch uploads off (`HomeMix:UploadsEnabled`), block an add-on by id or SHA-256
-(`HomeMix:Blocked`) and see every installation.
+(`HomeMix:Blocked`) in configuration; a screen for blocking and seeing every installation comes with the store (A5).
 
 ## The sandbox (A1)
 
 Files are served at `/homemix/run/{installationId}/{path}` with:
 
 ```
-Content-Security-Policy: sandbox allow-scripts allow-forms allow-popups;
-  default-src 'self' 'unsafe-inline' data: blob:; connect-src <network>; frame-ancestors https://<HOMEAPPS_DOMAIN>
-Access-Control-Allow-Origin: *
-Cache-Control: public, max-age=31536000, immutable      (the path holds the installation, the content its hash)
+Content-Security-Policy: sandbox allow-scripts allow-forms allow-popups; default-src 'self' 'unsafe-inline' data: blob:;
+  script-src 'self' 'unsafe-inline' blob:; connect-src <network, or 'none'>; form-action 'none'; base-uri 'none';
+  frame-ancestors 'self'
+Access-Control-Allow-Origin: *                 (the frame's origin is opaque, so its module scripts are cross-origin)
+Cache-Control: no-cache                        (the path holds the installation; an update changes the files behind it)
+X-Content-Type-Options: nosniff
+Referrer-Policy: no-referrer
 ```
+
+`/homemix/run/{installationId}/` serves the manifest's `entry`; `homemix.json` itself, other paths and removed or
+blocked installations answer 404.
 
 `sandbox` in the header gives an opaque origin even when the URL is opened in a tab, so no separate domain is needed.
 The web app embeds it as `<iframe sandbox="allow-scripts allow-forms allow-popups">` with a caption "HomeMix: Pomodoro
@@ -210,6 +240,18 @@ first entries of the store.
 
 ## Running it (A1)
 
-The `homemix` service joins the compose files like the other core services: database `homemix`, volume
+The `homemix` service joins the compose files like the other core services: database `homeapps_homemix`, volume
 `homemix-packages` (back it up with the database, see [deployment.md](deployment.md)), Traefik paths `/homemix/api`
-and `/homemix/run`. Configuration: `HomeMix:UploadsEnabled`, `HomeMix:Blocked`, the limits above.
+and `/homemix/run` (not `/mcp`). From Rider it runs on `http://localhost:5600`.
+
+| Setting | Default | |
+|---|---|---|
+| `HomeMix:UploadsEnabled` | `true` | `HOMEMIX_UPLOADS_ENABLED` in `.env` |
+| `HomeMix:Blocked` | empty | add-on ids or package SHA-256s; blocked ones are not added and stop being served |
+| `HomeMix:Plugins` | `HOMEAPPS_PLUGINS` | ids an add-on may not take |
+| `HomeMix:MaxPackageBytes` | 5 MB | |
+| `HomeMix:PackagesPath` | `/data/packages` | the volume |
+| `HomeMix:HouseholdsUrl` | `http://households:8080` | |
+| `HomeMix:GitHubToken` | empty | `HOMEMIX_GITHUB_TOKEN`, only to raise GitHub's limit of 60 anonymous requests an hour |
+
+Tests: `tests/HomeMix`; the Api tests use `HOMEMIX_TEST_DATABASE` (a Postgres connection string) or Testcontainers.
