@@ -2,7 +2,8 @@
 
 Apps beyond the core (todo lists, shopping, weather, news, pomodoro) are **plugins**: separate services in their own
 repositories, built on the same kit as Auth, Accounts and Households, switched on per household. HomeApps itself knows
-nothing about any particular plugin. This page is the contract between the two sides; the reasons are in
+nothing about any particular plugin. Add-ons that a household or a person adds from the web app, without the server,
+are a different thing: [HomeMix](homemix.md). This page is the contract between the two sides; the reasons are in
 `plans/ideas/jarvis-hub.md` (9b) and `plans/features/todo-plugin.md`.
 
 ```mermaid

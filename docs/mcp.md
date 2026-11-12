@@ -97,7 +97,8 @@ a new endpoint in the core services is refused for assistants by default, so not
 | Households | `household_members(household)` | by name or id; roles for members and up, names only for a guest |
 | Accounts | `my_profile` | name, email, language, time zone, date of birth |
 
-Plugins add theirs (Todo and Chat in stage J1 of the JARVIS plan).
+Plugins add theirs (Todo and Chat in stage J1 of the JARVIS plan). HomeMix add-ons get theirs from the HomeMix
+service, named after the add-on (`pomodoro_add_session`): [homemix.md](homemix.md#jarvis-a6-a7).
 
 ## Testing
 
