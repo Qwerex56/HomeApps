@@ -1,8 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- JARVIS use cases and ports. J2a: only the gateway's ports and options; the agent loop and its log come in J2b. -->
+  <!-- JARVIS use cases and ports. One folder per command or query; ports for Infrastructure. -->
   <ItemGroup>
+    <ProjectReference Include="..\Jarvis.Domain\Jarvis.Domain.csproj" />
     <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Application\HomeApps.BuildingBlocks.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
   </ItemGroup>
 
   <ItemGroup>

@@ -6,6 +6,7 @@ namespace Jarvis.Application.Gateway;
 /// </summary>
 public interface IDelegation
 {
-    /// <param name="client">Who connected: the OAuth client id, or <c>direct</c> for a person's own token.</param>
-    Task<string> TokenForAsync(Guid userId, string client, CancellationToken cancellationToken);
+    /// <param name="channel"><c>mcp</c> for a client of the gateway, otherwise the run's channel (<c>app</c>, <c>chat</c>).</param>
+    /// <param name="reference">Who or what: the OAuth client id, <c>direct</c>, or <c>run:{id}</c>; in Auth's log.</param>
+    Task<string> TokenForAsync(Guid userId, string channel, string reference, CancellationToken cancellationToken);
 }
