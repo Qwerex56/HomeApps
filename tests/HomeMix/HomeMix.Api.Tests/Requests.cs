@@ -48,4 +48,10 @@ internal static class Requests
 
     /// <summary>Consent for an account add-on with its own data and notifications.</summary>
     public static readonly object UserNotify = new { capabilities = new[] { "storage.user", "notify" }, jarvis = false };
+
+    /// <summary>Consent for <see cref="AddonZip.Notes"/>, JARVIS included.</summary>
+    public static readonly object NotesForJarvis = new { capabilities = new[] { "storage.household", "storage.user" }, jarvis = true };
+
+    /// <summary>The same without JARVIS.</summary>
+    public static readonly object NotesWithoutJarvis = new { capabilities = new[] { "storage.household", "storage.user" }, jarvis = false };
 }

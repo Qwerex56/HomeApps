@@ -9,7 +9,7 @@ using HomeMix.Infrastructure.Persistence;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddHomeAppsDefaults(typeof(Program).Assembly);
-// Empty until stage A6: the JARVIS gateway lists this source from J2 on (jarvis-v1.md 10a).
+// The add-ons' tools for JARVIS (A6): the JARVIS gateway lists this source per person (jarvis-v1.md 10a).
 builder.AddHomeAppsMcp("homeapps-homemix", typeof(Program).Assembly);
 builder.Services.AddHomeMixApi();
 builder.Services.AddHomeMixApplication();

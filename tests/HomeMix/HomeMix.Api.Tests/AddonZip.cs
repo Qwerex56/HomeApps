@@ -43,6 +43,24 @@ internal static class AddonZip
     public static byte[] Pomodoro(string version = "1.0.0", string capabilities = """["storage.household"]""", string network = "[]") =>
         Create(Manifest(version: version, capabilities: capabilities, network: network));
 
+    /// <summary>An add-on with declared tools and a summary for JARVIS (docs/homemix.md, "JARVIS").</summary>
+    public static byte[] Notes(string version = "1.0.0") => Create(Manifest(id: "notes", version: version,
+        capabilities: """["storage.household", "storage.user"]""", extra: """
+          "jarvis": true,
+          "permissions": [{ "id": "notes.write", "minRole": "Member" }, { "id": "vault", "minRole": "Admin" }],
+          "tools": [
+            { "name": "add_note", "description": "Adds a note.", "collection": "notes", "action": "add",
+              "fields": { "text": { "type": "string", "required": true }, "stars": { "type": "integer", "default": 1 } },
+              "answer": "Noted: {text}." },
+            { "name": "notes", "description": "Lists the notes.", "collection": "notes", "action": "list" },
+            { "name": "star", "description": "Changes a note's stars.", "collection": "notes", "action": "update",
+              "fields": { "stars": { "type": "integer" } } },
+            { "name": "forget", "description": "Deletes a note.", "collection": "notes", "action": "delete" },
+            { "name": "secret", "description": "Lists the vault.", "collection": "vault", "action": "list", "permission": "vault" }
+          ],
+          "summary": { "collection": "notes" }
+        """));
+
     private static void Add(ZipArchive zip, string path, string content)
     {
         using var stream = zip.CreateEntry(path).Open();

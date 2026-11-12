@@ -31,4 +31,24 @@ public sealed class FakeHouseholds
             return [.. _roles.Keys.Where(k => k.Household == household).Select(k => k.User)];
         }
     }
+
+    private readonly Dictionary<Guid, string> _names = [];
+
+    public void Name(Guid household, string name)
+    {
+        lock (_lock)
+        {
+            _names[household] = name;
+        }
+    }
+
+    /// <summary>The households a person is in, with their names (the id when none was given) and roles.</summary>
+    public IReadOnlyList<(Guid Id, string Name, HouseholdRole Role)> Of(Guid user)
+    {
+        lock (_lock)
+        {
+            return [.. _roles.Where(r => r.Key.User == user)
+                .Select(r => (r.Key.Household, _names.GetValueOrDefault(r.Key.Household, r.Key.Household.ToString()), r.Value))];
+        }
+    }
 }
