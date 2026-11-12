@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using FluentResults;
 using HomeMix.Domain.Installations;
+using HomeMix.Domain.Tools;
 
 namespace HomeMix.Domain.Manifests;
 
@@ -80,6 +81,13 @@ internal sealed partial class ManifestReader(JsonElement root)
 
         var permissions = Permissions();
         var jarvis = root.TryGetProperty("jarvis", out var j) && j.ValueKind == JsonValueKind.True;
+        var tools = new ToolsReader(root, id, capabilities, permissions, _problems);
+        var declared = tools.Tools();
+        var summary = tools.Summary();
+        if ((declared.Count > 0 || summary is not null) && !jarvis)
+        {
+            _problems.Add("tools and summary are for JARVIS: set jarvis to true.");
+        }
 
         if (_problems.Count > 0)
         {
@@ -90,7 +98,7 @@ internal sealed partial class ManifestReader(JsonElement root)
             id, addonVersion, requires!, name!, description, icon, targets, entry, pages, widgets,
             capabilities.Distinct(StringComparer.Ordinal).ToList(),
             network.Select(o => o.TrimEnd('/')).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
-            permissions, jarvis);
+            permissions, jarvis, declared, summary);
     }
 
     private List<TargetKind> Targets()

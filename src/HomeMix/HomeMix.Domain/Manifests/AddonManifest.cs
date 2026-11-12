@@ -1,4 +1,5 @@
 using HomeMix.Domain.Installations;
+using HomeMix.Domain.Tools;
 
 namespace HomeMix.Domain.Manifests;
 
@@ -20,4 +21,6 @@ public sealed record AddonManifest(
     IReadOnlyList<string> Capabilities,
     IReadOnlyList<string> Network,
     IReadOnlyList<AddonPermission> Permissions,
-    bool Jarvis);
+    bool Jarvis,
+    IReadOnlyList<AddonTool> Tools,
+    AddonSummary? Summary);
