@@ -6,7 +6,8 @@ using ModelContextProtocol.Protocol;
 
 namespace Jarvis.Api.Tests;
 
-public sealed class GatewayTests(JarvisFactory factory) : IClassFixture<JarvisFactory>
+[Collection(nameof(JarvisCollection))]
+public sealed class GatewayTests(JarvisFactory factory)
 {
     private const string Endpoint = "jarvis/mcp";
     private readonly Guid _person = Guid.NewGuid();
@@ -43,7 +44,7 @@ public sealed class GatewayTests(JarvisFactory factory) : IClassFixture<JarvisFa
         var tools = (await mcp.ListToolsAsync()).Select(t => t.Name).Order(StringComparer.Ordinal).ToList();
         var who = await mcp.CallTextAsync("households_my_households", new Dictionary<string, object?>());
 
-        Assert.Equal(["households_my_households", "pomodoro_add_session", "todo_add_task"], tools);
+        Assert.Equal(["households_my_households", "pomodoro_add_session", "todo_add_task", "todo_delete_task", "todo_my_tasks"], tools);
         Assert.Equal(($"sub={_person} act=jarvis-service", false), who);
         Assert.Contains((_person, "app_claude"), factory.Delegation.Calls);
     }

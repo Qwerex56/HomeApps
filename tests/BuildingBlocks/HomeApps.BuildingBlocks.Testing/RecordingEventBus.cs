@@ -3,7 +3,7 @@ using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.Contracts;
 using MassTransit;
 
-namespace HomeApps.Plugins.Tests;
+namespace HomeApps.BuildingBlocks.Testing;
 
 /// <summary>
 /// Publishes like the kit (through the outbox) and remembers what was published: the harness sees outbox deliveries

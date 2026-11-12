@@ -1,21 +1,22 @@
 using System.Collections.Concurrent;
 using System.Net.Http.Headers;
+using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.BuildingBlocks.Testing;
 using Jarvis.Application.Gateway;
 using Jarvis.Infrastructure.Gateway;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Jarvis.Application.Abstractions;
+using Jarvis.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Jarvis.Api.Tests;
 
 /// <summary>
 /// The gateway in memory with three sources in memory too: Households, the Todo plugin (found through its manifest)
-/// and HomeMix. Accounts is configured but never answers, like a service that is down.
+/// and HomeMix. Accounts is configured but never answers, like a service that is down. JARVIS's brain is
+/// <see cref="FakeBrain"/>: a test says which tools it calls, through the gateway like Claude Code would.
 /// </summary>
-public sealed class JarvisFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public sealed class JarvisFactory : HomeAppsApiFactory<Program, JarvisDbContext>, IAsyncLifetime
 {
     public const string Resource = "https://app.test/jarvis/mcp";
 
@@ -24,12 +25,18 @@ public sealed class JarvisFactory : WebApplicationFactory<Program>, IAsyncLifeti
 
     internal FakeDelegation Delegation { get; } = new();
 
-    public async Task InitializeAsync()
+    internal FakeBrain Brain { get; } = new();
+
+    /// <summary>What JARVIS published, e.g. his answers to a channel.</summary>
+    public ConcurrentQueue<object> Published { get; } = new();
+
+    public new async Task InitializeAsync()
     {
         await AddAsync("households.test", await FakeSource.StartAsync("/mcp", m => m.WithTools<HouseholdsTools>()));
         await AddAsync("todo.test", await FakeSource.StartAsync("/plugins/todo/mcp", m => m.WithTools<TodoTools>(), pluginId: "todo"));
         await AddAsync("homemix.test", await FakeSource.StartAsync("/mcp", m => m.WithTools<HomeMixTools>().WithResources<HomeMixResources>()));
-        _ = Services;
+        await base.InitializeAsync();
+        Brain.Gateway = token => CreateClient(token);
     }
 
     public new async Task DisposeAsync()
@@ -50,10 +57,7 @@ public sealed class JarvisFactory : WebApplicationFactory<Program>, IAsyncLifeti
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-        builder.UseEnvironment("Testing");
-        builder.UseSetting("Jwt:Authority", TestJwt.Issuer);
-        builder.UseSetting("Jwt:Audience", TestJwt.Audience);
+        base.ConfigureWebHost(builder);
         builder.UseSetting("Jarvis:Resource", Resource);
         builder.UseSetting("Jarvis:ClientSecret", "test-secret");
         builder.UseSetting("Jarvis:Plugins", "todo");
@@ -66,20 +70,16 @@ public sealed class JarvisFactory : WebApplicationFactory<Program>, IAsyncLifeti
         builder.UseSetting("Jarvis:Sources:2:Url", "http://homemix.test/mcp");
         builder.UseSetting("Jarvis:Sources:2:Prefix", string.Empty);
 
-        builder.ConfigureTestServices(services =>
-        {
-            services.AddSingleton<IDelegation>(Delegation);
-            services.AddHttpClient(SourceConnector.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => new HostRouter(_hosts));
-            services.AddHttpClient(nameof(IToolSources)).ConfigurePrimaryHttpMessageHandler(() => new HostRouter(_hosts));
-            services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
-            {
-                options.Authority = null;
-                options.MetadataAddress = null!;
-                options.Configuration = new Microsoft.IdentityModel.Protocols.OpenIdConnect.OpenIdConnectConfiguration { Issuer = TestJwt.Issuer };
-                options.Configuration.SigningKeys.Add(TestJwt.SigningKey);
-                options.TokenValidationParameters.IssuerSigningKey = TestJwt.SigningKey;
-            });
-        });
+        builder.UseSetting("Jarvis:DailyBudgetUsd", "1");
+    }
+
+    protected override void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton<IDelegation>(Delegation);
+        services.AddSingleton<IAssistantBrain>(Brain);
+        services.AddScoped<IEventBus>(sp => new RecordingEventBus(sp.GetRequiredService<MassTransit.IPublishEndpoint>(), Published));
+        services.AddHttpClient(SourceConnector.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => new HostRouter(_hosts));
+        services.AddHttpClient(nameof(IToolSources)).ConfigurePrimaryHttpMessageHandler(() => new HostRouter(_hosts));
     }
 
     private Task AddAsync(string host, FakeSource source)
