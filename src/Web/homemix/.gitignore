@@ -1,0 +1,4 @@
+dist
+node_modules
+# The npm commands (the root .gitignore drops .NET bin folders).
+!bin/

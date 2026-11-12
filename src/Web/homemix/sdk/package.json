@@ -1,0 +1,16 @@
+{
+  "name": "@homemix/sdk",
+  "version": "2.3.0",
+  "description": "The HomeMix bridge for add-ons, the host side and the homemix.json types (docs/homemix.md)",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./host": { "types": "./dist/host.d.ts", "default": "./dist/host.js" }
+  },
+  "files": ["dist"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "../../node_modules/.bin/tsc -p tsconfig.json"
+  }
+}
