@@ -4,6 +4,7 @@ using HomeMix.Api.Requests;
 using HomeMix.Application.Installations;
 using HomeMix.Application.Installations.GetHouseholdInstallations;
 using HomeMix.Application.Installations.GetInstallation;
+using HomeMix.Application.Installations.GetMyAccess;
 using HomeMix.Application.Installations.GetMyInstallations;
 using HomeMix.Application.Installations.Install;
 using HomeMix.Application.Installations.RemoveInstallation;
@@ -45,6 +46,10 @@ internal sealed class InstallationEndpoints : IEndpoint
         api.MapGet("/installations/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
                 (await sender.Send(new GetInstallationQuery(id), ct)).ToHttpResult())
             .Produces<InstallationView>();
+
+        api.MapGet("/installations/{id:guid}/me", async (Guid id, ISender sender, CancellationToken ct) =>
+                (await sender.Send(new GetMyAccessQuery(id), ct)).ToHttpResult())
+            .Produces<MyAccessView>();
 
         api.MapPut("/installations/{id:guid}", async (Guid id, UpdateInstallationRequest body, ISender sender, CancellationToken ct) =>
                 (await sender.Send(new UpdateInstallationCommand(id, body.Sha256, body.Consent), ct)).ToHttpResult())

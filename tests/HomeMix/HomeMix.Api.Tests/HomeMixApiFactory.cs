@@ -23,7 +23,8 @@ namespace HomeMix.Api.Tests;
 /// <summary>
 /// The real HomeMix Api on its own Postgres database (<c>HOMEMIX_TEST_DATABASE</c>, otherwise Testcontainers), packages
 /// in a temporary folder, and <see cref="FakeHouseholds"/> and <see cref="FakeGitHubReleases"/> instead of the
-/// Households service and GitHub. The instance has the plugin <c>todo</c>.
+/// Households service and GitHub. The instance has the plugin <c>todo</c>; data limits are small: 4 KB a
+/// document, 64 KB an installation, 3 documents a collection.
 /// </summary>
 public sealed class HomeMixApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
@@ -88,6 +89,9 @@ public sealed class HomeMixApiFactory : WebApplicationFactory<Program>, IAsyncLi
         builder.UseSetting("HomeMix:PackagesPath", _packages);
         builder.UseSetting("HomeMix:Plugins", "todo, chat");
         builder.UseSetting("HomeMix:Blocked:0", "evil");
+        builder.UseSetting("HomeMix:MaxDocumentBytes", "4096");
+        builder.UseSetting("HomeMix:MaxInstallationBytes", "65536");
+        builder.UseSetting("HomeMix:MaxDocumentsPerCollection", "3");
 
         builder.ConfigureTestServices(services =>
         {
