@@ -19,3 +19,6 @@ dynamic/plugin-*.yaml
 
 # HomeMix packages when the service runs from Rider (appsettings.Development.json)
 .homemix-packages/
+
+# Official HomeMix add-ons built by homemix/official/build.sh
+homemix/official/dist/

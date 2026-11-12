@@ -1,0 +1,20 @@
+{
+  "homemixVersion": 1,
+  "id": "pogoda",
+  "version": "1.0.0",
+  "requires": { "homeApps": "2.3.0" },
+  "name": { "pl": "Pogoda", "en": "Weather" },
+  "description": {
+    "pl": "Pogoda teraz i na tydzień dla miejsca, które ustawi dom. Dane z Open-Meteo, bez klucza i bez konta.",
+    "en": "The weather now and for the week where the household is. Data from Open-Meteo, no key and no account."
+  },
+  "icon": "pi-sun",
+  "entry": "index.html",
+  "pages": [{ "path": "", "title": { "pl": "Pogoda", "en": "Weather" }, "menu": true }],
+  "widgets": [
+    { "id": "now", "title": { "pl": "Pogoda", "en": "Weather" }, "size": "Small", "places": ["Household", "Wall", "Account"] }
+  ],
+  "capabilities": ["storage.household"],
+  "network": ["https://api.open-meteo.com", "https://geocoding-api.open-meteo.com"],
+  "permissions": [{ "id": "place.write", "minRole": "Admin" }]
+}

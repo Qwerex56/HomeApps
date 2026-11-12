@@ -13,7 +13,8 @@ import {
 } from "./timer";
 
 // The official HomeMix Pomodoro: one timer shared by the household (storage.household), each person's finished
-// sessions counted privately (storage.user), and the lengths set by Admins (permission settings.write).
+// sessions counted privately (storage.user), the lengths set by Admins (permission settings.write), and the end of a
+// focus sent to everyone else's devices (notify.push).
 const { homemix, context, ready } = useHomeMix();
 const timers = useCollection<Timer>("timer");
 const settingsDocs = useCollection<Settings>("settings");
@@ -90,6 +91,10 @@ watch(seconds, async (value) => {
 				"Koniec skupienia, czas na przerwę.",
 				"success",
 			);
+			// Everyone else on their devices too (notify.push); the same tag replaces the previous one.
+			await homemix
+				.push({ title: "Pomodoro", body: "Koniec skupienia, czas na przerwę.", tag: "end" })
+				.catch(() => undefined);
 		}
 	} catch {
 		await timers.refresh();

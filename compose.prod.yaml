@@ -178,6 +178,7 @@ services:
       HomeMix__Plugins: ${HOMEAPPS_PLUGINS:-}
       HomeMix__UploadsEnabled: ${HOMEMIX_UPLOADS_ENABLED:-true}
       HomeMix__GitHubToken: ${HOMEMIX_GITHUB_TOKEN:-}
+      HomeMix__StoreIndexUrl: ${HOMEMIX_STORE_INDEX-https://raw.githubusercontent.com/Qwerex56/HomeApps/master/homemix/store/addons.json}
     volumes:
       - homemix-packages:/data/packages
     labels:

@@ -13,6 +13,9 @@
 **/*.jfm
 **/azds.yaml
 **/bin
+# The HomeMix CLI's own bin (src/Web/homemix), needed to pack the official add-ons.
+!src/Web/homemix/cli/bin
+!src/Web/homemix/create-homemix/bin
 **/charts
 **/docker-compose*
 **/Dockerfile*

@@ -1,0 +1,23 @@
+{
+  "name": "pogoda",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch & homemix dev",
+    "check": "vite build && homemix check",
+    "pack": "vite build && homemix pack"
+  },
+  "dependencies": {
+    "@homemix/vue": "file:../../../src/Web/homemix/vue",
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.0",
+    "homemix": "file:../../../src/Web/homemix/cli",
+    "typescript": "~5.9.0",
+    "vite": "^8.0.0"
+  },
+  "description": "The official HomeMix Pogoda (docs/homemix.md): the weather for the household from Open-Meteo."
+}
