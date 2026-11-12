@@ -1,0 +1,11 @@
+{
+  "homemixVersion": 1,
+  "id": "__ID__",
+  "version": "1.0.0",
+  "requires": { "homeApps": "2.3.0" },
+  "name": { "pl": "__ID__", "en": "__ID__" },
+  "icon": "pi-box",
+  "entry": "index.html",
+  "capabilities": ["storage.household"],
+  "network": []
+}

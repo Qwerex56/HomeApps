@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HomeMix dev host</title>
+    <style>
+      :root {
+        font-family: system-ui, sans-serif;
+        color-scheme: light dark;
+      }
+      body {
+        margin: 0;
+        display: grid;
+        grid-template-columns: 18rem 1fr;
+        min-height: 100vh;
+      }
+      aside {
+        padding: 1rem;
+        border-right: 1px solid #8884;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        font-size: 14px;
+      }
+      main {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      iframe {
+        width: 100%;
+        border: 1px dashed #8886;
+        border-radius: 8px;
+        height: 480px;
+      }
+      .widget iframe {
+        max-width: 24rem;
+      }
+      pre {
+        font-size: 12px;
+        max-height: 14rem;
+        overflow: auto;
+        background: #8881;
+        padding: 0.5rem;
+        border-radius: 6px;
+      }
+      #toasts {
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      #toasts div {
+        background: #334155;
+        color: #fff;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <aside>
+      <strong id="title">HomeMix</strong>
+      <label
+        >Gdzie<select id="target">
+          <option value="Household">Dom „Dom testowy”</option>
+          <option value="User">Moje konto</option>
+        </select></label
+      >
+      <label
+        >Twoja rola w domu<select id="role">
+          <option>Guest</option>
+          <option selected>Member</option>
+          <option>Admin</option>
+          <option>Owner</option>
+        </select></label
+      >
+      <label>Widok<select id="view"></select></label>
+      <label
+        ><span><input type="checkbox" id="dark" /> ciemny motyw</span></label
+      >
+      <button id="reset">Wyczyść dane</button>
+      <div>Dane w pamięci (znikają po odświeżeniu):</div>
+      <pre id="data">{}</pre>
+      <div>Wywołania mostu:</div>
+      <pre id="log"></pre>
+    </aside>
+    <main><div id="frame"></div></main>
+    <div id="toasts"></div>
+    <script type="module" src="/host/host.js"></script>
+  </body>
+</html>

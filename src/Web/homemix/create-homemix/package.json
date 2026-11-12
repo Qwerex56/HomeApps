@@ -1,0 +1,10 @@
+{
+  "name": "create-homemix",
+  "version": "2.3.0",
+  "description": "npm create homemix@latest: a new HomeMix add-on (docs/homemix.md, \"Building one\")",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "create-homemix": "./bin/create-homemix.js" },
+  "files": ["bin", "templates"],
+  "engines": { "node": ">=22.2" }
+}

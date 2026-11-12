@@ -1,0 +1,23 @@
+# On a tag v*: build, check and attach addon.zip to the GitHub release. That asset is what HomeApps installs from a
+# repository link and what the HomeMix store lists (docs/homemix.md); GitHub shows its SHA-256 next to it.
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Version in homemix.json matches the tag
+        run: test "v$(node -p "require('./public/homemix.json').version")" = "$GITHUB_REF_NAME"
+      - run: npm run pack
+      - run: gh release create "$GITHUB_REF_NAME" addon.zip --title "$GITHUB_REF_NAME" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
