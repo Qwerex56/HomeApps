@@ -83,7 +83,7 @@ services:
 
   auth:
     <<: *service
-    image: homeapps/auth:2.2.0
+    image: homeapps/auth:2.3.0
     build:
       context: .
       dockerfile: src/Auth/Auth.Api/Dockerfile
@@ -97,6 +97,12 @@ services:
       Auth__Google__ClientId: ${AUTH_GOOGLE_CLIENT_ID:-}
       Auth__Google__ClientSecret: ${AUTH_GOOGLE_CLIENT_SECRET:-}
       Auth__Email__FrontendBaseUrl: "https://${HOMEAPPS_DOMAIN}"
+      # JARVIS (docs/jarvis.md): his service client for delegated tokens, and the gateway apps may connect to (OAuth).
+      Auth__Clients__1__ClientId: jarvis-service
+      Auth__Clients__1__Name: "JARVIS (service)"
+      Auth__Clients__1__Type: Service
+      Auth__Clients__1__Secret: ${JARVIS_CLIENT_SECRET:?set JARVIS_CLIENT_SECRET in .env}
+      Auth__ConnectedApps__Resources__0: "https://${HOMEAPPS_DOMAIN}/jarvis/mcp"
       Auth__Email__From: ${SMTP_FROM:?set SMTP_FROM in .env}
       Auth__Email__Smtp__Host: ${SMTP_HOST:?set SMTP_HOST in .env}
       Auth__Email__Smtp__Port: ${SMTP_PORT:-587}
@@ -118,7 +124,7 @@ services:
 
   accounts:
     <<: *service
-    image: homeapps/accounts:2.2.0
+    image: homeapps/accounts:2.3.0
     build:
       context: .
       dockerfile: src/Accounts/Accounts.Api/Dockerfile
@@ -133,7 +139,7 @@ services:
 
   households:
     <<: *service
-    image: homeapps/households:2.2.0
+    image: homeapps/households:2.3.0
     build:
       context: .
       dockerfile: src/Households/Households.Api/Dockerfile
@@ -149,7 +155,7 @@ services:
 
   notifications:
     <<: *service
-    image: homeapps/notifications:2.2.0
+    image: homeapps/notifications:2.3.0
     build:
       context: .
       dockerfile: src/Notifications/Notifications.Api/Dockerfile
@@ -188,8 +194,32 @@ services:
       - "traefik.http.routers.homemix.entrypoints=websecure"
       - "traefik.http.services.homemix.loadbalancer.server.port=8080"
 
+  jarvis:
+    <<: *service
+    image: homeapps/jarvis:2.3.0
+    build:
+      context: .
+      dockerfile: src/Jarvis/Jarvis.Api/Dockerfile
+    environment:
+      <<: [*environment, *jwt]
+      ConnectionStrings__Database: "Host=postgres;Database=homeapps_jarvis;Username=${POSTGRES_USER:-homeapps};Password=${POSTGRES_PASSWORD}"
+      Jarvis__Resource: "https://${HOMEAPPS_DOMAIN}/jarvis/mcp"
+      Jarvis__ClientSecret: ${JARVIS_CLIENT_SECRET:?set JARVIS_CLIENT_SECRET in .env}
+      Jarvis__Plugins: ${HOMEAPPS_PLUGINS:-}
+      # The owner's Claude subscription (`claude setup-token`); empty: JARVIS answers that he is switched off, while
+      # connected apps (Claude Code, claude.ai) still use the gateway.
+      Jarvis__ClaudeCode__OAuthToken: ${JARVIS_CLAUDE_CODE_OAUTH_TOKEN:-}
+      # Optional (docs/jarvis.md): Jarvis__ClaudeCode__Model, Jarvis__DailyBudgetUsd (default 2 USD a day for the home).
+    labels:
+      - "traefik.enable=true"
+      # The gateway, the API and the gateway's OAuth metadata; /jarvis itself is a page of the web app.
+      - "traefik.http.routers.jarvis.rule=Host(`${HOMEAPPS_DOMAIN}`) && (PathPrefix(`/jarvis/api`) || PathPrefix(`/jarvis/mcp`) || Path(`/.well-known/oauth-protected-resource/jarvis/mcp`))"
+      - "traefik.http.routers.jarvis.priority=300"
+      - "traefik.http.routers.jarvis.entrypoints=websecure"
+      - "traefik.http.services.jarvis.loadbalancer.server.port=8080"
+
   web:
-    image: homeapps/web:2.2.0
+    image: homeapps/web:2.3.0
     restart: unless-stopped
     build:
       context: src/Web
