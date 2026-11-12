@@ -165,6 +165,28 @@ services:
       - "traefik.http.routers.notifications.entrypoints=websecure"
       - "traefik.http.services.notifications.loadbalancer.server.port=8080"
 
+  homemix:
+    <<: *service
+    image: homeapps/homemix:2.3.0
+    build:
+      context: .
+      dockerfile: src/HomeMix/HomeMix.Api/Dockerfile
+    environment:
+      <<: [*environment, *jwt]
+      ConnectionStrings__Database: "Host=postgres;Database=homeapps_homemix;Username=${POSTGRES_USER:-homeapps};Password=${POSTGRES_PASSWORD}"
+      # Add-ons may not take the ids of the instance's plugins (docs/homemix.md).
+      HomeMix__Plugins: ${HOMEAPPS_PLUGINS:-}
+      HomeMix__UploadsEnabled: ${HOMEMIX_UPLOADS_ENABLED:-true}
+      HomeMix__GitHubToken: ${HOMEMIX_GITHUB_TOKEN:-}
+    volumes:
+      - homemix-packages:/data/packages
+    labels:
+      - "traefik.enable=true"
+      # Not /mcp: the MCP server is reached only inside the Docker network (through the JARVIS gateway).
+      - "traefik.http.routers.homemix.rule=Host(`${HOMEAPPS_DOMAIN}`) && (PathPrefix(`/homemix/api`) || PathPrefix(`/homemix/run`))"
+      - "traefik.http.routers.homemix.entrypoints=websecure"
+      - "traefik.http.services.homemix.loadbalancer.server.port=8080"
+
   web:
     image: homeapps/web:2.2.0
     restart: unless-stopped
@@ -189,3 +211,4 @@ volumes:
   postgres-data:
   rabbitmq-data:
   auth-keys:
+  homemix-packages:
