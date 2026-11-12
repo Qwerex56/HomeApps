@@ -35,6 +35,13 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
   write roles from the add-on's `{collection}.write` permission, and `/me` for the bridge's `can()`. An assistant may
   change this data; a test pins which changes it may make. Uninstalled add-ons' data comes back on a reinstall within
   30 days and is deleted after. Database migration `Documents`.
+- **HomeMix (A3), web:** add-ons in a household's settings and in "Moje aplikacje" (add from GitHub or a zip, the
+  consent screen, update, uninstall), their pages in the household's tabs and at `/me/mix/...`, widgets on the
+  household page and the wall tablet, all in sandboxed frames with the bridge (`useMixHost`).
+- **HomeMix (A3), tooling** in `src/Web/homemix`: `@homemix/sdk`, `@homemix/vue`, `create-homemix` and the `homemix`
+  CLI (`dev` fake host, `check`, `pack`); the official add-on **Pomodoro** in `homemix/official/pomodoro`.
+- **Web:** a Playwright test that an add-on's frame reads no storage, cookies, parent page or services
+  (`e2e/homemix-sandbox.spec.ts`, needs no running stack).
 
 ### Fixed
 

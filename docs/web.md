@@ -226,6 +226,10 @@ It signs in, reloads, creates a household, makes an invite, opens it at `/join/{
 `/wall` and archives it again. With `E2E_REGISTRATION_OPEN=1` a second person also signs up from the invite link and
 joins. Every run creates its own `Smoke <time>` household and archives it at the end.
 
+`e2e/homemix-sandbox.spec.ts` needs no running stack: it serves a HomeMix frame with the sandbox headers from a
+Playwright route and checks that the frame has an opaque origin and cannot reach storage, cookies, the parent page or
+the API (`npx playwright test homemix-sandbox`).
+
 ## Dark mode
 
 `useColorScheme` (`shared/composables`) follows the system and remembers a choice made with the button in the

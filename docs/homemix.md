@@ -7,7 +7,8 @@ narrow bridge, keeps its data in the core service HomeMix and can give JARVIS to
 
 > Status: the contract for HomeApps 2.3.0, built in stages A1-A7 (plan `plans/features/household-apps-upload.md`,
 > order agreed with JARVIS in `plans/features/jarvis-v1.md` 10a). Sections say which stage brings them. Built so far:
-> A1, the service with packages, installations and the sandbox; A2, the data (no web app screens yet).
+> A1, the service with packages, installations and the sandbox; A2, the data; A3, the web app, the bridge, the
+> tooling and Pomodoro.
 
 ## Plugin or HomeMix
 
@@ -57,7 +58,7 @@ A zip of at most 5 MB (`HomeMix:MaxPackageBytes`) with `homemix.json` at its roo
 | `id` | `[a-z][a-z0-9-]{1,30}`. Also the prefix of its JARVIS tools. Must not be a plugin id from `HOMEAPPS_PLUGINS` or a core source name: `households`, `accounts`, `jarvis`, `homemix`, `notifications`, `auth`. |
 | `requires.homeApps` | Oldest HomeApps version it works with. |
 | `targets` | Optional, both by default: `Household`, `User`. Narrow it only when the add-on makes no sense elsewhere. |
-| `entry`, `pages`, `widgets` | The page shown at `/homes/{householdId}/mix/{id}/{path}` (household) or `/me/mix/{id}/{path}` (account), and tiles with where they may stand (`Household`, `Wall`, `Account`). A widget may have its own `entry`. |
+| `entry`, `pages`, `widgets` | The page shown at `/homes/{householdId}/mix/{id}/{path}` (household) or `/me/mix/{id}/{path}` (account), and tiles with where they may stand (`Household`, `Wall`, `Account`). Every page opens `entry` with its path as `#/{path}` (and in `context().page`); pages with `menu` join the household's tabs. A widget opens its own `entry`, or the main one, with `context().widget`. |
 | `capabilities` | What the bridge will offer (see below). Shown to the installer. |
 | `network` | `https://` origins (no wildcards, no paths) the add-on may `fetch`. Shown to the installer as "may send data to". |
 | `permissions` | Named permissions with the lowest household role that has them, as in plugins. |
@@ -134,8 +135,8 @@ Referrer-Policy: no-referrer
 blocked installations answer 404.
 
 `sandbox` in the header gives an opaque origin even when the URL is opened in a tab, so no separate domain is needed.
-The web app embeds it as `<iframe sandbox="allow-scripts allow-forms allow-popups">` with a caption "HomeMix: Pomodoro
-(installed by Ewa)"; the frame cannot navigate the app (`allow-top-navigation` is off). An installation id is a UUID
+The web app embeds it as `<iframe sandbox="allow-scripts allow-forms allow-popups">` with the caption "HomeMix:
+Pomodoro działa w osobnej, zamkniętej ramce"; the frame cannot navigate the app (`allow-top-navigation` is off). An installation id is a UUID
 and the files are only code, so the route is anonymous; all data needs a token.
 
 ## The bridge (A3)
@@ -243,19 +244,37 @@ export default async function ({ day }, ctx) {
 }
 ```
 
+## In the web app (A3)
+
+- A household's settings list its HomeMix add-ons under the server's plugins; Admins and up add one (GitHub link or
+  zip, then the consent screen), check a GitHub one for a new version, and uninstall. An update that asks for nothing
+  new applies at once; one that asks for more shows the consent screen again.
+- The account menu has "Moje aplikacje" (`/account/mix`): add-ons on the account and their `Account` widgets.
+- Widgets stand on the household's first page (`Household`) and on the wall tablet (`Wall`).
+- The host side of the bridge is `src/Web/src/features/homemix/useMixHost.ts`; `members()` goes through Households,
+  so a guest, who may not list members, gets an error there.
+
 ## Building one (A3)
 
-Optional, light tooling, versioned with HomeApps:
+Optional, light tooling, versioned with HomeApps, in `src/Web/homemix` (npm workspaces; not on npm yet):
 
-- `@homemix/sdk`: the bridge client without a framework, and TypeScript types for `homemix.json` and `ctx`.
-- `@homemix/vue`: `useHomeMix()`, `useCollection('sessions')`, `useCan()`, and the HomeApps theme as CSS variables
-  plus a PrimeVue 4 preset. The add-on bundles its own Vue.
-- `npm create homemix@latest` and the `homemix` CLI: `dev` (a fake host with a household, roles and in-memory data),
-  `check`, `pack` (zip + SHA-256), `tool <name> '<json>'`. The template has a GitHub Actions workflow that attaches
-  `addon.zip` to a release on a `v*` tag, which is what the store reads.
+- `@homemix/sdk` (`sdk`): `connect()` (the bridge client without a framework), `autoResize()`, the protocol types, the
+  `homemix.json` types and `checkManifest()`/`checkFiles()`, the same checks the server makes. `@homemix/sdk/host`
+  (`serveFrame()`) is the host side, used by the web app and by `homemix dev`.
+- `@homemix/vue` (`vue`): `useHomeMix()` (applies the host's theme and follows it), `useCollection('sessions')`
+  (reactive, writes with the version it holds, refreshes on `data.changed`), `useCan()`; `theme.css` (the HomeApps
+  look without PrimeVue) and `@homemix/vue/primevue` (`HomeAppsPreset` for PrimeVue 4). The add-on bundles its own Vue.
+- `create-homemix` (`npm create homemix@latest my-addon`, templates `vue` and `vanilla`) and the `homemix` CLI:
+  `dev` (a fake host at http://localhost:5180 with a household, roles, data in memory and the sandbox headers),
+  `check`, `pack` (`addon.zip` + SHA-256). The template has a GitHub Actions workflow that attaches `addon.zip` to a
+  release on a `v*` tag, which is what HomeMix installs from a repository link and what the store reads.
+  `homemix tool` comes with the tool scripts (A6).
 
-The official **Pomodoro** and **Pogoda** (`homemix/official/*` in this repository) are written with it and are the
-first entries of the store.
+To work on them: `cd src/Web && npm ci`, then `cd homemix && npm install && npm run build`.
+
+The official **Pomodoro** (`homemix/official/pomodoro`) is written with `@homemix/vue`: one timer shared by the
+household, each person's sessions counted privately (`storage.user`), the lengths set by Admins (`settings.write`).
+**Pogoda** follows with the store (A5).
 
 ## Running it (A1)
 
