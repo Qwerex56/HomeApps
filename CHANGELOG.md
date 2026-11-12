@@ -14,6 +14,8 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
   (`act`, `amr: delegated`), only on the internal network.
 - **Kit:** the assistant guard: a token with `act` only reads in Auth, Accounts and Households (403
   `assistant.not_allowed` on every change); plugins let it change their data, but not switch the plugin.
+- **Plugins:** `IHouseholdDirectory` with `FindHouseholdAsync` / `FindPersonAsync`, so a plugin's tools take a
+  household or person by name or id; `NameLookup` and `ToolResult.Error(errors)` in the MCP package.
 - **Testing:** `TestJwt.CreateDelegatedToken`, `CreateAssistantClient`, `McpTestClient`.
 - **Auth: connected apps (OAuth 2.1).** Discovery (RFC 8414), dynamic registration (RFC 7591), authorization code with
   PKCE and `resource`, refresh with rotation, revocation (RFC 7009); tokens only for the configured resource

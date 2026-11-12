@@ -228,6 +228,21 @@ server at `/plugins/{id}/mcp` from the tool classes in the API assembly, and ref
 the manifest's list. JARVIS calls the tools with the person's delegated token: the same permission checks as HTTP,
 plugin data may change, switching the plugin may not. How to write a tool: [mcp.md](mcp.md).
 
+People name households and each other, not ids. `IHouseholdDirectory` lists the caller's households and the people
+of one (Households' `GET /households` and `GET /households/{id}/members/names`, with the caller's token, not
+cached), and `FindHouseholdAsync` / `FindPersonAsync` pick one by name (case-insensitive) or id with `NameLookup`:
+
+```csharp
+var found = await directory.FindHouseholdAsync(household, cancellationToken);
+if (found.IsFailed) return ToolResult.Error(found.Errors);  // household.not_found lists the names, household.ambiguous the ids
+```
+
+A tool where the household may be left out ("my tasks") looks through `HouseholdsToSearchAsync(household)`: the one
+named, or all of the caller's households, skipping those where `PluginErrors.IsOffOrForbidden(errors)` holds.
+
+In tests, give the directory's client the same fake handler as `IHouseholdAccess`:
+`services.AddHttpClient(nameof(IHouseholdDirectory)).ConfigurePrimaryHttpMessageHandler(() => Households)`.
+
 ## Program.cs
 
 ```csharp

@@ -17,6 +17,7 @@ public sealed class HelloPluginFactory : HomeAppsApiFactory<Program, HelloDbCont
     protected override void ConfigureServices(IServiceCollection services)
     {
         services.AddHttpClient(nameof(IHouseholdAccess)).ConfigurePrimaryHttpMessageHandler(() => Households);
+        services.AddHttpClient(nameof(IHouseholdDirectory)).ConfigurePrimaryHttpMessageHandler(() => Households);
         services.AddScoped<IEventBus>(sp => new RecordingEventBus(sp.GetRequiredService<MassTransit.IPublishEndpoint>(), Published));
     }
 }

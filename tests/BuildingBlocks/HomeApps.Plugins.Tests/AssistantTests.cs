@@ -19,6 +19,8 @@ public sealed class AssistantTests(HelloPluginFactory factory) : IClassFixture<H
     private readonly Guid _member = Guid.NewGuid();
     private readonly Guid _guest = Guid.NewGuid();
 
+    private const string HouseholdName = "Dom";
+
     private string Enablement => $"/plugins/hello/api/households/{_household}/enablement";
 
     private string Greetings => $"/plugins/hello/api/households/{_household}/greetings";
@@ -67,11 +69,14 @@ public sealed class AssistantTests(HelloPluginFactory factory) : IClassFixture<H
         await using var forMember = await McpTestClient.ConnectAsync(factory.CreateAssistantClient(_member), "plugins/hello/mcp");
         await using var forGuest = await McpTestClient.ConnectAsync(factory.CreateAssistantClient(_guest), "plugins/hello/mcp");
 
-        var written = await forMember.CallTextAsync("say_hello", new Dictionary<string, object?> { ["householdId"] = _household, ["text"] = "Hej z MCP" });
-        var refused = await forGuest.CallTextAsync("say_hello", new Dictionary<string, object?> { ["householdId"] = _household, ["text"] = "Hej" });
-        var listed = await forGuest.CallTextAsync("list_greetings", new Dictionary<string, object?> { ["householdId"] = _household });
+        var written = await forMember.CallTextAsync("say_hello", new Dictionary<string, object?> { ["household"] = "dom", ["text"] = "Hej z MCP" });
+        var refused = await forGuest.CallTextAsync("say_hello", new Dictionary<string, object?> { ["household"] = _household.ToString(), ["text"] = "Hej" });
+        var listed = await forGuest.CallTextAsync("list_greetings", new Dictionary<string, object?> { ["household"] = "Dom" });
+        var unknown = await forGuest.CallTextAsync("list_greetings", new Dictionary<string, object?> { ["household"] = "Działka" });
 
-        Assert.Equal(("Greeting written.", false), written);
+        Assert.Equal(($"Greeting written in {HouseholdName}.", false), written);
+        Assert.True(unknown.IsError);
+        Assert.Contains("household.not_found", unknown.Text, StringComparison.Ordinal);
         Assert.True(refused.IsError);
         Assert.Contains("plugin.forbidden", refused.Text, StringComparison.Ordinal);
         Assert.False(listed.IsError);
@@ -101,6 +106,7 @@ public sealed class AssistantTests(HelloPluginFactory factory) : IClassFixture<H
 
     private void GivenHousehold()
     {
+        factory.Households.HouseholdNames[_household] = HouseholdName;
         factory.Households.SetRole(_household, _owner, HouseholdRole.Owner);
         factory.Households.SetRole(_household, _member, HouseholdRole.Member);
         factory.Households.SetRole(_household, _guest, HouseholdRole.Guest);

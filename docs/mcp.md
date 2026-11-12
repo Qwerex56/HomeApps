@@ -97,8 +97,18 @@ a new endpoint in the core services is refused for assistants by default, so not
 | Households | `household_members(household)` | by name or id; roles for members and up, names only for a guest |
 | Accounts | `my_profile` | name, email, language, time zone, date of birth |
 
-Plugins add theirs (Todo and Chat in stage J1 of the JARVIS plan). HomeMix add-ons get theirs from the HomeMix
-service, named after the add-on (`pomodoro_add_session`): [homemix.md](homemix.md#jarvis-a6-a7).
+Plugins add theirs, at `/plugins/{id}/mcp` (stage J1 of the JARVIS plan; details in each plugin's README). HomeMix
+add-ons get theirs from the HomeMix service, named after the add-on (`pomodoro_add_session`):
+[homemix.md](homemix.md#jarvis-a6-a7).
+
+| Plugin | Tool | |
+|---|---|---|
+| Todo | `add_task(title, list?, household?, due?, assignee?)` | list, household and person by name or id |
+| Todo | `my_tasks(when?, household?)` | open tasks assigned to the person, all households when none is named |
+| Todo | `complete_task(task, household?)` | by title or id |
+| Chat | `send_message(text, to?, household?)` | to "Dom" (default), a room or a person; marked "przez JARVIS-a" |
+| Chat | `unread_summary(household?)` | unread per conversation with the newest messages; marks nothing read |
+| Chat | `read_conversation(with?, limit?, household?)` | the latest messages, oldest first |
 
 ## Testing
 
@@ -107,7 +117,7 @@ service, named after the add-on (`pomodoro_add_session`): [homemix.md](homemix.m
 
 ```csharp
 await using var mcp = await McpTestClient.ConnectAsync(factory.CreateAssistantClient(member), "plugins/hello/mcp");
-var (text, isError) = await mcp.CallTextAsync("say_hello", new Dictionary<string, object?> { ["householdId"] = id, ["text"] = "Hej" });
+var (text, isError) = await mcp.CallTextAsync("say_hello", new Dictionary<string, object?> { ["household"] = "Dom", ["text"] = "Hej" });
 ```
 
 By hand, with a token from the browser's dev tools (15 minutes) and the MCP Inspector:

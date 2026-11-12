@@ -21,6 +21,11 @@ public sealed class FakeHouseholds : HttpMessageHandler
 
     public string? LastAuthorization { get; private set; }
 
+    /// <summary>Names for <c>GET /households</c> and <c>GET /households/{id}/members/names</c>.</summary>
+    public ConcurrentDictionary<Guid, string> HouseholdNames { get; } = new();
+
+    public ConcurrentDictionary<Guid, string> PeopleNames { get; } = new();
+
     public void SetRole(Guid householdId, Guid userId, HouseholdRole? role)
     {
         if (role is { } value)
@@ -39,8 +44,23 @@ public sealed class FakeHouseholds : HttpMessageHandler
         LastAuthorization = request.Headers.Authorization?.ToString();
 
         var segments = request.RequestUri!.AbsolutePath.Trim('/').Split('/');
-        var householdId = Guid.Parse(segments[1]);
         var userId = Guid.Parse(TestUser.Of(LastAuthorization));
+        if (segments.Length == 1)
+        {
+            var mine = _roles.Keys.Where(k => k.Item2 == userId)
+                .Select(k => new { id = k.Item1, name = HouseholdNames.GetValueOrDefault(k.Item1, "?") });
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(mine, options: Json) });
+        }
+
+        var householdId = Guid.Parse(segments[1]);
+        if (segments[^1] == "names")
+        {
+            var people = _roles.Keys.Where(k => k.Item1 == householdId)
+                .Select(k => new { userId = k.Item2, name = PeopleNames.GetValueOrDefault(k.Item2, "?"), avatarUrl = (string?)null });
+            return Task.FromResult(_roles.ContainsKey((householdId, userId))
+                ? new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(people, options: Json) }
+                : new HttpResponseMessage(HttpStatusCode.NotFound));
+        }
 
         return Task.FromResult(_roles.TryGetValue((householdId, userId), out var role)
             ? new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(new { householdId, role, nickname = (string?)null, joinedAt = JoinedAt, accessUntil = (DateTimeOffset?)null }, options: Json) }
