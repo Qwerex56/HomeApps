@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The gateway end to end: the real Households and a fake plugin as MCP sources in the same process, no database. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Jarvis\Jarvis.Api\Jarvis.Api.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Testing\HomeApps.BuildingBlocks.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+
+</Project>
