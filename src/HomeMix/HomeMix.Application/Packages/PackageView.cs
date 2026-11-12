@@ -19,6 +19,7 @@ public sealed record PackageView(
     string RequiresHomeApps,
     string? Repository,
     string? Tag,
+    bool Official,
     long Size)
 {
     public static PackageView From(AddonPackage package)
@@ -27,6 +28,6 @@ public sealed record PackageView(
         var m = package.Manifest;
         return new PackageView(
             package.Sha256, m.Id, m.Version, m.Name, m.Description, m.Icon, m.Targets, m.Capabilities, m.Network, m.Jarvis,
-            m.RequiresHomeApps, package.Repository, package.Tag, package.Size);
+            m.RequiresHomeApps, package.Repository, package.Tag, package.IsOfficial, package.Size);
     }
 }

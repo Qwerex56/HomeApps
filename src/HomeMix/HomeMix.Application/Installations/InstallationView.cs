@@ -22,6 +22,7 @@ public sealed record InstallationView(
     IReadOnlyList<string> Network,
     bool JarvisAllowed,
     string? Repository,
+    bool Official,
     Guid InstalledBy,
     DateTimeOffset InstalledAt,
     DateTimeOffset? UpdatedAt)
@@ -34,7 +35,7 @@ public sealed record InstallationView(
         return new InstallationView(
             installation.Id, installation.AddonId, installation.Version, installation.TargetKind, installation.TargetId,
             m.Name, m.Icon, $"/homemix/run/{installation.Id}/", m.Entry, m.Pages, m.Widgets, m.Permissions,
-            installation.Capabilities, installation.Network, installation.JarvisAllowed, package.Repository,
+            installation.Capabilities, installation.Network, installation.JarvisAllowed, package.Repository, package.IsOfficial,
             installation.InstalledBy, installation.InstalledAt, installation.UpdatedAt);
     }
 }

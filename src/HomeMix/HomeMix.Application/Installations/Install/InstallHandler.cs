@@ -1,3 +1,4 @@
+using HomeMix.Application.Blocks;
 using FluentResults;
 using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.BuildingBlocks.Application.Messaging;
@@ -16,6 +17,7 @@ internal sealed class InstallHandler(
     InstallationAccess access,
     ICurrentUser currentUser,
     TimeProvider time,
+    Blocklist blocklist,
     IOptions<HomeMixOptions> options) : ICommandHandler<InstallCommand, InstallationView>
 {
     public async Task<Result<InstallationView>> Handle(InstallCommand command, CancellationToken cancellationToken)
@@ -39,7 +41,7 @@ internal sealed class InstallHandler(
             return Result.Fail(PackageErrors.NotFound);
         }
 
-        if (options.Value.IsBlocked(package.AddonId, package.Sha256))
+        if (await blocklist.IsBlockedAsync(package.AddonId, package.Sha256, cancellationToken))
         {
             return Result.Fail(PackageErrors.Blocked);
         }

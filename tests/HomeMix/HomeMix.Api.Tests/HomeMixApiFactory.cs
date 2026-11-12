@@ -32,6 +32,7 @@ public sealed class HomeMixApiFactory : WebApplicationFactory<Program>, IAsyncLi
 
     private readonly RsaSecurityKey _key = new(RSA.Create(2048)) { KeyId = "test" };
     private readonly string _packages = Path.Combine(Path.GetTempPath(), $"homemix-tests-{Guid.NewGuid():N}");
+    private readonly string _official = Path.Combine(Path.GetTempPath(), $"homemix-official-{Guid.NewGuid():N}");
     private PostgreSqlContainer? _container;
     private string _server = string.Empty;
     private string _database = string.Empty;
@@ -39,6 +40,12 @@ public sealed class HomeMixApiFactory : WebApplicationFactory<Program>, IAsyncLi
     public FakeHouseholds Households { get; } = new();
 
     public FakeGitHubReleases GitHub { get; } = new();
+
+    public FakeStoreIndex Store { get; } = new();
+
+    /// <summary>The one official add-on of the test instance, as <c>homemix/official</c> would ship it.</summary>
+    public static byte[] OfficialWeather { get; } = AddonZip.Create(AddonZip.Manifest(id: "weather", version: "1.0.0",
+        capabilities: """["storage.household", "notify"]""", network: """["https://api.open-meteo.com"]"""));
 
     public async Task InitializeAsync()
     {
@@ -49,6 +56,10 @@ public sealed class HomeMixApiFactory : WebApplicationFactory<Program>, IAsyncLi
             await _container.StartAsync();
             _server = _container.GetConnectionString();
         }
+
+        Directory.CreateDirectory(_official);
+        await File.WriteAllBytesAsync(Path.Combine(_official, "weather.zip"), OfficialWeather);
+        await File.WriteAllTextAsync(Path.Combine(_official, "broken.zip"), "not a zip");
 
         _database = $"homemix_api_tests_{Guid.NewGuid():N}";
         await using var db = new HomeMixDbContext(
@@ -72,9 +83,9 @@ public sealed class HomeMixApiFactory : WebApplicationFactory<Program>, IAsyncLi
             await _container.DisposeAsync();
         }
 
-        if (Directory.Exists(_packages))
+        foreach (var folder in new[] { _packages, _official }.Where(Directory.Exists))
         {
-            Directory.Delete(_packages, recursive: true);
+            Directory.Delete(folder, recursive: true);
         }
     }
 
@@ -87,6 +98,8 @@ public sealed class HomeMixApiFactory : WebApplicationFactory<Program>, IAsyncLi
         builder.UseSetting("Messaging:Transport", "InMemory");
         builder.UseSetting("Jwt:Authority", Issuer);
         builder.UseSetting("HomeMix:PackagesPath", _packages);
+        builder.UseSetting("HomeMix:OfficialPath", _official);
+        builder.UseSetting("HomeMix:NotificationsPerHour", "1000");
         builder.UseSetting("HomeMix:Plugins", "todo, chat");
         builder.UseSetting("HomeMix:Blocked:0", "evil");
         builder.UseSetting("HomeMix:MaxDocumentBytes", "4096");
@@ -100,6 +113,8 @@ public sealed class HomeMixApiFactory : WebApplicationFactory<Program>, IAsyncLi
             services.AddScoped<IHouseholdRoles, FakeHouseholdRoles>();
             services.RemoveAll<IGitHubReleases>();
             services.AddSingleton<IGitHubReleases>(GitHub);
+            services.RemoveAll<IStoreIndex>();
+            services.AddSingleton<IStoreIndex>(Store);
             services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, bearer =>
             {
                 var configuration = new OpenIdConnectConfiguration { Issuer = Issuer };
@@ -111,6 +126,9 @@ public sealed class HomeMixApiFactory : WebApplicationFactory<Program>, IAsyncLi
     }
 
     public HttpClient SignedIn(Guid userId) => ClientWith(Token(userId, actor: null));
+
+    /// <summary>Someone with this server role (User, Admin or Owner).</summary>
+    public HttpClient WithRole(Guid userId, string role) => ClientWith(Token(userId, actor: null, role));
 
     /// <summary>An assistant acting for the person (jarvis-v1.md, JV3).</summary>
     public HttpClient Assistant(Guid userId) => ClientWith(Token(userId, "jarvis-service"));
@@ -130,10 +148,10 @@ public sealed class HomeMixApiFactory : WebApplicationFactory<Program>, IAsyncLi
         return household;
     }
 
-    private string Token(Guid userId, string? actor)
+    private string Token(Guid userId, string? actor, string role = "User")
     {
         var now = DateTime.UtcNow;
-        var claims = new Dictionary<string, object> { ["sub"] = userId.ToString(), ["role"] = "User" };
+        var claims = new Dictionary<string, object> { ["sub"] = userId.ToString(), ["role"] = role };
         if (actor is not null)
         {
             claims["act"] = new Dictionary<string, object> { ["sub"] = actor };

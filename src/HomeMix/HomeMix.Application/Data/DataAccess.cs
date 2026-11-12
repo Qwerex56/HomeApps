@@ -1,3 +1,4 @@
+using HomeMix.Application.Blocks;
 using FluentResults;
 using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.Contracts.Households;
@@ -5,7 +6,6 @@ using HomeMix.Application.Abstractions;
 using HomeMix.Domain.Data;
 using HomeMix.Domain.Installations;
 using HomeMix.Domain.Manifests;
-using Microsoft.Extensions.Options;
 
 namespace HomeMix.Application.Data;
 
@@ -19,14 +19,14 @@ public sealed class DataAccess(
     IPackageRepository packages,
     IHouseholdRoles households,
     ICurrentUser currentUser,
-    IOptions<HomeMixOptions> options)
+    Blocklist blocklist)
 {
     public const HouseholdRole DefaultWriteRole = HouseholdRole.Member;
 
     public async Task<Result<DataSpace>> OpenAsync(Guid installationId, DataScope scope, string collection, bool write, CancellationToken cancellationToken)
     {
         var installation = await installations.FindAsync(installationId, cancellationToken);
-        if (installation is null || !installation.IsActive || options.Value.IsBlocked(installation.AddonId, installation.PackageSha256))
+        if (installation is null || !installation.IsActive || await blocklist.IsBlockedAsync(installation.AddonId, installation.PackageSha256, cancellationToken))
         {
             return Result.Fail(InstallationErrors.NotFound);
         }

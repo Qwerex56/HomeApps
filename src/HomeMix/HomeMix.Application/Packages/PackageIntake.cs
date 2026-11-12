@@ -1,3 +1,4 @@
+using HomeMix.Application.Blocks;
 using System.Security.Cryptography;
 using FluentResults;
 using HomeApps.BuildingBlocks.Application.Abstractions;
@@ -18,6 +19,7 @@ public sealed class PackageIntake(
     IPackageRepository packages,
     ICurrentUser currentUser,
     TimeProvider time,
+    Blocklist blocklist,
     IOptions<HomeMixOptions> options)
 {
     /// <summary>The version of this HomeApps (Directory.Build.props).</summary>
@@ -41,7 +43,7 @@ public sealed class PackageIntake(
         var known = await packages.FindAsync(sha256, cancellationToken);
         if (known is not null)
         {
-            return settings.IsBlocked(known.AddonId, sha256) ? Result.Fail(PackageErrors.Blocked) : Result.Ok(known);
+            return await blocklist.IsBlockedAsync(known.AddonId, sha256, cancellationToken) ? Result.Fail(PackageErrors.Blocked) : Result.Ok(known);
         }
 
         var contents = reader.Read(zip);
@@ -64,7 +66,7 @@ public sealed class PackageIntake(
             return Result.Fail(ManifestErrors.ReservedId(manifest.Id));
         }
 
-        if (settings.IsBlocked(manifest.Id, sha256))
+        if (await blocklist.IsBlockedAsync(manifest.Id, sha256, cancellationToken))
         {
             return Result.Fail(PackageErrors.Blocked);
         }

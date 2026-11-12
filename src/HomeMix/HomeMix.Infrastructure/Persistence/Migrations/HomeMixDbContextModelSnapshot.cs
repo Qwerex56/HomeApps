@@ -23,6 +23,27 @@ namespace HomeMix.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("HomeMix.Domain.Blocks.AddonBlock", b =>
+                {
+                    b.Property<string>("Value")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("BlockedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("BlockedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.HasKey("Value");
+
+                    b.ToTable("Blocks", (string)null);
+                });
+
             modelBuilder.Entity("HomeMix.Domain.Data.AddonDocument", b =>
                 {
                     b.Property<Guid>("Id")

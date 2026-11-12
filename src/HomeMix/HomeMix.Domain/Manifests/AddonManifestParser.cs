@@ -12,6 +12,9 @@ public static class AddonManifestParser
     public const int SupportedVersion = 1;
     public const int MaxIdLength = 31;
 
+    /// <summary>2-31 characters: lowercase letters, digits and '-', starting with a letter.</summary>
+    public static bool IsValidId(string? id) => id is not null && ManifestReader.IdPattern().IsMatch(id);
+
     public static Result<AddonManifest> Parse(string json)
     {
         JsonDocument document;

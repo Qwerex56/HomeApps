@@ -11,6 +11,9 @@ public interface IInstallationRepository
 
     Task<IReadOnlyList<Installation>> ListActiveAsync(InstallTarget target, CancellationToken cancellationToken);
 
+    /// <summary>Every active installation on the instance, newest first (the Owner's view).</summary>
+    Task<IReadOnlyList<Installation>> ListAllActiveAsync(CancellationToken cancellationToken);
+
     /// <summary>Ids of this add-on's installations in this household or account removed after <paramref name="since"/>.</summary>
     Task<IReadOnlyList<Guid>> RemovedSinceAsync(string addonId, InstallTarget target, DateTimeOffset since, CancellationToken cancellationToken);
 

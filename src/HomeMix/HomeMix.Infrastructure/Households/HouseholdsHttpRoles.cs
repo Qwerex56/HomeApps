@@ -10,7 +10,7 @@ using Microsoft.Net.Http.Headers;
 namespace HomeMix.Infrastructure.Households;
 
 /// <summary>
-/// Asks Households for the caller's role with the caller's own token, as plugins do (docs/plugins.md), so Households
+/// Asks Households for the caller's role (and a household's members) with the caller's own token, as plugins do (docs/plugins.md), so Households
 /// applies its own rules (archived, guest access ended). Remembered for the request only: an install checks access
 /// twice. Anything but 200, 403 or 404 throws: HomeMix refuses rather than guesses.
 /// </summary>
@@ -27,14 +27,7 @@ internal sealed class HouseholdsHttpRoles(HttpClient http, IHttpContextAccessor 
             return known;
         }
 
-        var authorization = accessor.HttpContext?.Request.Headers[HeaderNames.Authorization].ToString();
-        if (string.IsNullOrEmpty(authorization))
-        {
-            throw new InvalidOperationException("Household roles need the caller's access token; there is no HTTP request with one.");
-        }
-
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"households/{householdId}/members/me");
-        request.Headers.TryAddWithoutValidation(HeaderNames.Authorization, authorization);
+        using var request = Request($"households/{householdId}/members/me");
         using var response = await http.SendAsync(request, cancellationToken);
         HouseholdRole? role = response.StatusCode switch
         {
@@ -46,5 +39,32 @@ internal sealed class HouseholdsHttpRoles(HttpClient http, IHttpContextAccessor 
 
         _known[householdId] = role;
         return role;
+    }
+
+    public async Task<IReadOnlyList<Guid>> GetMemberIdsAsync(Guid householdId, CancellationToken cancellationToken)
+    {
+        using var request = Request($"households/{householdId}/members/names");
+        using var response = await http.SendAsync(request, cancellationToken);
+        if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return [];
+        }
+
+        response.EnsureSuccessStatusCode();
+        var names = await response.Content.ReadFromJsonAsync<List<MemberNameResponse>>(Json, cancellationToken);
+        return [.. (names ?? []).Select(n => n.UserId)];
+    }
+
+    private HttpRequestMessage Request(string path)
+    {
+        var authorization = accessor.HttpContext?.Request.Headers[HeaderNames.Authorization].ToString();
+        if (string.IsNullOrEmpty(authorization))
+        {
+            throw new InvalidOperationException("Households is asked with the caller's access token; there is no HTTP request with one.");
+        }
+
+        var request = new HttpRequestMessage(HttpMethod.Get, path);
+        request.Headers.TryAddWithoutValidation(HeaderNames.Authorization, authorization);
+        return request;
     }
 }

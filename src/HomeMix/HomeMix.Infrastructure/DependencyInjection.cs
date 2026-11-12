@@ -7,6 +7,7 @@ using HomeMix.Infrastructure.Households;
 using HomeMix.Infrastructure.Jobs;
 using HomeMix.Infrastructure.Persistence;
 using HomeMix.Infrastructure.Storage;
+using HomeMix.Infrastructure.Store;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -29,27 +30,34 @@ public static class DependencyInjection
         services.AddScoped<IPackageRepository, PackageRepository>();
         services.AddScoped<IInstallationRepository, InstallationRepository>();
         services.AddScoped<IDocumentRepository, DocumentRepository>();
+        services.AddScoped<IBlockRepository, BlockRepository>();
         services.AddHostedService<RemovedDataCleanup>();
 
         services.AddSingleton<IPackageReader, ZipPackageReader>();
         services.AddSingleton<IPackageStore, FilePackageStore>();
 
-        services.AddHttpClient<IGitHubReleases, GitHubReleasesClient>((sp, http) =>
-        {
-            var options = sp.GetRequiredService<IOptions<HomeMixOptions>>().Value;
-            http.BaseAddress = new Uri(options.GitHubApiUrl.TrimEnd('/') + "/");
-            http.Timeout = TimeSpan.FromSeconds(30);
-            http.DefaultRequestHeaders.UserAgent.ParseAdd("HomeApps-HomeMix");
-            http.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
-            if (!string.IsNullOrWhiteSpace(options.GitHubToken))
-            {
-                http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", options.GitHubToken);
-            }
-        });
+        services.AddMemoryCache();
+        services.AddSingleton<IOfficialAddons, FolderOfficialAddons>();
+        services.AddHttpClient<IGitHubReleases, GitHubReleasesClient>(ConfigureGitHub);
+        services.AddHttpClient<IStoreIndex, GitHubStoreIndex>(ConfigureGitHub);
 
         services.AddHttpClient<IHouseholdRoles, HouseholdsHttpRoles>((sp, http) =>
             http.BaseAddress = new Uri(sp.GetRequiredService<IOptions<HomeMixOptions>>().Value.HouseholdsUrl.TrimEnd('/') + "/"));
 
         return services;
+    }
+
+    /// <summary>GitHub's REST API, with the optional token (<c>HomeMix:GitHubToken</c>).</summary>
+    private static void ConfigureGitHub(IServiceProvider sp, HttpClient http)
+    {
+        var options = sp.GetRequiredService<IOptions<HomeMixOptions>>().Value;
+        http.BaseAddress = new Uri(options.GitHubApiUrl.TrimEnd('/') + "/");
+        http.Timeout = TimeSpan.FromSeconds(30);
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("HomeApps-HomeMix");
+        http.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
+        if (!string.IsNullOrWhiteSpace(options.GitHubToken))
+        {
+            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", options.GitHubToken);
+        }
     }
 }

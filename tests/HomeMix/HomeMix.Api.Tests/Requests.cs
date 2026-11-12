@@ -42,4 +42,10 @@ internal static class Requests
 
     /// <summary>Consent for a Pomodoro that also sends notifications.</summary>
     public static readonly object Notify = new { capabilities = new[] { "storage.household", "notify" }, jarvis = false };
+
+    /// <summary>Consent for the official Weather of the test instance.</summary>
+    public static readonly object Weather = new { capabilities = new[] { "storage.household", "notify" }, network = new[] { "https://api.open-meteo.com" }, jarvis = false };
+
+    /// <summary>Consent for an account add-on with its own data and notifications.</summary>
+    public static readonly object UserNotify = new { capabilities = new[] { "storage.user", "notify" }, jarvis = false };
 }

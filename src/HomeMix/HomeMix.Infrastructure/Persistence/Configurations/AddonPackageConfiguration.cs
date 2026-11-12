@@ -17,6 +17,7 @@ internal sealed class AddonPackageConfiguration : IEntityTypeConfiguration<Addon
         builder.Property(p => p.Repository).HasMaxLength(300);
         builder.Property(p => p.Tag).HasMaxLength(100);
         builder.Ignore(p => p.Manifest);
+        builder.Ignore(p => p.IsOfficial);
         builder.HasIndex(p => p.AddonId);
     }
 }

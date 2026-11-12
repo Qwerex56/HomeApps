@@ -26,8 +26,13 @@ public sealed class AddonPackage
     /// <summary>Where it came from: a GitHub repository URL, or <c>null</c> for an uploaded zip.</summary>
     public string? Repository { get; private set; }
 
-    /// <summary>The release tag on GitHub, when it came from there.</summary>
+    /// <summary>The release tag on GitHub, when it came from there; <see cref="OfficialTag"/> for an official add-on.</summary>
     public string? Tag { get; private set; }
+
+    /// <summary>The tag of a package that came with HomeMix (<c>homemix/official</c>), which has no repository.</summary>
+    public const string OfficialTag = "official";
+
+    public bool IsOfficial => Repository is null && Tag == OfficialTag;
 
     public long Size { get; private set; }
 

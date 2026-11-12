@@ -23,4 +23,12 @@ public sealed class FakeHouseholds
             return _roles.TryGetValue((household, user), out var role) ? role : null;
         }
     }
+
+    public IReadOnlyList<Guid> MembersOf(Guid household)
+    {
+        lock (_lock)
+        {
+            return [.. _roles.Keys.Where(k => k.Household == household).Select(k => k.User)];
+        }
+    }
 }

@@ -4,4 +4,5 @@ namespace HomeMix.Infrastructure.GitHub;
 
 internal sealed record GitHubReleaseResponse(
     [property: JsonPropertyName("tag_name")] string TagName,
-    [property: JsonPropertyName("assets")] IReadOnlyList<GitHubAsset> Assets);
+    [property: JsonPropertyName("assets")] IReadOnlyList<GitHubAsset> Assets,
+    [property: JsonPropertyName("published_at")] DateTimeOffset? PublishedAt = null);

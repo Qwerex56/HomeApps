@@ -31,6 +31,10 @@ public sealed class HomeMixOptions
     [Range(1, 100_000)]
     public int MaxDocumentsPerCollection { get; set; } = 1000;
 
+    /// <summary>Notifications one installation may send in an hour (<c>notify.push</c>).</summary>
+    [Range(1, 10_000)]
+    public int NotificationsPerHour { get; set; } = 30;
+
     /// <summary>Where the zips are kept, one per SHA-256 (the <c>homemix-packages</c> volume).</summary>
     [Required]
     public string PackagesPath { get; set; } = "/data/packages";
@@ -43,6 +47,19 @@ public sealed class HomeMixOptions
     [Required]
     [Url]
     public string HouseholdsUrl { get; set; } = "http://households:8080";
+
+    /// <summary>
+    /// The store's index (W9): a public <c>addons.json</c> with repository links, added to by pull request. Empty: the
+    /// store shows only the official add-ons.
+    /// </summary>
+    public string StoreIndexUrl { get; set; } = "https://raw.githubusercontent.com/Qwerex56/HomeApps/master/homemix/store/addons.json";
+
+    /// <summary>How long the store keeps what it read from GitHub.</summary>
+    [Range(1, 24 * 60)]
+    public int StoreCacheMinutes { get; set; } = 60;
+
+    /// <summary>The official add-ons' zips built into the image (<c>homemix/official/*</c>); missing: none.</summary>
+    public string OfficialPath { get; set; } = "/app/official";
 
     /// <summary>Optional, only to raise GitHub's limit of 60 anonymous requests an hour.</summary>
     public string? GitHubToken { get; set; }

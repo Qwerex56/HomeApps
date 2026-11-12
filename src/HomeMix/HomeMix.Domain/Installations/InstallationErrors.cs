@@ -24,4 +24,7 @@ public static class InstallationErrors
     /// <summary>The installer has to accept these first (a new install, or an update that asks for more).</summary>
     public static Error ConsentRequired(IEnumerable<string> missing) => new AppError(
         "homemix.consent_required", $"Accept first: {string.Join(", ", missing)}.", ErrorKind.Conflict);
+
+    public static Error NotARecipient => new AppError(
+        "homemix.not_a_recipient", "A notification can go only to people of this add-on's household.", ErrorKind.Validation);
 }

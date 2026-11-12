@@ -1,20 +1,20 @@
+using HomeMix.Application.Blocks;
 using FluentResults;
 using HomeApps.BuildingBlocks.Application.Messaging;
 using HomeMix.Application.Abstractions;
 using HomeMix.Domain.Installations;
 using HomeMix.Domain.Packages;
-using Microsoft.Extensions.Options;
 
 namespace HomeMix.Application.Run.GetRunFile;
 
 internal sealed class GetRunFileHandler(
-    IInstallationRepository installations, IPackageRepository packages, IPackageStore store, IOptions<HomeMixOptions> options)
+    IInstallationRepository installations, IPackageRepository packages, IPackageStore store, Blocklist blocklist)
     : IQueryHandler<GetRunFileQuery, RunFile>
 {
     public async Task<Result<RunFile>> Handle(GetRunFileQuery query, CancellationToken cancellationToken)
     {
         var installation = await installations.FindAsync(query.InstallationId, cancellationToken);
-        if (installation is null || !installation.IsActive || options.Value.IsBlocked(installation.AddonId, installation.PackageSha256))
+        if (installation is null || !installation.IsActive || await blocklist.IsBlockedAsync(installation.AddonId, installation.PackageSha256, cancellationToken))
         {
             return Result.Fail(InstallationErrors.NotFound);
         }

@@ -13,7 +13,7 @@ internal sealed partial class ManifestReader(JsonElement root)
     private static readonly HashSet<string> Places = new(StringComparer.Ordinal) { "Household", "Wall", "Account" };
 
     [GeneratedRegex("^[a-z][a-z0-9-]{1,30}$")]
-    private static partial Regex IdPattern();
+    internal static partial Regex IdPattern();
 
     [GeneratedRegex("^[a-z][a-z0-9._-]{0,63}$")]
     private static partial Regex NamePattern();

@@ -22,6 +22,9 @@ app.UseHomeAppsDefaults();
 // Inside the Docker network only, like Households' (Traefik routes /homemix/api and /homemix/run, not /mcp).
 app.MapHomeAppsMcp();
 
+// After authentication, before the endpoints run: notify.push is limited per installation.
+app.UseRateLimiter();
+
 await app.MigrateDatabaseOnStartupAsync<HomeMixDbContext>();
 
 await app.RunAsync();
