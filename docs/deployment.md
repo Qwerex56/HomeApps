@@ -43,7 +43,8 @@ On an empty database Auth sends an invitation to `AUTH_BOOTSTRAP_EMAIL`. That pe
 (or uses Google) and becomes the Owner, the only account above Admin. Sign-up is closed (`Auth:RegistrationOpen`
 is off): everyone else joins through an invitation from an existing account.
 
-Every service creates its database (`homeapps_auth`, `homeapps_accounts`, `homeapps_households`, `homeapps_notifications`) and applies its
+Every service creates its database (`homeapps_auth`, `homeapps_accounts`, `homeapps_households`, `homeapps_notifications`,
+`homeapps_homemix`, `homeapps_jarvis`) and applies its
 migrations on start (`Database:MigrateOnStartup`, set by the compose file). Each runs as a single instance, so two
 copies never migrate at the same time.
 
@@ -62,6 +63,8 @@ copies never migrate at the same time.
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM` | The mail server. Auth does not start without `SMTP_HOST`. |
 | `HOUSEHOLDS_MAX_MEMBERS` | Members per household, guests included (100). |
 | `NOTIFICATIONS_VAPID_PUBLIC_KEY`, `NOTIFICATIONS_VAPID_PRIVATE_KEY` | The Web Push keys from `scripts/generate-vapid-keys.sh`. Notifications does not start without them. Back them up and keep them: new keys mean every device has to turn notifications on again. The private key is a secret. |
+| `JARVIS_CLIENT_SECRET` | Required: the secret JARVIS asks Auth for delegated tokens with (`openssl rand -base64 32`). See [jarvis.md](jarvis.md#production). |
+| `JARVIS_CLAUDE_CODE_OAUTH_TOKEN` | Optional: the owner's Claude subscription for JARVIS's answers (`claude setup-token`). Empty: JARVIS says he is switched off; Claude Code can still connect to the gateway. A secret. |
 | `NOTIFICATIONS_VAPID_SUBJECT` | Optional: how push services can reach you, `mailto:` or `https:` (the site's address by default). |
 
 Anything else a service reads can be set the same way, as an environment variable in `compose.prod.yaml`
@@ -108,7 +111,8 @@ scripts/smoke.sh
 `scripts/smoke.sh` (bash, curl, jq) needs an empty database. It goes through the whole release over HTTP: the web
 app and a deep link, the Owner from the bootstrap invitation, sign-in, refresh (including a refresh whose answer
 was lost), the profile reaching Accounts, a household and its invite, a second person invited to the app who signs up
-and joins the household, the Notifications service, and sign-out. It ends with `SMOKE TEST PASSED`.
+and joins the household, the Notifications service, the official Pogoda add-on installed from HomeMix's store, the JARVIS gateway (metadata,
+`tools/list` with Pogoda's tool, a call) and a message to JARVIS, and sign-out. It ends with `SMOKE TEST PASSED`.
 
 The browser test of the web app runs against the same stack, with an account that exists (the Owner from above):
 
