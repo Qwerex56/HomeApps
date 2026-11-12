@@ -1,0 +1,50 @@
+/* The HomeApps look without PrimeVue: the host sends its theme as CSS variables (useHomeMix applies them). */
+:root {
+  color-scheme: light dark;
+  font-family: Inter, system-ui, sans-serif;
+  color: var(--p-text-color, #334155);
+  background: transparent;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: var(--p-primary-color, #6366f1);
+}
+
+.hm-card {
+  border: 1px solid var(--p-content-border-color, #e2e8f0);
+  border-radius: var(--p-border-radius-xl, 12px);
+  background: var(--p-content-background, #fff);
+  padding: 1rem;
+}
+
+.hm-muted {
+  color: var(--p-text-muted-color, #64748b);
+}
+
+.hm-button {
+  border: 0;
+  border-radius: var(--p-border-radius-md, 6px);
+  padding: 0.5rem 1rem;
+  font: inherit;
+  cursor: pointer;
+  background: var(--p-primary-color, #6366f1);
+  color: var(--p-primary-contrast-color, #fff);
+}
+
+.hm-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.hm-button.secondary {
+  background: var(--p-surface-100, #f1f5f9);
+  color: var(--p-text-color, #334155);
+}
+
+:root.hm-dark .hm-button.secondary {
+  background: var(--p-surface-800, #1e293b);
+}

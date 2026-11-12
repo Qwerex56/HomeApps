@@ -1,0 +1,27 @@
+{
+  "name": "@homemix/vue",
+  "version": "2.3.0",
+  "description": "Vue 3 composables and the HomeApps look for HomeMix add-ons (docs/homemix.md)",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./primevue": { "types": "./dist/primevue.d.ts", "default": "./dist/primevue.js" },
+    "./theme.css": "./theme.css"
+  },
+  "files": ["dist", "theme.css"],
+  "sideEffects": ["*.css"],
+  "scripts": {
+    "build": "../../node_modules/.bin/tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@homemix/sdk": "2.3.0"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0",
+    "@primeuix/themes": "^2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@primeuix/themes": { "optional": true }
+  }
+}
