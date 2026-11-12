@@ -4,6 +4,7 @@ using HomeMix.Application;
 using HomeMix.Application.Abstractions;
 using HomeMix.Infrastructure.GitHub;
 using HomeMix.Infrastructure.Households;
+using HomeMix.Infrastructure.Jobs;
 using HomeMix.Infrastructure.Persistence;
 using HomeMix.Infrastructure.Storage;
 using Microsoft.Extensions.Configuration;
@@ -16,7 +17,7 @@ public static class DependencyInjection
 {
     /// <summary>
     /// The adapters behind Application's ports: Postgres with the outbox, the zips on the <c>homemix-packages</c>
-    /// volume, GitHub releases and household roles from Households (section <c>HomeMix</c>). The Api calls
+    /// volume, GitHub releases, household roles from Households and the hourly cleanup of old add-on data (section <c>HomeMix</c>). The Api calls
     /// <c>AddHomeMixApplication</c> next to it.
     /// </summary>
     public static IServiceCollection AddHomeMixInfrastructure(this IServiceCollection services, IConfiguration configuration)
@@ -27,6 +28,8 @@ public static class DependencyInjection
         services.AddValidatedOptions<HomeMixOptions>(HomeMixOptions.SectionName);
         services.AddScoped<IPackageRepository, PackageRepository>();
         services.AddScoped<IInstallationRepository, InstallationRepository>();
+        services.AddScoped<IDocumentRepository, DocumentRepository>();
+        services.AddHostedService<RemovedDataCleanup>();
 
         services.AddSingleton<IPackageReader, ZipPackageReader>();
         services.AddSingleton<IPackageStore, FilePackageStore>();
