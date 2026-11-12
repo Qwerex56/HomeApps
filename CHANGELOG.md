@@ -65,6 +65,10 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
   permission and the data's write rule allow, with a `household` argument when the add-on is in more than one place.
   They run the bridge's data use cases; `delete` is destructive, the rest read-only or not destructive. `homemix check`
   checks them; Pomodoro 1.2.0 offers its timer (summary) and `pomodoro_stats`.
+- **HomeMix (A7), tool scripts:** `"action": "script"` runs the add-on's `tools/{name}.js` in Jint with the bridge's
+  contract as `ctx` (`context`, `can`, `data`, `members`, `fetch` only to the `network` origins) and limits (5 s,
+  10 MB, statements, recursion, ctx calls); `readOnly` scripts may not write. `ToolContext` in `@homemix/sdk`,
+  `homemix tool` in the CLI. Pogoda 1.1.0 gives JARVIS `pogoda_forecast`.
 
 ### Fixed
 

@@ -9,7 +9,7 @@ narrow bridge, keeps its data in the core service HomeMix and can give JARVIS to
 > order agreed with JARVIS in `plans/features/jarvis-v1.md` 10a). Sections say which stage brings them. Built so far:
 > A1, the service with packages, installations and the sandbox; A2, the data; A3, the web app, the bridge, the
 > tooling and Pomodoro; A4, the Owner's read-only "Pluginy serwera" view; A5, the store, Pogoda, `notify.push` and the
-> Owner's blocks; A6, declared tools for JARVIS.
+> Owner's blocks; A6, declared tools for JARVIS; A7, tool scripts.
 
 ## Plugin or HomeMix
 
@@ -296,18 +296,44 @@ a source with no prefix of its own. For JARVIS a HomeMix tool is an ordinary MCP
 
 `tools` and `summary` need `"jarvis": true`. `homemix check` makes the same checks.
 
-**Tool scripts (A7)** for anything that needs logic or a fetch: `tools/{name}.js` exports one function, run in Jint
-with 2 s, 10 MB and a statement and recursion limit. `ctx` is the bridge's contract (`storage`, `members`, `context`,
-`can`, and `fetch` only to the `network` origins), so the "never" list holds here too.
+**Tool scripts (A7)** for anything that needs logic or a fetch. A tool with `"action": "script"` runs
+`tools/{name}.js` from the package (it must be there, `homemix check` and the upload say so) on the HomeMix server in
+[Jint](https://github.com/sebastienros/jint): no files, network, timers or .NET, only `ctx`. The module's default
+export takes the tool's fields and `ctx`; a string it returns is the answer, anything else goes to JARVIS as JSON.
+
+```json
+{ "name": "forecast", "description": "The weather where the household is.", "action": "script", "readOnly": true,
+  "fields": { "days": { "type": "integer", "default": 2 } } }
+```
 
 ```js
-// tools/forecast.js
-export default async function ({ day }, ctx) {
-  const { lat, lon } = await ctx.storage.household.get('settings', 'location')
-  const r = await ctx.fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max`)
-  return `Tomorrow up to ${(await r.json()).daily.temperature_2m_max[1]}°C.`
+// public/tools/forecast.js (Vite copies public/ into the package)
+export default async function ({ days }, ctx) {
+  const place = (await ctx.data.get('place', 'current'))?.value
+  if (!place) return 'No place yet.'
+  const r = await ctx.fetch(`https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&daily=temperature_2m_max&forecast_days=${days}`)
+  return `Up to ${(await r.json()).daily.temperature_2m_max.at(-1)}°C.`
 }
 ```
+
+`ctx` (type `ToolContext` in `@homemix/sdk`) is the bridge's contract without the screen, answered by the same use
+cases with the person's token, so roles, capabilities and the "never" list hold here too:
+
+| `ctx.` | |
+|---|---|
+| `context()`, `can(permission)` | As in the frame; no theme, page or widget, `language` is `pl`. |
+| `data.list/get/put/delete` | As `homemix.data`. In a `readOnly` tool `put` and `delete` fail with `homemix.read_only_tool`. |
+| `members()` | With `household.members`; on an account just the person. |
+| `fetch(url, { method, body, headers })` | Only the add-on's `network` origins (`homemix.network_denied` otherwise), GET or POST, no redirects or cookies, 3 s and 1 MB per answer, 5 per run. Answers `{ ok, status, headers, text(), json() }`. |
+
+Errors come back as JavaScript errors with `code` and `message`, as in the frame. Limits per run: 5 s in all (fetches
+included), 10 MB of memory, a million statements, 64 nested calls, 100 `ctx` calls, a 256 KB script. A script that
+fails or hits a limit answers JARVIS `homemix.tool_script` with the reason; the server logs it. A `readOnly` script is
+`ReadOnly` for the gateway; any other is `Destructive`, so JARVIS asks first.
+
+`homemix tool <name> '{"days":3}' --data=data.json --role=Admin` runs a script on the built add-on with the same
+`ctx` over data in memory (`{ "household": { "<collection>": { "<key>": value } }, "user": { … } }`), real `fetch` to
+the `network` origins and the same limits. It mirrors the server's contract, not its isolation (`node:vm`).
 
 ## In the web app (A3)
 
@@ -334,7 +360,7 @@ Optional, light tooling, versioned with HomeApps, in `src/Web/homemix` (npm work
   `dev` (a fake host at http://localhost:5180 with a household, roles, data in memory and the sandbox headers),
   `check`, `pack` (`addon.zip` + SHA-256). The template has a GitHub Actions workflow that attaches `addon.zip` to a
   release on a `v*` tag, which is what HomeMix installs from a repository link and what the store reads.
-  `homemix tool` comes with the tool scripts (A7).
+  `homemix tool` runs a tool script (see "JARVIS"), and `dev` lists the add-on's JARVIS tools.
 
 To work on them: `cd src/Web && npm ci`, then `cd homemix && npm install && npm run build`.
 
