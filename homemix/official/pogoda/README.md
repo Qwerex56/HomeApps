@@ -5,6 +5,11 @@ An Admin picks the place once (permission `place.write`); everyone sees the page
 page, the wall tablet and "Moje aplikacje". The frame asks Open-Meteo itself every 15 minutes: the only addresses it
 may reach are the two in `homemix.json` `network`, which the installer accepts on the consent screen.
 
+JARVIS gets `pogoda_forecast` when the installer allowed it: `public/tools/forecast.js`, a tool script the HomeMix
+server runs in Jint with the same `ctx` as the bridge (docs/homemix.md, "JARVIS"). Try it without HomeApps:
+`npm run build && npx homemix tool forecast '{"days":3}' --data=place.json`, where `place.json` is
+`{ "household": { "place": { "current": { "name": "Kraków", "latitude": 50.06, "longitude": 19.94 } } } }`.
+
 Written with `@homemix/vue` as the second example of docs/homemix.md, "Building one".
 
 ```bash

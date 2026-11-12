@@ -80,4 +80,9 @@ export async function dev(dir, port) {
   })
   await new Promise((done) => server.listen(port, done))
   console.log(`HomeMix dev host: http://localhost:${port}  (add-on from ${dir})`)
+  const manifest = await readManifest(dir)
+  const tools = (manifest.tools ?? []).map((t) => `${manifest.id}_${t.name} (${t.action})`)
+  if (manifest.summary) tools.push(`${manifest.id}_summary`)
+  if (tools.length)
+    console.log(`JARVIS tools${manifest.jarvis ? '' : ' (jarvis is not true!)'}: ${tools.join(', ')}; scripts: homemix tool <name>`)
 }

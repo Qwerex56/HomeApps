@@ -2,3 +2,4 @@
 export * from './protocol.js'
 export * from './client.js'
 export * from './manifest.js'
+export * from './tool.js'

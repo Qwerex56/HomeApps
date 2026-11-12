@@ -1,7 +1,7 @@
 {
   "homemixVersion": 1,
   "id": "pogoda",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "requires": { "homeApps": "2.3.0" },
   "name": { "pl": "Pogoda", "en": "Weather" },
   "description": {
@@ -16,5 +16,17 @@
   ],
   "capabilities": ["storage.household"],
   "network": ["https://api.open-meteo.com", "https://geocoding-api.open-meteo.com"],
-  "permissions": [{ "id": "place.write", "minRole": "Admin" }]
+  "permissions": [{ "id": "place.write", "minRole": "Admin" }],
+  "jarvis": true,
+  "tools": [
+    {
+      "name": "forecast",
+      "description": "The weather where the household is (the place set in Pogoda): now, and per day the sky, min..max temperature and the chance of rain.",
+      "action": "script",
+      "readOnly": true,
+      "fields": {
+        "days": { "type": "integer", "description": "How many days from today, 1-7 (2 = today and tomorrow).", "default": 2 }
+      }
+    }
+  ]
 }

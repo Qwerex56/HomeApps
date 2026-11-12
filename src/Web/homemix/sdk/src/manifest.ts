@@ -34,16 +34,20 @@ export interface HomeMixManifest {
   summary?: { collection: string; scope?: 'household' | 'user'; description?: string }
 }
 
-export type ToolAction = 'add' | 'list' | 'get' | 'update' | 'delete'
+export type ToolAction = 'add' | 'list' | 'get' | 'update' | 'delete' | 'script'
 export type ToolFieldType = 'string' | 'integer' | 'number' | 'boolean'
 
 export interface AddonTool {
   name: string
   description: string
-  collection: string
+  /** Not for script tools: they reach data through ctx. */
+  collection?: string
+  /** script runs tools/{name}.js on the server with a ToolContext (docs/homemix.md, "JARVIS"). */
   action: ToolAction
   scope?: 'household' | 'user'
-  /** Only for add and update. */
+  /** A script that only reads: JARVIS calls it without asking, and its writes fail. */
+  readOnly?: boolean
+  /** Only for add, update and script. */
   fields?: Record<string, { type: ToolFieldType; description?: string; required?: boolean; default?: unknown }>
   permission?: string
   /** What JARVIS says after a change; {key} and {field} are filled in. */
@@ -63,7 +67,7 @@ const path = /^[A-Za-z0-9._/-]{0,200}$/
 const roles = ['Guest', 'Member', 'Admin', 'Owner']
 const toolName = /^[a-z][a-z0-9_]{0,39}$/
 const fieldName = /^[a-z][A-Za-z0-9_]{0,39}$/
-const actions = ['add', 'list', 'get', 'update', 'delete']
+const actions = ['add', 'list', 'get', 'update', 'delete', 'script']
 const fieldTypes = ['string', 'integer', 'number', 'boolean']
 const collection = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/
 
@@ -138,13 +142,16 @@ function checkTools(m: Partial<HomeMixManifest>, problems: string[]) {
     else if (`${m.id}_${tool.name}`.length > 64) problems.push(`${at}.name: '${m.id}_${tool.name}' is longer than 64 characters.`)
     if (typeof tool.description !== 'string' || !tool.description.trim() || tool.description.length > 500)
       problems.push(`${at}.description is required, at most 500 characters: JARVIS picks tools by it.`)
-    if (typeof tool.collection !== 'string' || !collection.test(tool.collection))
+    if (!actions.includes(tool.action)) problems.push(`${at}.action must be add, list, get, update, delete or script.`)
+    const script = tool.action === 'script'
+    if (!script && (typeof tool.collection !== 'string' || !collection.test(tool.collection)))
       problems.push(`${at}.collection must be a collection name.`)
-    if (!actions.includes(tool.action)) problems.push(`${at}.action must be add, list, get, update or delete.`)
-    scope(tool.scope, at)
+    if (!script) scope(tool.scope, at)
+    if (tool.readOnly !== undefined && !script)
+      problems.push(`${at}.readOnly is for script tools; the others say it by their action.`)
     const fields = Object.entries(tool.fields ?? {})
-    if (fields.length && tool.action !== 'add' && tool.action !== 'update')
-      problems.push(`${at}.fields: only add and update tools take fields.`)
+    if (fields.length && tool.action !== 'add' && tool.action !== 'update' && !script)
+      problems.push(`${at}.fields: only add, update and script tools take fields.`)
     if (fields.length > 20) problems.push(`${at}.fields: at most 20.`)
     for (const [field, spec] of fields) {
       if (!fieldName.test(field) || field === 'key' || field === 'household')
@@ -176,7 +183,8 @@ export function checkFiles(files: { path: string; size: number }[], manifest: Ho
       problems.push(`'${f.path}' is not allowed: only ${ALLOWED_EXTENSIONS.join(', ')} files.`)
   }
   const paths = new Set(files.map((f) => f.path))
-  for (const entry of new Set([manifest.entry, ...(manifest.widgets ?? []).map((w) => w.entry)].filter(Boolean)))
+  const scripts = (manifest.tools ?? []).filter((t) => t.action === 'script').map((t) => `tools/${t.name}.js`)
+  for (const entry of new Set([manifest.entry, ...(manifest.widgets ?? []).map((w) => w.entry), ...scripts].filter(Boolean)))
     if (!paths.has(entry!)) problems.push(`'${entry}' is named in homemix.json but is not in the package.`)
   return problems
 }
