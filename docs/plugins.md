@@ -316,6 +316,9 @@ be scoped (`<style scoped>`); it can use the app's Tailwind classes only where t
 from `HOMEAPPS_PLUGINS` (`.env`, e.g. `HOMEAPPS_PLUGINS=todo`), during development `vite` serves it from the same
 variable (`HOMEAPPS_PLUGINS=todo npm run dev`). A listed plugin that is not running is left out; one whose manifest
 needs a newer HomeApps or has an unknown `manifestVersion` shows as such under "Aplikacje" and is never loaded.
+The Owner sees every listed plugin, the ones that are not running included, with its health and UI state under
+Administracja → "Pluginy serwera" (`/admin/plugins`). It is read-only: a plugin is added or removed on the server
+(`HOMEAPPS_PLUGINS`, compose, restart), never from the web app (ADR 0009).
 
 ## The kit as packages
 

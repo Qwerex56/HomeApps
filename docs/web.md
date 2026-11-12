@@ -99,7 +99,7 @@ the request bodies; their response types are written by hand next to the feature
 - Auth limits `/auth/refresh` separately from sign-in (`Auth:RateLimits:RefreshPerMinute`, 60 per IP). A `429` is
   waited out with `Retry-After`, never treated as signed out.
 - Pages inside `AppLayout` need a session (`meta.requiresAuth`), `meta.guestOnly` pages send a signed-in user to the
-  dashboard and `meta.admin` needs the Admin or Owner role. The services check all of it again.
+  dashboard, `meta.admin` needs the Admin or Owner role and `meta.owner` the Owner. The services check all of it again.
 - A request with `{ ticket }` in its Axios config sends that ticket instead of the session token (reactivation).
 
 ### Sign-in pages
@@ -154,6 +154,7 @@ Traefik sends to the services.
 | --- | --- |
 | `/admin/accounts` | UC-10: search (name or email), status and role filters, sorting and paging. The filter lives in the URL. |
 | `/admin/accounts/:id` | UC-11 to UC-17: details, profile edit, history (100 at a time, "older" loads more), disable/enable, password reset (Auth A-22), role (Auth A-23) and erase. |
+| `/admin/plugins` | Owner only, read-only "Pluginy serwera": each id in `/plugins.json` with version, `requires.homeApps`, health (`endpoints.health`, checked again with the refresh button) and the UI state (loaded, no UI, incompatible, failed to load, not running). |
 
 `permissions()` in `features/admin/api.ts` mirrors R1, R3, R5 and R18 only to show the right buttons. A role change is
 made in Auth; Accounts' copy follows from Auth's event a moment later, and the person gets the new role in their token

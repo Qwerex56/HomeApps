@@ -8,7 +8,7 @@ narrow bridge, keeps its data in the core service HomeMix and can give JARVIS to
 > Status: the contract for HomeApps 2.3.0, built in stages A1-A7 (plan `plans/features/household-apps-upload.md`,
 > order agreed with JARVIS in `plans/features/jarvis-v1.md` 10a). Sections say which stage brings them. Built so far:
 > A1, the service with packages, installations and the sandbox; A2, the data; A3, the web app, the bridge, the
-> tooling and Pomodoro.
+> tooling and Pomodoro; A4, the Owner's read-only "Pluginy serwera" view.
 
 ## Plugin or HomeMix
 

@@ -48,6 +48,9 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
   CLI (`dev` fake host, `check`, `pack`); the official add-on **Pomodoro** in `homemix/official/pomodoro`.
 - **Web:** a Playwright test that an add-on's frame reads no storage, cookies, parent page or services
   (`e2e/homemix-sandbox.spec.ts`, needs no running stack).
+- **Web (A4):** "Pluginy serwera" at `/admin/plugins`, for the Owner only and read-only: every plugin in
+  `HOMEAPPS_PLUGINS` with its version, `requires.homeApps`, health (`endpoints.health`) and whether its UI loaded,
+  listed plugins that are not running included. Plugins are still added and removed only on the server.
 
 ### Fixed
 
