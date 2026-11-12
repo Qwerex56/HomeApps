@@ -23,6 +23,12 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 - **JARVIS (J2a):** new service `src/Jarvis` with the MCP gateway `/jarvis/mcp`: the tools of Households, Accounts,
   HomeMix and the plugins in one server, per person, always with a delegated token; OAuth protected resource metadata
   for MCP clients. See [docs/jarvis.md](docs/jarvis.md). `TestJwt.CreateAppToken` for tests.
+- **JARVIS (J2b):** the agent. `POST /jarvis/api/ask` and the chat's `AssistantInvoked` run Claude Code (owner's
+  subscription, `JARVIS_CLAUDE_CODE_OAUTH_TOKEN`) with the gateway as its only tools; every call is logged to the run, and
+  a tool not marked read-only or non-destructive waits 10 minutes for the person's confirmation
+  (`POST /jarvis/api/confirmations/{id}`, `AssistantConfirmed`). Daily budget, retention 7/30 days, erase on
+  `UserErased`. Database `homeapps_jarvis` (migration `Initial`). Contracts `Assistant*`. `RecordingEventBus` moved to
+  the testing kit.
 - **Web:** the consent screen `/connect` and "Connected apps" in the account settings.
 - **HomeMix (A1):** the core service `src/HomeMix` for add-ons from the web app (docs/homemix.md, ADR 0009): packages
   from a zip or a GitHub release (`addon.zip` checked against GitHub's SHA-256), the `homemix.json` validation,

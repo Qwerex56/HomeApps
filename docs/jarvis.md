@@ -32,6 +32,20 @@ Settings (`Jarvis`):
 | `Plugins`, `PluginUrl`, `PluginUrls:{id}` | from `HOMEAPPS_PLUGINS`; `PluginUrls` for a plugin run from the IDE |
 | `AuthUrl`, `ClientId`, `ClientSecret` | Auth's `Service` client (`jarvis-service`) |
 
+## The agent (J2b)
+
+- **Ask:** `POST /jarvis/api/ask` `{text, householdId?}` with the person's own token (an assistant's is refused)
+  answers `{runId, text, actions[]}`. A channel sends `AssistantInvoked` instead and gets `AssistantWorking`, then
+  `AssistantResponded` with the same `reference`; the run happens in a background worker, not inside the consumer.
+- **Brain:** `claude -p` per run (`Jarvis:ClaudeCode`), only the gateway as MCP server with the person's delegated token
+  (reference `run:{id}`) and the `X-Jarvis-Run` header, no built-in tools, a turn limit and a timeout. Without
+  `OAuthToken`, or with `Jarvis:Enabled` false, JARVIS answers that he is switched off; over `Jarvis:DailyBudgetUsd`
+  (whole home, since midnight UTC) that the budget is spent.
+- **Actions:** in a run the gateway logs every call. `readOnlyHint` = a read (not on the card); `destructiveHint: false`
+  = done and shown; anything else (MCP's default counts as destructive) is not called but waits 10 minutes for
+  `POST /jarvis/api/confirmations/{id}` `{approve}` or `AssistantConfirmed`, only from the person who asked.
+- **Data:** runs and calls in `homeapps_jarvis`; content erased after 7 days, rows after 30; everything on `UserErased`.
+
 ## Connecting Claude Code (dev)
 
 Run the stack with `--profile services` (or JARVIS from the IDE on `:5700`, routed by `dynamic/dev-routes.yaml`), then:
