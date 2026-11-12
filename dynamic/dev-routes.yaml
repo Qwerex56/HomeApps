@@ -1,5 +1,5 @@
 # Routes to what runs on the host during development (Q19): Auth from Rider on :5100, Accounts on :5200,
-# Households on :5300, Notifications on :5500, HomeMix on :5600, Vue (vite) on :5173. The containers from the "services" profile override these routes with a higher priority.
+# Households on :5300, Notifications on :5500, HomeMix on :5600, JARVIS on :5700, Vue (vite) on :5173. The containers from the "services" profile override these routes with a higher priority.
 http:
   routers:
     auth-host:
@@ -32,6 +32,12 @@ http:
       entryPoints: [websecure]
       service: homemix-host
       tls: {}
+    jarvis-host:
+      rule: "Host(`app.localhost`) && (PathPrefix(`/jarvis`) || Path(`/.well-known/oauth-protected-resource/jarvis/mcp`))"
+      priority: 150
+      entryPoints: [websecure]
+      service: jarvis-host
+      tls: {}
     frontend-host:
       rule: "Host(`app.localhost`)"
       priority: 1
@@ -59,6 +65,10 @@ http:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:5600"
+    jarvis-host:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:5700"
     frontend-host:
       loadBalancer:
         servers:

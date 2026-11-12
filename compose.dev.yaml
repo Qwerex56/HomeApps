@@ -230,6 +230,35 @@ services:
       - "traefik.http.routers.homemix.tls=true"
       - "traefik.http.services.homemix.loadbalancer.server.port=8080"
 
+  jarvis:
+    profiles: ["services"]
+    build:
+      context: .
+      dockerfile: src/Jarvis/Jarvis.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Jwt__Authority: "http://auth:8080"
+      Jwt__Issuer: "https://app.localhost"
+      Jwt__RequireHttpsMetadata: "false"
+      Jarvis__Resource: "https://app.localhost/jarvis/mcp"
+      Jarvis__AuthUrl: "http://auth:8080"
+      Jarvis__Plugins: ${HOMEAPPS_PLUGINS:-}
+      Jarvis__PluginUrl: "http://{id}:8080"
+      Jarvis__Sources__0__Url: "http://households:8080/mcp"
+      Jarvis__Sources__1__Url: "http://accounts:8080/mcp"
+      Jarvis__Sources__2__Url: "http://homemix:8080/mcp"
+    depends_on:
+      auth:
+        condition: service_started
+    labels:
+      - "traefik.enable=true"
+      # Only the gateway and its RFC 9728 metadata; the services' own MCP servers stay inside the Docker network.
+      - "traefik.http.routers.jarvis.rule=Host(`app.localhost`) && (PathPrefix(`/jarvis`) || Path(`/.well-known/oauth-protected-resource/jarvis/mcp`))"
+      - "traefik.http.routers.jarvis.priority=300"
+      - "traefik.http.routers.jarvis.entrypoints=websecure"
+      - "traefik.http.routers.jarvis.tls=true"
+      - "traefik.http.services.jarvis.loadbalancer.server.port=8080"
+
 volumes:
   postgres-data:
   auth-keys:
