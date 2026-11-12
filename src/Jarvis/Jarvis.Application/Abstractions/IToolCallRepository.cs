@@ -8,5 +8,7 @@ public interface IToolCallRepository
 
     Task<IReadOnlyList<ToolCall>> ListForRunAsync(Guid runId, CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<ToolCall>> ListForRunsAsync(IReadOnlyCollection<Guid> runIds, CancellationToken cancellationToken);
+
     void Add(ToolCall toolCall);
 }
