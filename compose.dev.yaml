@@ -264,7 +264,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Only the gateway and its RFC 9728 metadata; the services' own MCP servers stay inside the Docker network.
-      - "traefik.http.routers.jarvis.rule=Host(`app.localhost`) && (PathPrefix(`/jarvis`) || Path(`/.well-known/oauth-protected-resource/jarvis/mcp`))"
+      - "traefik.http.routers.jarvis.rule=Host(`app.localhost`) && (PathPrefix(`/jarvis/api`) || PathPrefix(`/jarvis/mcp`) || Path(`/.well-known/oauth-protected-resource/jarvis/mcp`))"
       - "traefik.http.routers.jarvis.priority=300"
       - "traefik.http.routers.jarvis.entrypoints=websecure"
       - "traefik.http.routers.jarvis.tls=true"

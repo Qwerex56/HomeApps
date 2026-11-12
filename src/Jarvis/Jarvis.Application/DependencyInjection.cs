@@ -1,4 +1,6 @@
 using HomeApps.BuildingBlocks.Application;
+using Jarvis.Application.Conversations;
+using Jarvis.Application.Runs;
 using Jarvis.Application.ToolCalls;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -14,6 +16,8 @@ public static class DependencyInjection
         services.TryAddSingleton(TimeProvider.System);
         services.AddOptions<AssistantOptions>().BindConfiguration(AssistantOptions.SectionName);
         services.AddScoped<RunAccess>();
+        services.AddScoped<Agent>();
+        services.AddScoped<OwnConversation>();
         return services;
     }
 }

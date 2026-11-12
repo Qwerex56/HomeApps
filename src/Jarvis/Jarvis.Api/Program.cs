@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using HomeApps.BuildingBlocks.Api;
 using HomeApps.BuildingBlocks.Infrastructure.Persistence;
 using Jarvis.Api.Gateway;
@@ -11,6 +12,9 @@ builder.AddHomeAppsDefaults(typeof(Program).Assembly);
 builder.Services.AddJarvisApplication();
 builder.Services.AddJarvisInfrastructure(builder.Configuration);
 builder.AddJarvisGateway();
+
+// Statuses and roles as names, like the other services the web app reads.
+builder.Services.ConfigureHttpJsonOptions(json => json.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 var app = builder.Build();
 

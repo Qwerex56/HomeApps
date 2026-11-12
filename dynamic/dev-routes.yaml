@@ -33,7 +33,7 @@ http:
       service: homemix-host
       tls: {}
     jarvis-host:
-      rule: "Host(`app.localhost`) && (PathPrefix(`/jarvis`) || Path(`/.well-known/oauth-protected-resource/jarvis/mcp`))"
+      rule: "Host(`app.localhost`) && (PathPrefix(`/jarvis/api`) || PathPrefix(`/jarvis/mcp`) || Path(`/.well-known/oauth-protected-resource/jarvis/mcp`))"
       priority: 150
       entryPoints: [websecure]
       service: jarvis-host
