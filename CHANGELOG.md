@@ -53,6 +53,13 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 - **Web (A4):** "Pluginy serwera" at `/admin/plugins`, for the Owner only and read-only: every plugin in
   `HOMEAPPS_PLUGINS` with its version, `requires.homeApps`, health (`endpoints.health`) and whether its UI loaded,
   listed plugins that are not running included. Plugins are still added and removed only on the server.
+- **HomeMix (A5), store:** `GET /homemix/api/store` with the official add-ons built into the HomeMix image
+  (`homemix/official/build.sh`) and the GitHub repositories listed in `homemix/store/addons.json` (README, release and
+  SHA-256 read from GitHub, cached); "Dodaj dodatek" opens on it. The official **Pogoda** (Open-Meteo) joins Pomodoro.
+- **HomeMix (A5), notifications:** `notify.push` in the bridge and `@homemix/sdk` (`push()`), sent through
+  Notifications to people of the add-on's household, limited per installation; Pomodoro pushes the end of a focus.
+- **HomeMix (A5), Owner:** Administracja → "Dodatki" lists every installation and blocks an add-on by id or SHA-256
+  from the web app (`/homemix/api/admin/*`, Owner only), next to `HomeMix:Blocked`.
 
 ### Fixed
 

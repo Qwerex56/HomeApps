@@ -155,6 +155,7 @@ Traefik sends to the services.
 | `/admin/accounts` | UC-10: search (name or email), status and role filters, sorting and paging. The filter lives in the URL. |
 | `/admin/accounts/:id` | UC-11 to UC-17: details, profile edit, history (100 at a time, "older" loads more), disable/enable, password reset (Auth A-22), role (Auth A-23) and erase. |
 | `/admin/plugins` | Owner only, read-only "Pluginy serwera": each id in `/plugins.json` with version, `requires.homeApps`, health (`endpoints.health`, checked again with the refresh button) and the UI state (loaded, no UI, incompatible, failed to load, not running). |
+| `/admin/addons` | Owner only, "Dodatki": every HomeMix installation and the blocks (block by id or SHA-256, lift), see [homemix.md](homemix.md). |
 
 `permissions()` in `features/admin/api.ts` mirrors R1, R3, R5 and R18 only to show the right buttons. A role change is
 made in Auth; Accounts' copy follows from Auth's event a moment later, and the person gets the new role in their token

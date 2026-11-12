@@ -65,7 +65,8 @@ Every endpoint needs an access token from Auth and works on the caller's own dat
 
 ## Sending a notification
 
-A plugin declares its kinds of notifications in the manifest and sends them with `INotifier`
+HomeMix add-ons send theirs with `notify.push` ([homemix.md](homemix.md)): the source is the add-on's id and the
+category `addon`. A plugin declares its kinds of notifications in the manifest and sends them with `INotifier`
 ([plugins.md](plugins.md#notifications)). A core service publishes `NotificationRequested`
 (`src/Contracts/HomeApps.Contracts/Notifications`) itself:
 

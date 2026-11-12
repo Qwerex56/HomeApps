@@ -8,7 +8,8 @@ narrow bridge, keeps its data in the core service HomeMix and can give JARVIS to
 > Status: the contract for HomeApps 2.3.0, built in stages A1-A7 (plan `plans/features/household-apps-upload.md`,
 > order agreed with JARVIS in `plans/features/jarvis-v1.md` 10a). Sections say which stage brings them. Built so far:
 > A1, the service with packages, installations and the sandbox; A2, the data; A3, the web app, the bridge, the
-> tooling and Pomodoro; A4, the Owner's read-only "Pluginy serwera" view.
+> tooling and Pomodoro; A4, the Owner's read-only "Pluginy serwera" view; A5, the store, Pogoda, `notify.push` and the
+> Owner's blocks.
 
 ## Plugin or HomeMix
 
@@ -67,14 +68,13 @@ A zip of at most 5 MB (`HomeMix:MaxPackageBytes`) with `homemix.json` at its roo
 
 `homemix check` (A3) and the server run the same validation and report every problem at once.
 
-## Where packages come from (A1, store A5)
+## Where packages come from (A1, A5)
 
 - **A GitHub repository link** (`https://github.com/owner/repo`): HomeMix reads the latest release, takes its asset
   `addon.zip` and the SHA-256 digest GitHub gives for it, downloads and checks it. A tag or release can be named.
 - **An uploaded zip.**
-- **The store** is only an aggregator of GitHub: `addons.json` in a public repository lists repository links; adding an
-  add-on is a pull request with its link. The store shows each one's README and SHA-256 from GitHub, and the person
-  picks where to install (a household or their account). Nothing is uploaded to the store.
+- **The store** (A5) is only an aggregator of GitHub, see below.
+- **An official add-on** (A5) that came with HomeMix, by its id.
 
 The server keeps only installed packages, one copy per SHA-256, in the `homemix-packages` volume.
 
@@ -84,10 +84,29 @@ Adding a package installs nothing; it answers what the add-on asks for, for the 
 |---|---|---|
 | `POST /homemix/api/packages` | `multipart/form-data`, field `file` | the package: `sha256`, `id`, `version`, `name`, `targets`, `capabilities`, `network`, `jarvis`, ... |
 | `POST /homemix/api/packages/github` | `{ "repository": "https://github.com/owner/repo", "tag": null }` | the same, with `repository` and `tag` |
+| `POST /homemix/api/packages/official/{addonId}` | none | the same, with `official: true` (404 for an unknown id) |
 
 Any signed-in person may add one; the same zip is one package. Errors: `homemix.manifest_invalid` (every problem at
 once), `homemix.package_invalid`, `homemix.package_too_large`, `homemix.id_reserved`, `homemix.needs_newer_homeapps`,
 `homemix.download_failed`, `homemix.blocked`, `homemix.uploads_disabled`.
+
+### The store (A5)
+
+`GET /homemix/api/store` lists, for anyone signed in:
+
+1. **The official add-ons** (`official: true`, `addonId`): `homemix/official/*` built into zips inside the HomeMix
+   image (`homemix/official/build.sh`, `HomeMix:OfficialPath`). They need no GitHub and update with HomeApps: the
+   web app's "check for an update" adds the image's zip again. Today: Pomodoro and Pogoda.
+2. **The index's add-ons** (`repository`): `addons.json` (`HomeMix:StoreIndexUrl`, by default
+   [`homemix/store/addons.json`](../homemix/store/addons.json) in the HomeApps repository) lists GitHub repositories;
+   publishing an add-on is a pull request that adds its link. For each, HomeMix reads from GitHub the repository's
+   description, its latest release (tag, date, the SHA-256 of `addon.zip`) and the README, at most 15 repositories,
+   cached for `HomeMix:StoreCacheMinutes`. A repository GitHub cannot describe stays listed with `problem`
+   (`no_release`, `no_addon_zip`, `no_digest`, `unavailable`).
+
+Nothing is uploaded to the store and the server keeps nothing but that cache. Choosing an entry adds it like a link
+(`/packages/github`) or by id (`/packages/official/{id}`), then the consent screen asks where to install it. Blocked
+add-ons (by id or hash) leave the list. The web app shows a README as plain text, never as HTML.
 
 ## Installing (A1)
 
@@ -114,8 +133,22 @@ an update needs `consent` only when it answered 409 `homemix.consent_required`. 
 caller's role with the caller's own token. An assistant acting for a person (JARVIS) reads these but never adds,
 installs, updates or removes (403 `assistant.not_allowed`).
 
-The Owner of the instance can switch uploads off (`HomeMix:UploadsEnabled`), block an add-on by id or SHA-256
-(`HomeMix:Blocked`) in configuration; a screen for blocking and seeing every installation comes with the store (A5).
+The Owner of the instance can switch uploads off (`HomeMix:UploadsEnabled`, official add-ons included) and block an
+add-on by id (every version) or by package SHA-256, in configuration (`HomeMix:Blocked`) or in the web app.
+
+### The Owner's view (A5)
+
+Administracja → **Dodatki** (`/admin/addons`, server role Owner only) lists every active installation on the instance
+(where, version, from where, network) and the blocks. A block stops the add-on everywhere at once: its files, data and
+notifications answer 404, it cannot be added or installed again, and it leaves the store; the data stays and comes
+back when the block is lifted. Blocks from the configuration are shown but lifted only there.
+
+| Endpoint (policy Owner) | |
+|---|---|
+| `GET /homemix/api/admin/installations` | every active installation, newest first, with `blocked` |
+| `GET /homemix/api/admin/blocks` | configuration's (`fromConfiguration`) and the web app's, with reason and who and when |
+| `PUT /homemix/api/admin/blocks/{idOrSha256}` `{ reason }` | blocks; again only changes the reason |
+| `DELETE /homemix/api/admin/blocks/{idOrSha256}` | lifts; `409 homemix.block_in_configuration`, `404 homemix.block_not_found` |
 
 ## The sandbox (A1)
 
@@ -160,12 +193,25 @@ Messages are plain objects over `postMessage`; the host checks `event.source` ag
 | `storage.household` | `data.list/get/put/delete` with `scope: 'household'` | the installation's shared data (for an account installation: the person's) |
 | `storage.user` | the same with `scope: 'user'` | the person's private data inside a household installation |
 | `household.members` | `members()` | names and avatars only |
-| `notify` | `toast(...)`; `push(userIds, ...)` through Notifications (A5) | |
+| `notify` | `toast(...)`; `push({ title, body, userIds?, path?, tag? })` through Notifications (A5) | see below |
 
 **Never**, whatever the consent: tokens, cookies or sessions; emails or account data beyond names and avatars; server
 roles or the list of accounts; data of other households or other installations, the same add-on elsewhere included;
 instance configuration (domain, Owner, versions, plugins); calls to core or plugin APIs on the person's behalf. A new
 capability is a change to this page plus a test that nothing on this list leaks.
+
+### Notifications (A5)
+
+`push()` sends a Web Push notification through the Notifications service (`NotificationRequested`, docs/notifications.md)
+on the person's behalf: `POST /homemix/api/installations/{id}/notify` `{ title, body, userIds, path, tag }` answers
+`{ recipients }`.
+
+- Without `userIds` it goes to everyone else in the household; on an account, to its owner. Named people must be in
+  the household (`400 homemix.not_a_recipient`); at most 50.
+- A click opens the add-on's page (`/homes/{id}/mix/{addon}/{path}` or `/me/mix/{addon}/{path}`); the same `tag`
+  replaces the previous notification of this installation. People mute it like a plugin: by household or by the
+  add-on's id (the source); the category is `addon`.
+- `HomeMix:NotificationsPerHour` (30) per installation, then `429` with `Retry-After`. Not open to an assistant.
 
 ## Data (A2)
 
@@ -253,6 +299,7 @@ export default async function ({ day }, ctx) {
 - Widgets stand on the household's first page (`Household`) and on the wall tablet (`Wall`).
 - The host side of the bridge is `src/Web/src/features/homemix/useMixHost.ts`; `members()` goes through Households,
   so a guest, who may not list members, gets an error there.
+- "Dodaj dodatek" opens on the store (A5), with the GitHub link and the zip next to it.
 
 ## Building one (A3)
 
@@ -273,8 +320,13 @@ Optional, light tooling, versioned with HomeApps, in `src/Web/homemix` (npm work
 To work on them: `cd src/Web && npm ci`, then `cd homemix && npm install && npm run build`.
 
 The official **Pomodoro** (`homemix/official/pomodoro`) is written with `@homemix/vue`: one timer shared by the
-household, each person's sessions counted privately (`storage.user`), the lengths set by Admins (`settings.write`).
-**Pogoda** follows with the store (A5).
+household, each person's sessions counted privately (`storage.user`), the lengths set by Admins (`settings.write`) and
+the end of a focus pushed to everyone else (`notify`). The official **Pogoda** (`homemix/official/pogoda`, A5) shows
+the weather now and for a week from Open-Meteo for a place an Admin picks (`place.write`); its only `network` are
+Open-Meteo's two hosts. `homemix/official/build.sh <folder>` builds both into `<id>.zip`; the HomeMix image runs it,
+and `HomeMix:OfficialPath` points HomeMix at the folder (from Rider: `homemix/official/dist`).
+
+The bridge client sends parameters through JSON, so a Vue `ref` of an object can be passed to `data.put` as it is.
 
 ## Running it (A1)
 
@@ -292,5 +344,9 @@ and `/homemix/run` (not `/mcp`). From Rider it runs on `http://localhost:5600`.
 | `HomeMix:PackagesPath` | `/data/packages` | the volume |
 | `HomeMix:HouseholdsUrl` | `http://households:8080` | |
 | `HomeMix:GitHubToken` | empty | `HOMEMIX_GITHUB_TOKEN`, only to raise GitHub's limit of 60 anonymous requests an hour |
+| `HomeMix:StoreIndexUrl` | `homemix/store/addons.json` on GitHub | `HOMEMIX_STORE_INDEX`; empty: only official add-ons |
+| `HomeMix:StoreCacheMinutes` | 60 | how long the store keeps what it read from GitHub |
+| `HomeMix:OfficialPath` | `/app/official` | the official add-ons' zips in the image |
+| `HomeMix:NotificationsPerHour` | 30 | `notify.push` per installation |
 
 Tests: `tests/HomeMix`; the Api tests use `HOMEMIX_TEST_DATABASE` (a Postgres connection string) or Testcontainers.
