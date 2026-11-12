@@ -19,6 +19,18 @@ public sealed class HomeMixOptions
     [Range(64 * 1024, 50 * 1024 * 1024)]
     public long MaxPackageBytes { get; set; } = 5 * 1024 * 1024;
 
+    /// <summary>One data document (docs/homemix.md, "Data").</summary>
+    [Range(1024, 16 * 1024 * 1024)]
+    public int MaxDocumentBytes { get; set; } = 1024 * 1024;
+
+    /// <summary>All data of one installation, both scopes.</summary>
+    [Range(64 * 1024, 1024L * 1024 * 1024)]
+    public long MaxInstallationBytes { get; set; } = 10 * 1024 * 1024;
+
+    /// <summary>Documents in one collection of one space.</summary>
+    [Range(1, 100_000)]
+    public int MaxDocumentsPerCollection { get; set; } = 1000;
+
     /// <summary>Where the zips are kept, one per SHA-256 (the <c>homemix-packages</c> volume).</summary>
     [Required]
     public string PackagesPath { get; set; } = "/data/packages";
