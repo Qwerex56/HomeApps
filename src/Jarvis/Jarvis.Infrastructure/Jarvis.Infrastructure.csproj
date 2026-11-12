@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- JARVIS adapters: Auth's delegation endpoint, plugin manifests, MCP clients to the sources. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Jarvis.Application\Jarvis.Application.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Infrastructure\HomeApps.BuildingBlocks.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Jarvis.Api.Tests" />
+  </ItemGroup>
+
+</Project>

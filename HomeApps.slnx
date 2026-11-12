@@ -66,6 +66,14 @@
 		<Project Path="tests/Households/Households.Domain.Tests/Households.Domain.Tests.csproj" />
 		<Project Path="tests/Households/Households.Infrastructure.Tests/Households.Infrastructure.Tests.csproj" />
 	</Folder>
+	<Folder Name="/Jarvis/">
+		<Project Path="src/Jarvis/Jarvis.Api/Jarvis.Api.csproj" />
+		<Project Path="src/Jarvis/Jarvis.Application/Jarvis.Application.csproj" />
+		<Project Path="src/Jarvis/Jarvis.Infrastructure/Jarvis.Infrastructure.csproj" />
+	</Folder>
+	<Folder Name="/Jarvis/tests/">
+		<Project Path="tests/Jarvis/Jarvis.Api.Tests/Jarvis.Api.Tests.csproj" />
+	</Folder>
 
 	<Folder Name="/Notifications/">
 		<Project Path="src/Notifications/Notifications.Api/Notifications.Api.csproj" />
