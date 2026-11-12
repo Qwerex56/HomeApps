@@ -29,7 +29,14 @@ public static class TestJwt
     public static string CreateDelegatedToken(Guid userId, string actor = "jarvis-service", string? email = null, params string[] roles) =>
         Create(userId, email, roles, actor);
 
-    private static string Create(Guid userId, string? email, string[] roles, string? actor)
+    /// <summary>
+    /// A token Auth gives a connected app (OAuth, jarvis-v1.md 3.1): <c>aud</c> = the <paramref name="resource"/> it
+    /// asked for, <c>client_id</c> = the app.
+    /// </summary>
+    public static string CreateAppToken(Guid userId, string resource, string clientId) =>
+        Create(userId, null, [], null, resource, clientId);
+
+    private static string Create(Guid userId, string? email, string[] roles, string? actor, string audience = Audience, string? clientId = null)
     {
         ArgumentNullException.ThrowIfNull(roles);
 
@@ -44,6 +51,11 @@ public static class TestJwt
         }
 
         claims.AddRange(roles.Select(r => new Claim(ClaimNames.Role, r)));
+        if (clientId is not null)
+        {
+            claims.Add(new Claim(ClaimNames.ClientId, clientId));
+        }
+
         if (actor is not null)
         {
             claims.Add(new Claim(ClaimNames.Actor, JsonSerializer.Serialize(new Dictionary<string, string> { ["sub"] = actor }), JsonClaimValueTypes.Json));
@@ -52,7 +64,7 @@ public static class TestJwt
 
         var token = new JwtSecurityToken(
             Issuer,
-            Audience,
+            audience,
             claims,
             expires: DateTime.UtcNow.AddMinutes(10),
             signingCredentials: new SigningCredentials(SigningKey, SecurityAlgorithms.HmacSha256));
