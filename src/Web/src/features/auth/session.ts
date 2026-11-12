@@ -32,6 +32,7 @@ export const useSessionStore = defineStore('session', () => {
 
   const claims = computed(() => (accessToken.value ? readClaims(accessToken.value) : null))
   const isAdmin = computed(() => claims.value?.role === 'Admin' || claims.value?.role === 'Owner')
+  const isOwner = computed(() => claims.value?.role === 'Owner')
 
   const channel = typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel('homeapps.session')
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -125,7 +126,7 @@ export const useSessionStore = defineStore('session', () => {
 
   connectSession({ accessToken: () => accessToken.value, refresh })
 
-  return { accessToken, status, claims, isAdmin, apply, clear, refresh, start, signOut }
+  return { accessToken, status, claims, isAdmin, isOwner, apply, clear, refresh, start, signOut }
 })
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))

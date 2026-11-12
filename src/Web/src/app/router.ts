@@ -12,6 +12,8 @@ declare module 'vue-router' {
     guestOnly?: boolean
     /** Server role Admin or Owner (the claim in the token; Accounts and Auth check it again). */
     admin?: boolean
+    /** Server role Owner only: the person who runs the server (AUTH_BOOTSTRAP_EMAIL). */
+    owner?: boolean
   }
 }
 
@@ -153,6 +155,12 @@ export const router = createRouter({
               name: 'admin-households',
               component: () => import('@/features/admin/pages/HouseholdsPage.vue'),
             },
+            {
+              path: 'plugins',
+              name: 'admin-plugins',
+              meta: { owner: true },
+              component: () => import('@/features/admin/pages/ServerPluginsPage.vue'),
+            },
           ],
         },
       ],
@@ -248,6 +256,9 @@ router.beforeEach(async (to) => {
     return { name: 'home' }
   }
   if (to.matched.some((r) => r.meta.admin) && !session.isAdmin) {
+    return { name: 'home' }
+  }
+  if (to.matched.some((r) => r.meta.owner) && !session.isOwner) {
     return { name: 'home' }
   }
 })

@@ -399,7 +399,8 @@
     },
     "tabs": {
       "users": "Konta",
-      "households": "Domy"
+      "households": "Domy",
+      "plugins": "Pluginy serwera"
     },
     "households": {
       "title": "Wszystkie domy",
@@ -409,6 +410,28 @@
       "created": "Utworzony",
       "restore": "Przywróć",
       "restored": "Dom przywrócony"
+    },
+    "plugins": {
+      "title": "Pluginy serwera",
+      "subtitle": "Tylko podgląd. HomeApps {version}.",
+      "refresh": "Sprawdź ponownie",
+      "empty": "Ten serwer nie ma pluginów (HOMEAPPS_PLUGINS jest puste).",
+      "version": "wersja {version}",
+      "requires": "wymaga HomeApps {version}",
+      "tooOld": "ten serwer ma starszą wersję",
+      "health": {
+        "healthy": "Działa",
+        "unhealthy": "Nie odpowiada",
+        "unknown": "Brak sprawdzenia zdrowia"
+      },
+      "ui": {
+        "loaded": "UI wczytane",
+        "none": "Bez UI",
+        "incompatible": "UI pominięte: niezgodna wersja",
+        "unavailable": "UI się nie wczytało",
+        "notRunning": "Nie działa"
+      },
+      "howToChange": "Pluginy dodaje się i usuwa na serwerze: wpis w HOMEAPPS_PLUGINS, usługa w compose i restart. Szczegóły w docs/plugins.md."
     }
   },
   "households": {

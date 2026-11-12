@@ -84,16 +84,19 @@ async function loadPlugin(id: string): Promise<LoadedPlugin | null> {
   }
 }
 
-/** The instance's plugins (/plugins.json, from HOMEAPPS_PLUGINS) with their manifests and UI modules. */
-export async function loadPlugins(): Promise<LoadedPlugin[]> {
-  let ids: string[] = []
+/** The ids in /plugins.json (from HOMEAPPS_PLUGINS), without repeats; none when it cannot be read. */
+export async function loadPluginIds(): Promise<string[]> {
   try {
     const response = await fetch('/plugins.json', { headers: { Accept: 'application/json' } })
-    ids = response.ok ? ((await response.json()) as string[]) : []
+    return response.ok ? [...new Set((await response.json()) as string[])] : []
   } catch {
-    ids = []
+    return []
   }
-  const loaded = await Promise.all([...new Set(ids)].map(loadPlugin))
+}
+
+/** The instance's plugins (/plugins.json, from HOMEAPPS_PLUGINS) with their manifests and UI modules. */
+export async function loadPlugins(): Promise<LoadedPlugin[]> {
+  const loaded = await Promise.all((await loadPluginIds()).map(loadPlugin))
   return loaded.filter((p): p is LoadedPlugin => p !== null)
 }
 

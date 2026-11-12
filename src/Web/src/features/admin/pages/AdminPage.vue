@@ -1,12 +1,16 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useSessionStore } from '@/features/auth/session'
 
 const { t } = useI18n()
+const session = useSessionStore()
 
-const tabs = [
+const tabs = computed(() => [
   { name: 'admin-users', label: 'admin.tabs.users', icon: 'pi pi-users' },
   { name: 'admin-households', label: 'admin.tabs.households', icon: 'pi pi-home' },
-]
+  ...(session.isOwner ? [{ name: 'admin-plugins', label: 'admin.tabs.plugins', icon: 'pi pi-box' }] : []),
+])
 </script>
 
 <template>
