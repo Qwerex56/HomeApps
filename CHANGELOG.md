@@ -29,6 +29,8 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
   (`POST /jarvis/api/confirmations/{id}`, `AssistantConfirmed`). Daily budget, retention 7/30 days, erase on
   `UserErased`. Database `homeapps_jarvis` (migration `Initial`). Contracts `Assistant*`. `RecordingEventBus` moved to
   the testing kit.
+- **JARVIS (J2c):** the person's conversations (`/jarvis/api/conversations`, answers over server-sent events, migration
+  `Conversations`) and the **JARVIS** page in the web app with the action card and confirmations.
 - **Web:** the consent screen `/connect` and "Connected apps" in the account settings.
 - **HomeMix (A1):** the core service `src/HomeMix` for add-ons from the web app (docs/homemix.md, ADR 0009): packages
   from a zip or a GitHub release (`addon.zip` checked against GitHub's SHA-256), the `homemix.json` validation,

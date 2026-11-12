@@ -46,6 +46,19 @@ Settings (`Jarvis`):
   `POST /jarvis/api/confirmations/{id}` `{approve}` or `AssistantConfirmed`, only from the person who asked.
 - **Data:** runs and calls in `homeapps_jarvis`; content erased after 7 days, rows after 30; everything on `UserErased`.
 
+## Conversations in the app (J2c)
+
+- Page **JARVIS** (`/jarvis/:conversationId?`) in the menu: the person's conversations, the open one, the action card with
+  Confirm / Cancel. The household picked in the header goes along as JARVIS's default.
+- API, only the owner's own (someone else's answers 404, the server's Owner too):
+  `GET/POST /jarvis/api/conversations`, `DELETE /jarvis/api/conversations/{id}`,
+  `GET /jarvis/api/conversations/{id}/messages`, `POST /jarvis/api/conversations/{id}/messages` `{text, householdId?}`.
+- Sending answers with server-sent events: `text` (JSON string pieces), `action` (`ActionView`, as the gateway logs it),
+  then `message` (the kept answer with its card) or `error` (`{code, detail}`). JARVIS sees the last 20 messages.
+- Messages stay until the person deletes the conversation (or the account is erased); the run behind an answer follows
+  the log's retention, so after 30 days the message keeps its text but loses its card.
+- Traefik sends only `/jarvis/api`, `/jarvis/mcp` and the metadata to the service; `/jarvis` itself is the web app.
+
 ## Connecting Claude Code (dev)
 
 Run the stack with `--profile services` (or JARVIS from the IDE on `:5700`, routed by `dynamic/dev-routes.yaml`), then:
