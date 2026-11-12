@@ -79,6 +79,17 @@
 		<Project Path="tests/Notifications/Notifications.Infrastructure.Tests/Notifications.Infrastructure.Tests.csproj" />
 	</Folder>
 
+	<Folder Name="/HomeMix/">
+		<Project Path="src/HomeMix/HomeMix.Api/HomeMix.Api.csproj" />
+		<Project Path="src/HomeMix/HomeMix.Application/HomeMix.Application.csproj" />
+		<Project Path="src/HomeMix/HomeMix.Domain/HomeMix.Domain.csproj" />
+		<Project Path="src/HomeMix/HomeMix.Infrastructure/HomeMix.Infrastructure.csproj" />
+	</Folder>
+	<Folder Name="/HomeMix/tests/">
+		<Project Path="tests/HomeMix/HomeMix.Api.Tests/HomeMix.Api.Tests.csproj" />
+		<Project Path="tests/HomeMix/HomeMix.Domain.Tests/HomeMix.Domain.Tests.csproj" />
+	</Folder>
+
 	<Folder Name="/Contracts/">
 		<Project Path="src/Contracts/HomeApps.Contracts/HomeApps.Contracts.csproj" />
 	</Folder>

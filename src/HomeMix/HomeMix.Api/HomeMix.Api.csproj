@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\HomeMix.Infrastructure\HomeMix.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Api\HomeApps.BuildingBlocks.Api.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Mcp\HomeApps.BuildingBlocks.Mcp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="HomeMix.Api.Tests" />
+  </ItemGroup>
+
+</Project>
