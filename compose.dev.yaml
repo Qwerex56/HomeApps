@@ -247,9 +247,20 @@ services:
       Jarvis__Sources__0__Url: "http://households:8080/mcp"
       Jarvis__Sources__1__Url: "http://accounts:8080/mcp"
       Jarvis__Sources__2__Url: "http://homemix:8080/mcp"
+      Jarvis__ClientSecret: ${JARVIS_CLIENT_SECRET:-development-only-jarvis-secret-0123456789}
+      # Owner's Claude subscription (`claude setup-token`); without it JARVIS answers that he is switched off.
+      Jarvis__ClaudeCode__OAuthToken: ${JARVIS_CLAUDE_CODE_OAUTH_TOKEN:-}
+      ConnectionStrings__Database: "Host=postgres;Database=homeapps_jarvis;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: ${RABBITMQ_USER:-guest}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-guest}
     depends_on:
       auth:
         condition: service_started
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
       # Only the gateway and its RFC 9728 metadata; the services' own MCP servers stay inside the Docker network.
