@@ -13,9 +13,9 @@ internal sealed class AuthDelegation(HttpClient http, IOptions<GatewayOptions> o
 {
     private static readonly TimeSpan Margin = TimeSpan.FromSeconds(30);
 
-    public async Task<string> TokenForAsync(Guid userId, string client, CancellationToken cancellationToken)
+    public async Task<string> TokenForAsync(Guid userId, string channel, string reference, CancellationToken cancellationToken)
     {
-        var key = (nameof(AuthDelegation), userId, client);
+        var key = (nameof(AuthDelegation), userId, channel, reference);
         if (cache.TryGetValue(key, out string? cached) && cached is not null)
         {
             return cached;
@@ -27,8 +27,8 @@ internal sealed class AuthDelegation(HttpClient http, IOptions<GatewayOptions> o
             settings.ClientId,
             settings.ClientSecret,
             userId,
-            channel = "mcp",
-            reference = client,
+            channel,
+            reference,
         }, cancellationToken);
         response.EnsureSuccessStatusCode();
         var token = await response.Content.ReadFromJsonAsync<DelegatedToken>(cancellationToken)
