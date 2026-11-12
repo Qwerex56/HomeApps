@@ -1,7 +1,7 @@
 {
   "homemixVersion": 1,
   "id": "pomodoro",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "requires": { "homeApps": "2.3.0" },
   "name": { "pl": "Pomodoro", "en": "Pomodoro" },
   "description": {
@@ -16,5 +16,19 @@
   ],
   "capabilities": ["storage.household", "storage.user", "notify"],
   "network": [],
-  "permissions": [{ "id": "settings.write", "minRole": "Admin" }]
+  "permissions": [{ "id": "settings.write", "minRole": "Admin" }],
+  "jarvis": true,
+  "tools": [
+    {
+      "name": "stats",
+      "description": "How many focus sessions the person finished, per day (key yyyy-MM-dd, count).",
+      "collection": "stats",
+      "action": "list",
+      "scope": "user"
+    }
+  ],
+  "summary": {
+    "collection": "timer",
+    "description": "The household's shared timer: mode (focus or break), startedAt (null while stopped), remaining seconds when stopped, and who changed it last."
+  }
 }

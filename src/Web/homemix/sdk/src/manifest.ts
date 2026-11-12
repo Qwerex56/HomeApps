@@ -28,6 +28,26 @@ export interface HomeMixManifest {
   network?: string[]
   permissions?: { id: string; minRole: HouseholdRole }[]
   jarvis?: boolean
+  /** What JARVIS may do with the add-on's data, as `{id}_{name}` tools (docs/homemix.md, "JARVIS"). */
+  tools?: AddonTool[]
+  /** A collection JARVIS reads as `{id}_summary`. */
+  summary?: { collection: string; scope?: 'household' | 'user'; description?: string }
+}
+
+export type ToolAction = 'add' | 'list' | 'get' | 'update' | 'delete'
+export type ToolFieldType = 'string' | 'integer' | 'number' | 'boolean'
+
+export interface AddonTool {
+  name: string
+  description: string
+  collection: string
+  action: ToolAction
+  scope?: 'household' | 'user'
+  /** Only for add and update. */
+  fields?: Record<string, { type: ToolFieldType; description?: string; required?: boolean; default?: unknown }>
+  permission?: string
+  /** What JARVIS says after a change; {key} and {field} are filled in. */
+  answer?: string
 }
 
 export const RESERVED_IDS = ['households', 'accounts', 'jarvis', 'homemix', 'notifications', 'auth']
@@ -41,6 +61,11 @@ const name = /^[a-z][a-z0-9._-]{0,63}$/
 const version = /^\d{1,5}\.\d{1,5}\.\d{1,5}(-[0-9A-Za-z.-]{1,32})?$/
 const path = /^[A-Za-z0-9._/-]{0,200}$/
 const roles = ['Guest', 'Member', 'Admin', 'Owner']
+const toolName = /^[a-z][a-z0-9_]{0,39}$/
+const fieldName = /^[a-z][A-Za-z0-9_]{0,39}$/
+const actions = ['add', 'list', 'get', 'update', 'delete']
+const fieldTypes = ['string', 'integer', 'number', 'boolean']
+const collection = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/
 
 /** Every problem with a homemix.json, as the server reports them; empty when it is valid. */
 export function checkManifest(json: unknown): string[] {
@@ -93,7 +118,49 @@ export function checkManifest(json: unknown): string[] {
     if (!roles.includes(p.minRole))
       problems.push(`permissions['${p.id}'].minRole must be Guest, Member, Admin or Owner.`)
   }
+  checkTools(m, problems)
   return problems
+}
+
+function checkTools(m: Partial<HomeMixManifest>, problems: string[]) {
+  if ((m.tools?.length || m.summary) && m.jarvis !== true)
+    problems.push('tools and summary are for JARVIS: set jarvis to true.')
+  if ((m.tools?.length ?? 0) > 20) problems.push('tools: at most 20.')
+  const scope = (s: unknown, at: string) => {
+    if (s !== undefined && s !== 'household' && s !== 'user') problems.push(`${at}.scope must be household or user.`)
+    else if (!m.capabilities?.includes(`storage.${s ?? 'household'}` as Capability))
+      problems.push(`${at}.scope ${s ?? 'household'} needs the capability storage.${s ?? 'household'}.`)
+  }
+  for (const tool of m.tools ?? []) {
+    const at = `tools['${tool.name}']`
+    if (typeof tool.name !== 'string' || !toolName.test(tool.name) || tool.name === 'summary')
+      problems.push(`${at}.name must be 1-40 characters: lowercase letters, digits and '_', starting with a letter, not 'summary'.`)
+    else if (`${m.id}_${tool.name}`.length > 64) problems.push(`${at}.name: '${m.id}_${tool.name}' is longer than 64 characters.`)
+    if (typeof tool.description !== 'string' || !tool.description.trim() || tool.description.length > 500)
+      problems.push(`${at}.description is required, at most 500 characters: JARVIS picks tools by it.`)
+    if (typeof tool.collection !== 'string' || !collection.test(tool.collection))
+      problems.push(`${at}.collection must be a collection name.`)
+    if (!actions.includes(tool.action)) problems.push(`${at}.action must be add, list, get, update or delete.`)
+    scope(tool.scope, at)
+    const fields = Object.entries(tool.fields ?? {})
+    if (fields.length && tool.action !== 'add' && tool.action !== 'update')
+      problems.push(`${at}.fields: only add and update tools take fields.`)
+    if (fields.length > 20) problems.push(`${at}.fields: at most 20.`)
+    for (const [field, spec] of fields) {
+      if (!fieldName.test(field) || field === 'key' || field === 'household')
+        problems.push(`${at}.fields.${field}: a field name is 1-40 letters, digits and '_', starting with a lowercase letter, not key or household.`)
+      if (!fieldTypes.includes(spec?.type)) problems.push(`${at}.fields.${field}.type must be string, integer, number or boolean.`)
+    }
+    if (tool.permission !== undefined && !m.permissions?.some((p) => p.id === tool.permission))
+      problems.push(`${at}.permission: '${tool.permission}' is not in permissions.`)
+    if (tool.answer !== undefined && (typeof tool.answer !== 'string' || tool.answer.length > 300))
+      problems.push(`${at}.answer: at most 300 characters.`)
+  }
+  if (m.summary) {
+    if (typeof m.summary.collection !== 'string' || !collection.test(m.summary.collection))
+      problems.push('summary.collection must be a collection name.')
+    scope(m.summary.scope, 'summary')
+  }
 }
 
 /** Every problem with the files of a package; paths relative to its root, with sizes. */
