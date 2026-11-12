@@ -2,9 +2,25 @@
 
 Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`.
 
-## 2.3.0 (unreleased)
+## 2.3.0 (2026-11-12)
+
+JARVIS and HomeMix. JARVIS is the home's assistant: one MCP gateway (`/jarvis/mcp`) for the tools of the core,
+the plugins and the add-ons, an agent on the owner's Claude subscription (the JARVIS page, `@Jarvis` in the chat
+plugin), and the same gateway for your own Claude Code or claude.ai over OAuth. HomeMix brings add-ons
+that a household or a person installs from the web app, sandboxed, with a store and the official Pomodoro and Pogoda.
+
+### Upgrading
+
+- **`.env`:** add `JARVIS_CLIENT_SECRET` (required, `openssl rand -base64 32`) and, for JARVIS's own answers,
+  `JARVIS_CLAUDE_CODE_OAUTH_TOKEN` from `claude setup-token`. See [docs/jarvis.md](docs/jarvis.md#production).
+- Two new databases (`homeapps_homemix`, `homeapps_jarvis`) and the volume `homemix-packages` (back it up with the
+  databases, see docs/deployment.md). Plugins built against the kit need the 2.3.0 packages (`scripts/pack.sh`).
 
 ### Added
+
+- **Release (J4):** `compose.prod.yaml` runs `jarvis` (Traefik `/jarvis/api`, `/jarvis/mcp` and its metadata) and gives
+  Auth the `jarvis-service` client and the gateway as the connected apps' resource; every image is 2.3.0.
+  `scripts/smoke.sh` also installs Pogoda from the store and checks the gateway and an answer from JARVIS.
 
 - **MCP:** the kit package `HomeApps.BuildingBlocks.Mcp` serves a service's use cases as MCP tools for JARVIS and other
   MCP clients (`AddHomeAppsMcp`, `MapHomeAppsMcp`, `ToolResult`), see [docs/mcp.md](docs/mcp.md). Households serves
