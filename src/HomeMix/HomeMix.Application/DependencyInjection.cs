@@ -1,4 +1,5 @@
 using HomeApps.BuildingBlocks.Application;
+using HomeMix.Application.Data;
 using HomeMix.Application.Installations;
 using HomeMix.Application.Packages;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +16,7 @@ public static class DependencyInjection
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<PackageIntake>();
         services.AddScoped<InstallationAccess>();
+        services.AddScoped<DataAccess>();
         return services;
     }
 }

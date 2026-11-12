@@ -7,7 +7,7 @@ narrow bridge, keeps its data in the core service HomeMix and can give JARVIS to
 
 > Status: the contract for HomeApps 2.3.0, built in stages A1-A7 (plan `plans/features/household-apps-upload.md`,
 > order agreed with JARVIS in `plans/features/jarvis-v1.md` 10a). Sections say which stage brings them. Built so far:
-> A1, the service with packages, installations and the sandbox (no web app screens yet).
+> A1, the service with packages, installations and the sandbox; A2, the data (no web app screens yet).
 
 ## Plugin or HomeMix
 
@@ -168,20 +168,39 @@ capability is a change to this page plus a test that nothing on this list leaks.
 
 ## Data (A2)
 
-Documents of JSON per installation, in collections the add-on names: `HomeMix:MaxDocumentBytes` 1 MB,
-`HomeMix:MaxInstallationBytes` 10 MB, `HomeMix:MaxDocumentsPerCollection` 1000. Each has a `version` for optimistic
-concurrency (`409 homemix.conflict` on a stale write), `updatedBy`, `updatedAt`.
+Documents of JSON per installation, in collections the add-on names (`[A-Za-z0-9][A-Za-z0-9._-]{0,63}`, the same for
+keys). Two scopes: `household`, the installation's shared data (on an account: the person's), needs
+`storage.household`; `user`, each person's private data in it, needs `storage.user`. Limits:
+`HomeMix:MaxDocumentBytes` 1 MB, `HomeMix:MaxInstallationBytes` 10 MB (both scopes), `HomeMix:MaxDocumentsPerCollection`
+1000. Each document has a `version`, `updatedBy` and `updatedAt`.
 
 ```http
-GET    /homemix/api/installations/{id}/data/{collection}?scope=household|user
+GET    /homemix/api/installations/{id}/data/{collection}?scope=household|user       every document, by key
 GET    /homemix/api/installations/{id}/data/{collection}/{key}?scope=...
-PUT    /homemix/api/installations/{id}/data/{collection}/{key}?scope=...     { "value": {...}, "version": 2 }
-DELETE /homemix/api/installations/{id}/data/{collection}/{key}?scope=...
+PUT    /homemix/api/installations/{id}/data/{collection}/{key}?scope=...           { "value": <any JSON>, "version": 2 }
+DELETE /homemix/api/installations/{id}/data/{collection}/{key}?scope=...&version=2
+GET    /homemix/api/installations/{id}/me                                           { "role": "Member", "permissions": [...] }
 ```
 
-The host calls these with the person's token; the frame never does. Access is checked like a plugin's, by asking
-Households for the caller's role (`IHouseholdAccess`). These endpoints and `/mcp` allow assistant tokens
-(`.AllowAssistant()`); installing, updating and uninstalling refuse them, pinned by a test as in Households.
+`scope` defaults to `household`. `version` is the one read before: a stale one answers 409 `homemix.conflict`;
+without it the write wins. Who may do what:
+
+| | Household installation | Account installation |
+|---|---|---|
+| Read either scope | every member, guests too | the owner |
+| Write shared data | the role of the add-on's permission `{collection}.write` (e.g. `{ "id": "plan.write", "minRole": "Admin" }`), Member and up when there is none; otherwise 403 `homemix.read_only` | the owner |
+| Write own private data | every member, guests too | the owner |
+
+`/me` answers the caller's household role and which of the add-on's `permissions` they have; the bridge's `can()`
+answers from it. Other errors: `homemix.capability_missing`, `homemix.document_too_large`, `homemix.storage_full`,
+`homemix.collection_full`, `homemix.document_not_found`.
+
+The host calls these with the person's token; the frame never does. These endpoints and `/mcp` allow assistant tokens
+(`.AllowAssistant()`): they are the add-on's data, not HomeApps'. Adding packages, installing, updating and
+uninstalling refuse them; `AssistantTests` pins that list.
+
+Uninstalling keeps the data: reinstalling the same add-on in the same place within 30 days brings it back; after that
+an hourly job deletes it.
 
 ## JARVIS (A6, A7)
 
@@ -250,6 +269,7 @@ and `/homemix/run` (not `/mcp`). From Rider it runs on `http://localhost:5600`.
 | `HomeMix:Blocked` | empty | add-on ids or package SHA-256s; blocked ones are not added and stop being served |
 | `HomeMix:Plugins` | `HOMEAPPS_PLUGINS` | ids an add-on may not take |
 | `HomeMix:MaxPackageBytes` | 5 MB | |
+| `HomeMix:MaxDocumentBytes`, `MaxInstallationBytes`, `MaxDocumentsPerCollection` | 1 MB, 10 MB, 1000 | data limits |
 | `HomeMix:PackagesPath` | `/data/packages` | the volume |
 | `HomeMix:HouseholdsUrl` | `http://households:8080` | |
 | `HomeMix:GitHubToken` | empty | `HOMEMIX_GITHUB_TOKEN`, only to raise GitHub's limit of 60 anonymous requests an hour |

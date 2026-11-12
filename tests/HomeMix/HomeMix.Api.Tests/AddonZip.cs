@@ -9,7 +9,7 @@ internal static class AddonZip
     public const string Index = "<!doctype html><title>Pomodoro</title><script type=\"module\" src=\"app.js\"></script>";
 
     public static string Manifest(string id = "pomodoro", string version = "1.0.0", string capabilities = """["storage.household"]""",
-        string network = "[]", string? targets = null) =>
+        string network = "[]", string? targets = null, string? extra = null) =>
         $$"""
         {
           "homemixVersion": 1,
@@ -21,7 +21,7 @@ internal static class AddonZip
           {{(targets is null ? string.Empty : $"\"targets\": {targets},")}}
           "entry": "index.html",
           "capabilities": {{capabilities}},
-          "network": {{network}}
+          "network": {{network}}{{(extra is null ? string.Empty : "," + extra)}}
         }
         """;
 

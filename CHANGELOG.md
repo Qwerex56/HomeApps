@@ -30,6 +30,11 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
   the sandbox route `/homemix/run/{installationId}/` (CSP `sandbox`, `connect-src` from the consent). An empty MCP
   server at `/mcp` for the JARVIS gateway. Compose service `homemix`, database `homeapps_homemix`, volume
   `homemix-packages`.
+- **HomeMix (A2):** each installation's data: JSON documents in collections, shared (`storage.household`) or private
+  per person (`storage.user`), with versions against lost updates, limits per document, collection and installation,
+  write roles from the add-on's `{collection}.write` permission, and `/me` for the bridge's `can()`. An assistant may
+  change this data; a test pins which changes it may make. Uninstalled add-ons' data comes back on a reinstall within
+  30 days and is deleted after. Database migration `Documents`.
 
 ### Fixed
 

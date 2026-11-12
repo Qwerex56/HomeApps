@@ -2,6 +2,7 @@ using FluentResults;
 using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.BuildingBlocks.Application.Messaging;
 using HomeMix.Application.Abstractions;
+using HomeMix.Application.Data;
 using HomeMix.Domain.Installations;
 using HomeMix.Domain.Packages;
 using Microsoft.Extensions.Options;
@@ -11,6 +12,7 @@ namespace HomeMix.Application.Installations.Install;
 internal sealed class InstallHandler(
     IPackageRepository packages,
     IInstallationRepository installations,
+    IDocumentRepository documents,
     InstallationAccess access,
     ICurrentUser currentUser,
     TimeProvider time,
@@ -54,6 +56,18 @@ internal sealed class InstallHandler(
         }
 
         installations.Add(installation.Value);
+
+        // Uninstalled within the retention time: its data comes back.
+        var now = time.GetUtcNow();
+        var earlier = await installations.RemovedSinceAsync(package.AddonId, target, now - DataRetention.AfterRemoval, cancellationToken);
+        if (earlier.Count > 0)
+        {
+            foreach (var document in await documents.ListOfAsync(earlier, cancellationToken))
+            {
+                document.MoveTo(installation.Value.Id);
+            }
+        }
+
         return InstallationView.From(installation.Value, package);
     }
 }
