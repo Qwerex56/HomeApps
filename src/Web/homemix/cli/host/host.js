@@ -146,6 +146,18 @@ const handlers = {
     setTimeout(() => toast.remove(), 4000)
     return null
   },
+  // HomeApps sends it through Notifications; here it is only shown, with whom it would reach.
+  'notify.push': ({ title, body, userIds }) => {
+    const everyone = state().target === 'Household' ? members.map((m) => m.id) : [me.id]
+    const recipients = userIds ?? everyone.filter((id) => id !== me.id || state().target !== 'Household')
+    if (recipients.some((id) => !everyone.includes(id)))
+      throw new HomeMixError('homemix.not_a_recipient', 'A notification can go only to people of this household.')
+    const toast = document.createElement('div')
+    toast.textContent = `🔔 ${title}: ${body} (→ ${recipients.length})`
+    $('toasts').append(toast)
+    setTimeout(() => toast.remove(), 4000)
+    return { recipients: recipients.length }
+  },
 }
 
 const logged = Object.fromEntries(

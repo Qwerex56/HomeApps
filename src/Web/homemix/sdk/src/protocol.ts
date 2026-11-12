@@ -50,6 +50,19 @@ export interface Toast {
   severity?: 'success' | 'info' | 'warn' | 'error'
 }
 
+/**
+ * A notification through HomeApps' Notifications (Web Push) to people of the household, or to the account's owner.
+ * Without userIds it goes to everyone else in the household. path is a page of the add-on that a click opens; the same
+ * tag replaces an earlier notification instead of adding one. Each person's settings still decide if it shows.
+ */
+export interface Push {
+  title: string
+  body: string
+  userIds?: string[]
+  path?: string
+  tag?: string
+}
+
 /** Every method and its params and result. */
 export interface Methods {
   context: { params: undefined; result: HomeMixContext }
@@ -65,6 +78,7 @@ export interface Methods {
   'data.delete': { params: { scope?: Scope; collection: string; key: string; version?: number }; result: null }
   members: { params: undefined; result: Member[] }
   toast: { params: Toast; result: null }
+  'notify.push': { params: Push; result: { recipients: number } }
 }
 
 export type Method = keyof Methods
@@ -112,6 +126,7 @@ export const METHODS: readonly Method[] = [
   'data.delete',
   'members',
   'toast',
+  'notify.push',
 ]
 
 /** The capability a call needs, or null when every add-on may make it. */
@@ -120,7 +135,7 @@ export function requiredCapability(method: Method, params: unknown): Capability 
     return (params as { scope?: Scope } | undefined)?.scope === 'user' ? 'storage.user' : 'storage.household'
   }
   if (method === 'members') return 'household.members'
-  if (method === 'toast') return 'notify'
+  if (method === 'toast' || method === 'notify.push') return 'notify'
   return null
 }
 

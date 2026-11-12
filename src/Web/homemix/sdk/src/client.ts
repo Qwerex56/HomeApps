@@ -12,6 +12,7 @@ import {
   type Method,
   type Methods,
   type Scope,
+  type Push,
   type Toast,
 } from './protocol.js'
 
@@ -42,6 +43,8 @@ export interface HomeMix {
   }
   members(): Promise<Member[]>
   toast(message: string, severity?: Toast['severity']): Promise<void>
+  /** A notification to people's devices (capability notify); how many it was sent to. */
+  push(notification: Push): Promise<number>
   on<E extends EventName>(event: E, listener: (data: Events[E]) => void): () => void
 }
 
@@ -84,7 +87,10 @@ export function connect(options: ConnectOptions = {}): HomeMix {
       setTimeout(() => {
         if (pending.delete(id)) reject(new BridgeCallError('homemix.timeout', `No answer to ${method}.`))
       }, timeout)
-      host.postMessage({ homemix: PROTOCOL, id, method, params }, '*')
+      // Through JSON: what goes to HomeApps is JSON anyway, and a framework's reactive proxy (Vue's ref of an
+      // object) cannot be cloned by postMessage.
+      const plain = params === undefined ? undefined : JSON.parse(JSON.stringify(params))
+      host.postMessage({ homemix: PROTOCOL, id, method, params: plain }, '*')
     })
   }
 
@@ -110,6 +116,7 @@ export function connect(options: ConnectOptions = {}): HomeMix {
     toast: async (message, severity) => {
       await call('toast', { message, severity })
     },
+    push: async (notification) => (await call('notify.push', notification)).recipients,
     on(event, listener) {
       const set = listeners.get(event) ?? new Set()
       listeners.set(event, set)
