@@ -26,6 +26,7 @@ internal sealed partial class ToolsReader(
         ["get"] = ToolAction.Get,
         ["update"] = ToolAction.Update,
         ["delete"] = ToolAction.Delete,
+        ["script"] = ToolAction.Script,
     };
 
     private static readonly HashSet<string> Reserved = new(StringComparer.Ordinal) { "key", "household" };
@@ -125,23 +126,31 @@ internal sealed partial class ToolsReader(
             problems.Add($"{at}.description is required, at most 500 characters: JARVIS picks tools by it.");
         }
 
+        var actionText = Text(tool, "action") ?? string.Empty;
+        if (!Actions.TryGetValue(actionText, out var action))
+        {
+            problems.Add($"{at}.action must be add, list, get, update, delete or script.");
+        }
+
+        // A script reaches data through ctx, under the add-on's capabilities: no collection or scope of its own.
+        var script = action == ToolAction.Script;
         var collection = Text(tool, "collection") ?? string.Empty;
-        if (!DataNames.IsValid(collection))
+        if (!script && !DataNames.IsValid(collection))
         {
             problems.Add($"{at}.collection must be a collection name.");
         }
 
-        var actionText = Text(tool, "action") ?? string.Empty;
-        if (!Actions.TryGetValue(actionText, out var action))
+        var scope = script ? DataScope.Household : Scope(tool, at);
+        var fields = Fields(tool, at);
+        if (fields.Count > 0 && action is not (ToolAction.Add or ToolAction.Update or ToolAction.Script))
         {
-            problems.Add($"{at}.action must be add, list, get, update or delete.");
+            problems.Add($"{at}.fields: only add, update and script tools take fields.");
         }
 
-        var scope = Scope(tool, at);
-        var fields = Fields(tool, at);
-        if (fields.Count > 0 && action is not (ToolAction.Add or ToolAction.Update))
+        var readOnly = tool.TryGetProperty("readOnly", out var r) && r.ValueKind == JsonValueKind.True;
+        if (readOnly && !script)
         {
-            problems.Add($"{at}.fields: only add and update tools take fields.");
+            problems.Add($"{at}.readOnly is for script tools; the others say it by their action.");
         }
 
         var permission = Text(tool, "permission");
@@ -156,7 +165,7 @@ internal sealed partial class ToolsReader(
             problems.Add($"{at}.answer: at most 300 characters.");
         }
 
-        return new AddonTool(name, description ?? string.Empty, collection, action, scope, fields, permission, answer);
+        return new AddonTool(name, description ?? string.Empty, collection, action, scope, fields, permission, answer, readOnly);
     }
 
     private DataScope Scope(JsonElement owner, string at)

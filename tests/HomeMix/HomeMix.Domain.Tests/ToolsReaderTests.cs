@@ -1,5 +1,6 @@
 using HomeMix.Domain.Data;
 using HomeMix.Domain.Manifests;
+using HomeMix.Domain.Packages;
 using HomeMix.Domain.Tools;
 
 namespace HomeMix.Domain.Tests;
@@ -45,7 +46,7 @@ public sealed class ToolsReaderTests
     [InlineData(""" "jarvis": true, "tools": [{ "name": "a", "collection": "c", "action": "list" }]""", ".description is required")]
     [InlineData(""" "jarvis": true, "tools": [{ "name": "a", "description": "d", "collection": "c", "action": "fly" }]""", ".action must be")]
     [InlineData(""" "jarvis": true, "tools": [{ "name": "a", "description": "d", "collection": "c", "action": "list", "scope": "user" }]""", "needs the capability storage.user")]
-    [InlineData(""" "jarvis": true, "tools": [{ "name": "a", "description": "d", "collection": "c", "action": "list", "fields": { "n": { "type": "string" } } }]""", "only add and update")]
+    [InlineData(""" "jarvis": true, "tools": [{ "name": "a", "description": "d", "collection": "c", "action": "list", "fields": { "n": { "type": "string" } } }]""", "only add, update and script")]
     [InlineData(""" "jarvis": true, "tools": [{ "name": "a", "description": "d", "collection": "c", "action": "add", "fields": { "key": { "type": "string" } } }]""", "not key or household")]
     [InlineData(""" "jarvis": true, "tools": [{ "name": "a", "description": "d", "collection": "c", "action": "add", "fields": { "n": { "type": "date" } } }]""", ".type must be")]
     [InlineData(""" "jarvis": true, "tools": [{ "name": "a", "description": "d", "collection": "c", "action": "add", "fields": { "n": { "type": "integer", "default": "x" } } }]""", ".default must be a integer")]
@@ -66,5 +67,34 @@ public sealed class ToolsReaderTests
             """));
 
         Assert.Contains(result.Errors, e => e.Message.Contains("is longer than 64", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_script_tool_needs_its_file_in_the_package()
+    {
+        var manifest = AddonManifestParser.Parse(Manifests.Valid(extra: """
+            "jarvis": true, "tools": [{ "name": "forecast", "description": "d", "action": "script", "readOnly": true,
+              "fields": { "day": { "type": "integer", "default": 1 } } }]
+            """)).Value;
+
+        var without = PackageRules.Check([new PackageFile("index.html", 10)], manifest);
+        var with = PackageRules.Check([new PackageFile("index.html", 10), new PackageFile("tools/forecast.js", 10)], manifest);
+
+        var tool = Assert.Single(manifest.Tools);
+        Assert.Equal(ToolAction.Script, tool.Action);
+        Assert.False(tool.Changes);
+        Assert.Equal("tools/forecast.js", tool.ScriptPath);
+        Assert.Contains(without, p => p.Contains("tools/forecast.js", StringComparison.Ordinal));
+        Assert.Empty(with);
+    }
+
+    [Fact]
+    public void ReadOnly_is_only_for_scripts()
+    {
+        var result = AddonManifestParser.Parse(Manifests.Valid(extra: """
+            "jarvis": true, "tools": [{ "name": "a", "description": "d", "collection": "c", "action": "list", "readOnly": true }]
+            """));
+
+        Assert.Contains(result.Errors, e => e.Message.Contains("readOnly is for script tools", StringComparison.Ordinal));
     }
 }

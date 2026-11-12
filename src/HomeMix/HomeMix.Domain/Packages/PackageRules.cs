@@ -1,4 +1,5 @@
 using HomeMix.Domain.Manifests;
+using HomeMix.Domain.Tools;
 
 namespace HomeMix.Domain.Packages;
 
@@ -51,7 +52,10 @@ public static class PackageRules
             problems.Add("The package holds the same path twice.");
         }
 
-        foreach (var entry in new[] { manifest.Entry }.Concat(manifest.Widgets.Select(w => w.Entry)).OfType<string>().Distinct(StringComparer.Ordinal))
+        var named = new[] { manifest.Entry }
+            .Concat(manifest.Widgets.Select(w => w.Entry))
+            .Concat(manifest.Tools.Where(t => t.Action == ToolAction.Script).Select(t => t.ScriptPath));
+        foreach (var entry in named.OfType<string>().Distinct(StringComparer.Ordinal))
         {
             if (!paths.Contains(entry))
             {

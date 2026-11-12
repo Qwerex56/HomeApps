@@ -8,4 +8,7 @@ public enum ToolAction
     Get,
     Update,
     Delete,
+
+    /// <summary>Runs the add-on's <c>tools/{name}.js</c> in Jint (A7).</summary>
+    Script,
 }
