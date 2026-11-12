@@ -13,6 +13,15 @@ internal sealed class InstallationRepository(HomeMixDbContext db) : IInstallatio
         db.Installations.FirstOrDefaultAsync(
             i => i.AddonId == addonId && i.TargetKind == target.Kind && i.TargetId == target.Id && i.RemovedAt == null, cancellationToken);
 
+    public async Task<IReadOnlyList<Installation>> ListActiveForAsync(
+        IReadOnlyCollection<Guid> householdIds, Guid userId, CancellationToken cancellationToken) =>
+        await db.Installations
+            .Where(i => i.RemovedAt == null
+                && ((i.TargetKind == TargetKind.Household && householdIds.Contains(i.TargetId))
+                    || (i.TargetKind == TargetKind.User && i.TargetId == userId)))
+            .OrderBy(i => i.InstalledAt)
+            .ToListAsync(cancellationToken);
+
     public async Task<IReadOnlyList<Installation>> ListAllActiveAsync(CancellationToken cancellationToken) =>
         await db.Installations.Where(i => i.RemovedAt == null).OrderByDescending(i => i.InstalledAt).ToListAsync(cancellationToken);
 

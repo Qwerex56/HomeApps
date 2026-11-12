@@ -11,6 +11,9 @@ public interface IInstallationRepository
 
     Task<IReadOnlyList<Installation>> ListActiveAsync(InstallTarget target, CancellationToken cancellationToken);
 
+    /// <summary>Active installations in these households and on this account (what one person can reach).</summary>
+    Task<IReadOnlyList<Installation>> ListActiveForAsync(IReadOnlyCollection<Guid> householdIds, Guid userId, CancellationToken cancellationToken);
+
     /// <summary>Every active installation on the instance, newest first (the Owner's view).</summary>
     Task<IReadOnlyList<Installation>> ListAllActiveAsync(CancellationToken cancellationToken);
 

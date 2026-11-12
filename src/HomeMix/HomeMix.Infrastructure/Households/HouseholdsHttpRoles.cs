@@ -55,6 +55,21 @@ internal sealed class HouseholdsHttpRoles(HttpClient http, IHttpContextAccessor 
         return [.. (names ?? []).Select(n => n.UserId)];
     }
 
+    public async Task<IReadOnlyList<MyHousehold>> GetMyHouseholdsAsync(CancellationToken cancellationToken)
+    {
+        using var request = Request("households/");
+        using var response = await http.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        var mine = await response.Content.ReadFromJsonAsync<List<MyHouseholdResponse>>(Json, cancellationToken);
+        var households = (mine ?? []).Select(h => new MyHousehold(h.Id, h.Name, h.MyRole)).ToList();
+        foreach (var household in households)
+        {
+            _known[household.Id] = household.Role;
+        }
+
+        return households;
+    }
+
     private HttpRequestMessage Request(string path)
     {
         var authorization = accessor.HttpContext?.Request.Headers[HeaderNames.Authorization].ToString();
