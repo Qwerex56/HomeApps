@@ -350,7 +350,9 @@ the `network` origins and the same limits. It mirrors the server's contract, not
 
 A step-by-step guide for authors, from `npm create homemix` to the store: [homemix-authoring.md](homemix-authoring.md).
 
-Optional, light tooling, versioned with HomeApps, in `src/Web/homemix` (npm workspaces; not on npm yet):
+Optional, light tooling, versioned with HomeApps, in `src/Web/homemix` (npm workspaces), published to npm by
+`.github/workflows/homemix-npm.yml` on a tag `homemix-v<version>`
+([working-with-the-repo.md](working-with-the-repo.md#publishing-to-npm-the-first-time)):
 
 - `@homemix/sdk` (`sdk`): `connect()` (the bridge client without a framework), `autoResize()`, the protocol types, the
   `homemix.json` types and `checkManifest()`/`checkFiles()`, the same checks the server makes. `@homemix/sdk/host`

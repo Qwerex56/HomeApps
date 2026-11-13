@@ -39,17 +39,8 @@ npm create homemix@latest chores -- --template=vanilla
 cd chores && npm install
 ```
 
-> **Before the packages are on npm** the template's dependencies cannot be installed from the registry. Build them
-> from a HomeApps checkout and point the add-on at them, as the official add-ons do:
->
-> ```bash
-> git clone https://github.com/Qwerex56/HomeApps && cd HomeApps/src/Web && npm ci
-> cd homemix && npm install && npm run build
-> node create-homemix/bin/create-homemix.js chores   # creates ./chores
-> ```
->
-> then in the add-on's `package.json` use `"@homemix/vue": "file:<HomeApps>/src/Web/homemix/vue"` and
-> `"homemix": "file:<HomeApps>/src/Web/homemix/cli"`.
+To work on the tooling itself, or before a version is on npm, build it from a HomeApps checkout as the official
+add-ons do (`"@homemix/vue": "file:<HomeApps>/src/Web/homemix/vue"`): see [homemix.md, "Building one"](homemix.md#building-one-a3).
 
 The template gives you:
 
