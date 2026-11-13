@@ -4,7 +4,8 @@
 only links to GitHub: nothing is uploaded here, and each instance reads the repository's latest release, the SHA-256
 of its `addon.zip` and its README straight from GitHub.
 
-To publish an add-on, open a pull request that adds its repository:
+How to write, release and publish one: [docs/homemix-authoring.md](../../docs/homemix-authoring.md). To publish an
+add-on, open a pull request that adds its repository:
 
 ```json
 {

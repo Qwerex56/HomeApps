@@ -348,6 +348,8 @@ the `network` origins and the same limits. It mirrors the server's contract, not
 
 ## Building one (A3)
 
+A step-by-step guide for authors, from `npm create homemix` to the store: [homemix-authoring.md](homemix-authoring.md).
+
 Optional, light tooling, versioned with HomeApps, in `src/Web/homemix` (npm workspaces; not on npm yet):
 
 - `@homemix/sdk` (`sdk`): `connect()` (the bridge client without a framework), `autoResize()`, the protocol types, the
