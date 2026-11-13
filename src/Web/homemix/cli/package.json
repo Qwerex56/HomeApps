@@ -4,8 +4,12 @@
   "description": "HomeMix add-on tooling: a fake host for development, the server's checks, and packing addon.zip (docs/homemix.md)",
   "license": "MIT",
   "type": "module",
+  "repository": { "type": "git", "url": "git+https://github.com/Qwerex56/HomeApps.git", "directory": "src/Web/homemix/cli" },
+  "homepage": "https://github.com/Qwerex56/HomeApps/blob/master/docs/homemix-authoring.md",
+  "keywords": ["homeapps", "homemix", "add-on"],
+  "publishConfig": { "access": "public" },
   "bin": {
-    "homemix": "./bin/homemix.js"
+    "homemix": "bin/homemix.js"
   },
   "files": [
     "bin",

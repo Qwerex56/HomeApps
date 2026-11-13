@@ -1,0 +1,48 @@
+# Publishes the HomeMix tooling (src/Web/homemix: @homemix/sdk, @homemix/vue, homemix, create-homemix) to npm on a
+# tag homemix-v<version>, e.g. homemix-v2.3.0 for the packages at 2.3.0. Needs the repository secret NPM_TOKEN
+# (an npm automation token that may publish to the @homemix scope and the two unscoped names). See
+# docs/homemix-authoring.md for authors and docs/working-with-the-repo.md for releasing.
+name: HomeMix packages
+on:
+  push:
+    tags: ['homemix-v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: Install (Vue and TypeScript come from src/Web)
+        run: |
+          cd src/Web && npm ci --no-audit --no-fund
+          cd homemix && npm ci --no-audit --no-fund
+      - name: Build
+        working-directory: src/Web/homemix
+        run: npm run build
+      - name: Every package has the tag's version
+        if: startsWith(github.ref, 'refs/tags/')
+        working-directory: src/Web/homemix
+        run: |
+          for p in sdk vue cli create-homemix; do
+            test "homemix-v$(node -p "require('./$p/package.json').version")" = "$GITHUB_REF_NAME"
+          done
+      - name: Check the official add-ons with the built tooling
+        run: |
+          for dir in homemix/official/*/; do
+            (cd "$dir" && npm ci --no-audit --no-fund && npx vite build && npx homemix check)
+          done
+      - name: Publish (the SDK first; the others depend on it)
+        working-directory: src/Web/homemix
+        run: |
+          for p in sdk vue cli create-homemix; do
+            npm publish --workspace "$p" --provenance
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

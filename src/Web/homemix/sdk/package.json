@@ -4,6 +4,10 @@
   "description": "The HomeMix bridge for add-ons, the host side and the homemix.json types (docs/homemix.md)",
   "license": "MIT",
   "type": "module",
+  "repository": { "type": "git", "url": "git+https://github.com/Qwerex56/HomeApps.git", "directory": "src/Web/homemix/sdk" },
+  "homepage": "https://github.com/Qwerex56/HomeApps/blob/master/docs/homemix-authoring.md",
+  "keywords": ["homeapps", "homemix", "add-on"],
+  "publishConfig": { "access": "public" },
   "exports": {
     ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
     "./host": { "types": "./dist/host.d.ts", "default": "./dist/host.js" }

@@ -4,7 +4,11 @@
   "description": "npm create homemix@latest: a new HomeMix add-on (docs/homemix.md, \"Building one\")",
   "license": "MIT",
   "type": "module",
-  "bin": { "create-homemix": "./bin/create-homemix.js" },
+  "repository": { "type": "git", "url": "git+https://github.com/Qwerex56/HomeApps.git", "directory": "src/Web/homemix/create-homemix" },
+  "homepage": "https://github.com/Qwerex56/HomeApps/blob/master/docs/homemix-authoring.md",
+  "keywords": ["homeapps", "homemix", "add-on"],
+  "publishConfig": { "access": "public" },
+  "bin": { "create-homemix": "bin/create-homemix.js" },
   "files": ["bin", "templates"],
   "engines": { "node": ">=22.2" }
 }
