@@ -209,7 +209,9 @@ services:
       # The owner's Claude subscription (`claude setup-token`); empty: JARVIS answers that he is switched off, while
       # connected apps (Claude Code, claude.ai) still use the gateway.
       Jarvis__ClaudeCode__OAuthToken: ${JARVIS_CLAUDE_CODE_OAUTH_TOKEN:-}
-      # Optional (docs/jarvis.md): Jarvis__ClaudeCode__Model, Jarvis__DailyBudgetUsd (default 2 USD a day for the home).
+      # The model for Claude Code: an alias (haiku, sonnet, opus) or a full id; empty = Claude Code's default.
+      Jarvis__ClaudeCode__Model: ${JARVIS_CLAUDE_MODEL:-}
+      # Optional (docs/jarvis.md): Jarvis__DailyBudgetUsd (default 2 USD a day for the home).
     labels:
       - "traefik.enable=true"
       # The gateway, the API and the gateway's OAuth metadata; /jarvis itself is a page of the web app.
