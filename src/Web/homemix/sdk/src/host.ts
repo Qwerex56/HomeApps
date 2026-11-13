@@ -55,7 +55,7 @@ export function serveFrame(options: HostOptions): () => void {
 
     const { id, method, params } = event.data
     const reply = (body: { result?: unknown; error?: BridgeError }) =>
-      frame.postMessage({ homemix: PROTOCOL, id, ...body }, '*')
+      frame.postMessage({ homemix: PROTOCOL, id, ...plain(body) }, '*')
 
     const needed = requiredCapability(method, params)
     if (needed && !options.capabilities.includes(needed)) {
@@ -77,7 +77,13 @@ export function serveFrame(options: HostOptions): () => void {
 
 /** Sends an event the frame did not ask for (theme, data.changed). */
 export function emit<E extends EventName>(frame: Window | null | undefined, event: E, data: Events[E]) {
-  frame?.postMessage({ homemix: PROTOCOL, event, data }, '*')
+  frame?.postMessage({ homemix: PROTOCOL, event, data: plain(data) }, '*')
+}
+
+// Through JSON, as the client does: answers are JSON anyway, and a framework's reactive proxy (the host app's Vue
+// state, e.g. the installation's capabilities) cannot be cloned by postMessage, which would fail the call.
+function plain<T>(value: T): T {
+  return value === undefined ? value : (JSON.parse(JSON.stringify(value)) as T)
 }
 
 export type { Capability }

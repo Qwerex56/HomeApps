@@ -1,13 +1,17 @@
 import { describe, expect, it, vi } from 'vitest'
+import { reactive } from 'vue'
 import { HomeMixError, serveFrame, type Handlers } from '@homemix/sdk/host'
 import { BridgeCallError, checkManifest, connect } from '@homemix/sdk'
 
-// The bridge without a browser: two EventTargets play the host's and the frame's windows.
+// The bridge without a browser: two EventTargets play the host's and the frame's windows; postMessage clones like
+// a browser's (structuredClone throws on a proxy).
 function windows() {
   const host = new EventTarget() as EventTarget & { postMessage: (data: unknown) => void }
   const frame = new EventTarget() as EventTarget & { postMessage: (data: unknown) => void }
-  const deliver = (to: EventTarget, from: unknown) => (data: unknown) =>
-    queueMicrotask(() => to.dispatchEvent(Object.assign(new Event('message'), { data, source: from })))
+  const deliver = (to: EventTarget, from: unknown) => (data: unknown) => {
+    const copy = structuredClone(data)
+    queueMicrotask(() => to.dispatchEvent(Object.assign(new Event('message'), { data: copy, source: from })))
+  }
   host.postMessage = deliver(host, frame)
   frame.postMessage = deliver(frame, host)
   return { host, frame }
@@ -51,6 +55,15 @@ describe('HomeMix bridge', () => {
 
     expect(document).toMatchObject({ key: 'a1', value: { minutes: 25 }, version: 1 })
     expect(await homemix.can('plan.write')).toBe(true)
+  })
+
+  it('answers with the host app reactive state, as a real page does', async () => {
+    const installation = reactive({ capabilities: ['storage.household'] })
+    const homemix = setup(['storage.household'], {
+      context: () => ({ capabilities: installation.capabilities }) as never,
+    })
+
+    expect(await homemix.context()).toMatchObject({ capabilities: ['storage.household'] })
   })
 
   it('refuses a scope without its capability', async () => {

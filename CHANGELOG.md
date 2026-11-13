@@ -88,6 +88,9 @@ that a household or a person installs from the web app, sandboxed, with a store 
 
 ### Fixed
 
+- **HomeMix:** an add-on's frame stayed empty in the web app: the host answered the bridge with the page's reactive
+  state, which `postMessage` cannot clone, so `context()` failed ("Brak połączenia z serwerem"). Answers and events now
+  go through JSON, like the add-on's calls.
 - `Auth.IntegrationTests` started without `AUTH_TEST_MAILPIT` again (the Mailpit address was read before it was set).
 
 ## 2.2.0 (unreleased)
