@@ -1,0 +1,485 @@
+/*
+ * @homemix/css: the HomeApps look for add-ons (docs/homemix-authoring.md, "Building blocks").
+ * Every colour comes from the host's theme (CSS variables HomeApps sends; applyTheme sets them), with light fallbacks.
+ * Dark mode: the class hm-dark on <html>. Where the add-on stands: hm-page or hm-widget, hm-size-small|medium|large
+ * and hm-wall on the wall tablet (applyLayout sets them from the context).
+ */
+
+/* ---- Tokens ---- */
+:root {
+  --hm-primary: var(--p-primary-color, #6366f1);
+  --hm-on-primary: var(--p-primary-contrast-color, #ffffff);
+  --hm-primary-hover: var(--p-primary-hover-color, #4f46e5);
+  --hm-text: var(--p-text-color, #334155);
+  --hm-muted: var(--p-text-muted-color, #64748b);
+  --hm-surface: var(--p-content-background, #ffffff);
+  --hm-surface-hover: var(--p-content-hover-background, #f1f5f9);
+  --hm-surface-alt: var(--p-surface-100, #f1f5f9);
+  --hm-border: var(--p-content-border-color, #e2e8f0);
+  --hm-highlight: var(--p-highlight-background, #eef2ff);
+  --hm-highlight-text: var(--p-highlight-color, #4338ca);
+  --hm-field: var(--p-form-field-background, #ffffff);
+  --hm-field-border: var(--p-form-field-border-color, #cbd5e1);
+  --hm-radius: var(--p-border-radius-md, 6px);
+  --hm-radius-lg: var(--p-border-radius-xl, 12px);
+  --hm-success: #16a34a;
+  --hm-warn: #d97706;
+  --hm-danger: #dc2626;
+  --hm-gap: 0.75rem;
+  --hm-font-size: 1rem;
+  --hm-big: 2rem;
+
+  color-scheme: light dark;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: var(--hm-font-size);
+  line-height: 1.5;
+  color: var(--hm-text);
+  background: transparent;
+}
+
+:root.hm-dark {
+  --hm-surface-alt: var(--p-surface-800, #27272a);
+  --hm-highlight: color-mix(in srgb, var(--hm-primary) 16%, transparent);
+  --hm-highlight-text: var(--p-primary-200, #c7d2fe);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: var(--hm-primary);
+}
+
+/* ---- Where it stands: widget sizes and the wall tablet ---- */
+.hm-size-small {
+  --hm-gap: 0.5rem;
+  --hm-font-size: 0.875rem;
+  --hm-big: 1.5rem;
+}
+
+.hm-size-medium {
+  --hm-big: 2rem;
+}
+
+.hm-size-large {
+  --hm-big: 2.5rem;
+}
+
+/* The tablet is read from across the room: bigger type, light on the wall's dark tiles in either theme. */
+.hm-wall {
+  --hm-font-size: 1.25rem;
+  --hm-gap: 1rem;
+  --hm-big: 3.5rem;
+  --hm-text: #f8fafc;
+  --hm-muted: #cbd5e1;
+  --hm-surface: transparent;
+  --hm-surface-alt: rgb(255 255 255 / 0.1);
+  --hm-surface-hover: rgb(255 255 255 / 0.06);
+  --hm-border: rgb(255 255 255 / 0.15);
+  --hm-highlight: rgb(255 255 255 / 0.12);
+  --hm-highlight-text: #f8fafc;
+}
+
+.hm-wall.hm-size-small {
+  --hm-big: 2.5rem;
+}
+
+/* Only shown in one size: hide the rest with hm-only-small, hm-only-medium, hm-only-large. */
+.hm-size-small .hm-only-medium,
+.hm-size-small .hm-only-large,
+.hm-size-medium .hm-only-small,
+.hm-size-medium .hm-only-large,
+.hm-size-large .hm-only-small,
+.hm-size-large .hm-only-medium {
+  display: none !important;
+}
+
+/* ---- Layout ---- */
+.hm-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hm-gap);
+}
+
+.hm-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--hm-gap);
+}
+
+.hm-row.hm-between {
+  justify-content: space-between;
+}
+
+.hm-grow {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.hm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
+  gap: var(--hm-gap);
+}
+
+.hm-size-small .hm-grid {
+  grid-template-columns: 1fr;
+}
+
+/* ---- Type ---- */
+.hm-title {
+  margin: 0;
+  font-size: 1.25em;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.hm-subtitle {
+  margin: 0;
+  font-size: 1em;
+  font-weight: 600;
+}
+
+.hm-muted {
+  color: var(--hm-muted);
+}
+
+.hm-small {
+  font-size: 0.85em;
+}
+
+.hm-big {
+  font-size: var(--hm-big);
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.hm-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Elements ---- */
+.hm-card {
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-lg);
+  background: var(--hm-surface);
+  padding: 1rem;
+}
+
+.hm-size-small .hm-card {
+  padding: 0.75rem;
+}
+
+.hm-wall .hm-card {
+  border: 0;
+  padding: 0;
+}
+
+.hm-clickable {
+  cursor: pointer;
+}
+
+.hm-clickable:hover {
+  background: var(--hm-surface-hover);
+}
+
+.hm-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--hm-radius);
+  padding: 0.5em 1em;
+  font: inherit;
+  line-height: 1.2;
+  cursor: pointer;
+  background: var(--hm-primary);
+  color: var(--hm-on-primary);
+}
+
+.hm-button:hover:not(:disabled) {
+  background: var(--hm-primary-hover);
+}
+
+.hm-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.hm-button.secondary {
+  background: var(--hm-surface-alt);
+  color: var(--hm-text);
+}
+
+.hm-button.text {
+  background: transparent;
+  color: var(--hm-primary);
+}
+
+.hm-button.danger {
+  background: var(--hm-danger);
+  color: #fff;
+}
+
+.hm-button.secondary:hover:not(:disabled),
+.hm-button.text:hover:not(:disabled) {
+  background: var(--hm-surface-hover);
+}
+
+.hm-chip,
+.hm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 999px;
+  font-size: 0.85em;
+  line-height: 1.2;
+}
+
+.hm-chip {
+  padding: 0.25em 0.75em;
+  background: var(--hm-surface-alt);
+}
+
+.hm-chip.active {
+  background: var(--hm-highlight);
+  color: var(--hm-highlight-text);
+}
+
+.hm-badge {
+  padding: 0.125em 0.5em;
+  font-weight: 600;
+  background: var(--hm-highlight);
+  color: var(--hm-highlight-text);
+}
+
+.hm-badge.success {
+  background: color-mix(in srgb, var(--hm-success) 15%, transparent);
+  color: var(--hm-success);
+}
+
+.hm-badge.warn {
+  background: color-mix(in srgb, var(--hm-warn) 15%, transparent);
+  color: var(--hm-warn);
+}
+
+.hm-badge.danger {
+  background: color-mix(in srgb, var(--hm-danger) 15%, transparent);
+  color: var(--hm-danger);
+}
+
+.hm-input,
+.hm-select,
+.hm-textarea {
+  width: 100%;
+  border: 1px solid var(--hm-field-border);
+  border-radius: var(--hm-radius);
+  padding: 0.5em 0.75em;
+  font: inherit;
+  color: var(--hm-text);
+  background: var(--hm-field);
+}
+
+.hm-input:focus,
+.hm-select:focus,
+.hm-textarea:focus,
+.hm-button:focus-visible,
+.hm-switch input:focus-visible + span {
+  outline: 2px solid var(--hm-primary);
+  outline-offset: 1px;
+}
+
+.hm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.hm-field > .hm-label {
+  font-size: 0.85em;
+  font-weight: 500;
+}
+
+.hm-field > .hm-error {
+  font-size: 0.85em;
+  color: var(--hm-danger);
+}
+
+.hm-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.hm-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hm-switch span {
+  position: relative;
+  width: 2.5em;
+  height: 1.4em;
+  border-radius: 999px;
+  background: var(--hm-field-border);
+  transition: background 0.15s;
+}
+
+.hm-switch span::after {
+  content: '';
+  position: absolute;
+  top: 0.2em;
+  left: 0.2em;
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+
+.hm-switch input:checked + span {
+  background: var(--hm-primary);
+}
+
+.hm-switch input:checked + span::after {
+  transform: translateX(1.1em);
+}
+
+.hm-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.hm-list > li {
+  display: flex;
+  align-items: center;
+  gap: var(--hm-gap);
+  padding: 0.5em 0;
+  border-bottom: 1px solid var(--hm-border);
+}
+
+.hm-list > li:last-child {
+  border-bottom: 0;
+}
+
+.hm-progress {
+  height: 0.5em;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--hm-surface-alt);
+}
+
+.hm-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--hm-primary);
+  transition: width 0.3s;
+}
+
+.hm-ring {
+  width: 6em;
+  height: 6em;
+}
+
+.hm-size-small .hm-ring {
+  width: 4em;
+  height: 4em;
+}
+
+.hm-tabs {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--hm-border);
+}
+
+.hm-tabs > button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 0.5em 0.75em;
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  color: var(--hm-muted);
+  background: transparent;
+}
+
+.hm-tabs > button[aria-selected='true'] {
+  border-bottom-color: var(--hm-primary);
+  color: var(--hm-primary);
+}
+
+/* ---- States ---- */
+.hm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: var(--hm-muted);
+}
+
+.hm-size-small .hm-empty {
+  padding: 0.75rem;
+}
+
+.hm-loading {
+  position: relative;
+  overflow: hidden;
+  min-height: 1.5em;
+  border-radius: var(--hm-radius);
+  background: var(--hm-surface-alt);
+  color: transparent !important;
+}
+
+.hm-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--hm-surface) 60%, transparent), transparent);
+  animation: hm-shimmer 1.2s infinite;
+}
+
+@keyframes hm-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.hm-trend-up {
+  color: var(--hm-success);
+}
+
+.hm-trend-down {
+  color: var(--hm-danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-loading::after,
+  .hm-progress > span,
+  .hm-switch span,
+  .hm-switch span::after {
+    animation: none;
+    transition: none;
+  }
+}

@@ -19,6 +19,7 @@
     "build": "../../node_modules/.bin/tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@homemix/css": "2.4.0",
     "@homemix/sdk": "2.3.0"
   },
   "peerDependencies": {

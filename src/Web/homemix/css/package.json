@@ -1,0 +1,17 @@
+{
+  "name": "@homemix/css",
+  "version": "2.4.0",
+  "description": "hm-* classes in the HomeApps look for HomeMix add-ons, with or without a framework (docs/homemix-authoring.md)",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/Qwerex56/HomeApps.git", "directory": "src/Web/homemix/css" },
+  "homepage": "https://github.com/Qwerex56/HomeApps/blob/master/docs/homemix-authoring.md",
+  "keywords": ["homeapps", "homemix", "add-on", "css"],
+  "publishConfig": { "access": "public" },
+  "exports": {
+    ".": "./homemix.css",
+    "./homemix.css": "./homemix.css"
+  },
+  "style": "./homemix.css",
+  "files": ["homemix.css"],
+  "sideEffects": ["*.css"]
+}

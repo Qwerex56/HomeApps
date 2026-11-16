@@ -13,6 +13,7 @@ import {
   type Methods,
   type Scope,
   type Push,
+  type Theme,
   type Toast,
 } from './protocol.js'
 
@@ -136,4 +137,26 @@ export function autoResize(homemix: HomeMix, element: Element = document.body) {
   const observer = new ResizeObserver(() => void homemix.resize())
   observer.observe(element)
   return () => observer.disconnect()
+}
+
+/** Applies the host's theme to this document: its CSS variables, and the classes hm-dark (and app-dark for PrimeVue). */
+export function applyTheme(theme: Theme, root: HTMLElement = document.documentElement) {
+  for (const [name, value] of Object.entries(theme.vars)) root.style.setProperty(name, value)
+  root.classList.toggle('hm-dark', theme.dark)
+  root.classList.toggle('app-dark', theme.dark)
+}
+
+/** The @homemix/css classes for where the add-on stands: hm-page or hm-widget, hm-size-*, hm-wall on the tablet. */
+export function layoutClasses(context: Pick<HomeMixContext, 'widget'>): string[] {
+  const widget = context.widget
+  if (!widget) return ['hm-page']
+  return ['hm-widget', `hm-size-${widget.size.toLowerCase()}`, ...(widget.place === 'Wall' ? ['hm-wall'] : [])]
+}
+
+const LAYOUT = ['hm-page', 'hm-widget', 'hm-size-small', 'hm-size-medium', 'hm-size-large', 'hm-wall']
+
+/** Sets layoutClasses on this document (useHomeMix does it for Vue add-ons). */
+export function applyLayout(context: Pick<HomeMixContext, 'widget'>, root: HTMLElement = document.documentElement) {
+  root.classList.remove(...LAYOUT)
+  root.classList.add(...layoutClasses(context))
 }
