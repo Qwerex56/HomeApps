@@ -57,9 +57,8 @@ async function read() {
 
 async function choose(entry: StoreEntry) {
   await submit(async () => {
-    pkg.value = entry.official
-      ? await homemixApi.addOfficial(entry.addonId!)
-      : await homemixApi.addGitHub(entry.repository!)
+    // Built into HomeMix: by id; everything else (official ones from addons.json too) from its repository.
+    pkg.value = entry.builtin ? await homemixApi.addOfficial(entry.addonId) : await homemixApi.addGitHub(entry.repository!)
   })
 }
 

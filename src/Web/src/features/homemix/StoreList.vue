@@ -9,7 +9,7 @@ import Tag from 'primevue/tag'
 import { localized } from '@/features/plugins/registry'
 import { homemixApi, mixKeys, type StoreEntry } from './api'
 
-// The store (W9): official add-ons that came with HomeApps, then the GitHub repositories from the store's index. The
+// The store (homemix-2.md 2.1): official add-ons (built in and from addons.json), then the ones people submitted. The
 // README is shown as plain text: it comes from someone else's repository, so it is never rendered as HTML.
 defineProps<{ busy: boolean }>()
 const emit = defineEmits<{ choose: [entry: StoreEntry] }>()
@@ -17,7 +17,7 @@ const { t, d } = useI18n()
 
 const store = useQuery({ queryKey: mixKeys.store, queryFn: homemixApi.store, staleTime: 5 * 60_000 })
 const open = ref<string | null>(null)
-const keyOf = (e: StoreEntry) => e.addonId ?? e.repository ?? ''
+const keyOf = (e: StoreEntry) => e.listingKey
 </script>
 
 <template>

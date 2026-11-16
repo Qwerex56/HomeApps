@@ -813,6 +813,9 @@ export interface components {
         /** @enum {unknown} */
         HouseholdRole: "Guest" | "Member" | "Admin" | "Owner" | null;
         /** Format: binary */
+        HideListingRequest: {
+            hidden: boolean;
+        };
         IFormFile: string;
         InstallationView: {
             /** Format: uuid */
@@ -890,18 +893,29 @@ export interface components {
             version: null | number | string;
         };
         StoreEntryView: {
+            listingKey: string;
             official: boolean;
-            addonId: null | string;
+            builtin: boolean;
+            addonId: string;
             repository: null | string;
             name: components["schemas"]["LocalizedText"];
             description: null | components["schemas"]["LocalizedText"];
             icon: string;
-            version: null | string;
-            sha256: null | string;
+            version: string;
+            sha256: string;
             readme: null | string;
             /** Format: date-time */
             publishedAt: null | string;
             problem: null | string;
+            capabilities: string[];
+            network: string[];
+            jarvis: boolean;
+            targets: components["schemas"]["TargetKind"][];
+            status: string;
+            mine: boolean;
+        };
+        SubmitListingRequest: {
+            repository: string;
         };
         /** @enum {unknown} */
         TargetKind: "Household" | "User";
