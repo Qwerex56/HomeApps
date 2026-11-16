@@ -17,6 +17,7 @@ public sealed record InstallationView(
     string Entry,
     IReadOnlyList<AddonPage> Pages,
     IReadOnlyList<AddonWidget> Widgets,
+    IReadOnlyList<WidgetChoice> WidgetChoices,
     IReadOnlyList<AddonPermission> Permissions,
     IReadOnlyList<string> Capabilities,
     IReadOnlyList<string> Network,
@@ -34,7 +35,7 @@ public sealed record InstallationView(
         var m = package.Manifest;
         return new InstallationView(
             installation.Id, installation.AddonId, installation.Version, installation.TargetKind, installation.TargetId,
-            m.Name, m.Icon, $"/homemix/run/{installation.Id}/", m.Entry, m.Pages, m.Widgets, m.Permissions,
+            m.Name, m.Icon, $"/homemix/run/{installation.Id}/", m.Entry, m.Pages, m.Widgets, installation.Widgets, m.Permissions,
             installation.Capabilities, installation.Network, installation.JarvisAllowed, package.Repository, package.IsOfficial,
             installation.InstalledBy, installation.InstalledAt, installation.UpdatedAt);
     }

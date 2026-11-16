@@ -88,6 +88,30 @@ public sealed class AddonManifestParserTests
         Assert.True(manifest.Jarvis);
     }
 
+    [Fact]
+    public void A_widget_without_sizes_has_only_its_own_size()
+    {
+        var manifest = AddonManifestParser.Parse(Manifests.Valid(extra: """
+            "widgets": [
+              { "id": "timer", "title": { "pl": "Minutnik" }, "size": "Small", "places": ["Household"] },
+              { "id": "big", "title": { "pl": "Duży" }, "size": "Medium", "sizes": ["Medium", "Large"], "places": ["Wall"] }
+            ]
+            """)).Value;
+
+        Assert.Equal(["Small"], manifest.Widgets[0].Sizes);
+        Assert.Equal(["Medium", "Large"], manifest.Widgets[1].Sizes);
+    }
+
+    [Fact]
+    public void Sizes_must_be_known_and_include_the_default()
+    {
+        var result = AddonManifestParser.Parse(Manifests.Valid(extra: """
+            "widgets": [{ "id": "timer", "title": { "pl": "Minutnik" }, "size": "Small", "sizes": ["Medium", "Huge"], "places": ["Household"] }]
+            """));
+
+        Assert.Equal(2, result.Errors.Count);
+    }
+
     [Theory]
     [InlineData("2.3.0", "2.3.0", true)]
     [InlineData("2.3.0", "2.2.9", true)]

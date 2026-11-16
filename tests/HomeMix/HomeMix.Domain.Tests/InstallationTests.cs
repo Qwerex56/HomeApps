@@ -106,4 +106,24 @@ public sealed class InstallationTests
         Assert.False(installation.IsActive);
         Assert.True(installation.Remove(Adam, Now).IsFailed);
     }
+
+    [Fact]
+    public void Widget_choices_follow_the_manifest_and_survive_an_update()
+    {
+        const string twoSizes = """
+            "widgets": [{ "id": "timer", "title": { "pl": "Minutnik" }, "size": "Small", "sizes": ["Small", "Large"], "places": ["Household", "Wall"] }]
+            """;
+        const string oneSize = """
+            "widgets": [{ "id": "timer", "title": { "pl": "Minutnik" }, "size": "Small", "places": ["Household", "Wall"] }]
+            """;
+        var package = Package(extra: twoSizes);
+        var installation = Installation.Install(package, InstallTarget.Household(Guid.NewGuid()), Household, Adam, Now).Value;
+
+        var account = installation.ChooseWidget(package.Manifest, WidgetPlaces.Account, "timer", null, 0);
+        installation.ChooseWidget(package.Manifest, WidgetPlaces.Wall, "timer", "Large", 1);
+        installation.Update(Package(version: "1.1.0", extra: oneSize), consent: null, Adam, Now.AddDays(1));
+
+        Assert.Equal("homemix.widget_place", Assert.Single(account.Errors).Metadata[AppError.CodeKey]);
+        Assert.Equal(new WidgetChoice(WidgetPlaces.Wall, "timer", "Small", 1), Assert.Single(installation.Widgets));
+    }
 }

@@ -156,6 +156,13 @@ namespace HomeMix.Infrastructure.Persistence.Migrations
                         .HasColumnType("text[]")
                         .HasColumnName("Network");
 
+                    b.Property<string>("_widgets")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("Widgets")
+                        .HasDefaultValueSql("'[]'::jsonb");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PackageSha256");

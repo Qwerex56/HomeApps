@@ -25,6 +25,15 @@ public static class InstallationErrors
     public static Error ConsentRequired(IEnumerable<string> missing) => new AppError(
         "homemix.consent_required", $"Accept first: {string.Join(", ", missing)}.", ErrorKind.Conflict);
 
+    public static Error WidgetPlace(string place) => new AppError(
+        "homemix.widget_place", $"Widgets here cannot stand in {place}.", ErrorKind.Validation);
+
+    public static Error WidgetUnknown(string widgetId, string place) => new AppError(
+        "homemix.widget_unknown", $"The add-on has no widget '{widgetId}' for {place}.", ErrorKind.Validation);
+
+    public static Error WidgetSize(string size, IEnumerable<string> sizes) => new AppError(
+        "homemix.widget_size", $"This widget comes in {string.Join(", ", sizes)}, not {size}.", ErrorKind.Validation);
+
     public static Error NotARecipient => new AppError(
         "homemix.not_a_recipient", "A notification can go only to people of this add-on's household.", ErrorKind.Validation);
 }

@@ -8,6 +8,8 @@ using HomeMix.Application.Installations.GetMyAccess;
 using HomeMix.Application.Installations.GetMyInstallations;
 using HomeMix.Application.Installations.Install;
 using HomeMix.Application.Installations.RemoveInstallation;
+using HomeMix.Application.Installations.ChooseWidget;
+using HomeMix.Application.Installations.ResetWidget;
 using HomeMix.Application.Installations.UpdateInstallation;
 using HomeMix.Domain.Installations;
 using MediatR;
@@ -57,5 +59,14 @@ internal sealed class InstallationEndpoints : IEndpoint
 
         api.MapDelete("/installations/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
             (await sender.Send(new RemoveInstallationCommand(id), ct)).ToHttpResult());
+
+        // B1: which widget stands where (docs/homemix.md, "Widgets"); household admins and up, or the account's owner.
+        api.MapPut("/installations/{id:guid}/widgets/{place}", async (Guid id, string place, ChooseWidgetRequest body, ISender sender, CancellationToken ct) =>
+                (await sender.Send(new ChooseWidgetCommand(id, place, body.Widget, body.Size, body.Order), ct)).ToHttpResult())
+            .Produces<InstallationView>();
+
+        api.MapDelete("/installations/{id:guid}/widgets/{place}", async (Guid id, string place, ISender sender, CancellationToken ct) =>
+                (await sender.Send(new ResetWidgetCommand(id, place), ct)).ToHttpResult())
+            .Produces<InstallationView>();
     }
 }

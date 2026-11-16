@@ -78,6 +78,7 @@ public sealed class AssistantTests(HomeMixApiFactory api) : IClassFixture<HomeMi
             "DELETE /homemix/api/admin/blocks/{value} Default",
             "DELETE /homemix/api/installations/{id:guid} Default",
             "DELETE /homemix/api/installations/{id:guid}/data/{collection}/{key} Allow",
+            "DELETE /homemix/api/installations/{id:guid}/widgets/{place} Default",
             "POST /homemix/api/households/{householdId:guid}/installations Default",
             "POST /homemix/api/installations/{id:guid}/notify Default",
             "POST /homemix/api/me/installations Default",
@@ -88,6 +89,7 @@ public sealed class AssistantTests(HomeMixApiFactory api) : IClassFixture<HomeMi
             "PUT /homemix/api/admin/blocks/{value} Default",
             "PUT /homemix/api/installations/{id:guid} Default",
             "PUT /homemix/api/installations/{id:guid}/data/{collection}/{key} Allow",
+            "PUT /homemix/api/installations/{id:guid}/widgets/{place} Default",
         ], changes);
     }
 
