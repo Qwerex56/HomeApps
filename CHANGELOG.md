@@ -17,13 +17,23 @@ HomeMix 2.0: widgets you can choose, a store page with stats, RealTime and a fra
   devices and JARVIS), `permissions.changed` (on a new household role), `installation.changed` and `notification`
   (also a toast) to the add-on frames; `@homemix/vue`'s `useCan()` follows a role change. Traefik routes `/homemix/hub`.
 
+- **HomeMix store catalog (B3):** store entries in HomeMix's database. Anyone signed in submits a GitHub repository
+  (`POST /homemix/api/store`, 5 a day); entries are keyed `{id}-{hash}`, so two people may list add-ons with the same
+  id. `addons.json` becomes the quick listing of official entries; built-in add-ons win over the same id. Entries are
+  read again from GitHub every hour (10 per 10-minute round); the author refreshes or removes an entry, the Owner
+  hides one (`PUT /homemix/api/admin/store/{key}/hidden`). Installing a second add-on with the same id in one place
+  answers `homemix.id_in_use`.
+
 ### Changed
 
+- **HomeMix:** `HomeMix:StoreCacheMinutes` is replaced by `HomeMix:StoreRefreshMinutes`; `StoreEntryView` has
+  `listingKey`, `builtin` (added by id) and what the add-on asks for. `official` now also marks `addons.json` entries.
 - **HomeMix:** the "działa w osobnej, zamkniętej ramce" caption is gone from widgets, it stays under add-on pages.
 
 ### Upgrading
 
-- HomeMix gets the migration `WidgetChoices` (applied at start).
+- HomeMix gets the migrations `WidgetChoices` and `StoreListings` (applied at start). The store fills itself from
+  `addons.json` within the first rounds after the update.
 
 ## 2.3.0 (2026-11-12)
 

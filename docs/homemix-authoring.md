@@ -263,21 +263,24 @@ keeps running. Never reuse a tag: a release's zip and hash must not change under
 
 ## 9. Getting into the store
 
-Every HomeApps instance shows a store under **Dodaj dodatek**: the official add-ons that come with HomeApps, and the
-add-ons listed in [`homemix/store/addons.json`](../homemix/store/addons.json) in the HomeApps repository. To be
-listed, open a pull request there that adds your repository:
+Every HomeApps instance has its own store under **Dodaj dodatek**. To list your add-on there, sign in to that
+instance and submit your repository's link in the store; it is listed at once (a few submissions a day per person).
+Your entry is keyed by the add-on's `id` and a hash of you and the repository, so someone else's add-on with the same
+`id` does not clash with yours, and submitting again simply reads your latest release again.
+
+Nothing is uploaded: the instance reads your latest release and README from GitHub and refreshes them about once an
+hour, so new releases appear on their own (or press "Odśwież"). A release without `addon.zip`, without a SHA-256, or
+whose package changes the `id`, keeps your last good version and shows the problem to you.
+
+Official add-ons come from the HomeApps team: built into the image, or listed in
+[`homemix/store/addons.json`](../homemix/store/addons.json) in the HomeApps repository, one line each:
 
 ```json
-{ "addons": [{ "repository": "https://github.com/you/chores" }] }
+{ "addons": [{ "repository": "https://github.com/homeapps/chores" }] }
 ```
 
-Nothing is uploaded: each instance reads your repository's description, latest release and README from GitHub and
-refreshes them about once an hour, so new releases appear on their own. A repository without a release, without
-`addon.zip` or without a SHA-256 is shown with a problem instead of an install button.
-
-The pull request is reviewed for: a working release, an honest README, the smallest set of capabilities and origins
-the add-on needs, and no tracking or third-party analytics. An instance's Owner can still block any add-on, by id or
-by the hash of one version, and can point the store at another index (`HOMEMIX_STORE_INDEX`) or none.
+An instance's Owner can hide any entry and block any add-on, by id or by the hash of one version, and can point the
+official listing at another index (`HOMEMIX_STORE_INDEX`) or none.
 
 ## Checklist
 
@@ -288,7 +291,7 @@ by the hash of one version, and can point the store at another index (`HOMEMIX_S
 - [ ] Reads the data older versions wrote.
 - [ ] `npm run check` passes; JARVIS tools have clear descriptions and scripts that only read are `readOnly`.
 - [ ] Public repository with a README, a release and its `addon.zip`.
-- [ ] A pull request to `homemix/store/addons.json`, if you want it in the store.
+- [ ] Submitted to the store of the instances you want it in.
 
 ## When something goes wrong
 

@@ -90,23 +90,45 @@ Any signed-in person may add one; the same zip is one package. Errors: `homemix.
 once), `homemix.package_invalid`, `homemix.package_too_large`, `homemix.id_reserved`, `homemix.needs_newer_homeapps`,
 `homemix.download_failed`, `homemix.blocked`, `homemix.uploads_disabled`.
 
-### The store (A5)
+### The store (A5, HomeMix 2.0 B3)
 
-`GET /homemix/api/store` lists, for anyone signed in:
+The store is this instance's own (homemix-2.md S1): its entries live in HomeMix's database. `GET /homemix/api/store`
+lists, for anyone signed in, without blocked, hidden or removed entries:
 
-1. **The official add-ons** (`official: true`, `addonId`): `homemix/official/*` built into zips inside the HomeMix
-   image (`homemix/official/build.sh`, `HomeMix:OfficialPath`). They need no GitHub and update with HomeApps: the
-   web app's "check for an update" adds the image's zip again. Today: Pomodoro and Pogoda.
-2. **The index's add-ons** (`repository`): `addons.json` (`HomeMix:StoreIndexUrl`, by default
-   [`homemix/store/addons.json`](../homemix/store/addons.json) in the HomeApps repository) lists GitHub repositories;
-   publishing an add-on is a pull request that adds its link. For each, HomeMix reads from GitHub the repository's
-   description, its latest release (tag, date, the SHA-256 of `addon.zip`) and the README, at most 15 repositories,
-   cached for `HomeMix:StoreCacheMinutes`. A repository GitHub cannot describe stays listed with `problem`
-   (`no_release`, `no_addon_zip`, `no_digest`, `unavailable`).
+1. **Built-in add-ons** (`builtin: true`, `official: true`, key `{id}-official`): `homemix/official/*` built into zips
+   inside the HomeMix image (`homemix/official/build.sh`, `HomeMix:OfficialPath`). They need no GitHub and update
+   with HomeApps. Today: Pomodoro and Pogoda.
+2. **Official entries from `addons.json`** (`official: true`, key `{id}-official`): the quick listing of repositories
+   the HomeApps team keeps (`HomeMix:StoreIndexUrl`, by default [`homemix/store/addons.json`](../homemix/store/addons.json)),
+   one line each, no submitting. A built-in add-on with the same id wins.
+3. **Submitted entries**, newest first: any signed-in person pastes a GitHub repository link
+   (`POST /homemix/api/store { repository }`, `HomeMix:StoreSubmissionsPerDay` = 5 in 24 hours). HomeMix reads the
+   latest release and its README, checks the package like any other (manifest, files, reserved ids, blocks) and
+   lists it at once, with no review of rights for now.
 
-Nothing is uploaded to the store and the server keeps nothing but that cache. Choosing an entry adds it like a link
-(`/packages/github`) or by id (`/packages/official/{id}`), then the consent screen asks where to install it. Blocked
-add-ons (by id or hash) leave the list. The web app shows a README as plain text, never as HTML.
+**Keys.** An add-on's `id` need not be unique in the store: an entry is `{id}-{8 hex of SHA-256(submitter + repository)}`,
+e.g. `chores-3f9a1c2e`. The same person with the same repository always gets the same entry, so submitting again reads
+it again (and lists it again after they removed it); a new release is a new version of the entry, not a new one. Only
+one add-on per id may stand in one household or account: installing another one with the same id (another repository)
+answers `homemix.id_in_use`.
+
+**Refreshing.** Every 10 minutes HomeMix lists new repositories of `addons.json` and reads again the entries not read
+for `HomeMix:StoreRefreshMinutes` (60), at most 10 per round to stay within GitHub's anonymous limit. A release whose
+SHA-256 it already has is not downloaded again. A release that cannot be used keeps the entry's last good version with
+`problem`: `no_release`, `no_addon_zip`, `no_digest`, `unavailable`, `id_changed` or the package's error code. The
+author can read it now (`POST /homemix/api/store/{key}/refresh`).
+
+| Endpoint | Who |
+|---|---|
+| `GET /homemix/api/store`, `GET /homemix/api/store/{key}` | anyone signed in (a hidden entry: its author and the Owner) |
+| `POST /homemix/api/store` `{ repository }` | anyone signed in, not an assistant |
+| `POST /homemix/api/store/{key}/refresh`, `DELETE /homemix/api/store/{key}` | the author or the Owner; official entries leave by a change to `addons.json` |
+| `PUT /homemix/api/admin/store/{key}/hidden` `{ hidden }` | the Owner |
+
+Errors: `homemix.store_unusable` (with `problem`), `homemix.store_limit`, `homemix.not_author`,
+`homemix.listing_official`, `homemix.listing_not_found`. Choosing an entry adds it like a link (`/packages/github`)
+or, built in, by id (`/packages/official/{id}`), then the consent screen asks where to install it. The web app shows
+a README as plain text, never as HTML.
 
 ## Installing (A1)
 
@@ -446,8 +468,9 @@ and `/homemix/run` (not `/mcp`). From Rider it runs on `http://localhost:5600`.
 | `HomeMix:PackagesPath` | `/data/packages` | the volume |
 | `HomeMix:HouseholdsUrl` | `http://households:8080` | |
 | `HomeMix:GitHubToken` | empty | `HOMEMIX_GITHUB_TOKEN`, only to raise GitHub's limit of 60 anonymous requests an hour |
-| `HomeMix:StoreIndexUrl` | `homemix/store/addons.json` on GitHub | `HOMEMIX_STORE_INDEX`; empty: only official add-ons |
-| `HomeMix:StoreCacheMinutes` | 60 | how long the store keeps what it read from GitHub |
+| `HomeMix:StoreIndexUrl` | `homemix/store/addons.json` on GitHub | `HOMEMIX_STORE_INDEX`; empty: no official entries but the built-in ones |
+| `HomeMix:StoreRefreshMinutes` | 60 | how often each store entry is read again from GitHub |
+| `HomeMix:StoreSubmissionsPerDay` | 5 | store submissions per person in 24 hours |
 | `HomeMix:OfficialPath` | `/app/official` | the official add-ons' zips in the image |
 | `HomeMix:NotificationsPerHour` | 30 | `notify.push` per installation |
 
