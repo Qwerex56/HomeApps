@@ -147,7 +147,9 @@ autoResize(homemix)
 const ctx = await homemix.context()
 const doc = await homemix.data.get('counter', 'clicks')        // null when there is none
 await homemix.data.put('counter', 'clicks', (doc?.value ?? 0) + 1, { version: doc?.version })
-homemix.on('data.changed', ({ scope, collection }) => { /* someone else wrote */ })
+homemix.on('data.changed', ({ scope, collection, key, by }) => { /* written here, on another device or by JARVIS */ })
+homemix.on('permissions.changed', ({ role, permissions }) => { /* a new role in the household */ })
+homemix.on('notification', ({ title, body }) => { /* a push() of this add-on, while HomeApps is open */ })
 ```
 
 Every call answers a promise; a refused one rejects with an error that has `code` and `message`

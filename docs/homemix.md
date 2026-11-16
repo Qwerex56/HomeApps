@@ -185,8 +185,11 @@ Messages are plain objects over `postMessage`; the host checks `event.source` ag
 { homemix: 1, id: 7, error: { code: 'homemix.forbidden', message: '...' } }
 // host -> frame, unasked
 { homemix: 1, event: 'theme', data: { dark: true, vars: { '--p-primary-color': '...' } } }
-{ homemix: 1, event: 'data.changed', data: { scope: 'household', collection: 'sessions' } }
+{ homemix: 1, event: 'data.changed', data: { scope: 'household', collection: 'sessions', key: 'a1', by: '<user id>' } }
 ```
+
+Events (`homemix.on(name, listener)`): `theme`, `data.changed`, and from HomeMix 2.0 `permissions.changed`,
+`installation.changed` and `notification`; see "RealTime" below.
 
 | Capability | Methods | |
 |---|---|---|
@@ -374,6 +377,27 @@ in `Account`.
   add-on's name and "Przejdź do aplikacji"; the add-on itself can call `homemix.open(path?)` (e.g. on a click on its
   tile). On the wall tablet this opens the add-on in full at `/wall/mix/{id}/{path}` with a way back, elsewhere at its
   usual page.
+
+## RealTime (HomeMix 2.0, B2)
+
+The web app keeps one SignalR connection to `/homemix/hub` (the person's token as `?access_token=`, read only on that
+path) while it is open. Every connection is in its person's group; it joins a household's group (`WatchHousehold`)
+only as a member, guests included, checked with Households. Events name what changed, never data, and are sent only
+after the change is saved. The host passes each to the frames of that installation:
+
+| Event | Data in the frame | When | Who |
+|---|---|---|---|
+| `data.changed` | `{ scope, collection, key, by }` | a document written or deleted, on any device or by JARVIS | the household (account add-on: its owner); `user` data only its owner |
+| `permissions.changed` | `{ role, permissions }` | `MemberRoleChanged` from Households (role `null` after `MemberLeft`) | the person |
+| `installation.changed` | `{ change, version }` | `updated`, `removed`, `blocked`, `unblocked`, `widgets` (installs only refresh the list) | the household or the owner |
+| `notification` | `{ title, body, path, tag }` | a `push()` (Web Push still goes out as before) | each recipient, also as a toast in the app |
+
+- The host reloads a frame on a new version (its key includes it) and drops it when the list no longer has the
+  installation. `@homemix/vue`'s `useCan()` and context follow `permissions.changed` without a reload.
+- A write in this tab reaches the other frames here at once; its echo over realtime within 2 s is not told twice.
+- No new capabilities: an add-on only hears about what it could already read. Someone who leaves a household stays
+  in its group until they reconnect; they only see keys, never values.
+- `homemix dev` sends `permissions.changed` when you switch the role.
 
 ## Building one (A3)
 

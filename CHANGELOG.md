@@ -13,6 +13,10 @@ HomeMix 2.0: widgets you can choose, a store page with stats, RealTime and a fra
   widget and "Widgety" in the add-on list). Each widget has a header with "Przejdź do aplikacji"; the bridge has
   `open(path?)` and `context().widget.size`. On the wall tablet an add-on opens in full at `/wall/mix/{id}`.
 
+- **HomeMix RealTime (B2):** the SignalR hub `/homemix/hub`; the web app passes `data.changed` (also from other
+  devices and JARVIS), `permissions.changed` (on a new household role), `installation.changed` and `notification`
+  (also a toast) to the add-on frames; `@homemix/vue`'s `useCan()` follows a role change. Traefik routes `/homemix/hub`.
+
 ### Changed
 
 - **HomeMix:** the "działa w osobnej, zamkniętej ramce" caption is gone from widgets, it stays under add-on pages.
