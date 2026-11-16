@@ -10,10 +10,10 @@ server runs in Jint with the same `ctx` as the bridge (docs/homemix.md, "JARVIS"
 `npm run build && npx homemix tool forecast '{"days":3}' --data=place.json`, where `place.json` is
 `{ "household": { "place": { "current": { "name": "Kraków", "latitude": 50.06, "longitude": 19.94 } } } }`.
 
-Written with `@homemix/vue` as the second example of docs/homemix.md, "Building one".
+Written with `@home-apps/vue` as the second example of docs/homemix.md, "Building one".
 
 ```bash
-cd src/Web/homemix && npm install && npm run build   # the SDK and @homemix/vue, once
+cd src/Web/homemix && npm install && npm run build   # the SDK and @home-apps/vue, once
 cd homemix/official/pogoda
 npm install
 npm run dev     # a fake HomeApps at http://localhost:5180

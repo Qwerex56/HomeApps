@@ -1,5 +1,5 @@
 /*
- * @homemix/css: the HomeApps look for add-ons (docs/homemix-authoring.md, "Building blocks").
+ * @home-apps/css: the HomeApps look for add-ons (docs/homemix-authoring.md, "Building blocks").
  * Every colour comes from the host's theme (CSS variables HomeApps sends; applyTheme sets them), with light fallbacks.
  * Dark mode: the class hm-dark on <html>. Where the add-on stands: hm-page or hm-widget, hm-size-small|medium|large
  * and hm-wall on the wall tablet (applyLayout sets them from the context).

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
-import { useCan, useCollection, useHomeMix } from "@homemix/vue";
+import { useCan, useCollection, useHomeMix } from "@home-apps/vue";
 import { describe, forecast, round, search, type Forecast, type Place } from "./weather";
 
 // The official HomeMix Pogoda: an Admin picks the household's place once (collection "place", permission

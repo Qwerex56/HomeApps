@@ -1,4 +1,4 @@
-// The fake host of `homemix dev`: the same bridge as HomeApps (serveFrame from @homemix/sdk), with a household, roles
+// The fake host of `homemix dev`: the same bridge as HomeApps (serveFrame from @home-apps/sdk), with a household, roles
 // and data in memory, so an add-on runs without a HomeApps instance.
 import { HomeMixError, emit, serveFrame } from '/sdk/host.js'
 

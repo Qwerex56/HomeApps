@@ -10,13 +10,13 @@
     "pack": "vite build && homemix pack"
   },
   "dependencies": {
-    "@homemix/css": "^2.4.0",
-    "@homemix/vue": "^2.4.0",
+    "@home-apps/css": "^2.4.0",
+    "@home-apps/vue": "^2.4.0",
     "vue": "^3.5.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.0",
-    "homemix": "^2.4.0",
+    "@home-apps/homemix": "^2.4.0",
     "typescript": "~5.9.0",
     "vite": "^8.0.0"
   }

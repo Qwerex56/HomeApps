@@ -1,5 +1,5 @@
 {
-  "name": "@homemix/css",
+  "name": "@home-apps/css",
   "version": "2.4.0",
   "description": "hm-* classes in the HomeApps look for HomeMix add-ons, with or without a framework (docs/homemix-authoring.md)",
   "license": "MIT",

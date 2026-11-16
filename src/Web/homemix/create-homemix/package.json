@@ -1,7 +1,7 @@
 {
-  "name": "create-homemix",
+  "name": "@home-apps/create-homemix",
   "version": "2.4.0",
-  "description": "npm create homemix@latest: a new HomeMix add-on (docs/homemix.md, \"Building one\")",
+  "description": "npm create @home-apps/homemix@latest: a new HomeMix add-on (docs/homemix.md, \"Building one\")",
   "license": "MIT",
   "type": "module",
   "repository": { "type": "git", "url": "git+https://github.com/Qwerex56/HomeApps.git", "directory": "src/Web/homemix/create-homemix" },

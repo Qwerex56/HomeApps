@@ -16,7 +16,7 @@ namespace HomeMix.Api.Mcp;
 /// </summary>
 internal sealed partial class ScriptRunner(IPackageStore store, ScriptBridge bridge, ILogger<ScriptRunner> logger)
 {
-    // The bridge's contract (@homemix/sdk) over one host function: every call answers {value} or {error: {code, message}}.
+    // The bridge's contract (@home-apps/sdk) over one host function: every call answers {value} or {error: {code, message}}.
     private const string Bootstrap = """
         const ctx = (() => {
           const host = __host

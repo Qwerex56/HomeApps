@@ -5,10 +5,10 @@ the household page, the wall tablet and "Moje aplikacje". Each person's finished
 Admins set the lengths (permission `settings.write`). The end of a focus is pushed to everyone's devices, and JARVIS
 can read the timer (summary) and your stats (tool `pomodoro_stats`) when the installer allowed it.
 
-Written with `@homemix/vue` as the living example of docs/homemix.md, "Building one".
+Written with `@home-apps/vue` as the living example of docs/homemix.md, "Building one".
 
 ```bash
-cd src/Web/homemix && npm install && npm run build   # the SDK and @homemix/vue, once
+cd src/Web/homemix && npm install && npm run build   # the SDK and @home-apps/vue, once
 cd homemix/official/pomodoro
 npm install
 npm run dev     # a fake HomeApps at http://localhost:5180

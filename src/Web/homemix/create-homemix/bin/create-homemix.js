@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// npm create homemix@latest my-addon [-- --template=vue|vanilla]
+// npm create @home-apps/homemix@latest my-addon [-- --template=vue|vanilla]
 import { cp, readFile, readdir, rename, stat, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -14,7 +14,7 @@ const id = (name ?? '')
 
 if (!name || !/^[a-z][a-z0-9-]{1,30}$/.test(id)) {
   console.error(
-    'Usage: npm create homemix@latest <id> [-- --template=vue|vanilla]\n  id: 2-31 lowercase letters, digits or "-", starting with a letter.',
+    'Usage: npm create @home-apps/homemix@latest <id> [-- --template=vue|vanilla]\n  id: 2-31 lowercase letters, digits or "-", starting with a letter.',
   )
   process.exit(1)
 }

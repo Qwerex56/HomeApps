@@ -71,8 +71,8 @@ export default defineConfig({
       // The plugin SDK lives next to the app; the app uses its source, plugins its packed build (scripts/pack.sh).
       '@homeapps/plugin-sdk': fileURLToPath(new URL('./plugin-sdk/src', import.meta.url)),
       // The HomeMix SDK lives here too (docs/homemix.md, "Building one"); the app uses its source.
-      '@homemix/sdk/host': fileURLToPath(new URL('./homemix/sdk/src/host.ts', import.meta.url)),
-      '@homemix/sdk': fileURLToPath(new URL('./homemix/sdk/src/index.ts', import.meta.url)),
+      '@home-apps/sdk/host': fileURLToPath(new URL('./homemix/sdk/src/host.ts', import.meta.url)),
+      '@home-apps/sdk': fileURLToPath(new URL('./homemix/sdk/src/index.ts', import.meta.url)),
     },
   },
   // Traefik serves the app at https://app.localhost and reaches vite through host.docker.internal:5173.

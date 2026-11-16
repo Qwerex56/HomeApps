@@ -8,8 +8,8 @@
       "@/*": ["./src/*"],
       "@homeapps/plugin-sdk": ["./plugin-sdk/src/index.ts"],
       "@homeapps/plugin-sdk/vite": ["./plugin-sdk/src/vite.ts"],
-      "@homemix/sdk": ["./homemix/sdk/src/index.ts"],
-      "@homemix/sdk/host": ["./homemix/sdk/src/host.ts"]
+      "@home-apps/sdk": ["./homemix/sdk/src/index.ts"],
+      "@home-apps/sdk/host": ["./homemix/sdk/src/host.ts"]
     }
   }
 }

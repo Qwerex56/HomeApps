@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { HouseholdRole, WidgetPlace, WidgetSize } from '@homemix/sdk'
+import type { HouseholdRole, WidgetPlace, WidgetSize } from '@home-apps/sdk'
 import { useSessionStore } from '@/features/auth/session'
 import { useMyAccount } from '@/features/account/api'
 import { localized } from '@/features/plugins/registry'

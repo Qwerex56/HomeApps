@@ -1,5 +1,5 @@
 {
-  "name": "@homemix/vue",
+  "name": "@home-apps/vue",
   "version": "2.4.0",
   "description": "Vue 3 composables and the HomeApps look for HomeMix add-ons (docs/homemix.md)",
   "license": "MIT",
@@ -19,8 +19,8 @@
     "build": "../../node_modules/.bin/tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@homemix/css": "2.4.0",
-    "@homemix/sdk": "2.4.0"
+    "@home-apps/css": "2.4.0",
+    "@home-apps/sdk": "2.4.0"
   },
   "peerDependencies": {
     "vue": "^3.5.0",

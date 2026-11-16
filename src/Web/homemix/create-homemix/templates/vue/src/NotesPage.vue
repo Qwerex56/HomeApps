@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { HmEmpty, HmInput, HmList, HmPage, useCollection, useHomeMix } from '@homemix/vue'
+import { HmEmpty, HmInput, HmList, HmPage, useCollection, useHomeMix } from '@home-apps/vue'
 
 // The page: a shared list for the household; everyone sees it, Members and up write (homemix.json, storage.household).
 const { context } = useHomeMix()

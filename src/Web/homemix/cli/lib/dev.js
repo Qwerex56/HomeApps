@@ -2,7 +2,7 @@ import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { dirname, extname, join, normalize, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { isSafePath } from '@homemix/sdk'
+import { isSafePath } from '@home-apps/sdk'
 import { readManifest } from './files.js'
 
 const types = {
@@ -19,7 +19,7 @@ const types = {
 }
 
 const hostDir = fileURLToPath(new URL('../host/', import.meta.url))
-const sdkDir = dirname(fileURLToPath(import.meta.resolve('@homemix/sdk')))
+const sdkDir = dirname(fileURLToPath(import.meta.resolve('@home-apps/sdk')))
 
 /** The sandbox headers HomeApps sends with an add-on's files (docs/homemix.md, "The sandbox"). */
 export function sandboxHeaders(network) {

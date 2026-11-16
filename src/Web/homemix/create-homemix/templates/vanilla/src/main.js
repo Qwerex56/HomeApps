@@ -1,7 +1,7 @@
-import '@homemix/css'
-import { applyLayout, applyTheme, autoResize, connect } from '@homemix/sdk'
+import '@home-apps/css'
+import { applyLayout, applyTheme, autoResize, connect } from '@home-apps/sdk'
 
-// The bridge without a framework: context, data, the host's theme and the @homemix/css classes for where it stands.
+// The bridge without a framework: context, data, the host's theme and the @home-apps/css classes for where it stands.
 const homemix = connect()
 autoResize(homemix)
 

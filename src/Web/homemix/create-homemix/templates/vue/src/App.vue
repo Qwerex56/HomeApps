@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useHomeMix } from '@homemix/vue'
+import { useHomeMix } from '@home-apps/vue'
 import NotesPage from './NotesPage.vue'
 import NotesWidget from './NotesWidget.vue'
 

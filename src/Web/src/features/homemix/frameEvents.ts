@@ -1,4 +1,4 @@
-import type { EventName, Events } from '@homemix/sdk'
+import type { EventName, Events } from '@home-apps/sdk'
 import type { MixEvent } from './realtime'
 
 /** What a frame of this installation hears of a realtime event, or null when it is not its own. */

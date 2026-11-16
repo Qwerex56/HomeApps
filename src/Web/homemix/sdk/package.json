@@ -1,5 +1,5 @@
 {
-  "name": "@homemix/sdk",
+  "name": "@home-apps/sdk",
   "version": "2.4.0",
   "description": "The HomeMix bridge for add-ons, the host side and the homemix.json types (docs/homemix.md)",
   "license": "MIT",

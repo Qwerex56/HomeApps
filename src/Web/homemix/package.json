@@ -4,6 +4,6 @@
   "description": "The HomeMix tooling, built and released with HomeApps (docs/homemix.md, \"Building one\"). Vue, TypeScript and PrimeVue come from src/Web.",
   "workspaces": ["sdk", "css", "vue", "cli", "create-homemix"],
   "scripts": {
-    "build": "npm run build -w @homemix/sdk && npm run build -w @homemix/vue"
+    "build": "npm run build -w @home-apps/sdk && npm run build -w @home-apps/vue"
   }
 }

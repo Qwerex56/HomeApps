@@ -1,4 +1,4 @@
-// @homemix/vue: Vue 3 composables over @homemix/sdk (docs/homemix.md, "Building one"). The add-on bundles its own Vue.
+// @home-apps/vue: Vue 3 composables over @home-apps/sdk (docs/homemix.md, "Building one"). The add-on bundles its own Vue.
 import {
   computed,
   onScopeDispose,
@@ -21,7 +21,7 @@ import {
   type Scope,
   type WidgetPlace,
   type WidgetSize,
-} from '@homemix/sdk'
+} from '@home-apps/sdk'
 
 let instance: HomeMix | null = null
 const context = shallowRef<HomeMixContext | null>(null)
@@ -31,7 +31,7 @@ let loading: Promise<HomeMixContext> | null = null
 export { applyLayout, applyTheme }
 
 /**
- * The bridge and where the add-on runs, shared by every component. Applies the theme and the @homemix/css layout
+ * The bridge and where the add-on runs, shared by every component. Applies the theme and the @home-apps/css layout
  * classes (hm-widget, hm-size-*, hm-wall), follows theme changes and keeps the frame as tall as the page (pass
  * autoResize: false to size it yourself).
  */
@@ -146,4 +146,4 @@ export function useWidget(): Widget {
 }
 
 export * from './blocks.js'
-export type { Document, HomeMixContext, Scope, WidgetPlace, WidgetSize } from '@homemix/sdk'
+export type { Document, HomeMixContext, Scope, WidgetPlace, WidgetSize } from '@home-apps/sdk'

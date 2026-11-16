@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { h } from 'vue'
-import type { HomeMixContext, WidgetSize } from '@homemix/sdk'
+import type { HomeMixContext, WidgetSize } from '@home-apps/sdk'
 
-// @homemix/vue's building blocks (homemix-2.md 3.3), over a fake bridge: the context says where the add-on stands.
+// @home-apps/vue's building blocks (homemix-2.md 3.3), over a fake bridge: the context says where the add-on stands.
 const bridge = vi.hoisted(() => ({
   widget: null as { id: string; place: 'Household' | 'Wall' | 'Account'; size: 'Small' | 'Medium' | 'Large' } | null,
   open: vi.fn(async () => {}),
 }))
 
-vi.mock('@homemix/sdk', async (original) => {
-  const actual = await original<typeof import('@homemix/sdk')>()
+vi.mock('@home-apps/sdk', async (original) => {
+  const actual = await original<typeof import('@home-apps/sdk')>()
   return {
     ...actual,
     autoResize: () => () => {},

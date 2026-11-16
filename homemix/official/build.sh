@@ -8,7 +8,7 @@ out=${1:-"$root/homemix/official/dist"}
 mkdir -p "$out"
 out=$(cd "$out" && pwd)
 
-# The SDK and @homemix/vue build with src/Web's TypeScript and Vue.
+# The SDK and @home-apps/vue build with src/Web's TypeScript and Vue.
 (cd "$root/src/Web" && npm ci --no-audit --no-fund)
 (cd "$root/src/Web/homemix" && npm ci --no-audit --no-fund && npm run build)
 

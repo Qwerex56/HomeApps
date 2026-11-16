@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { reactive } from 'vue'
-import { HomeMixError, serveFrame, type Handlers } from '@homemix/sdk/host'
-import { BridgeCallError, checkManifest, connect } from '@homemix/sdk'
+import { HomeMixError, serveFrame, type Handlers } from '@home-apps/sdk/host'
+import { BridgeCallError, checkManifest, connect } from '@home-apps/sdk'
 
 // The bridge without a browser: two EventTargets play the host's and the frame's windows; postMessage clones like
 // a browser's (structuredClone throws on a proxy).

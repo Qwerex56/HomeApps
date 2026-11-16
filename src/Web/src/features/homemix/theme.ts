@@ -1,7 +1,7 @@
-import type { Theme } from '@homemix/sdk'
+import type { Theme } from '@home-apps/sdk'
 
 // The theme an add-on gets (docs/homemix.md, "The bridge"): PrimeVue's tokens as CSS custom properties, read from the
-// page so they follow light and dark. @homemix/vue applies them in the frame.
+// page so they follow light and dark. @home-apps/vue applies them in the frame.
 export const THEME_VARS = [
   '--p-primary-color',
   '--p-primary-contrast-color',

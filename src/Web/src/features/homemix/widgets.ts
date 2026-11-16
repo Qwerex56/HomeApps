@@ -1,4 +1,4 @@
-import type { WidgetPlace, WidgetSize } from '@homemix/sdk'
+import type { WidgetPlace, WidgetSize } from '@home-apps/sdk'
 import type { AddonWidget, Installation } from './api'
 
 export interface PlacedWidget {

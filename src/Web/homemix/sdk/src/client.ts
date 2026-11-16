@@ -146,7 +146,7 @@ export function applyTheme(theme: Theme, root: HTMLElement = document.documentEl
   root.classList.toggle('app-dark', theme.dark)
 }
 
-/** The @homemix/css classes for where the add-on stands: hm-page or hm-widget, hm-size-*, hm-wall on the tablet. */
+/** The @home-apps/css classes for where the add-on stands: hm-page or hm-widget, hm-size-*, hm-wall on the tablet. */
 export function layoutClasses(context: Pick<HomeMixContext, 'widget'>): string[] {
   const widget = context.widget
   if (!widget) return ['hm-page']

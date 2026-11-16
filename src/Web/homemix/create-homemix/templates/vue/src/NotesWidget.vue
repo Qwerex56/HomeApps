@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { HmList, HmStat, HmWallTile, HmWidget, useCollection, useWidget } from '@homemix/vue'
+import { HmList, HmStat, HmWallTile, HmWidget, useCollection, useWidget } from '@home-apps/vue'
 
 // The widget: a click anywhere opens the page (HmWidget); a small one shows only the count, the tablet a big tile.
 const notes = useCollection<{ text: string }>('notes')

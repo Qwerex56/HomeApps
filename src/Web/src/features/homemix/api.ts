@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { http } from '@/api/http'
 import type { components } from '@/api/types/homemix'
-import type { Document, Push, Scope } from '@homemix/sdk'
+import type { Document, Push, Scope } from '@home-apps/sdk'
 
 type Schemas = components['schemas']
 export type Installation = Schemas['InstallationView']

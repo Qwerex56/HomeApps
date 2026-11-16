@@ -1,8 +1,8 @@
-// @homemix/vue building blocks (homemix-2.md 3.3): ready parts of a widget or page in the HomeApps look, drawn with the
-// @homemix/css classes. Each knows the three widget sizes through useWidget() and the size classes on <html>.
+// @home-apps/vue building blocks (homemix-2.md 3.3): ready parts of a widget or page in the HomeApps look, drawn with the
+// @home-apps/css classes. Each knows the three widget sizes through useWidget() and the size classes on <html>.
 // Written as render functions so the package needs no Vue compiler: <HmStat :value="3" label="Zadania" /> as usual.
 import { computed, defineComponent, h, onScopeDispose, ref, watch, type PropType, type VNode } from 'vue'
-import type { WidgetSize } from '@homemix/sdk'
+import type { WidgetSize } from '@home-apps/sdk'
 import { useWidget } from './index.js'
 
 let ids = 0

@@ -1,6 +1,6 @@
-# Publishes the HomeMix tooling (src/Web/homemix: @homemix/sdk, @homemix/css, @homemix/vue, homemix, create-homemix) to npm on a
+# Publishes the HomeMix tooling (src/Web/homemix: @home-apps/sdk, @home-apps/css, @home-apps/vue, @home-apps/homemix, @home-apps/create-homemix) to npm on a
 # tag homemix-v<version>, e.g. homemix-v2.4.0 for the packages at 2.4.0. Needs the repository secret NPM_TOKEN
-# (an npm automation token that may publish to the @homemix scope and the two unscoped names). See
+# (an npm automation token that may publish to the @home-apps scope). See
 # docs/homemix-authoring.md for authors and docs/working-with-the-repo.md for releasing.
 name: HomeMix packages
 on:
@@ -42,7 +42,7 @@ jobs:
         working-directory: src/Web/homemix
         run: |
           for p in sdk css vue cli create-homemix; do
-            npm publish --workspace "$p" --provenance
+            npm publish --workspace "$p" --provenance --access public
           done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
