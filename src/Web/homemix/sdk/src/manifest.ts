@@ -1,5 +1,5 @@
 // homemix.json (docs/homemix.md, "The package") and the same checks the server makes, for `homemix check`.
-import type { Capability, HouseholdRole, WidgetPlace } from './protocol.js'
+import type { Capability, HouseholdRole, WidgetPlace, WidgetSize } from './protocol.js'
 
 export interface LocalizedText {
   pl: string
@@ -20,7 +20,10 @@ export interface HomeMixManifest {
   widgets?: {
     id: string
     title: LocalizedText
-    size?: 'Small' | 'Medium' | 'Large'
+    /** The default size (Medium). */
+    size?: WidgetSize
+    /** Every size the widget can be shown in; admins pick one. Defaults to [size]. */
+    sizes?: WidgetSize[]
     places?: WidgetPlace[]
     entry?: string
   }[]
@@ -104,6 +107,11 @@ export function checkManifest(json: unknown): string[] {
     text(widget.title, `widgets['${widget.id}'].title`, true, problems)
     if (widget.size && !['Small', 'Medium', 'Large'].includes(widget.size))
       problems.push(`widgets['${widget.id}'].size must be Small, Medium or Large.`)
+    for (const size of widget.sizes ?? [])
+      if (!['Small', 'Medium', 'Large'].includes(size))
+        problems.push(`widgets['${widget.id}'].sizes: '${size}' must be Small, Medium or Large.`)
+    if (widget.sizes && !widget.sizes.includes(widget.size ?? 'Medium'))
+      problems.push(`widgets['${widget.id}'].sizes must include size.`)
     for (const place of widget.places ?? [])
       if (!['Household', 'Wall', 'Account'].includes(place))
         problems.push(`widgets['${widget.id}'].places: '${place}' must be Household, Wall or Account.`)

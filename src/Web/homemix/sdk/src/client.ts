@@ -30,6 +30,8 @@ export interface HomeMix {
   can(permission: string): Promise<boolean>
   resize(height?: number): Promise<void>
   navigate(path: string): Promise<void>
+  /** From a widget: opens the add-on (one of its pages) in full, where the widget stands (the app or the wall tablet). */
+  open(path?: string): Promise<void>
   data: {
     list<T = unknown>(collection: string, scope?: Scope): Promise<Document<T>[]>
     get<T = unknown>(collection: string, key: string, scope?: Scope): Promise<Document<T> | null>
@@ -103,6 +105,9 @@ export function connect(options: ConnectOptions = {}): HomeMix {
     },
     navigate: async (path) => {
       await call('navigate', { path })
+    },
+    open: async (path) => {
+      await call('open', { path: path ?? '' })
     },
     data: {
       list: (collection, scope) => call('data.list', { collection, scope }) as never,

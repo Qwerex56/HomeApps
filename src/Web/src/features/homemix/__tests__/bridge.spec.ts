@@ -26,6 +26,7 @@ function handlers(overrides: Partial<Handlers> = {}): Handlers {
     can: ({ permission }) => permission === 'plan.write',
     resize: () => null,
     navigate: () => null,
+    open: () => null,
     'data.list': () => [],
     'data.get': () => null,
     'data.put': ({ key, value }) => ({ key, value, version: 1, updatedBy: 'u', updatedAt: '2026-11-12T00:00:00Z' }),
@@ -126,5 +127,11 @@ describe('homemix.json check', () => {
       entry: '../a.html',
     })
     expect(problems).toHaveLength(4)
+  })
+
+  it('checks the sizes of a widget like the server', () => {
+    const widget = { id: 'timer', title: { pl: 'Minutnik' }, places: ['Household' as const] }
+    expect(checkManifest({ ...valid, widgets: [{ ...widget, size: 'Small', sizes: ['Small', 'Large'] }] })).toEqual([])
+    expect(checkManifest({ ...valid, widgets: [{ ...widget, size: 'Small', sizes: ['Medium'] }] })).toHaveLength(1)
   })
 })

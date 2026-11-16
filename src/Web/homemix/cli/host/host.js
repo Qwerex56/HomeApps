@@ -45,15 +45,27 @@ const views = [
     widget: null,
   })),
   ...(manifest.widgets ?? []).flatMap((w) =>
-    (w.places ?? ['Household']).map((place) => ({
-      label: `Kafelek: ${w.title?.pl ?? w.id} (${place})`,
-      page: '',
-      file: w.entry ?? '',
-      widget: { id: w.id, place },
-    })),
+    (w.places ?? ['Household']).flatMap((place) =>
+      (w.sizes ?? [w.size ?? 'Medium']).map((size) => ({
+        label: `Kafelek: ${w.title?.pl ?? w.id} (${place}, ${size})`,
+        page: '',
+        file: w.entry ?? '',
+        widget: { id: w.id, place, size },
+      })),
+    ),
   ),
 ]
 $('view').innerHTML = views.map((v, i) => `<option value="${i}">${v.label}</option>`).join('')
+
+// navigate and open: switch the view to the page with that path, as HomeApps would open it.
+function show(path) {
+  const index = views.findIndex((v) => v.page === path && !v.widget)
+  if (index >= 0) {
+    $('view').value = String(index)
+    load()
+  }
+  return null
+}
 
 const state = () => ({
   target: $('target').value,
@@ -100,14 +112,8 @@ const handlers = {
     $('frame').querySelector('iframe').style.height = `${Math.min(Math.max(height, 40), 4000)}px`
     return null
   },
-  navigate: ({ path }) => {
-    const index = views.findIndex((v) => v.page === path && !v.widget)
-    if (index >= 0) {
-      $('view').value = String(index)
-      load()
-    }
-    return null
-  },
+  navigate: ({ path }) => show(path),
+  open: ({ path }) => show(path ?? ''),
   'data.list': ({ collection, scope }) =>
     Object.values(store[space(scope, collection)] ?? {}).sort((a, b) => a.key.localeCompare(b.key)),
   'data.get': ({ collection, key, scope }) => store[space(scope, collection)]?.[key] ?? null,

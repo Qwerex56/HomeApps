@@ -7,6 +7,7 @@ export type Capability = 'storage.household' | 'storage.user' | 'household.membe
 export type Scope = 'household' | 'user'
 export type HouseholdRole = 'Guest' | 'Member' | 'Admin' | 'Owner'
 export type WidgetPlace = 'Household' | 'Wall' | 'Account'
+export type WidgetSize = 'Small' | 'Medium' | 'Large'
 
 /** What the add-on knows about where it runs. Never tokens, emails, server roles or instance configuration. */
 export interface HomeMixContext {
@@ -21,7 +22,8 @@ export interface HomeMixContext {
   theme: Theme
   /** The page path inside the add-on, or the widget's id and place. */
   page: string
-  widget: { id: string; place: WidgetPlace } | null
+  /** Set in a widget: which one, where, and the size it was given (one of its homemix.json sizes). */
+  widget: { id: string; place: WidgetPlace; size: WidgetSize } | null
 }
 
 export interface Theme {
@@ -69,6 +71,7 @@ export interface Methods {
   can: { params: { permission: string }; result: boolean }
   resize: { params: { height: number }; result: null }
   navigate: { params: { path: string }; result: null }
+  open: { params: { path?: string }; result: null }
   'data.list': { params: { scope?: Scope; collection: string }; result: Document[] }
   'data.get': { params: { scope?: Scope; collection: string; key: string }; result: Document | null }
   'data.put': {
@@ -120,6 +123,7 @@ export const METHODS: readonly Method[] = [
   'can',
   'resize',
   'navigate',
+  'open',
   'data.list',
   'data.get',
   'data.put',
