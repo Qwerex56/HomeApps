@@ -19,4 +19,7 @@ public static class ListingKey
     }
 
     public static string Official(string addonId) => $"{addonId}-official";
+
+    /// <summary>The source of a built-in add-on in the store's numbers (it has no repository).</summary>
+    public const string OfficialSource = "official";
 }

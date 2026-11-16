@@ -4,11 +4,18 @@ using HomeApps.BuildingBlocks.Application.Messaging;
 using HomeMix.Application.Abstractions;
 using HomeMix.Domain.Installations;
 using HomeMix.Application.Realtime;
+using HomeMix.Domain.Store;
 
 namespace HomeMix.Application.Installations.RemoveInstallation;
 
 internal sealed class RemoveInstallationHandler(
-    IInstallationRepository installations, InstallationAccess access, ICurrentUser currentUser, TimeProvider time, RealtimeOutbox realtime)
+    IInstallationRepository installations,
+    IPackageRepository packages,
+    InstallationAccess access,
+    ICurrentUser currentUser,
+    TimeProvider time,
+    RealtimeOutbox realtime,
+    IStoreStatsRepository stats)
     : ICommandHandler<RemoveInstallationCommand>
 {
     public async Task<Result> Handle(RemoveInstallationCommand command, CancellationToken cancellationToken)
@@ -25,6 +32,11 @@ internal sealed class RemoveInstallationHandler(
         }
 
         realtime.Add(RealtimeEvents.InstallationChanged(installation, "removed"));
+        if (await packages.FindAsync(installation.PackageSha256, cancellationToken) is { } package)
+        {
+            stats.Add(StoreEvent.Of(installation, package, StoreEventKind.Removed, time.GetUtcNow()));
+        }
+
         return installation.Remove(currentUser.RequiredUserId, time.GetUtcNow());
     }
 }

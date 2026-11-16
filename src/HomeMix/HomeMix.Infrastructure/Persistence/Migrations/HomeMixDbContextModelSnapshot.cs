@@ -220,6 +220,71 @@ namespace HomeMix.Infrastructure.Persistence.Migrations
                     b.ToTable("Packages", (string)null);
                 });
 
+            modelBuilder.Entity("HomeMix.Domain.Store.StoreEvent", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("AddonId")
+                        .IsRequired()
+                        .HasMaxLength(31)
+                        .HasColumnType("character varying(31)");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("InstallationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("TargetKind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AddonId", "Source", "Kind", "At");
+
+                    b.ToTable("StoreEvents", (string)null);
+                });
+
+            modelBuilder.Entity("HomeMix.Domain.Store.StoreHeart", b =>
+                {
+                    b.Property<string>("ListingKey")
+                        .HasMaxLength(48)
+                        .HasColumnType("character varying(48)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ListingKey", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("StoreHearts", (string)null);
+                });
+
             modelBuilder.Entity("HomeMix.Domain.Store.StoreListing", b =>
                 {
                     b.Property<string>("Key")

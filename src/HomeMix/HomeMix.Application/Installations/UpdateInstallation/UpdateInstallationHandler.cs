@@ -7,6 +7,7 @@ using HomeMix.Domain.Installations;
 using HomeMix.Domain.Packages;
 using Microsoft.Extensions.Options;
 using HomeMix.Application.Realtime;
+using HomeMix.Domain.Store;
 
 namespace HomeMix.Application.Installations.UpdateInstallation;
 
@@ -18,7 +19,8 @@ internal sealed class UpdateInstallationHandler(
     TimeProvider time,
     Blocklist blocklist,
     IOptions<HomeMixOptions> options,
-    RealtimeOutbox realtime) : ICommandHandler<UpdateInstallationCommand, InstallationView>
+    RealtimeOutbox realtime,
+    IStoreStatsRepository stats) : ICommandHandler<UpdateInstallationCommand, InstallationView>
 {
     public async Task<Result<InstallationView>> Handle(UpdateInstallationCommand command, CancellationToken cancellationToken)
     {
@@ -51,6 +53,7 @@ internal sealed class UpdateInstallationHandler(
 
         var updated = installation.Update(package, command.Consent?.ToConsent(), currentUser.RequiredUserId, time.GetUtcNow());
         realtime.Add(RealtimeEvents.InstallationChanged(installation, "updated"));
+        stats.Add(StoreEvent.Of(installation, package, StoreEventKind.Updated, time.GetUtcNow()));
         return updated.IsFailed ? updated : InstallationView.From(installation, package);
     }
 }

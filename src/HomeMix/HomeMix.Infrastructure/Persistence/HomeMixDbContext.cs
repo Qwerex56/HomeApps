@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HomeMix.Infrastructure.Persistence;
 
-/// <summary>HomeMix's own database: packages (what is in each zip) and installations in households and on accounts, the add-ons' data, the Owner's blocks and the store's entries.</summary>
+/// <summary>HomeMix's own database: packages (what is in each zip) and installations in households and on accounts, the add-ons' data, the Owner's blocks, the store's entries and its numbers and "domki".</summary>
 public sealed class HomeMixDbContext(DbContextOptions<HomeMixDbContext> options, IPublisher publisher)
     : HomeAppsDbContext(options, publisher)
 {
@@ -22,4 +22,8 @@ public sealed class HomeMixDbContext(DbContextOptions<HomeMixDbContext> options,
     public DbSet<AddonBlock> Blocks => Set<AddonBlock>();
 
     public DbSet<StoreListing> StoreListings => Set<StoreListing>();
+
+    public DbSet<StoreEvent> StoreEvents => Set<StoreEvent>();
+
+    public DbSet<StoreHeart> StoreHearts => Set<StoreHeart>();
 }

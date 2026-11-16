@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IDocumentRepository, DocumentRepository>();
         services.AddScoped<IBlockRepository, BlockRepository>();
         services.AddScoped<IStoreListingRepository, StoreListingRepository>();
+        services.AddScoped<IStoreStatsRepository, StoreStatsRepository>();
         services.AddHostedService<RemovedDataCleanup>();
         services.AddHostedService<StoreRefresh>();
 
