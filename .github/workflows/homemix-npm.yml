@@ -1,5 +1,5 @@
 # Publishes the HomeMix tooling (src/Web/homemix: @homemix/sdk, @homemix/css, @homemix/vue, homemix, create-homemix) to npm on a
-# tag homemix-v<version>, e.g. homemix-v2.3.0 for the packages at 2.3.0. Needs the repository secret NPM_TOKEN
+# tag homemix-v<version>, e.g. homemix-v2.4.0 for the packages at 2.4.0. Needs the repository secret NPM_TOKEN
 # (an npm automation token that may publish to the @homemix scope and the two unscoped names). See
 # docs/homemix-authoring.md for authors and docs/working-with-the-repo.md for releasing.
 name: HomeMix packages

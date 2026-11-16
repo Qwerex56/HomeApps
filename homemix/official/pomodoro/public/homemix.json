@@ -1,7 +1,7 @@
 {
   "homemixVersion": 1,
   "id": "pomodoro",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "requires": { "homeApps": "2.3.0" },
   "name": { "pl": "Pomodoro", "en": "Pomodoro" },
   "description": {

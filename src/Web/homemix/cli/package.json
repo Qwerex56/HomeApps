@@ -1,6 +1,6 @@
 {
   "name": "homemix",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "HomeMix add-on tooling: a fake host for development, the server's checks, and packing addon.zip (docs/homemix.md)",
   "license": "MIT",
   "type": "module",
@@ -20,6 +20,6 @@
     "node": ">=22.2"
   },
   "dependencies": {
-    "@homemix/sdk": "2.3.0"
+    "@homemix/sdk": "2.4.0"
   }
 }

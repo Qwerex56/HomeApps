@@ -1,6 +1,6 @@
 {
   "name": "create-homemix",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "npm create homemix@latest: a new HomeMix add-on (docs/homemix.md, \"Building one\")",
   "license": "MIT",
   "type": "module",
