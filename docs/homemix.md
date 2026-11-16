@@ -42,7 +42,7 @@ A zip of at most 5 MB (`HomeMix:MaxPackageBytes`) with `homemix.json` at its roo
   "entry": "index.html",
   "pages": [ { "path": "", "title": { "pl": "Pomodoro", "en": "Pomodoro" }, "menu": true } ],
   "widgets": [
-    { "id": "timer", "title": { "pl": "Minutnik", "en": "Timer" }, "size": "Small",
+    { "id": "timer", "title": { "pl": "Minutnik", "en": "Timer" }, "size": "Small", "sizes": ["Small", "Medium"],
       "places": ["Household", "Wall", "Account"], "entry": "widget.html" }
   ],
   "capabilities": ["storage.household", "storage.user", "household.members", "notify"],
@@ -168,8 +168,9 @@ Referrer-Policy: no-referrer
 blocked installations answer 404.
 
 `sandbox` in the header gives an opaque origin even when the URL is opened in a tab, so no separate domain is needed.
-The web app embeds it as `<iframe sandbox="allow-scripts allow-forms allow-popups">` with the caption "HomeMix:
-Pomodoro działa w osobnej, zamkniętej ramce"; the frame cannot navigate the app (`allow-top-navigation` is off). An installation id is a UUID
+The web app embeds it as `<iframe sandbox="allow-scripts allow-forms allow-popups">`, under a page with the caption
+"HomeMix: Pomodoro działa w osobnej, zamkniętej ramce" (a widget has its own header instead); the frame cannot
+navigate the app (`allow-top-navigation` is off), only ask the bridge to (`navigate`, `open`). An installation id is a UUID
 and the files are only code, so the route is anonymous; all data needs a token.
 
 ## The bridge (A3)
@@ -189,7 +190,7 @@ Messages are plain objects over `postMessage`; the host checks `event.source` ag
 
 | Capability | Methods | |
 |---|---|---|
-| always | `context()`, `can(permission)`, `resize(height)`, `navigate(path)` | context: add-on, target, `household { id, name, myRole }`, `user { id, name }`, language, theme |
+| always | `context()`, `can(permission)`, `resize(height)`, `navigate(path)`, `open(path?)` | context: add-on, target, `household { id, name, myRole }`, `user { id, name }`, language, theme, in a widget `widget { id, place, size }` |
 | `storage.household` | `data.list/get/put/delete` with `scope: 'household'` | the installation's shared data (for an account installation: the person's) |
 | `storage.user` | the same with `scope: 'user'` | the person's private data inside a household installation |
 | `household.members` | `members()` | names and avatars only |
@@ -341,10 +342,38 @@ the `network` origins and the same limits. It mirrors the server's contract, not
   zip, then the consent screen), check a GitHub one for a new version, and uninstall. An update that asks for nothing
   new applies at once; one that asks for more shows the consent screen again.
 - The account menu has "Moje aplikacje" (`/account/mix`): add-ons on the account and their `Account` widgets.
-- Widgets stand on the household's first page (`Household`) and on the wall tablet (`Wall`).
+- Widgets stand on the household's first page (`Household`) and on the wall tablet (`Wall`). See "Widgets" below.
 - The host side of the bridge is `src/Web/src/features/homemix/useMixHost.ts`; `members()` goes through Households,
   so a guest, who may not list members, gets an error there.
 - "Dodaj dodatek" opens on the store (A5), with the GitHub link and the zip next to it.
+
+## Widgets (HomeMix 2.0, B1)
+
+A widget is a tile of an add-on in a place: `Household` (the household's first page), `Wall` (the wall tablet) or
+`Account` ("Moje aplikacje"). A household installation may stand in `Household` and `Wall`, an account installation
+in `Account`.
+
+- **Sizes.** `size` is the default (`Small`, `Medium`, `Large`; `Medium` when left out) and `sizes` every size the
+  widget can take (defaults to `[size]`, must include it). The size given is in `context().widget.size`; on the page
+  `Small` is one column, `Medium` two, `Large` three.
+- **Choosing.** Until someone chooses, a place shows every widget that lists it, in its default size. Admins and up of
+  the household, or the account's owner, open ⚙ (top-left of the widget, or "Widgety" in the add-on list) and pick per
+  place one widget and its size, or turn the add-on's widgets off there. "Wszystkie, jak w dodatku" goes back to the
+  default.
+
+  ```
+  PUT    /homemix/api/installations/{id}/widgets/{place}   { "widget": "timer" | null, "size": "Medium", "order": 0 }
+  DELETE /homemix/api/installations/{id}/widgets/{place}   back to the default
+  ```
+
+  Errors: `homemix.widget_place` (the installation cannot stand there), `homemix.widget_unknown` (no such widget for
+  that place), `homemix.widget_size` (not one of its `sizes`), `homemix.forbidden` (not a manager). Both answer the
+  installation with `widgetChoices`. An update keeps the choices: a widget that is gone is dropped, a size that is gone
+  falls back to the widget's default.
+- **Going to the app.** The frame is sandboxed, so a click inside it stays there. Each widget has a header with the
+  add-on's name and "Przejdź do aplikacji"; the add-on itself can call `homemix.open(path?)` (e.g. on a click on its
+  tile). On the wall tablet this opens the add-on in full at `/wall/mix/{id}/{path}` with a way back, elsewhere at its
+  usual page.
 
 ## Building one (A3)
 

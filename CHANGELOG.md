@@ -2,6 +2,25 @@
 
 Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`.
 
+## 2.4.0 (unreleased)
+
+HomeMix 2.0: widgets you can choose, a store page with stats, RealTime and a framework for add-on authors.
+
+### Added
+
+- **HomeMix widgets (B1):** `sizes` in homemix.json; per place (household page, wall tablet, "Moje aplikacje") admins
+  pick the widget and its size or turn it off (`PUT/DELETE /homemix/api/installations/{id}/widgets/{place}`, ⚙ on the
+  widget and "Widgety" in the add-on list). Each widget has a header with "Przejdź do aplikacji"; the bridge has
+  `open(path?)` and `context().widget.size`. On the wall tablet an add-on opens in full at `/wall/mix/{id}`.
+
+### Changed
+
+- **HomeMix:** the "działa w osobnej, zamkniętej ramce" caption is gone from widgets, it stays under add-on pages.
+
+### Upgrading
+
+- HomeMix gets the migration `WidgetChoices` (applied at start).
+
 ## 2.3.0 (2026-11-12)
 
 JARVIS and HomeMix. JARVIS is the home's assistant: one MCP gateway (`/jarvis/mcp`) for the tools of the core,
