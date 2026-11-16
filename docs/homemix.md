@@ -395,7 +395,14 @@ the `network` origins and the same limits. It mirrors the server's contract, not
 - Widgets stand on the household's first page (`Household`) and on the wall tablet (`Wall`). See "Widgets" below.
 - The host side of the bridge is `src/Web/src/features/homemix/useMixHost.ts`; `members()` goes through Households,
   so a guest, who may not list members, gets an error there.
-- "Dodaj dodatek" opens on the store (A5), with the GitHub link and the zip next to it.
+- The store is its own page, "Sklep" in the menu (`/store`, HomeMix 2.0 B5): tabs Wszystkie, Oficjalne, Najczęściej
+  pobierane, Najwięcej domków, Nowe and Konto (`?tab=`), search, filters (dom/konto, JARVIS, bez sieci), "Pokaż
+  więcej" for the next 24, and "Zgłoś dodatek" (a GitHub link). An add-on's page (`/store/{listingKey}`) shows its
+  numbers, the "domek" button, what it asks for, its README as Markdown (`src/Web/src/shared/markdown.ts`: HTML is
+  escaped, an image shows only its alt text, links only http(s) and mailto) and "Zainstaluj" with a choice of a
+  household I administer or my account; its author refreshes or removes it there. "Konto" shows my entries' numbers
+  with a 30-day chart. The Owner hides entries in "Administracja → Dodatki".
+- "Dodaj dodatek" takes a GitHub link or a zip and links to the store.
 
 ## Widgets (HomeMix 2.0, B1)
 

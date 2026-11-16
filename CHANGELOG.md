@@ -30,7 +30,14 @@ HomeMix 2.0: widgets you can choose, a store page with stats, RealTime and a fra
   pages of 24; `GET /homemix/api/store/mine` gives the author's numbers, versions in use and a 30-day chart;
   `GET /homemix/api/admin/store` lists every entry, hidden ones too, for the Owner.
 
+- **HomeMix store page (B5):** "Sklep" in the menu (`/store`) with tabs, search, filters and "Zgłoś dodatek"; an
+  add-on's page (`/store/{listingKey}`) with its numbers, "domek", README rendered as safe Markdown and "Zainstaluj"
+  (household or account); "Konto" with my entries' numbers and a 30-day chart; "Wpisy sklepu" for the Owner in
+  "Administracja → Dodatki". The web app depends on `markdown-it`.
+
 ### Changed
+
+- **Web app:** "Dodaj dodatek" no longer lists the store; it links to the store page.
 
 - **HomeMix:** `HomeMix:StoreCacheMinutes` is replaced by `HomeMix:StoreRefreshMinutes`; `StoreEntryView` has
   `listingKey`, `builtin` (added by id) and what the add-on asks for. `official` now also marks `addons.json` entries.
@@ -40,6 +47,11 @@ HomeMix 2.0: widgets you can choose, a store page with stats, RealTime and a fra
 
 - HomeMix gets the migrations `WidgetChoices` and `StoreListings` (applied at start). The store fills itself from
   `addons.json` within the first rounds after the update.
+
+### Fixed
+
+- **Web app:** the consent screen showed a capability's key (`homemix.capability.storage.household`) instead of its
+  description; keys with a dot are now read with brackets.
 
 ## 2.3.0 (2026-11-12)
 
