@@ -120,15 +120,40 @@ author can read it now (`POST /homemix/api/store/{key}/refresh`).
 
 | Endpoint | Who |
 |---|---|
-| `GET /homemix/api/store`, `GET /homemix/api/store/{key}` | anyone signed in (a hidden entry: its author and the Owner) |
+| `GET /homemix/api/store?tab=&q=&target=&jarvis=&offline=&page=`, `GET /homemix/api/store/{key}` | anyone signed in (a hidden entry: its author and the Owner) |
 | `POST /homemix/api/store` `{ repository }` | anyone signed in, not an assistant |
 | `POST /homemix/api/store/{key}/refresh`, `DELETE /homemix/api/store/{key}` | the author or the Owner; official entries leave by a change to `addons.json` |
-| `PUT /homemix/api/admin/store/{key}/hidden` `{ hidden }` | the Owner |
+| `PUT`, `DELETE /homemix/api/store/{key}/heart` | anyone signed in, not an assistant |
+| `GET /homemix/api/store/mine` | anyone signed in: their own entries with numbers |
+| `GET /homemix/api/admin/store`, `PUT /homemix/api/admin/store/{key}/hidden` `{ hidden }` | the Owner |
 
 Errors: `homemix.store_unusable` (with `problem`), `homemix.store_limit`, `homemix.not_author`,
 `homemix.listing_official`, `homemix.listing_not_found`. Choosing an entry adds it like a link (`/packages/github`)
 or, built in, by id (`/packages/official/{id}`), then the consent screen asks where to install it. The web app shows
 a README as plain text, never as HTML.
+
+### Numbers and "domki" (HomeMix 2.0, B4)
+
+**Installs.** Every install, update and removal of a package that came from a repository (or a built-in add-on)
+writes a `StoreEvents` row: add-on id, source (the repository, or `official` for a built-in one), version, household
+or account, time. Never who or where. A zip upload has no source and is not counted. Numbers belong to the
+add-on id and source, not to one entry: two entries of the same repository (official and submitted) show the same
+numbers. Each entry shows `installs` (active installations now), `installs30` (installs in the last 30 days),
+`hearts` and `hearted` (whether the caller gave one).
+
+**Domki.** A heart (`StoreHearts`) is one person's like of one entry key, given once (`PUT .../heart` again changes
+nothing) and taken back with `DELETE`. Built-in entries (`{id}-official`) take hearts too.
+
+**Tabs.** `GET /homemix/api/store` without `tab` lists official entries first, then the newest. `tab=featured` only
+official ones, `popular` by active installations (then installs in 30 days), `hearts` by hearts, `new` by submission
+date (built-in ones have none). `q` searches id, name and description (both languages), `target=household|user`,
+`jarvis=true` and `offline=true` (no `network`) narrow it. A page has 24 entries (`page` from 1); a shorter page is
+the last one.
+
+**"Konto".** `GET /homemix/api/store/mine` gives each of my listed or hidden entries with `counts` (active,
+households, accounts, installs, installs30, updates, removals), `versions` (versions in use and how many
+installations each) and `days` (installs a day for the last 30 days, oldest first). `GET /homemix/api/admin/store`
+lists every listed and hidden entry for the Owner.
 
 ## Installing (A1)
 

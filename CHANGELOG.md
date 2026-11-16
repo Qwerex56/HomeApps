@@ -24,6 +24,12 @@ HomeMix 2.0: widgets you can choose, a store page with stats, RealTime and a fra
   hides one (`PUT /homemix/api/admin/store/{key}/hidden`). Installing a second add-on with the same id in one place
   answers `homemix.id_in_use`.
 
+- **HomeMix store numbers (B4):** installs, updates and removals from the store are counted per add-on and source
+  (never who); entries show active installations, installs in 30 days and "domki" (`PUT/DELETE
+  /homemix/api/store/{key}/heart`). The store has tabs (`featured`, `popular`, `hearts`, `new`), search, filters and
+  pages of 24; `GET /homemix/api/store/mine` gives the author's numbers, versions in use and a 30-day chart;
+  `GET /homemix/api/admin/store` lists every entry, hidden ones too, for the Owner.
+
 ### Changed
 
 - **HomeMix:** `HomeMix:StoreCacheMinutes` is replaced by `HomeMix:StoreRefreshMinutes`; `StoreEntryView` has
