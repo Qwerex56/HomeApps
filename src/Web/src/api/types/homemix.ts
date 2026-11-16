@@ -751,6 +751,7 @@ export interface components {
             size: string;
             places: string[];
             entry: null | string;
+            sizes: string[];
         };
         AdminInstallationView: {
             /** Format: uuid */
@@ -783,6 +784,12 @@ export interface components {
             /** Format: date-time */
             blockedAt: null | string;
             fromConfiguration: boolean;
+        };
+        ChooseWidgetRequest: {
+            widget: null | string;
+            size: null | string;
+            /** Format: int32 */
+            order: number | string;
         };
         ConsentInput: {
             capabilities: null | string[];
@@ -821,6 +828,7 @@ export interface components {
             entry: string;
             pages: components["schemas"]["AddonPage"][];
             widgets: components["schemas"]["AddonWidget"][];
+            widgetChoices: components["schemas"]["WidgetChoice"][];
             permissions: components["schemas"]["AddonPermission"][];
             capabilities: string[];
             network: string[];
@@ -900,6 +908,13 @@ export interface components {
         UpdateInstallationRequest: {
             sha256: string;
             consent: null | components["schemas"]["ConsentInput"];
+        };
+        WidgetChoice: {
+            place: string;
+            widgetId: null | string;
+            size: null | string;
+            /** Format: int32 */
+            order: number | string;
         };
     };
     responses: never;

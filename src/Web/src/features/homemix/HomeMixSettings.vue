@@ -13,6 +13,7 @@ import { toProblem } from '@/api/problem'
 import { localized } from '@/features/plugins/registry'
 import { homemixApi, mixKeys, useInstallations, type Installation, type MixTarget, type Package } from './api'
 import AddMixDialog from './AddMixDialog.vue'
+import WidgetSettingsDialog from './WidgetSettingsDialog.vue'
 
 // HomeMix add-ons of a household (in its settings, next to the server's plugins) or of my account ("Moje aplikacje").
 // Admins and up of a household, or the account's owner, add, update and remove them.
@@ -28,6 +29,8 @@ const adding = ref(false)
 const updating = ref<{ installation: Installation; pkg: Package } | null>(null)
 const updateOpen = computed({ get: () => !!updating.value, set: (v) => !v && (updating.value = null) })
 const checking = ref<string | null>(null)
+const widgetsOf = ref<Installation | null>(null)
+const widgetsOpen = computed({ get: () => !!widgetsOf.value, set: (v) => !v && (widgetsOf.value = null) })
 
 function refresh() {
   return queryClient.invalidateQueries({ queryKey: mixKeys.list(props.target) })
@@ -138,6 +141,14 @@ function remove(installation: Installation) {
               @click="open(i)"
             />
             <Button
+              v-if="canManage && i.widgets.length"
+              :label="t('homemix.widgets.short')"
+              icon="pi pi-cog"
+              size="small"
+              text
+              @click="widgetsOf = i"
+            />
+            <Button
               v-if="canManage && (i.repository || i.official)"
               :label="t('homemix.update.check')"
               icon="pi pi-refresh"
@@ -162,4 +173,5 @@ function remove(installation: Installation) {
   </Card>
   <AddMixDialog v-model:visible="adding" :target="target" @done="done" />
   <AddMixDialog v-model:visible="updateOpen" :target="target" :update="updating" @done="done" />
+  <WidgetSettingsDialog v-model:visible="widgetsOpen" :installation="widgetsOf" :target="target" />
 </template>

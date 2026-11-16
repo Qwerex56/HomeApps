@@ -145,7 +145,10 @@
       "installation_not_found": "Ten dodatek nie jest tu zainstalowany.",
       "not_a_recipient": "Powiadomienie może trafić tylko do osób z tego domu.",
       "block_not_found": "Ten dodatek nie jest zablokowany.",
-      "block_in_configuration": "Ta blokada pochodzi z konfiguracji serwera (HomeMix:Blocked) i tam się ją zdejmuje."
+      "block_in_configuration": "Ta blokada pochodzi z konfiguracji serwera (HomeMix:Blocked) i tam się ją zdejmuje.",
+      "widget_place": "Ten widget nie może stać w tym miejscu.",
+      "widget_unknown": "Ten dodatek nie ma takiego widgetu w tym miejscu.",
+      "widget_size": "Ten widget nie ma takiego rozmiaru."
     },
     "jarvis": {
       "conversation_not_found": "Nie ma takiej rozmowy.",
@@ -597,7 +600,8 @@
       "news": "Wiadomości"
     },
     "soon": "Wkrótce",
-    "noWakeLock": "Ta przeglądarka nie pozwala utrzymać włączonego ekranu. Ustaw wygaszanie w ustawieniach tabletu."
+    "noWakeLock": "Ta przeglądarka nie pozwala utrzymać włączonego ekranu. Ustaw wygaszanie w ustawieniach tabletu.",
+    "back": "Wróć do tabletu"
   },
   "plugins": {
     "title": "Aplikacje",
@@ -730,6 +734,26 @@
         "no_addon_zip": "Najnowsze wydanie nie ma pliku addon.zip.",
         "no_digest": "GitHub nie podaje SHA-256 dla addon.zip.",
         "unavailable": "Nie udało się odczytać repozytorium z GitHuba."
+      }
+    },
+    "widgets": {
+      "goTo": "Przejdź do aplikacji",
+      "settings": "Ustawienia widgetu",
+      "short": "Widgety",
+      "title": "Widgety: {name}",
+      "none": "Ten dodatek nie ma widgetów.",
+      "default": "Wszystkie, jak w dodatku",
+      "off": "Wyłączony",
+      "sizeLabel": "Rozmiar",
+      "size": {
+        "Small": "Mały",
+        "Medium": "Średni",
+        "Large": "Duży"
+      },
+      "place": {
+        "Household": "Strona domu",
+        "Wall": "Tablet",
+        "Account": "Moje aplikacje"
       }
     }
   },
