@@ -19,6 +19,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@microsoft/signalr": "^10.0.11",
     "@primeuix/themes": "~2.0.3",
     "@tanstack/vue-query": "^5.105.0",
     "axios": "^1.21.0",

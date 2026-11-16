@@ -7,11 +7,14 @@ import ColorSchemeToggle from '@/shared/components/ColorSchemeToggle.vue'
 import { useMyAccount } from '@/features/account/api'
 import { useSessionStore } from '@/features/auth/session'
 import HouseholdSwitcher from '@/features/households/components/HouseholdSwitcher.vue'
+import { useMixRealtime } from '@/features/homemix/realtime'
 import UserMenu from './UserMenu.vue'
 
 const { t } = useI18n()
 const { pending } = useMyAccount()
 const session = useSessionStore()
+// HomeMix realtime while signed in: notifications of add-ons show as toasts on any page (docs/homemix.md, "RealTime").
+useMixRealtime()
 
 // Administration only for Admin and Owner.
 const links = computed(() => [

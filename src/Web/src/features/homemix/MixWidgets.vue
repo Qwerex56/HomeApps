@@ -50,7 +50,7 @@ const settingsOpen = computed({ get: () => !!settingsFor.value, set: (v) => !v &
   <div v-if="widgets.length" class="grid gap-4 md:grid-cols-3">
     <section
       v-for="{ installation, widget, size } in widgets"
-      :key="`${installation.id}/${widget.id}/${size}`"
+      :key="`${installation.id}/${installation.version}/${widget.id}/${size}`"
       :class="[span[size], dark ? 'rounded-3xl bg-surface-900 p-8' : 'rounded-xl border border-surface p-4']"
     >
       <header class="mb-3 flex items-center gap-2">

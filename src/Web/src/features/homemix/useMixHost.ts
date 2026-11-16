@@ -9,6 +9,8 @@ import { householdsApi } from '@/features/households/api'
 import { homemixApi, type Installation } from './api'
 import { currentTheme } from './theme'
 import { localized } from '@/features/plugins/registry'
+import { frameEvent } from './frameEvents'
+import { useMixRealtime } from './realtime'
 
 export interface MixHostOptions {
   installation: Installation
@@ -21,8 +23,11 @@ export interface MixHostOptions {
   onResize: (height: number) => void
 }
 
-// Frames of the same installation hear about each other's writes (data.changed), e.g. a widget and the page.
+// Frames of the same installation hear about each other's writes (data.changed) at once, e.g. a widget and the page;
+// the same write coming back over realtime shortly after is not told twice.
 const frames = new Map<string, Set<() => Window | null | undefined>>()
+const recentWrites = new Map<string, number>()
+const ECHO_MS = 2000
 
 const PAGE_PATH = /^[A-Za-z0-9._/-]{0,200}$/
 
@@ -46,11 +51,42 @@ export function useMixHost(frame: Ref<HTMLIFrameElement | undefined>, options: (
     return access
   }
 
-  function changed(scope: Scope, collection: string) {
-    for (const other of frames.get(options().installation.id) ?? []) {
-      emit(other(), 'data.changed', { scope, collection })
+  function changed(scope: Scope, collection: string, key: string) {
+    const id = options().installation.id
+    recentWrites.set(`${id}/${scope}/${collection}/${key}`, Date.now())
+    for (const other of frames.get(id) ?? []) {
+      emit(other(), 'data.changed', { scope, collection, key, by: options().user.id })
     }
   }
+
+  // Realtime (docs/homemix.md, "RealTime"): writes from other devices and JARVIS, a new role, an update or removal,
+  // a notification. The frame only hears about its own installation and household.
+  useMixRealtime(
+    () => options().household?.id,
+    (event) => {
+      const o = options()
+      const routed = frameEvent(event, { installationId: o.installation.id, householdId: o.household?.id ?? null })
+      if (!routed) return
+      if (routed === 'permissions') {
+        access = null
+        void myAccess()
+          .then(({ permissions }) =>
+            emit(window_(), 'permissions.changed', {
+              role: (event.data as { role: HouseholdRole | null }).role,
+              permissions,
+            }),
+          )
+          .catch(() => undefined)
+        return
+      }
+      if (routed.name === 'data.changed') {
+        const { scope, collection, key } = routed.data as { scope: Scope; collection: string; key?: string }
+        const at = recentWrites.get(`${o.installation.id}/${scope}/${collection}/${key}`)
+        if (at && Date.now() - at < ECHO_MS) return
+      }
+      emit(window_(), routed.name, routed.data)
+    },
+  )
 
   // navigate (a page to another) and open (a widget to its add-on) both show one of the add-on's pages: on the wall
   // tablet in full there, otherwise in the household or on my account.
@@ -107,12 +143,12 @@ export function useMixHost(frame: Ref<HTMLIFrameElement | undefined>, options: (
         scope,
         version,
       )) as Document
-      changed(scope ?? 'household', collection)
+      changed(scope ?? 'household', collection, key)
       return document
     },
     async 'data.delete'({ collection, key, scope, version }) {
       await homemixApi.data.delete(options().installation.id, collection, key, scope, version)
-      changed(scope ?? 'household', collection)
+      changed(scope ?? 'household', collection, key)
       return null
     },
     async members() {

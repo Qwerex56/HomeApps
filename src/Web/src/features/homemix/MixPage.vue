@@ -28,7 +28,7 @@ const frameHousehold = computed(() =>
   <Message v-else-if="error" severity="error" :closable="false">{{ t('homemix.loadFailed') }}</Message>
   <MixFrame
     v-else-if="installation"
-    :key="installation.id"
+    :key="`${installation.id}/${installation.version}`"
     :installation="installation"
     :household="frameHousehold"
     :page="path ?? ''"
