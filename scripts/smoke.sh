@@ -149,6 +149,16 @@ call owner POST "/homemix/api/households/$household/installations" "{\"sha256\":
 expect 2xx "Owner installs Pogoda in the household, JARVIS allowed"
 call owner GET "/homemix/api/households/$household/installations" '' "$access" | jq -e 'any(.[]; .addonId == "pogoda")' >/dev/null
 expect 200 "the household lists Pogoda"
+call owner GET "/homemix/api/store/pogoda-official" '' "$access" | jq -e '.installs >= 1' >/dev/null
+expect 200 "the store counts the installation (HomeMix 2.0)"
+call owner PUT /homemix/api/store/pogoda-official/heart '' "$access" >/dev/null
+expect 2xx "Owner gives Pogoda a domek"
+call owner GET "/homemix/api/store?tab=hearts" '' "$access" | jq -e '.[0].listingKey == "pogoda-official" and .[0].hearted' >/dev/null
+expect 200 "the hearts tab puts Pogoda first"
+call owner GET /homemix/api/store/mine '' "$access" >/dev/null
+expect 200 "the Konto tab answers"
+call owner POST '/homemix/hub/negotiate?negotiateVersion=1' '' "$access" | jq -e '.connectionToken' >/dev/null
+expect 200 "the HomeMix realtime hub negotiates"
 
 step "JARVIS"
 call x GET /.well-known/oauth-protected-resource/jarvis/mcp | jq -e --arg r "$base/jarvis/mcp" '.resource == $r' >/dev/null
