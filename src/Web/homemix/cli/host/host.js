@@ -186,7 +186,11 @@ function load() {
   stop = serveFrame({ frame: frameWindow, capabilities: manifest.capabilities ?? [], handlers: logged })
 }
 
-for (const id of ['target', 'role', 'view']) $(id).addEventListener('change', load)
+for (const id of ['target', 'view']) $(id).addEventListener('change', load)
+// A new role reaches the open frame as in HomeApps (permissions.changed over realtime), without a reload.
+$('role').addEventListener('change', () =>
+  emit(frameWindow(), 'permissions.changed', { role: state().role, permissions: permissions() }),
+)
 $('dark').addEventListener('change', () => emit(frameWindow(), 'theme', theme()))
 $('reset').addEventListener('click', () => {
   store = {}

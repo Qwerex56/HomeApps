@@ -88,7 +88,14 @@ export type Method = keyof Methods
 
 export interface Events {
   theme: Theme
-  'data.changed': { scope: Scope; collection: string }
+  /** A document of this installation was written or deleted, here, on another device or by JARVIS. */
+  'data.changed': { scope: Scope; collection: string; key?: string; by?: string }
+  /** The person's role in the household changed: their permissions now (useCan-style checks read them again). */
+  'permissions.changed': { role: HouseholdRole | null; permissions: string[] }
+  /** The installation was updated, blocked or removed; on an update or a block the host reloads or closes the frame. */
+  'installation.changed': { change: 'updated' | 'removed' | 'blocked' | 'unblocked' | 'widgets'; version: string }
+  /** A push() of this add-on reached the person while HomeApps is open (shown as a toast too). */
+  notification: { title: string; body: string | null; path: string | null; tag: string | null }
 }
 
 export type EventName = keyof Events

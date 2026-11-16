@@ -34,6 +34,16 @@ export function useHomeMix(options: { autoResize?: boolean } = {}) {
       applyTheme(theme)
       if (context.value) context.value = { ...context.value, theme }
     })
+    // A new role in the household (realtime): useCan() and the context follow without a reload.
+    instance.on('permissions.changed', ({ role, permissions }) => {
+      const current = context.value
+      if (!current) return
+      context.value = {
+        ...current,
+        permissions,
+        household: current.household && role ? { ...current.household, myRole: role } : current.household,
+      }
+    })
     if (options.autoResize !== false) autoResize(instance)
   }
   loading ??= instance.context().then((value) => {
@@ -45,7 +55,7 @@ export function useHomeMix(options: { autoResize?: boolean } = {}) {
   return { homemix: instance, context, ready, loaded: loading }
 }
 
-/** Whether the person has one of the add-on's permissions (homemix.json permissions). */
+/** Whether the person has one of the add-on's permissions (homemix.json permissions); follows a role change at once. */
 export function useCan(permission: MaybeRefOrGetter<string>) {
   const { context } = useHomeMix()
   return computed(() => context.value?.permissions.includes(toValue(permission)) ?? false)
