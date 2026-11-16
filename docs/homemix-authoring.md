@@ -31,7 +31,8 @@ You need Node 22.2 or newer and Git. The tooling is versioned with HomeApps:
 | `create-homemix` | `npm create homemix@latest`: a new add-on from a template (`vue` or `vanilla`) |
 | `homemix` | the CLI: `dev`, `check`, `pack`, `tool` |
 | `@homemix/sdk` | the bridge client without a framework, the protocol and `homemix.json` types, `ToolContext` |
-| `@homemix/vue` | `useHomeMix()`, `useCollection()`, `useCan()`, the HomeApps look (`theme.css`, a PrimeVue preset) |
+| `@homemix/css` | the `hm-*` classes: the HomeApps look with or without a framework, widget sizes and the wall tablet |
+| `@homemix/vue` | `useHomeMix()`, `useCollection()`, `useCan()`, `useWidget()`, the building blocks (`HmWidget`, `HmStat`...), a PrimeVue preset |
 
 ```bash
 npm create homemix@latest chores                 # Vue 3 + TypeScript + Vite
@@ -47,7 +48,7 @@ The template gives you:
 ```
 chores/
   public/homemix.json            the manifest; Vite copies public/ into dist/
-  src/App.vue, src/main.ts       the add-on
+  src/App.vue, src/main.ts       the add-on: App.vue shows NotesWidget.vue in a widget, NotesPage.vue on a page
   index.html, vite.config.ts     base './': HomeApps serves the add-on at /homemix/run/<installation>/
   .github/workflows/release.yml  a GitHub release with addon.zip on every v* tag
 ```
@@ -109,15 +110,54 @@ HomeApps opens `entry` in a frame for each page and each widget:
   `homemix.navigate(path)` moves to another of your pages.
 - A **widget** stands on the household's first page (`Household`), on the wall tablet (`Wall`) or in "Moje
   aplikacje" (`Account`). It opens its own `entry`, or the main one with `context().widget` set
-  (`{ id, place }`), so one bundle can render both. Keep widgets glanceable: the wall tablet is read from across a
-  room.
+  (`{ id, place, size }`), so one bundle can render both. Keep widgets glanceable: the wall tablet is read from
+  across a room. `sizes` in the manifest lists the sizes admins may pick (`Small`, `Medium`, `Large`); a click on the
+  widget should open the add-on (`homemix.open(path)`, which `HmWidget` does for you).
 - The frame grows with its content: `useHomeMix()` and `autoResize(homemix)` report the height. Without them, call
   `homemix.resize(height)`.
 
 The host sends HomeApps' theme (light or dark, and its CSS variables such as `--p-primary-color`) at the start and
-whenever it changes. `useHomeMix()` applies it to `:root`; `@homemix/vue/theme.css` styles plain elements and the
-`hm-card`, `hm-button`, `hm-muted` classes to match. With PrimeVue 4, use `HomeAppsPreset` from
-`@homemix/vue/primevue`.
+whenever it changes. `useHomeMix()` applies it to `:root`, with the classes for where the add-on stands: `hm-page`, or
+`hm-widget` with `hm-size-small|medium|large` and `hm-wall` on the tablet (without Vue: `applyTheme(ctx.theme)` and
+`applyLayout(ctx)` from `@homemix/sdk`). With PrimeVue 4, use `HomeAppsPreset` from `@homemix/vue/primevue`.
+
+### Building blocks
+
+`import '@homemix/css'` once (in `main.ts`) gives the HomeApps look on the host's colours, light and dark:
+
+| Classes | |
+|---|---|
+| `hm-stack`, `hm-row` (`hm-between`), `hm-grid`, `hm-grow` | layout with a gap that follows the size |
+| `hm-title`, `hm-subtitle`, `hm-muted`, `hm-small`, `hm-big`, `hm-truncate` | type; `hm-big` is the glanceable number |
+| `hm-card` (`hm-clickable`), `hm-button` (`secondary`, `text`, `danger`), `hm-chip` (`active`), `hm-badge` (`success`, `warn`, `danger`) | elements |
+| `hm-field` with `hm-label`, `hm-input`, `hm-select`, `hm-textarea`, `hm-error`; `hm-switch` | form fields |
+| `hm-list`, `hm-progress`, `hm-tabs`, `hm-empty`, `hm-loading` | lists, progress, tabs and states |
+| `hm-only-small`, `hm-only-medium`, `hm-only-large` | shown only in that widget size |
+
+On the wall tablet (`hm-wall`) type is bigger and light on the wall's dark tiles, whatever the theme.
+
+`@homemix/vue` adds `useWidget()` (`size`, `place`, `isWidget`, `isWall`, `open(path?)`) and blocks drawn with those
+classes, each aware of the three sizes:
+
+| Block | |
+|---|---|
+| `HmWidget` | a widget's card with a title; a click (or Enter) opens the add-on at `path`; slots `actions`, `footer` |
+| `HmStat` | a big number with a caption, a unit and a trend (not in `Small`) |
+| `HmList` | rows (`{ key, title, subtitle?, icon?, trailing? }`), 3/5/10 in Small/Medium/Large then "+N"; slot `item` |
+| `HmProgress` | a bar, or a ring (`ring`) |
+| `HmCountdown` | a countdown to `until`, emits `done` |
+| `HmEmpty` | an empty state with an icon, a text and an action in the slot |
+| `HmWallTile` | one big value for the tablet |
+| `HmPage` | a page: title, subtitle, actions, tabs (`v-model:tab`) |
+| `HmInput`, `HmDate`, `HmSelect`, `HmSwitch` | form fields with labels and errors (`v-model`) |
+
+```vue
+<HmWallTile v-if="isWall" title="Zakupy" :value="items.length" />
+<HmWidget v-else title="Zakupy" path="list">
+  <HmStat :value="items.length" label="do kupienia" />
+  <HmList v-if="size !== 'Small'" :items="items" empty="Wszystko kupione" />
+</HmWidget>
+```
 
 Write the interface in Polish first: HomeApps is Polish, and `context().language` says which language the person uses.
 
@@ -222,7 +262,8 @@ The description is what JARVIS picks a tool by: say what it does and for whom, i
 ## 7. Trying it
 
 `npm run dev` opens a fake HomeApps at http://localhost:5180: a household with members, a role switch (see what a
-Guest sees), the page and its widgets, data in memory and the same sandbox headers as the server. If it works there it
+Guest sees), the page and its widgets (choose the place and the size; the wall tablet is shown dark, as on `/wall`),
+data in memory and the same sandbox headers as the server. If it works there it
 works in HomeApps; if `fetch` is blocked, the origin is missing from `network`.
 
 ```bash

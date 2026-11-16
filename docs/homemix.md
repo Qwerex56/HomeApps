@@ -461,14 +461,22 @@ Optional, light tooling, versioned with HomeApps, in `src/Web/homemix` (npm work
 `.github/workflows/homemix-npm.yml` on a tag `homemix-v<version>`
 ([working-with-the-repo.md](working-with-the-repo.md#publishing-to-npm-the-first-time)):
 
-- `@homemix/sdk` (`sdk`): `connect()` (the bridge client without a framework), `autoResize()`, the protocol types, the
+- `@homemix/sdk` (`sdk`): `connect()` (the bridge client without a framework), `autoResize()`, `applyTheme()` and
+  `applyLayout()` (the `@homemix/css` classes for where the add-on stands), the protocol types, the
   `homemix.json` types and `checkManifest()`/`checkFiles()`, the same checks the server makes. `@homemix/sdk/host`
   (`serveFrame()`) is the host side, used by the web app and by `homemix dev`.
-- `@homemix/vue` (`vue`): `useHomeMix()` (applies the host's theme and follows it), `useCollection('sessions')`
-  (reactive, writes with the version it holds, refreshes on `data.changed`), `useCan()`; `theme.css` (the HomeApps
-  look without PrimeVue) and `@homemix/vue/primevue` (`HomeAppsPreset` for PrimeVue 4). The add-on bundles its own Vue.
+- `@homemix/css` (`css`, HomeMix 2.0 B6): the `hm-*` classes in the HomeApps look on the host's theme variables,
+  with or without a framework: layout, type, elements, form fields, states, widget sizes (`hm-size-*`) and the wall
+  tablet (`hm-wall`).
+- `@homemix/vue` (`vue`): `useHomeMix()` (applies the host's theme and the layout classes and follows them),
+  `useCollection('sessions')` (reactive, writes with the version it holds, refreshes on `data.changed`), `useCan()`,
+  `useWidget()` (size, place, wall, `open()`) and the building blocks `HmWidget`, `HmStat`, `HmList`, `HmProgress`,
+  `HmCountdown`, `HmEmpty`, `HmWallTile`, `HmPage`, `HmInput`, `HmDate`, `HmSelect`, `HmSwitch` (render functions,
+  no compiler needed); `theme.css` (now an import of `@homemix/css`) and `@homemix/vue/primevue` (`HomeAppsPreset`
+  for PrimeVue 4). The add-on bundles its own Vue.
 - `create-homemix` (`npm create homemix@latest my-addon`, templates `vue` and `vanilla`) and the `homemix` CLI:
-  `dev` (a fake host at http://localhost:5180 with a household, roles, data in memory and the sandbox headers),
+  `dev` (a fake host at http://localhost:5180 with a household, roles, data in memory, the sandbox headers and, for
+  a widget, its place and size, the wall tablet in its own dark frame),
   `check`, `pack` (`addon.zip` + SHA-256). The template has a GitHub Actions workflow that attaches `addon.zip` to a
   release on a `v*` tag, which is what HomeMix installs from a repository link and what the store reads.
   `homemix tool` runs a tool script (see "JARVIS"), and `dev` lists the add-on's JARVIS tools.

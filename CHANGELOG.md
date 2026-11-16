@@ -35,6 +35,13 @@ HomeMix 2.0: widgets you can choose, a store page with stats, RealTime and a fra
   (household or account); "Konto" with my entries' numbers and a 30-day chart; "Wpisy sklepu" for the Owner in
   "Administracja → Dodatki". The web app depends on `markdown-it`.
 
+- **HomeMix framework (B6):** a new package `@homemix/css` with `hm-*` classes (layout, type, elements, form fields,
+  states, widget sizes `hm-size-*`, the wall tablet `hm-wall`) on HomeApps' theme variables. `@homemix/vue` has
+  `useWidget()` and building blocks (`HmWidget`, `HmStat`, `HmList`, `HmProgress`, `HmCountdown`, `HmEmpty`,
+  `HmWallTile`, `HmPage`, `HmInput`, `HmDate`, `HmSelect`, `HmSwitch`); `@homemix/sdk` has `applyTheme()` and
+  `applyLayout()`. The `vue` template is a widget and a page built from the blocks, `vanilla` uses `@homemix/css`;
+  `homemix dev` picks a widget's place and size and shows the wall tablet.
+
 ### Changed
 
 - **Web app:** "Dodaj dodatek" no longer lists the store; it links to the store page.
@@ -50,6 +57,7 @@ HomeMix 2.0: widgets you can choose, a store page with stats, RealTime and a fra
 
 ### Fixed
 
+- **HomeMix tooling:** `homemix dev` did not start since B1 (a name was declared twice in the fake host).
 - **Web app:** the consent screen showed a capability's key (`homemix.capability.storage.household`) instead of its
   description; keys with a dot are now read with brackets.
 
