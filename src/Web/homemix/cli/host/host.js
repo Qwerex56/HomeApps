@@ -37,6 +37,7 @@ let store = {}
 let stop = null
 
 $('title').textContent = `HomeMix: ${manifest.name?.pl ?? manifest.id} ${manifest.version}`
+// Pages, then widgets; a widget's place and size are chosen next to it, as admins choose them in HomeApps.
 const views = [
   ...(manifest.pages ?? [{ path: '', title: manifest.name }]).map((p) => ({
     label: `Strona: ${p.title?.pl ?? p.path}`,
@@ -44,24 +45,41 @@ const views = [
     file: '',
     widget: null,
   })),
-  ...(manifest.widgets ?? []).flatMap((w) =>
-    (w.places ?? ['Household']).flatMap((place) =>
-      (w.sizes ?? [w.size ?? 'Medium']).map((size) => ({
-        label: `Kafelek: ${w.title?.pl ?? w.id} (${place}, ${size})`,
-        page: '',
-        file: w.entry ?? '',
-        widget: { id: w.id, place, size },
-      })),
-    ),
-  ),
+  ...(manifest.widgets ?? []).map((w) => ({
+    label: `Widget: ${w.title?.pl ?? w.id}`,
+    page: '',
+    file: w.entry ?? '',
+    widget: {
+      id: w.id,
+      places: w.places ?? ['Household'],
+      sizes: w.sizes ?? [w.size ?? 'Medium'],
+      size: w.size ?? 'Medium',
+    },
+  })),
 ]
 $('view').innerHTML = views.map((v, i) => `<option value="${i}">${v.label}</option>`).join('')
+const placeNames = { Household: 'Strona domu', Wall: 'Tablet na ścianie', Account: 'Moje aplikacje' }
+
+// The place and size lists follow the chosen widget; a page has neither.
+function widgetChoices() {
+  const w = views[Number($('view').value)].widget
+  $('widget-options').hidden = !w
+  if (!w) return
+  const keep = (id, values, fallback) => {
+    const current = $(id).value
+    $(id).innerHTML = values.map((v) => `<option value="${v}">${id === 'place' ? placeNames[v] : v}</option>`).join('')
+    $(id).value = values.includes(current) ? current : fallback
+  }
+  keep('place', w.places, w.places[0])
+  keep('size', w.sizes, w.size)
+}
 
 // navigate and open: switch the view to the page with that path, as HomeApps would open it.
-function show(path) {
+function go(path) {
   const index = views.findIndex((v) => v.page === path && !v.widget)
   if (index >= 0) {
     $('view').value = String(index)
+    widgetChoices()
     load()
   }
   return null
@@ -71,6 +89,9 @@ const state = () => ({
   target: $('target').value,
   role: $('role').value,
   view: views[Number($('view').value)],
+  widget: views[Number($('view').value)].widget
+    ? { id: views[Number($('view').value)].widget.id, place: $('place').value, size: $('size').value }
+    : null,
   dark: $('dark').checked,
 })
 const theme = () => ({ dark: state().dark, vars: themes[state().dark] })
@@ -105,15 +126,15 @@ const handlers = {
     language: 'pl',
     theme: theme(),
     page: state().view.page,
-    widget: state().view.widget,
+    widget: state().widget,
   }),
   can: ({ permission }) => permissions().includes(permission),
   resize: ({ height }) => {
     $('frame').querySelector('iframe').style.height = `${Math.min(Math.max(height, 40), 4000)}px`
     return null
   },
-  navigate: ({ path }) => show(path),
-  open: ({ path }) => show(path ?? ''),
+  navigate: ({ path }) => go(path),
+  open: ({ path }) => go(path ?? ''),
   'data.list': ({ collection, scope }) =>
     Object.values(store[space(scope, collection)] ?? {}).sort((a, b) => a.key.localeCompare(b.key)),
   'data.get': ({ collection, key, scope }) => store[space(scope, collection)]?.[key] ?? null,
@@ -177,7 +198,8 @@ function load() {
   stop?.()
   const { view } = state()
   document.documentElement.style.colorScheme = state().dark ? 'dark' : 'light'
-  $('frame').className = view.widget ? 'widget' : ''
+  const widget = state().widget
+  $('frame').className = widget ? `widget ${widget.size.toLowerCase()}${widget.place === 'Wall' ? ' wall' : ''}` : ''
   $('frame').innerHTML = ''
   const iframe = document.createElement('iframe')
   iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups')
@@ -186,7 +208,9 @@ function load() {
   stop = serveFrame({ frame: frameWindow, capabilities: manifest.capabilities ?? [], handlers: logged })
 }
 
-for (const id of ['target', 'view']) $(id).addEventListener('change', load)
+$('view').addEventListener('change', () => (widgetChoices(), load()))
+// A new size or place reloads the frame, as HomeApps does after an admin changes the widget's settings.
+for (const id of ['target', 'place', 'size']) $(id).addEventListener('change', load)
 // A new role reaches the open frame as in HomeApps (permissions.changed over realtime), without a reload.
 $('role').addEventListener('change', () =>
   emit(frameWindow(), 'permissions.changed', { role: state().role, permissions: permissions() }),
@@ -197,4 +221,5 @@ $('reset').addEventListener('click', () => {
   show()
   load()
 })
+widgetChoices()
 load()

@@ -2,10 +2,19 @@
   "homemixVersion": 1,
   "id": "__ID__",
   "version": "1.0.0",
-  "requires": { "homeApps": "2.3.0" },
+  "requires": { "homeApps": "2.4.0" },
   "name": { "pl": "__ID__", "en": "__ID__" },
   "icon": "pi-box",
   "entry": "index.html",
+  "widgets": [
+    {
+      "id": "clicks",
+      "title": { "pl": "Kliknięcia", "en": "Clicks" },
+      "size": "Small",
+      "sizes": ["Small", "Medium"],
+      "places": ["Household", "Wall", "Account"]
+    }
+  ],
   "capabilities": ["storage.household"],
   "network": []
 }

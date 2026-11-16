@@ -40,8 +40,37 @@
         border-radius: 8px;
         height: 480px;
       }
-      .widget iframe {
+      /* Widths of the widget sizes; the wall tablet is dark and bigger, as on /wall. */
+      .widget.small iframe {
+        max-width: 16rem;
+      }
+      .widget.medium iframe {
         max-width: 24rem;
+      }
+      .widget.large iframe {
+        max-width: 40rem;
+      }
+      .widget.wall {
+        background: #0f172a;
+        padding: 2rem;
+        border-radius: 1.5rem;
+      }
+      .widget.wall.small iframe {
+        max-width: 20rem;
+      }
+      .widget.wall.medium iframe {
+        max-width: 30rem;
+      }
+      .widget.wall.large iframe {
+        max-width: 48rem;
+      }
+      #widget-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      #widget-options[hidden] {
+        display: none;
       }
       pre {
         font-size: 12px;
@@ -85,6 +114,10 @@
         </select></label
       >
       <label>Widok<select id="view"></select></label>
+      <div id="widget-options">
+        <label>Miejsce widgetu<select id="place"></select></label>
+        <label>Rozmiar<select id="size"></select></label>
+      </div>
       <label
         ><span><input type="checkbox" id="dark" /> ciemny motyw</span></label
       >

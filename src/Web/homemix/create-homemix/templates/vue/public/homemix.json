@@ -2,10 +2,20 @@
   "homemixVersion": 1,
   "id": "__ID__",
   "version": "1.0.0",
-  "requires": { "homeApps": "2.3.0" },
+  "requires": { "homeApps": "2.4.0" },
   "name": { "pl": "__ID__", "en": "__ID__" },
   "icon": "pi-box",
   "entry": "index.html",
+  "pages": [{ "path": "", "title": { "pl": "Notatki", "en": "Notes" } }],
+  "widgets": [
+    {
+      "id": "notes",
+      "title": { "pl": "Notatki", "en": "Notes" },
+      "size": "Medium",
+      "sizes": ["Small", "Medium", "Large"],
+      "places": ["Household", "Wall", "Account"]
+    }
+  ],
   "capabilities": ["storage.household"],
   "network": []
 }

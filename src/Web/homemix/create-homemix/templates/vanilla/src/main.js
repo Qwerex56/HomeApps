@@ -1,21 +1,35 @@
-import { autoResize, connect } from '@homemix/sdk'
+import '@homemix/css'
+import { applyLayout, applyTheme, autoResize, connect } from '@homemix/sdk'
 
-// The bridge without a framework: context, data and the host's theme.
+// The bridge without a framework: context, data, the host's theme and the @homemix/css classes for where it stands.
 const homemix = connect()
 autoResize(homemix)
 
 const ctx = await homemix.context()
-for (const [name, value] of Object.entries(ctx.theme.vars)) document.documentElement.style.setProperty(name, value)
-document.body.style.color = 'var(--p-text-color)'
+applyTheme(ctx.theme)
+applyLayout(ctx)
+homemix.on('theme', (theme) => applyTheme(theme))
 
 const counter = await homemix.data.get('counter', 'clicks')
 let clicks = counter?.value ?? 0
-const button = document.createElement('button')
-const render = () => (button.textContent = `${ctx.user.name}: ${clicks}`)
-button.onclick = async () => {
-  clicks += 1
+const app = document.querySelector('#app')
+
+if (ctx.widget) {
+  // A widget: the number, and a click opens the page.
+  app.innerHTML = `<section class="hm-card hm-stack hm-clickable" role="link" tabindex="0">
+    <span class="hm-muted">Kliknięcia</span><span class="hm-big"></span></section>`
+  app.querySelector('.hm-big').textContent = String(clicks)
+  app.querySelector('section').onclick = () => homemix.open()
+} else {
+  app.className = 'hm-stack'
+  app.innerHTML = `<h1 class="hm-title"></h1><div class="hm-row"><span class="hm-big"></span>
+    <button class="hm-button">Kliknij</button></div>`
+  app.querySelector('h1').textContent = ctx.user.name
+  const render = () => (app.querySelector('.hm-big').textContent = String(clicks))
+  app.querySelector('button').onclick = async () => {
+    clicks += 1
+    render()
+    await homemix.data.put('counter', 'clicks', clicks)
+  }
   render()
-  await homemix.data.put('counter', 'clicks', clicks)
 }
-render()
-document.querySelector('#app').append(button)
