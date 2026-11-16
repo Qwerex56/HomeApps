@@ -51,7 +51,14 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    tab?: string;
+                    q?: string;
+                    target?: string;
+                    jarvis?: boolean;
+                    offline?: boolean;
+                    page?: number | string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -70,8 +77,213 @@ export interface paths {
             };
         };
         put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SubmitListingRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StoreEntryView"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/homemix/api/store/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MyListingView"][];
+                    };
+                };
+            };
+        };
+        put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/homemix/api/store/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    key: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StoreEntryView"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    key: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/homemix/api/store/{key}/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    key: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StoreEntryView"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/homemix/api/store/{key}/heart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    key: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    key: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -137,6 +349,41 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["AdminInstallationView"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/homemix/api/admin/store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StoreEntryView"][];
                     };
                 };
             };
@@ -239,6 +486,47 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/homemix/api/admin/store/{key}/hidden": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    key: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["HideListingRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StoreEntryView"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -616,6 +904,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/homemix/api/installations/{id}/widgets/{place}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    place: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ChooseWidgetRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["InstallationView"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    place: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["InstallationView"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/homemix/api/packages": {
         parameters: {
             query?: never;
@@ -788,7 +1140,10 @@ export interface components {
         ChooseWidgetRequest: {
             widget: null | string;
             size: null | string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @default 0
+             */
             order: number | string;
         };
         ConsentInput: {
@@ -810,12 +1165,12 @@ export interface components {
             repository: string;
             tag: null | string;
         };
-        /** @enum {unknown} */
-        HouseholdRole: "Guest" | "Member" | "Admin" | "Owner" | null;
-        /** Format: binary */
         HideListingRequest: {
             hidden: boolean;
         };
+        /** @enum {unknown} */
+        HouseholdRole: "Guest" | "Member" | "Admin" | "Owner" | null;
+        /** Format: binary */
         IFormFile: string;
         InstallationView: {
             /** Format: uuid */
@@ -858,6 +1213,12 @@ export interface components {
             role: null | components["schemas"]["HouseholdRole"];
             permissions: string[];
         };
+        MyListingView: {
+            entry: components["schemas"]["StoreEntryView"];
+            counts: components["schemas"]["StoreCounts"];
+            versions: components["schemas"]["StoreVersionCount"][];
+            days: components["schemas"]["StoreDay"][];
+        };
         NotifyRequest: {
             userIds: null | string[];
             title: string;
@@ -892,6 +1253,28 @@ export interface components {
             /** Format: int32 */
             version: null | number | string;
         };
+        StoreCounts: {
+            /** Format: int32 */
+            active: number | string;
+            /** Format: int32 */
+            households: number | string;
+            /** Format: int32 */
+            accounts: number | string;
+            /** Format: int32 */
+            installs: number | string;
+            /** Format: int32 */
+            installs30: number | string;
+            /** Format: int32 */
+            updates: number | string;
+            /** Format: int32 */
+            removals: number | string;
+        };
+        StoreDay: {
+            /** Format: date */
+            day: string;
+            /** Format: int32 */
+            installs: number | string;
+        };
         StoreEntryView: {
             listingKey: string;
             official: boolean;
@@ -913,6 +1296,30 @@ export interface components {
             targets: components["schemas"]["TargetKind"][];
             status: string;
             mine: boolean;
+            /** Format: date-time */
+            submittedAt?: null | string;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            installs: number | string;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            installs30: number | string;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            hearts: number | string;
+            /** @default false */
+            hearted: boolean;
+        };
+        StoreVersionCount: {
+            version: string;
+            /** Format: int32 */
+            installations: number | string;
         };
         SubmitListingRequest: {
             repository: string;

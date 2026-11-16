@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using HomeMix.Domain.Manifests;
 using HomeMix.Domain.Installations;
 using HomeMix.Domain.Store;
@@ -8,6 +9,8 @@ namespace HomeMix.Application.Store;
 /// One add-on in the store. <see cref="Builtin"/> ones came with this HomeMix and are added by
 /// <see cref="AddonId"/>; the rest are added from <see cref="Repository"/> like any GitHub link. <see cref="Official"/>
 /// marks the team's (built in or from addons.json); <see cref="ListingKey"/> names the entry (homemix-2.md S3).
+/// <see cref="Installs"/> are the active installations, <see cref="Installs30"/> new ones in 30 days,
+/// <see cref="Hearts"/> its "domki" and <see cref="Hearted"/> whether the caller gave one.
 /// </summary>
 public sealed record StoreEntryView(
     string ListingKey,
@@ -28,12 +31,21 @@ public sealed record StoreEntryView(
     bool Jarvis,
     IReadOnlyList<TargetKind> Targets,
     string Status,
-    bool Mine)
+    bool Mine,
+    DateTimeOffset? SubmittedAt = null,
+    int Installs = 0,
+    int Installs30 = 0,
+    int Hearts = 0,
+    bool Hearted = false)
 {
+    /// <summary>Where its numbers come from (<see cref="StoreEvent.SourceOf"/>).</summary>
+    [JsonIgnore]
+    public string Source => Builtin ? Domain.Store.ListingKey.OfficialSource : Repository ?? string.Empty;
+
     public static StoreEntryView From(StoreListing listing, AddonManifest manifest, Guid? me) => new(
         listing.Key, listing.Official, false, listing.AddonId, listing.Repository, manifest.Name, manifest.Description, manifest.Icon,
         manifest.Version, listing.PackageSha256, listing.Readme, listing.PublishedAt, listing.Problem, manifest.Capabilities,
-        manifest.Network, manifest.Jarvis, manifest.Targets, listing.Status.ToString(), me is { } id && listing.IsAuthor(id));
+        manifest.Network, manifest.Jarvis, manifest.Targets, listing.Status.ToString(), me is { } id && listing.IsAuthor(id), listing.SubmittedAt);
 
     public static StoreEntryView FromBuiltin(AddonManifest manifest, string sha256) => new(
         Domain.Store.ListingKey.Official(manifest.Id), true, true, manifest.Id, null, manifest.Name, manifest.Description, manifest.Icon,

@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<DataAccess>();
         services.AddScoped<Blocks.Blocklist>();
         services.AddScoped<Store.StoreCatalog>();
+        services.AddScoped<Store.StoreNumbers>();
         return services;
     }
 }

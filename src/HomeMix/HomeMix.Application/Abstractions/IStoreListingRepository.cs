@@ -13,6 +13,9 @@ public interface IStoreListingRepository
     Task<IReadOnlyList<StoreListing>> ListAsync(ListingStatus status, CancellationToken cancellationToken);
 
     /// <summary>Entries not removed and last read before <paramref name="before"/>, the oldest first.</summary>
+    /// <summary>The entries a person submitted that are not removed, newest first.</summary>
+    Task<IReadOnlyList<StoreListing>> ListByAuthorAsync(Guid userId, CancellationToken cancellationToken);
+
     Task<IReadOnlyList<StoreListing>> ListDueAsync(DateTimeOffset before, int take, CancellationToken cancellationToken);
 
     Task<int> CountSubmittedSinceAsync(Guid userId, DateTimeOffset since, CancellationToken cancellationToken);

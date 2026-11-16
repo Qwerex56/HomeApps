@@ -9,6 +9,7 @@ using HomeMix.Application.Blocks.UnblockAddon;
 using HomeMix.Application.Installations.ListAllInstallations;
 using HomeMix.Application.Store;
 using HomeMix.Application.Store.HideListing;
+using HomeMix.Application.Store.ListAllListings;
 using MediatR;
 
 namespace HomeMix.Api.Endpoints;
@@ -26,6 +27,10 @@ internal sealed class AdminEndpoints : IEndpoint
         admin.MapGet("/installations", async (ISender sender, CancellationToken ct) =>
                 (await sender.Send(new ListAllInstallationsQuery(), ct)).ToHttpResult())
             .Produces<IReadOnlyList<AdminInstallationView>>();
+
+        admin.MapGet("/store", async (ISender sender, CancellationToken ct) =>
+                (await sender.Send(new ListAllListingsQuery(), ct)).ToHttpResult())
+            .Produces<IReadOnlyList<StoreEntryView>>();
 
         admin.MapGet("/blocks", async (ISender sender, CancellationToken ct) =>
                 (await sender.Send(new ListBlocksQuery(), ct)).ToHttpResult())

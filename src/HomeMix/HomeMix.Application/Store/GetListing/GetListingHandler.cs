@@ -8,10 +8,16 @@ using HomeMix.Domain.Store;
 namespace HomeMix.Application.Store.GetListing;
 
 internal sealed class GetListingHandler(
-    IStoreListingRepository listings, IPackageRepository packages, IOfficialAddons builtin, Blocklist blocklist, ICurrentUser currentUser)
+    IStoreListingRepository listings, IPackageRepository packages, IOfficialAddons builtin, Blocklist blocklist, StoreNumbers numbers, ICurrentUser currentUser)
     : IQueryHandler<GetListingQuery, StoreEntryView>
 {
     public async Task<Result<StoreEntryView>> Handle(GetListingQuery query, CancellationToken cancellationToken)
+    {
+        var entry = await FindAsync(query, cancellationToken);
+        return entry.IsSuccess ? await numbers.AddAsync(entry.Value, currentUser.UserId, cancellationToken) : entry;
+    }
+
+    private async Task<Result<StoreEntryView>> FindAsync(GetListingQuery query, CancellationToken cancellationToken)
     {
         var blocked = await blocklist.SnapshotAsync(cancellationToken);
         var image = builtin.List().FirstOrDefault(o => ListingKey.Official(o.Manifest.Id) == query.Key);

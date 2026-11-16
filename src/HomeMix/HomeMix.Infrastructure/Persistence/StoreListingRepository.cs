@@ -17,6 +17,10 @@ internal sealed class StoreListingRepository(HomeMixDbContext db) : IStoreListin
     public async Task<IReadOnlyList<StoreListing>> ListAsync(ListingStatus status, CancellationToken cancellationToken) =>
         await db.StoreListings.Where(l => l.Status == status).OrderByDescending(l => l.SubmittedAt).ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<StoreListing>> ListByAuthorAsync(Guid userId, CancellationToken cancellationToken) =>
+        await db.StoreListings.Where(l => l.SubmittedBy == userId && l.Status != ListingStatus.Removed)
+            .OrderByDescending(l => l.SubmittedAt).ToListAsync(cancellationToken);
+
     public async Task<IReadOnlyList<StoreListing>> ListDueAsync(DateTimeOffset before, int take, CancellationToken cancellationToken) =>
         await db.StoreListings.Where(l => l.Status != ListingStatus.Removed && l.RefreshedAt < before)
             .OrderBy(l => l.RefreshedAt).Take(take).ToListAsync(cancellationToken);
