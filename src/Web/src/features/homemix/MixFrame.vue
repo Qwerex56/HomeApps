@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { HouseholdRole, WidgetPlace } from '@homemix/sdk'
+import type { HouseholdRole, WidgetPlace, WidgetSize } from '@homemix/sdk'
 import { useSessionStore } from '@/features/auth/session'
 import { useMyAccount } from '@/features/account/api'
 import { localized } from '@/features/plugins/registry'
@@ -17,7 +17,9 @@ const props = defineProps<{
   page: string
   /** Another HTML file of the package than the entry, e.g. a widget's own entry. */
   file?: string | null
-  widget?: { id: string; place: WidgetPlace } | null
+  widget?: { id: string; place: WidgetPlace; size: WidgetSize } | null
+  /** On the wall tablet: the add-on's pages open there in full, not in the app. */
+  wall?: boolean
   /** Starting height before the add-on reports its own. */
   height?: number
 }>()
@@ -35,6 +37,7 @@ useMixHost(frame, () => ({
   user: { id: session.claims?.sub ?? '', name: account.value?.profile.displayName ?? '' },
   page: props.page,
   widget: props.widget ?? null,
+  wall: props.wall ?? props.widget?.place === 'Wall',
   onResize: (height) => (reported.value = height),
 }))
 </script>
@@ -50,7 +53,8 @@ useMixHost(frame, () => ({
       class="w-full rounded-lg border-0"
       :style="{ height: `${reported ?? height ?? 480}px` }"
     />
-    <figcaption class="flex items-center gap-1 text-xs text-muted-color">
+    <!-- Only under a page: a widget has its own header with the add-on's name (W3). -->
+    <figcaption v-if="!widget" class="flex items-center gap-1 text-xs text-muted-color">
       <i class="pi pi-box" aria-hidden="true" />{{ t('homemix.caption', { name: localized(installation.name) }) }}
     </figcaption>
   </figure>

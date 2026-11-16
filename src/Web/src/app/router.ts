@@ -185,6 +185,14 @@ export const router = createRouter({
       meta: { requiresAuth: true },
       component: () => import('@/features/wall/WallPage.vue'),
     },
+    // A HomeMix add-on opened from a wall widget: in full on the tablet, with a way back to the wall (docs/homemix.md).
+    {
+      path: '/wall/mix/:addon/:path(.*)?',
+      name: 'wall-mix',
+      meta: { requiresAuth: true },
+      props: true,
+      component: () => import('@/features/wall/WallMixPage.vue'),
+    },
     {
       path: '/',
       component: GuestLayout,

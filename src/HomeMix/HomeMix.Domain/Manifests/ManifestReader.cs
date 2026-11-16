@@ -194,7 +194,18 @@ internal sealed partial class ManifestReader(JsonElement root)
                 CheckHtmlPath($"widgets['{id}'].entry", entry);
             }
 
-            widgets.Add(new AddonWidget(id, title ?? new LocalizedText(id, id), size, places, entry));
+            List<string> sizes = widget.TryGetProperty("sizes", out var sz) ? StringArray(sz, $"widgets['{id}'].sizes") : [size];
+            foreach (var other in sizes.Where(x => !Sizes.Contains(x)))
+            {
+                _problems.Add($"widgets['{id}'].sizes: '{other}' must be Small, Medium or Large.");
+            }
+
+            if (!sizes.Contains(size))
+            {
+                _problems.Add($"widgets['{id}'].sizes must include its size {size}.");
+            }
+
+            widgets.Add(new AddonWidget(id, title ?? new LocalizedText(id, id), size, places, entry, [.. sizes.Distinct(StringComparer.Ordinal)]));
         }
 
         if (widgets.Select(w => w.Id).Distinct(StringComparer.Ordinal).Count() != widgets.Count)

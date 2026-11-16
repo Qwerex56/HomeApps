@@ -2,7 +2,7 @@ import { onBeforeUnmount, onMounted, type Ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { emit, serveFrame, type Handlers } from '@homemix/sdk/host'
-import type { Document, HomeMixContext, HouseholdRole, Scope, WidgetPlace } from '@homemix/sdk'
+import type { Document, HomeMixContext, HouseholdRole, Scope, WidgetPlace, WidgetSize } from '@homemix/sdk'
 import { toProblem } from '@/api/problem'
 import { errorMessage } from '@/api/errorMessage'
 import { householdsApi } from '@/features/households/api'
@@ -15,7 +15,9 @@ export interface MixHostOptions {
   household: { id: string; name: string; myRole: HouseholdRole } | null
   user: { id: string; name: string }
   page: string
-  widget: { id: string; place: WidgetPlace } | null
+  widget: { id: string; place: WidgetPlace; size: WidgetSize } | null
+  /** The frame is on the wall tablet, so navigate and open stay there. */
+  wall: boolean
   onResize: (height: number) => void
 }
 
@@ -50,6 +52,23 @@ export function useMixHost(frame: Ref<HTMLIFrameElement | undefined>, options: (
     }
   }
 
+  // navigate (a page to another) and open (a widget to its add-on) both show one of the add-on's pages: on the wall
+  // tablet in full there, otherwise in the household or on my account.
+  async function show(path: unknown) {
+    const o = options()
+    const clean = String(path ?? '').replace(/^\/+/, '')
+    if (!PAGE_PATH.test(clean) || clean.includes('..')) return null
+    const addon = o.installation.addonId
+    await router.push(
+      o.wall
+        ? { name: 'wall-mix', params: { addon, path: clean } }
+        : o.household
+          ? { name: 'household-mix', params: { id: o.household.id, addon, path: clean } }
+          : { name: 'my-mix', params: { addon, path: clean } },
+    )
+    return null
+  }
+
   const handlers: Handlers = {
     async context(): Promise<HomeMixContext> {
       const o = options()
@@ -73,17 +92,8 @@ export function useMixHost(frame: Ref<HTMLIFrameElement | undefined>, options: (
       options().onResize(Math.min(Math.max(Number(height) || 0, 40), 4000))
       return null
     },
-    async navigate({ path }) {
-      const o = options()
-      const clean = String(path ?? '').replace(/^\/+/, '')
-      if (!PAGE_PATH.test(clean) || clean.includes('..')) return null
-      await router.push(
-        o.household
-          ? { name: 'household-mix', params: { id: o.household.id, addon: o.installation.addonId, path: clean } }
-          : { name: 'my-mix', params: { addon: o.installation.addonId, path: clean } },
-      )
-      return null
-    },
+    navigate: ({ path }) => show(path),
+    open: ({ path }) => show(path),
     'data.list': ({ collection, scope }) =>
       homemixApi.data.list(options().installation.id, collection, scope) as Promise<Document[]>,
     'data.get': ({ collection, key, scope }) =>

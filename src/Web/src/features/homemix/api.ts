@@ -12,6 +12,8 @@ export type MyAccess = Schemas['MyAccessView']
 export type StoreEntry = Schemas['StoreEntryView']
 export type AdminInstallation = Schemas['AdminInstallationView']
 export type Block = Schemas['BlockView']
+export type AddonWidget = Schemas['AddonWidget']
+export type WidgetChoice = Schemas['WidgetChoice']
 
 /** Where add-ons are installed: a household, or the signed-in person's account. */
 export type MixTarget = { kind: 'Household'; householdId: string } | { kind: 'User' }
@@ -83,6 +85,16 @@ export const homemixApi = {
     return (
       await http.put<Installation>(`${base}/installations/${installationId}`, { sha256, consent: consent ?? null })
     ).data
+  },
+  /** Which widget of the add-on stands in a place and in which size; widget null turns it off there. */
+  async chooseWidget(installationId: string, place: string, widget: string | null, size: string | null, order = 0) {
+    return (
+      await http.put<Installation>(`${base}/installations/${installationId}/widgets/${place}`, { widget, size, order })
+    ).data
+  },
+  /** Back to the default: every widget that may stand in the place, in its own size. */
+  async resetWidget(installationId: string, place: string) {
+    return (await http.delete<Installation>(`${base}/installations/${installationId}/widgets/${place}`)).data
   },
   async remove(installationId: string) {
     await http.delete(`${base}/installations/${installationId}`)
