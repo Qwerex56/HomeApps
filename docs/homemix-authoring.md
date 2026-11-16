@@ -28,20 +28,20 @@ You need Node 22.2 or newer and Git. The tooling is versioned with HomeApps:
 
 | Package | |
 |---|---|
-| `create-homemix` | `npm create homemix@latest`: a new add-on from a template (`vue` or `vanilla`) |
-| `homemix` | the CLI: `dev`, `check`, `pack`, `tool` |
-| `@homemix/sdk` | the bridge client without a framework, the protocol and `homemix.json` types, `ToolContext` |
-| `@homemix/css` | the `hm-*` classes: the HomeApps look with or without a framework, widget sizes and the wall tablet |
-| `@homemix/vue` | `useHomeMix()`, `useCollection()`, `useCan()`, `useWidget()`, the building blocks (`HmWidget`, `HmStat`...), a PrimeVue preset |
+| `@home-apps/create-homemix` | `npm create @home-apps/homemix@latest`: a new add-on from a template (`vue` or `vanilla`) |
+| `@home-apps/homemix` | the CLI (command `homemix`): `dev`, `check`, `pack`, `tool` |
+| `@home-apps/sdk` | the bridge client without a framework, the protocol and `homemix.json` types, `ToolContext` |
+| `@home-apps/css` | the `hm-*` classes: the HomeApps look with or without a framework, widget sizes and the wall tablet |
+| `@home-apps/vue` | `useHomeMix()`, `useCollection()`, `useCan()`, `useWidget()`, the building blocks (`HmWidget`, `HmStat`...), a PrimeVue preset |
 
 ```bash
-npm create homemix@latest chores                 # Vue 3 + TypeScript + Vite
-npm create homemix@latest chores -- --template=vanilla
+npm create @home-apps/homemix@latest chores                 # Vue 3 + TypeScript + Vite
+npm create @home-apps/homemix@latest chores -- --template=vanilla
 cd chores && npm install
 ```
 
 To work on the tooling itself, or before a version is on npm, build it from a HomeApps checkout as the official
-add-ons do (`"@homemix/vue": "file:<HomeApps>/src/Web/homemix/vue"`): see [homemix.md, "Building one"](homemix.md#building-one-a3).
+add-ons do (`"@home-apps/vue": "file:<HomeApps>/src/Web/homemix/vue"`): see [homemix.md, "Building one"](homemix.md#building-one-a3).
 
 The template gives you:
 
@@ -119,11 +119,11 @@ HomeApps opens `entry` in a frame for each page and each widget:
 The host sends HomeApps' theme (light or dark, and its CSS variables such as `--p-primary-color`) at the start and
 whenever it changes. `useHomeMix()` applies it to `:root`, with the classes for where the add-on stands: `hm-page`, or
 `hm-widget` with `hm-size-small|medium|large` and `hm-wall` on the tablet (without Vue: `applyTheme(ctx.theme)` and
-`applyLayout(ctx)` from `@homemix/sdk`). With PrimeVue 4, use `HomeAppsPreset` from `@homemix/vue/primevue`.
+`applyLayout(ctx)` from `@home-apps/sdk`). With PrimeVue 4, use `HomeAppsPreset` from `@home-apps/vue/primevue`.
 
 ### Building blocks
 
-`import '@homemix/css'` once (in `main.ts`) gives the HomeApps look on the host's colours, light and dark:
+`import '@home-apps/css'` once (in `main.ts`) gives the HomeApps look on the host's colours, light and dark:
 
 | Classes | |
 |---|---|
@@ -136,7 +136,7 @@ whenever it changes. `useHomeMix()` applies it to `:root`, with the classes for 
 
 On the wall tablet (`hm-wall`) type is bigger and light on the wall's dark tiles, whatever the theme.
 
-`@homemix/vue` adds `useWidget()` (`size`, `place`, `isWidget`, `isWall`, `open(path?)`) and blocks drawn with those
+`@home-apps/vue` adds `useWidget()` (`size`, `place`, `isWidget`, `isWall`, `open(path?)`) and blocks drawn with those
 classes, each aware of the three sizes:
 
 | Block | |
@@ -166,7 +166,7 @@ Write the interface in Polish first: HomeApps is Polish, and `context().language
 With Vue:
 
 ```ts
-import { useCan, useCollection, useHomeMix } from '@homemix/vue'
+import { useCan, useCollection, useHomeMix } from '@home-apps/vue'
 
 const { homemix, context, ready } = useHomeMix()     // context: add-on, household { id, name, myRole }, user { id, name }
 const chores = useCollection<{ who: string; what: string }>('chores')   // reactive, refreshed on data.changed
@@ -180,7 +180,7 @@ await homemix.toast('Zapisano', 'success')          // needs notify
 Without a framework:
 
 ```js
-import { autoResize, connect } from '@homemix/sdk'
+import { autoResize, connect } from '@home-apps/sdk'
 
 const homemix = connect()
 autoResize(homemix)

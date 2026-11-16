@@ -86,7 +86,7 @@ What runs on GitHub:
 | Workflow | When | What |
 | --- | --- | --- |
 | `ci.yml` | Every pull request, and pushes to master | Restores, builds and tests `HomeApps.slnx` in Release. |
-| `homemix-npm.yml` | A tag `homemix-v<version>`, or by hand | Builds the HomeMix tooling, checks the official add-ons with it and publishes `@homemix/sdk`, `@homemix/css`, `@homemix/vue`, `homemix` and `create-homemix` to npm (secret `NPM_TOKEN`). |
+| `homemix-npm.yml` | A tag `homemix-v<version>`, or by hand | Builds the HomeMix tooling, checks the official add-ons with it and publishes `@home-apps/sdk`, `@home-apps/css`, `@home-apps/vue`, `@home-apps/homemix` and `@home-apps/create-homemix` to npm (secret `NPM_TOKEN`). |
 
 If CI fails, open the failed run from the pull request's Checks tab; the step log shows the compiler or test
 error. Fix it on the same branch and push again; CI reruns by itself.
@@ -98,17 +98,17 @@ error. Fix it on the same branch and push again; CI reruns by itself.
 3. Run both smoke tests on a fresh stack ([deployment.md](deployment.md#checking-a-release-the-smoke-tests)).
 4. Tag master: `git tag -a v2.0.0 -m "HomeApps 2.0.0"`.
 5. If the HomeMix tooling changed, set the same version in the five `src/Web/homemix/*/package.json` (and the
-   `@homemix/sdk` dependency of `vue` and `cli`, `@homemix/css` of `vue`), then push a tag `homemix-v2.4.0`: `homemix-npm.yml` publishes them.
-   Authors get them with `npm create homemix@latest` ([homemix-authoring.md](homemix-authoring.md)).
+   `@home-apps/sdk` dependency of `vue` and `cli`, `@home-apps/css` of `vue`), then push a tag `homemix-v2.4.0`: `homemix-npm.yml` publishes them.
+   Authors get them with `npm create @home-apps/homemix@latest` ([homemix-authoring.md](homemix-authoring.md)).
 
 ### Publishing to npm the first time
 
-1. Create an npm account with two-factor authentication, and an organization named `homemix` (free for public
-   packages), so the `@homemix` scope is yours. `homemix` and `create-homemix` are unscoped: the first publish takes
-   the names.
+1. Create an npm account with two-factor authentication, and an organization named `home-apps` (free for public
+   packages), so the `@home-apps` scope is yours. All five packages live in it; the workflow publishes them with
+   `--access public`.
 2. Create a granular access token that may read and write packages (all of yours, or the five by name; until the
-   first publish, the whole `@homemix` scope), and add it to the repository as the secret `NPM_TOKEN`
+   first publish, the whole `@home-apps` scope), and add it to the repository as the secret `NPM_TOKEN`
    (Settings → Secrets and variables → Actions).
 3. The repository must be public: `--provenance` links each package to the commit and workflow that built it.
 4. Push the tag: `git tag homemix-v2.4.0 && git push origin homemix-v2.4.0`, and watch the run in Actions.
-5. Check `npm view @homemix/sdk` and try `npm create homemix@latest test-addon` in an empty folder.
+5. Check `npm view @home-apps/sdk` and try `npm create @home-apps/homemix@latest test-addon` in an empty folder.

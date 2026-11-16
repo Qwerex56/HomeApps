@@ -368,7 +368,7 @@ export default async function ({ days }, ctx) {
 }
 ```
 
-`ctx` (type `ToolContext` in `@homemix/sdk`) is the bridge's contract without the screen, answered by the same use
+`ctx` (type `ToolContext` in `@home-apps/sdk`) is the bridge's contract without the screen, answered by the same use
 cases with the person's token, so roles, capabilities and the "never" list hold here too:
 
 | `ctx.` | |
@@ -448,7 +448,7 @@ after the change is saved. The host passes each to the frames of that installati
 | `notification` | `{ title, body, path, tag }` | a `push()` (Web Push still goes out as before) | each recipient, also as a toast in the app |
 
 - The host reloads a frame on a new version (its key includes it) and drops it when the list no longer has the
-  installation. `@homemix/vue`'s `useCan()` and context follow `permissions.changed` without a reload.
+  installation. `@home-apps/vue`'s `useCan()` and context follow `permissions.changed` without a reload.
 - A write in this tab reaches the other frames here at once; its echo over realtime within 2 s is not told twice.
 - No new capabilities: an add-on only hears about what it could already read. Someone who leaves a household stays
   in its group until they reconnect; they only see keys, never values.
@@ -462,20 +462,20 @@ Optional, light tooling, versioned with HomeApps, in `src/Web/homemix` (npm work
 `.github/workflows/homemix-npm.yml` on a tag `homemix-v<version>`
 ([working-with-the-repo.md](working-with-the-repo.md#publishing-to-npm-the-first-time)):
 
-- `@homemix/sdk` (`sdk`): `connect()` (the bridge client without a framework), `autoResize()`, `applyTheme()` and
-  `applyLayout()` (the `@homemix/css` classes for where the add-on stands), the protocol types, the
-  `homemix.json` types and `checkManifest()`/`checkFiles()`, the same checks the server makes. `@homemix/sdk/host`
+- `@home-apps/sdk` (`sdk`): `connect()` (the bridge client without a framework), `autoResize()`, `applyTheme()` and
+  `applyLayout()` (the `@home-apps/css` classes for where the add-on stands), the protocol types, the
+  `homemix.json` types and `checkManifest()`/`checkFiles()`, the same checks the server makes. `@home-apps/sdk/host`
   (`serveFrame()`) is the host side, used by the web app and by `homemix dev`.
-- `@homemix/css` (`css`, HomeMix 2.0 B6): the `hm-*` classes in the HomeApps look on the host's theme variables,
+- `@home-apps/css` (`css`, HomeMix 2.0 B6): the `hm-*` classes in the HomeApps look on the host's theme variables,
   with or without a framework: layout, type, elements, form fields, states, widget sizes (`hm-size-*`) and the wall
   tablet (`hm-wall`).
-- `@homemix/vue` (`vue`): `useHomeMix()` (applies the host's theme and the layout classes and follows them),
+- `@home-apps/vue` (`vue`): `useHomeMix()` (applies the host's theme and the layout classes and follows them),
   `useCollection('sessions')` (reactive, writes with the version it holds, refreshes on `data.changed`), `useCan()`,
   `useWidget()` (size, place, wall, `open()`) and the building blocks `HmWidget`, `HmStat`, `HmList`, `HmProgress`,
   `HmCountdown`, `HmEmpty`, `HmWallTile`, `HmPage`, `HmInput`, `HmDate`, `HmSelect`, `HmSwitch` (render functions,
-  no compiler needed); `theme.css` (now an import of `@homemix/css`) and `@homemix/vue/primevue` (`HomeAppsPreset`
+  no compiler needed); `theme.css` (now an import of `@home-apps/css`) and `@home-apps/vue/primevue` (`HomeAppsPreset`
   for PrimeVue 4). The add-on bundles its own Vue.
-- `create-homemix` (`npm create homemix@latest my-addon`, templates `vue` and `vanilla`) and the `homemix` CLI:
+- `@home-apps/create-homemix` (`npm create @home-apps/homemix@latest my-addon`, templates `vue` and `vanilla`) and the `@home-apps/homemix` CLI (command `homemix`):
   `dev` (a fake host at http://localhost:5180 with a household, roles, data in memory, the sandbox headers and, for
   a widget, its place and size, the wall tablet in its own dark frame),
   `check`, `pack` (`addon.zip` + SHA-256). The template has a GitHub Actions workflow that attaches `addon.zip` to a
@@ -484,7 +484,7 @@ Optional, light tooling, versioned with HomeApps, in `src/Web/homemix` (npm work
 
 To work on them: `cd src/Web && npm ci`, then `cd homemix && npm install && npm run build`.
 
-The official **Pomodoro** (`homemix/official/pomodoro`) is written with `@homemix/vue`: one timer shared by the
+The official **Pomodoro** (`homemix/official/pomodoro`) is written with `@home-apps/vue`: one timer shared by the
 household, each person's sessions counted privately (`storage.user`), the lengths set by Admins (`settings.write`) and
 the end of a focus pushed to everyone else (`notify`). The official **Pogoda** (`homemix/official/pogoda`, A5) shows
 the weather now and for a week from Open-Meteo for a place an Admin picks (`place.write`); its only `network` are
