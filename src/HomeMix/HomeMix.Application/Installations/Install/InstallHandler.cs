@@ -48,9 +48,13 @@ internal sealed class InstallHandler(
             return Result.Fail(PackageErrors.Blocked);
         }
 
-        if (await installations.FindActiveAsync(package.AddonId, target, cancellationToken) is not null)
+        if (await installations.FindActiveAsync(package.AddonId, target, cancellationToken) is { } existing)
         {
-            return Result.Fail(InstallationErrors.AlreadyInstalled);
+            // The id is not unique in the store (homemix-2.md S3), but data and tools are by id, so one per place.
+            var standing = await packages.FindAsync(existing.PackageSha256, cancellationToken);
+            return standing is not null && !string.Equals(standing.Repository, package.Repository, StringComparison.OrdinalIgnoreCase)
+                ? Result.Fail(InstallationErrors.IdInUse(package.AddonId, standing.Manifest.Name.Pl))
+                : Result.Fail(InstallationErrors.AlreadyInstalled);
         }
 
         var installation = Installation.Install(package, target, command.Consent.ToConsent(), currentUser.RequiredUserId, time.GetUtcNow());

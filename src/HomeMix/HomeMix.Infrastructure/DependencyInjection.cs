@@ -31,15 +31,17 @@ public static class DependencyInjection
         services.AddScoped<IInstallationRepository, InstallationRepository>();
         services.AddScoped<IDocumentRepository, DocumentRepository>();
         services.AddScoped<IBlockRepository, BlockRepository>();
+        services.AddScoped<IStoreListingRepository, StoreListingRepository>();
         services.AddHostedService<RemovedDataCleanup>();
+        services.AddHostedService<StoreRefresh>();
 
         services.AddSingleton<IPackageReader, ZipPackageReader>();
         services.AddSingleton<IPackageStore, FilePackageStore>();
 
-        services.AddMemoryCache();
         services.AddSingleton<IOfficialAddons, FolderOfficialAddons>();
         services.AddHttpClient<IGitHubReleases, GitHubReleasesClient>(ConfigureGitHub);
         services.AddHttpClient<IStoreIndex, GitHubStoreIndex>(ConfigureGitHub);
+        services.AddHttpClient<IGitHubRepositories, GitHubRepositoriesClient>(ConfigureGitHub);
 
         services.AddHttpClient<IHouseholdRoles, HouseholdsHttpRoles>((sp, http) =>
             http.BaseAddress = new Uri(sp.GetRequiredService<IOptions<HomeMixOptions>>().Value.HouseholdsUrl.TrimEnd('/') + "/"));

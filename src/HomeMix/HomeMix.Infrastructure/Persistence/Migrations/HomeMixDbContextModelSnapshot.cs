@@ -220,6 +220,74 @@ namespace HomeMix.Infrastructure.Persistence.Migrations
                     b.ToTable("Packages", (string)null);
                 });
 
+            modelBuilder.Entity("HomeMix.Domain.Store.StoreListing", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(48)
+                        .HasColumnType("character varying(48)");
+
+                    b.Property<string>("AddonId")
+                        .IsRequired()
+                        .HasMaxLength(31)
+                        .HasColumnType("character varying(31)");
+
+                    b.Property<DateTimeOffset>("LastSubmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Official")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("PackageSha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Problem")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Readme")
+                        .HasMaxLength(20008)
+                        .HasColumnType("character varying(20008)");
+
+                    b.Property<DateTimeOffset>("RefreshedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReleaseTag")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Repository")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("SubmittedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RefreshedAt");
+
+                    b.HasIndex("Status", "SubmittedAt");
+
+                    b.HasIndex("SubmittedBy", "LastSubmittedAt");
+
+                    b.ToTable("StoreListings", (string)null);
+                });
+
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.InboxState", b =>
                 {
                     b.Property<long>("Id")

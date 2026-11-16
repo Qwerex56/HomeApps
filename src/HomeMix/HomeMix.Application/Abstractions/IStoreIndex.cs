@@ -1,10 +1,10 @@
 namespace HomeMix.Application.Abstractions;
 
 /// <summary>
-/// The store (W9): <c>addons.json</c> in a public repository lists GitHub repositories, and each is read from GitHub.
-/// Nothing is uploaded to the store and nothing is kept but a short cache.
+/// <c>addons.json</c> (homemix-2.md S6): the quick listing of official add-ons, repositories the HomeApps team keeps.
+/// They become official store entries; an unreadable index lists nothing new and changes nothing.
 /// </summary>
 public interface IStoreIndex
 {
-    Task<IReadOnlyList<StoreListing>> ListAsync(CancellationToken cancellationToken);
+    Task<IReadOnlyList<string>> RepositoriesAsync(CancellationToken cancellationToken);
 }

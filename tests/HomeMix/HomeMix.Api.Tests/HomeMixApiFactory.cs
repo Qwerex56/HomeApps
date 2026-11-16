@@ -118,6 +118,8 @@ public sealed class HomeMixApiFactory : WebApplicationFactory<Program>, IAsyncLi
             services.AddScoped<IHouseholdRoles, FakeHouseholdRoles>();
             services.RemoveAll<IGitHubReleases>();
             services.AddSingleton<IGitHubReleases>(GitHub);
+            services.RemoveAll<IGitHubRepositories>();
+            services.AddSingleton<IGitHubRepositories>(GitHub);
             services.RemoveAll<IStoreIndex>();
             services.AddSingleton<IStoreIndex>(Store);
             services.AddHttpClient(ScriptBridge.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => Web);

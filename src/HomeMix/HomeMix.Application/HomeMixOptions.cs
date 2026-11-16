@@ -49,14 +49,18 @@ public sealed class HomeMixOptions
     public string HouseholdsUrl { get; set; } = "http://households:8080";
 
     /// <summary>
-    /// The store's index (W9): a public <c>addons.json</c> with repository links, added to by pull request. Empty: the
-    /// store shows only the official add-ons.
+    /// The official store entries (homemix-2.md S6): a public <c>addons.json</c> with the team's repository links. Empty:
+    /// only the official add-ons of the image and what people submit.
     /// </summary>
     public string StoreIndexUrl { get; set; } = "https://raw.githubusercontent.com/Qwerex56/HomeApps/master/homemix/store/addons.json";
 
-    /// <summary>How long the store keeps what it read from GitHub.</summary>
-    [Range(1, 24 * 60)]
-    public int StoreCacheMinutes { get; set; } = 60;
+    /// <summary>How often each store entry is read again from GitHub (its latest release and README), and addons.json with it.</summary>
+    [Range(5, 7 * 24 * 60)]
+    public int StoreRefreshMinutes { get; set; } = 60;
+
+    /// <summary>How many add-ons one person may submit to the store in 24 hours (homemix-2.md S2).</summary>
+    [Range(1, 100)]
+    public int StoreSubmissionsPerDay { get; set; } = 5;
 
     /// <summary>The official add-ons' zips built into the image (<c>homemix/official/*</c>); missing: none.</summary>
     public string OfficialPath { get; set; } = "/app/official";

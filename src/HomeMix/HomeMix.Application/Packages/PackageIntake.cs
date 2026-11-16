@@ -25,7 +25,9 @@ public sealed class PackageIntake(
     /// <summary>The version of this HomeApps (Directory.Build.props).</summary>
     public static string HomeAppsVersion { get; } = typeof(PackageIntake).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
 
-    public async Task<Result<AddonPackage>> AddAsync(byte[] zip, string? repository, string? tag, CancellationToken cancellationToken)
+    /// <param name="uploadedBy">Who added it; by default the caller. HomeMix's own store refresh passes <see cref="Guid.Empty"/>.</param>
+    public async Task<Result<AddonPackage>> AddAsync(
+        byte[] zip, string? repository, string? tag, CancellationToken cancellationToken, Guid? uploadedBy = null)
     {
         ArgumentNullException.ThrowIfNull(zip);
         var settings = options.Value;
@@ -54,7 +56,7 @@ public sealed class PackageIntake(
 
         var package = AddonPackage.Create(
             sha256, contents.Value.ManifestJson, contents.Value.Files, zip.LongLength, repository, tag,
-            currentUser.RequiredUserId, time.GetUtcNow());
+            uploadedBy ?? currentUser.RequiredUserId, time.GetUtcNow());
         if (package.IsFailed)
         {
             return package;

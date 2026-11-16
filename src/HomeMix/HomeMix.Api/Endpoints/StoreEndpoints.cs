@@ -3,14 +3,20 @@ using HomeApps.BuildingBlocks.Api.Results;
 using HomeMix.Application.Packages;
 using HomeMix.Application.Packages.AddOfficialPackage;
 using HomeMix.Application.Store;
+using HomeMix.Api.Requests;
+using HomeMix.Application.Store.GetListing;
 using HomeMix.Application.Store.GetStore;
+using HomeMix.Application.Store.RefreshListing;
+using HomeMix.Application.Store.RemoveListing;
+using HomeMix.Application.Store.SubmitListing;
 using MediatR;
 
 namespace HomeMix.Api.Endpoints;
 
 /// <summary>
-/// The store (W9): official add-ons that came with HomeMix and the index's GitHub repositories. An entry is installed
-/// like any package: official ones by id here, the others through <c>POST /homemix/api/packages/github</c>.
+/// The store (homemix-2.md 2.1): add-ons built into HomeMix, official repositories of addons.json and repositories
+/// people submitted. An entry is installed like any package: built-in ones by id here, the others through
+/// <c>POST /homemix/api/packages/github</c>. An assistant may read the store but not submit or change entries.
 /// </summary>
 internal sealed class StoreEndpoints : IEndpoint
 {
@@ -20,6 +26,25 @@ internal sealed class StoreEndpoints : IEndpoint
                 (await sender.Send(new GetStoreQuery(), ct)).ToHttpResult())
             .WithTags("Store")
             .Produces<IReadOnlyList<StoreEntryView>>();
+
+        app.MapGet("/homemix/api/store/{key}", async (string key, ISender sender, CancellationToken ct) =>
+                (await sender.Send(new GetListingQuery(key), ct)).ToHttpResult())
+            .WithTags("Store")
+            .Produces<StoreEntryView>();
+
+        app.MapPost("/homemix/api/store", async (SubmitListingRequest body, ISender sender, CancellationToken ct) =>
+                (await sender.Send(new SubmitListingCommand(body.Repository), ct)).ToHttpResult())
+            .WithTags("Store")
+            .Produces<StoreEntryView>();
+
+        app.MapPost("/homemix/api/store/{key}/refresh", async (string key, ISender sender, CancellationToken ct) =>
+                (await sender.Send(new RefreshListingCommand(key), ct)).ToHttpResult())
+            .WithTags("Store")
+            .Produces<StoreEntryView>();
+
+        app.MapDelete("/homemix/api/store/{key}", async (string key, ISender sender, CancellationToken ct) =>
+                (await sender.Send(new RemoveListingCommand(key), ct)).ToHttpResult())
+            .WithTags("Store");
 
         app.MapPost("/homemix/api/packages/official/{addonId}", async (string addonId, ISender sender, CancellationToken ct) =>
                 (await sender.Send(new AddOfficialPackageCommand(addonId), ct)).ToHttpResult())

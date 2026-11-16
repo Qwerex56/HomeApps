@@ -13,6 +13,10 @@ public static class InstallationErrors
     public static Error AlreadyInstalled => new AppError(
         "homemix.already_installed", "This add-on is already installed here; update it instead.", ErrorKind.Conflict);
 
+    /// <summary>Another add-on with the same id (another repository) already stands here.</summary>
+    public static Error IdInUse(string addonId, string standing) => new AppError(
+        "homemix.id_in_use", $"\"{standing}\" already uses the id {addonId} here; remove it first to install this one.", ErrorKind.Conflict);
+
     public static Error TargetNotSupported(TargetKind kind) => new AppError(
         "homemix.target_not_supported",
         kind == TargetKind.Household ? "This add-on can only be installed on an account." : "This add-on can only be installed in a household.",
