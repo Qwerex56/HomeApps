@@ -7,6 +7,7 @@ using HomeMix.Application.Data;
 using HomeMix.Domain.Installations;
 using HomeMix.Domain.Packages;
 using Microsoft.Extensions.Options;
+using HomeMix.Application.Realtime;
 
 namespace HomeMix.Application.Installations.Install;
 
@@ -18,7 +19,8 @@ internal sealed class InstallHandler(
     ICurrentUser currentUser,
     TimeProvider time,
     Blocklist blocklist,
-    IOptions<HomeMixOptions> options) : ICommandHandler<InstallCommand, InstallationView>
+    IOptions<HomeMixOptions> options,
+    RealtimeOutbox realtime) : ICommandHandler<InstallCommand, InstallationView>
 {
     public async Task<Result<InstallationView>> Handle(InstallCommand command, CancellationToken cancellationToken)
     {
@@ -58,6 +60,7 @@ internal sealed class InstallHandler(
         }
 
         installations.Add(installation.Value);
+        realtime.Add(RealtimeEvents.InstallationChanged(installation.Value, "installed"));
 
         // Uninstalled within the retention time: its data comes back.
         var now = time.GetUtcNow();

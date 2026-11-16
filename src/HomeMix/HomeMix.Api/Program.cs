@@ -2,6 +2,7 @@ using HomeApps.BuildingBlocks.Api;
 using HomeApps.BuildingBlocks.Infrastructure.Persistence;
 using HomeApps.BuildingBlocks.Mcp;
 using HomeMix.Api;
+using HomeMix.Api.Realtime;
 using HomeMix.Application;
 using HomeMix.Infrastructure;
 using HomeMix.Infrastructure.Persistence;
@@ -21,6 +22,9 @@ app.UseHomeAppsDefaults();
 
 // Inside the Docker network only, like Households' (Traefik routes /homemix/api and /homemix/run, not /mcp).
 app.MapHomeAppsMcp();
+
+// The web app's realtime connection (docs/homemix.md, "RealTime").
+app.MapHomeMixRealtime();
 
 // After authentication, before the endpoints run: notify.push is limited per installation.
 app.UseRateLimiter();

@@ -7,6 +7,8 @@ using HomeMix.Infrastructure.Persistence;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Connections;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
@@ -136,6 +138,22 @@ public sealed class HomeMixApiFactory : WebApplicationFactory<Program>, IAsyncLi
 
     /// <summary>An assistant acting for the person (jarvis-v1.md, JV3).</summary>
     public HttpClient Assistant(Guid userId) => ClientWith(Token(userId, "jarvis-service"));
+
+    /// <summary>The web app's realtime connection for this person, started (long polling over the test server).</summary>
+    public async Task<HubConnection> HubAsync(Guid userId)
+    {
+        var token = Token(userId, actor: null);
+        var connection = new HubConnectionBuilder()
+            .WithUrl(new Uri(Server.BaseAddress, "homemix/hub"), options =>
+            {
+                options.Transports = HttpTransportType.LongPolling;
+                options.HttpMessageHandlerFactory = _ => Server.CreateHandler();
+                options.AccessTokenProvider = () => Task.FromResult<string?>(token);
+            })
+            .Build();
+        await connection.StartAsync();
+        return connection;
+    }
 
     public HttpClient ClientWith(string token)
     {

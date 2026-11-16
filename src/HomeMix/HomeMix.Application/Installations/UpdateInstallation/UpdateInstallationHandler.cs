@@ -6,6 +6,7 @@ using HomeMix.Application.Abstractions;
 using HomeMix.Domain.Installations;
 using HomeMix.Domain.Packages;
 using Microsoft.Extensions.Options;
+using HomeMix.Application.Realtime;
 
 namespace HomeMix.Application.Installations.UpdateInstallation;
 
@@ -16,7 +17,8 @@ internal sealed class UpdateInstallationHandler(
     ICurrentUser currentUser,
     TimeProvider time,
     Blocklist blocklist,
-    IOptions<HomeMixOptions> options) : ICommandHandler<UpdateInstallationCommand, InstallationView>
+    IOptions<HomeMixOptions> options,
+    RealtimeOutbox realtime) : ICommandHandler<UpdateInstallationCommand, InstallationView>
 {
     public async Task<Result<InstallationView>> Handle(UpdateInstallationCommand command, CancellationToken cancellationToken)
     {
@@ -48,6 +50,7 @@ internal sealed class UpdateInstallationHandler(
         }
 
         var updated = installation.Update(package, command.Consent?.ToConsent(), currentUser.RequiredUserId, time.GetUtcNow());
+        realtime.Add(RealtimeEvents.InstallationChanged(installation, "updated"));
         return updated.IsFailed ? updated : InstallationView.From(installation, package);
     }
 }

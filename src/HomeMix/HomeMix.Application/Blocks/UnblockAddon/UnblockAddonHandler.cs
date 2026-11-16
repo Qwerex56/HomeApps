@@ -1,12 +1,15 @@
 using FluentResults;
 using HomeApps.BuildingBlocks.Application.Messaging;
 using HomeMix.Application.Abstractions;
+using HomeMix.Application.Realtime;
 using HomeMix.Domain.Blocks;
 using Microsoft.Extensions.Options;
 
 namespace HomeMix.Application.Blocks.UnblockAddon;
 
-internal sealed class UnblockAddonHandler(IBlockRepository blocks, IOptions<HomeMixOptions> options) : ICommandHandler<UnblockAddonCommand>
+internal sealed class UnblockAddonHandler(
+    IBlockRepository blocks, IInstallationRepository installations, IOptions<HomeMixOptions> options, RealtimeOutbox realtime)
+    : ICommandHandler<UnblockAddonCommand>
 {
     public async Task<Result> Handle(UnblockAddonCommand command, CancellationToken cancellationToken)
     {
@@ -20,6 +23,7 @@ internal sealed class UnblockAddonHandler(IBlockRepository blocks, IOptions<Home
         }
 
         blocks.Remove(block);
+        await BlockedInstallations.AnnounceAsync(value, "unblocked", installations, realtime, cancellationToken);
         return Result.Ok();
     }
 }

@@ -7,6 +7,7 @@ using HomeMix.Application.Blocks;
 using HomeMix.Domain.Data;
 using HomeMix.Domain.Installations;
 using HomeMix.Domain.Manifests;
+using HomeMix.Application.Realtime;
 
 namespace HomeMix.Application.Notify.PushNotification;
 
@@ -19,7 +20,8 @@ internal sealed class PushNotificationHandler(
     IHouseholdRoles households,
     Blocklist blocklist,
     ICurrentUser currentUser,
-    IEventBus bus) : ICommandHandler<PushNotificationCommand, PushNotificationResult>
+    IEventBus bus,
+    RealtimeOutbox realtime) : ICommandHandler<PushNotificationCommand, PushNotificationResult>
 {
     public const string Category = "addon";
 
@@ -80,6 +82,10 @@ internal sealed class PushNotificationHandler(
                 string.IsNullOrEmpty(path) ? page : $"{page}/{path}",
                 installation.TargetKind == TargetKind.Household ? installation.TargetId : null,
                 command.Tag is null ? null : $"homemix:{installation.Id}:{command.Tag}"), cancellationToken);
+            foreach (var recipient in recipients)
+            {
+                realtime.Add(RealtimeEvents.Notification(recipient, installation.Id, command.Title, command.Body, path, command.Tag));
+            }
         }
 
         return new PushNotificationResult(recipients.Count);

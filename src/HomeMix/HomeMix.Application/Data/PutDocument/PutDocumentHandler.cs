@@ -5,6 +5,7 @@ using HomeApps.BuildingBlocks.Application.Messaging;
 using HomeMix.Application.Abstractions;
 using HomeMix.Domain.Data;
 using Microsoft.Extensions.Options;
+using HomeMix.Application.Realtime;
 
 namespace HomeMix.Application.Data.PutDocument;
 
@@ -13,7 +14,8 @@ internal sealed class PutDocumentHandler(
     IDocumentRepository documents,
     ICurrentUser currentUser,
     TimeProvider time,
-    IOptions<HomeMixOptions> options) : ICommandHandler<PutDocumentCommand, DocumentView>
+    IOptions<HomeMixOptions> options,
+    RealtimeOutbox realtime) : ICommandHandler<PutDocumentCommand, DocumentView>
 {
     public async Task<Result<DocumentView>> Handle(PutDocumentCommand command, CancellationToken cancellationToken)
     {
@@ -40,6 +42,8 @@ internal sealed class PutDocumentHandler(
 
         var me = currentUser.RequiredUserId;
         var now = time.GetUtcNow();
+        realtime.Add(RealtimeEvents.DataChanged(
+            space.Value.InstallationId, space.Value.Target, space.Value.Scope, space.Value.OwnerUserId, command.Collection, command.Key, me));
         if (document is not null)
         {
             var replaced = document.Replace(json, size, command.Version, me, now);

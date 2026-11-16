@@ -224,7 +224,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Not /mcp: the MCP server is reached only inside the Docker network (through the JARVIS gateway).
-      - "traefik.http.routers.homemix.rule=Host(`app.localhost`) && (PathPrefix(`/homemix/api`) || PathPrefix(`/homemix/run`))"
+      - "traefik.http.routers.homemix.rule=Host(`app.localhost`) && (PathPrefix(`/homemix/api`) || PathPrefix(`/homemix/run`) || PathPrefix(`/homemix/hub`))"
       - "traefik.http.routers.homemix.priority=200"
       - "traefik.http.routers.homemix.entrypoints=websecure"
       - "traefik.http.routers.homemix.tls=true"

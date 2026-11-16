@@ -1,11 +1,14 @@
 using FluentResults;
+using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.BuildingBlocks.Application.Messaging;
 using HomeMix.Application.Abstractions;
 using HomeMix.Domain.Data;
+using HomeMix.Application.Realtime;
 
 namespace HomeMix.Application.Data.DeleteDocument;
 
-internal sealed class DeleteDocumentHandler(DataAccess access, IDocumentRepository documents) : ICommandHandler<DeleteDocumentCommand>
+internal sealed class DeleteDocumentHandler(DataAccess access, IDocumentRepository documents, ICurrentUser currentUser, RealtimeOutbox realtime)
+    : ICommandHandler<DeleteDocumentCommand>
 {
     public async Task<Result> Handle(DeleteDocumentCommand command, CancellationToken cancellationToken)
     {
@@ -27,6 +30,9 @@ internal sealed class DeleteDocumentHandler(DataAccess access, IDocumentReposito
         }
 
         documents.Remove(document);
+        realtime.Add(RealtimeEvents.DataChanged(
+            space.Value.InstallationId, space.Value.Target, space.Value.Scope, space.Value.OwnerUserId, command.Collection, command.Key,
+            currentUser.RequiredUserId));
         return Result.Ok();
     }
 }

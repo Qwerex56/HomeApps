@@ -61,7 +61,7 @@ public sealed class DataAccess(
             }
         }
 
-        return new DataSpace(installation.Id, scope, scope == DataScope.User ? me : null);
+        return new DataSpace(installation.Id, scope, scope == DataScope.User ? me : null, installation.Target);
     }
 
     public static HouseholdRole WriteRole(AddonManifest manifest, string collection)

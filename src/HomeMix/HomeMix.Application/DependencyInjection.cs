@@ -9,9 +9,12 @@ namespace HomeMix.Application;
 
 public static class DependencyInjection
 {
-    /// <summary>Handlers, validators and the kit's pipeline, and the shared intake and access checks.</summary>
+    /// <summary>Handlers, validators and the kit's pipeline, realtime after the commit, and the shared intake and access checks.</summary>
     public static IServiceCollection AddHomeMixApplication(this IServiceCollection services)
     {
+        // Before the kit's pipeline, so it is the outermost behavior and sends after the commit.
+        services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(Realtime.RealtimeBehavior<,>));
+        services.AddScoped<Realtime.RealtimeOutbox>();
         services.AddHomeAppsApplication(typeof(DependencyInjection).Assembly);
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<PackageIntake>();

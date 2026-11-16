@@ -190,7 +190,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Not /mcp: the MCP server is reached only inside the Docker network (through the JARVIS gateway).
-      - "traefik.http.routers.homemix.rule=Host(`${HOMEAPPS_DOMAIN}`) && (PathPrefix(`/homemix/api`) || PathPrefix(`/homemix/run`))"
+      - "traefik.http.routers.homemix.rule=Host(`${HOMEAPPS_DOMAIN}`) && (PathPrefix(`/homemix/api`) || PathPrefix(`/homemix/run`) || PathPrefix(`/homemix/hub`))"
       - "traefik.http.routers.homemix.entrypoints=websecure"
       - "traefik.http.services.homemix.loadbalancer.server.port=8080"
 
