@@ -1,14 +1,26 @@
 // @homemix/vue: Vue 3 composables over @homemix/sdk (docs/homemix.md, "Building one"). The add-on bundles its own Vue.
-import { computed, onScopeDispose, ref, shallowRef, toValue, type MaybeRefOrGetter, type Ref } from 'vue'
+import {
+  computed,
+  onScopeDispose,
+  ref,
+  shallowRef,
+  toValue,
+  type ComputedRef,
+  type MaybeRefOrGetter,
+  type Ref,
+} from 'vue'
 import {
   BridgeCallError,
+  applyLayout,
+  applyTheme,
   autoResize,
   connect,
   type Document,
   type HomeMix,
   type HomeMixContext,
   type Scope,
-  type Theme,
+  type WidgetPlace,
+  type WidgetSize,
 } from '@homemix/sdk'
 
 let instance: HomeMix | null = null
@@ -16,16 +28,12 @@ const context = shallowRef<HomeMixContext | null>(null)
 const ready = ref(false)
 let loading: Promise<HomeMixContext> | null = null
 
-/** Applies the host's theme to this document: its CSS variables, and the class hm-dark in dark mode. */
-export function applyTheme(theme: Theme, root: HTMLElement = document.documentElement) {
-  for (const [name, value] of Object.entries(theme.vars)) root.style.setProperty(name, value)
-  root.classList.toggle('hm-dark', theme.dark)
-  root.classList.toggle('app-dark', theme.dark)
-}
+export { applyLayout, applyTheme }
 
 /**
- * The bridge and where the add-on runs, shared by every component. Applies the theme, follows its changes and keeps
- * the frame as tall as the page (pass autoResize: false to size it yourself).
+ * The bridge and where the add-on runs, shared by every component. Applies the theme and the @homemix/css layout
+ * classes (hm-widget, hm-size-*, hm-wall), follows theme changes and keeps the frame as tall as the page (pass
+ * autoResize: false to size it yourself).
  */
 export function useHomeMix(options: { autoResize?: boolean } = {}) {
   if (!instance) {
@@ -49,6 +57,7 @@ export function useHomeMix(options: { autoResize?: boolean } = {}) {
   loading ??= instance.context().then((value) => {
     context.value = value
     applyTheme(value.theme)
+    applyLayout(value)
     ready.value = true
     return value
   })
@@ -110,4 +119,31 @@ export function useCollection<T = unknown>(name: string, scope: Scope = 'househo
   return { items, loading, error, refresh, put, remove }
 }
 
-export type { Document, HomeMixContext, Scope } from '@homemix/sdk'
+export interface Widget {
+  /** Small, Medium or Large: the size admins chose for this place (Medium on a page). */
+  size: ComputedRef<WidgetSize>
+  /** Household, Wall or Account; null on a page. */
+  place: ComputedRef<WidgetPlace | null>
+  /** Shown as a widget (not a page). */
+  isWidget: ComputedRef<boolean>
+  /** On the wall tablet: big type, read from afar. */
+  isWall: ComputedRef<boolean>
+  /** Opens the add-on (or one of its pages) in full where the widget stands. */
+  open: (path?: string) => Promise<void>
+}
+
+/** Where a widget stands and how big it is (homemix-2.md 3.3); the building blocks read their size from it. */
+export function useWidget(): Widget {
+  const { homemix, context } = useHomeMix()
+  const widget = computed(() => context.value?.widget ?? null)
+  return {
+    size: computed(() => widget.value?.size ?? 'Medium'),
+    place: computed(() => widget.value?.place ?? null),
+    isWidget: computed(() => !!widget.value),
+    isWall: computed(() => widget.value?.place === 'Wall'),
+    open: (path) => homemix.open(path),
+  }
+}
+
+export * from './blocks.js'
+export type { Document, HomeMixContext, Scope, WidgetPlace, WidgetSize } from '@homemix/sdk'
