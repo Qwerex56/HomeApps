@@ -111,7 +111,7 @@ scripts/smoke.sh
 `scripts/smoke.sh` (bash, curl, jq) needs an empty database. It goes through the whole release over HTTP: the web
 app and a deep link, the Owner from the bootstrap invitation, sign-in, refresh (including a refresh whose answer
 was lost), the profile reaching Accounts, a household and its invite, a second person invited to the app who signs up
-and joins the household, the Notifications service, the official Pogoda add-on installed from HomeMix's store, the JARVIS gateway (metadata,
+and joins the household, the Notifications service, the official Pogoda add-on installed from HomeMix's store (counted, given a "domek", the "Konto" tab and the realtime hub), the JARVIS gateway (metadata,
 `tools/list` with Pogoda's tool, a call) and a message to JARVIS, and sign-out. It ends with `SMOKE TEST PASSED`.
 
 The browser test of the web app runs against the same stack, with an account that exists (the Owner from above):

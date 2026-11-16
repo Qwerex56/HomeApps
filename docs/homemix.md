@@ -5,7 +5,8 @@ with a `homemix.json` and static files (HTML, JS, CSS). It runs in a sandboxed f
 narrow bridge, keeps its data in the core service HomeMix and can give JARVIS tools. Why it is built this way:
 [ADR 0009](adr/0009-homemix-addons-in-a-sandbox.md).
 
-> Status: the contract for HomeApps 2.3.0, built in stages A1-A7 (plan `plans/features/household-apps-upload.md`,
+> Status: the contract for HomeApps 2.4.0 (HomeMix 2.0, stages B1-B7 of `plans/features/homemix-2.md`: widgets you
+> choose, RealTime, the store with numbers and its page, the framework), first built in stages A1-A7 (plan `plans/features/household-apps-upload.md`,
 > order agreed with JARVIS in `plans/features/jarvis-v1.md` 10a). Sections say which stage brings them. Built so far:
 > A1, the service with packages, installations and the sandbox; A2, the data; A3, the web app, the bridge, the
 > tooling and Pomodoro; A4, the Owner's read-only "Pluginy serwera" view; A5, the store, Pogoda, `notify.push` and the
@@ -34,7 +35,7 @@ A zip of at most 5 MB (`HomeMix:MaxPackageBytes`) with `homemix.json` at its roo
   "homemixVersion": 1,
   "id": "pomodoro",
   "version": "1.0.0",
-  "requires": { "homeApps": "2.3.0" },
+  "requires": { "homeApps": "2.4.0" },
   "name": { "pl": "Pomodoro", "en": "Pomodoro" },
   "description": { "pl": "Minutnik do skupionej pracy.", "en": "A timer for focused work." },
   "icon": "pi-stopwatch",

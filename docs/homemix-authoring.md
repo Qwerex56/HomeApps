@@ -69,14 +69,14 @@ capability and every origin is shown to the installer, and adding one later make
   "homemixVersion": 1,
   "id": "chores",
   "version": "1.0.0",
-  "requires": { "homeApps": "2.3.0" },
+  "requires": { "homeApps": "2.4.0" },
   "name": { "pl": "Obowiązki", "en": "Chores" },
   "description": { "pl": "Kto dziś wynosi śmieci.", "en": "Who takes the bins out today." },
   "icon": "pi-check-square",
   "entry": "index.html",
   "pages": [{ "path": "", "title": { "pl": "Obowiązki", "en": "Chores" }, "menu": true }],
   "widgets": [
-    { "id": "today", "title": { "pl": "Dziś", "en": "Today" }, "size": "Small", "places": ["Household", "Wall"] }
+    { "id": "today", "title": { "pl": "Dziś", "en": "Today" }, "size": "Small", "sizes": ["Small", "Medium"], "places": ["Household", "Wall"] }
   ],
   "capabilities": ["storage.household", "household.members"],
   "network": [],

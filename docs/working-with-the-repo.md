@@ -98,7 +98,7 @@ error. Fix it on the same branch and push again; CI reruns by itself.
 3. Run both smoke tests on a fresh stack ([deployment.md](deployment.md#checking-a-release-the-smoke-tests)).
 4. Tag master: `git tag -a v2.0.0 -m "HomeApps 2.0.0"`.
 5. If the HomeMix tooling changed, set the same version in the five `src/Web/homemix/*/package.json` (and the
-   `@homemix/sdk` dependency of `vue` and `cli`, `@homemix/css` of `vue`), then push a tag `homemix-v2.3.0`: `homemix-npm.yml` publishes them.
+   `@homemix/sdk` dependency of `vue` and `cli`, `@homemix/css` of `vue`), then push a tag `homemix-v2.4.0`: `homemix-npm.yml` publishes them.
    Authors get them with `npm create homemix@latest` ([homemix-authoring.md](homemix-authoring.md)).
 
 ### Publishing to npm the first time
@@ -110,5 +110,5 @@ error. Fix it on the same branch and push again; CI reruns by itself.
    first publish, the whole `@homemix` scope), and add it to the repository as the secret `NPM_TOKEN`
    (Settings → Secrets and variables → Actions).
 3. The repository must be public: `--provenance` links each package to the commit and workflow that built it.
-4. Push the tag: `git tag homemix-v2.3.0 && git push origin homemix-v2.3.0`, and watch the run in Actions.
+4. Push the tag: `git tag homemix-v2.4.0 && git push origin homemix-v2.4.0`, and watch the run in Actions.
 5. Check `npm view @homemix/sdk` and try `npm create homemix@latest test-addon` in an empty folder.

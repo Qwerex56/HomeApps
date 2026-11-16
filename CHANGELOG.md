@@ -2,9 +2,13 @@
 
 Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`.
 
-## 2.4.0 (unreleased)
+## 2.4.0 (2026-11-16)
 
 HomeMix 2.0: widgets you can choose, a store page with stats, RealTime and a framework for add-on authors.
+
+Updating: no new settings in `.env`; HomeMix migrates its database on start (widget choices, the store's entries,
+numbers and "domki"). The HomeMix tooling is 2.4.0 on npm (tag `homemix-v2.4.0`, with the new `@homemix/css`). The
+official Pomodoro 1.2.1 and Pogoda 1.1.1 only take the new look; households see them as an update.
 
 ### Added
 
