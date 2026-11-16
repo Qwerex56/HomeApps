@@ -67,12 +67,12 @@ Settings (`Jarvis`):
 | Variable | |
 |---|---|
 | `JARVIS_CLIENT_SECRET` | Required. The secret of Auth's `jarvis-service` client, which JARVIS asks delegated tokens with: `openssl rand -base64 32`. Both services read it from `.env`. |
+| `JARVIS_CLAUDE_MODEL` | Optional. The model of JARVIS's answers: `haiku` (the cheapest, for tests), `sonnet`, `opus` or a full model id; empty = Claude Code's default. |
 | `JARVIS_CLAUDE_CODE_OAUTH_TOKEN` | Optional. JARVIS's own answers run on the owner's Claude subscription: on any computer with Claude Code, `claude setup-token`, then paste the token here. Empty: the JARVIS page and `@Jarvis` answer "JARVIS jest teraz wyłączony", while the gateway still serves your own Claude Code. A secret. |
 
 The compose file also gives Auth the `jarvis-service` client and `Auth__ConnectedApps__Resources__0` =
 `https://${HOMEAPPS_DOMAIN}/jarvis/mcp`, so apps can sign in to the gateway. More settings, as environment variables of
-the `jarvis` service: `Jarvis__DailyBudgetUsd` (2 USD a day for the whole home), `Jarvis__ClaudeCode__Model`
-(Claude Code's default when empty), `Jarvis__Enabled` (`false` switches the agent off), `Jarvis__ClaudeCode__MaxTurns`.
+the `jarvis` service: `Jarvis__DailyBudgetUsd` (2 USD a day for the whole home), `Jarvis__Enabled` (`false` switches the agent off), `Jarvis__ClaudeCode__MaxTurns`.
 
 The tools: Households and Accounts always; plugins from `HOMEAPPS_PLUGINS` (the plugin's compose service must be named
 after its id, as the plugins' own compose files do); HomeMix add-ons that declare `"jarvis": true` and were allowed
