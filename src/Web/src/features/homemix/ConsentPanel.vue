@@ -37,7 +37,7 @@ const { t } = useI18n()
       <h3 class="mb-1 font-medium">{{ t('homemix.consent.may') }}</h3>
       <ul class="list-inside list-disc text-sm">
         <li>{{ t('homemix.consent.always') }}</li>
-        <li v-for="c in pkg.capabilities" :key="c">{{ t(`homemix.capability.${c}`) }}</li>
+        <li v-for="c in pkg.capabilities" :key="c">{{ t(`homemix.capability["${c}"]`) }}</li>
       </ul>
     </section>
     <section v-if="pkg.network.length">

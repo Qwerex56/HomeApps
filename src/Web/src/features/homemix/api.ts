@@ -10,6 +10,7 @@ export type Package = Schemas['PackageView']
 export type Consent = { capabilities: string[]; network: string[]; jarvis: boolean }
 export type MyAccess = Schemas['MyAccessView']
 export type StoreEntry = Schemas['StoreEntryView']
+export type MyListing = Schemas['MyListingView']
 export type AdminInstallation = Schemas['AdminInstallationView']
 export type Block = Schemas['BlockView']
 export type AddonWidget = Schemas['AddonWidget']
@@ -26,11 +27,38 @@ export const mixKeys = {
       : (['homemix', 'me'] as const),
   access: (installationId: string) => ['homemix', 'access', installationId] as const,
   store: ['homemix', 'store'] as const,
+  storeList: (query: StoreQuery) => ['homemix', 'store', 'list', query] as const,
+  storeEntry: (key: string) => ['homemix', 'store', 'entry', key] as const,
+  storeMine: ['homemix', 'store', 'mine'] as const,
+  adminStore: ['homemix', 'admin', 'store'] as const,
   adminInstallations: ['homemix', 'admin', 'installations'] as const,
   blocks: ['homemix', 'admin', 'blocks'] as const,
 }
 
 const base = '/homemix/api'
+
+/** The store's tabs (docs/homemix.md, "Numbers and domki"); `all` is the default order. */
+export type StoreTab = 'all' | 'featured' | 'popular' | 'hearts' | 'new'
+export type StoreQuery = {
+  tab: StoreTab
+  q: string
+  target: 'household' | 'user' | null
+  jarvis: boolean
+  offline: boolean
+}
+/** Entries a page; a shorter page is the last one. */
+export const STORE_PAGE_SIZE = 24
+
+function storeParams(query: StoreQuery, page: number) {
+  return {
+    tab: query.tab === 'all' ? undefined : query.tab,
+    q: query.q.trim() || undefined,
+    target: query.target ?? undefined,
+    jarvis: query.jarvis || undefined,
+    offline: query.offline || undefined,
+    page: page > 1 ? page : undefined,
+  }
+}
 
 function listUrl(target: MixTarget) {
   return target.kind === 'Household'
@@ -58,8 +86,30 @@ export const homemixApi = {
   async addOfficial(addonId: string) {
     return (await http.post<Package>(`${base}/packages/official/${encodeURIComponent(addonId)}`)).data
   },
-  async store() {
-    return (await http.get<StoreEntry[]>(`${base}/store`)).data
+  store: {
+    async list(query: StoreQuery, page = 1) {
+      return (await http.get<StoreEntry[]>(`${base}/store`, { params: storeParams(query, page) })).data
+    },
+    async entry(key: string) {
+      return (await http.get<StoreEntry>(`${base}/store/${encodeURIComponent(key)}`)).data
+    },
+    async mine() {
+      return (await http.get<MyListing[]>(`${base}/store/mine`)).data
+    },
+    async submit(repository: string) {
+      return (await http.post<StoreEntry>(`${base}/store`, { repository })).data
+    },
+    async refresh(key: string) {
+      return (await http.post<StoreEntry>(`${base}/store/${encodeURIComponent(key)}/refresh`)).data
+    },
+    async remove(key: string) {
+      await http.delete(`${base}/store/${encodeURIComponent(key)}`)
+    },
+    /** A "domek": given once per person, taken back with `on` false. */
+    async heart(key: string, on: boolean) {
+      const url = `${base}/store/${encodeURIComponent(key)}/heart`
+      await (on ? http.put(url) : http.delete(url))
+    },
   },
   async notify(installationId: string, notification: Push) {
     return (await http.post<{ recipients: number }>(`${base}/installations/${installationId}/notify`, notification)).data
@@ -76,6 +126,12 @@ export const homemixApi = {
     },
     async unblock(value: string) {
       await http.delete(`${base}/admin/blocks/${encodeURIComponent(value)}`)
+    },
+    async store() {
+      return (await http.get<StoreEntry[]>(`${base}/admin/store`)).data
+    },
+    async hide(key: string, hidden: boolean) {
+      return (await http.put<StoreEntry>(`${base}/admin/store/${encodeURIComponent(key)}/hidden`, { hidden })).data
     },
   },
   async install(target: MixTarget, sha256: string, consent: Consent) {

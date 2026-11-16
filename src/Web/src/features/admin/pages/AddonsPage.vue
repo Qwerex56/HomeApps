@@ -15,9 +15,10 @@ import { errorMessage } from '@/api/errorMessage'
 import { toProblem } from '@/api/problem'
 import { localized } from '@/features/plugins/registry'
 import { homemixApi, mixKeys, type AdminInstallation } from '@/features/homemix/api'
+import StoreListingsCard from '@/features/homemix/store/StoreListingsCard.vue'
 
 // A5: the Owner sees every HomeMix installation and blocks an add-on (every version by id, or one package by
-// SHA-256). Blocks from HomeMix:Blocked are shown but lifted only in the configuration.
+// SHA-256). Blocks from HomeMix:Blocked are shown but lifted only in the configuration. B4: store entries to hide.
 const { t, d } = useI18n()
 const toast = useToast()
 const queryClient = useQueryClient()
@@ -149,6 +150,8 @@ const short = (value: string) => (value.length === 64 ? `${value.slice(0, 12)}â€
         </form>
       </template>
     </Card>
+
+    <StoreListingsCard />
 
     <Dialog
       v-model:visible="visible"

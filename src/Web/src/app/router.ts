@@ -83,6 +83,18 @@ export const router = createRouter({
           props: true,
           component: () => import('@/features/homemix/MixPage.vue'),
         },
+        // The HomeMix store (docs/homemix.md, "The store"); /homemix/api/store belongs to the service.
+        {
+          path: 'store',
+          name: 'store',
+          component: () => import('@/features/homemix/store/StorePage.vue'),
+        },
+        {
+          path: 'store/:listingKey',
+          name: 'store-entry',
+          props: true,
+          component: () => import('@/features/homemix/store/StoreEntryPage.vue'),
+        },
         // JARVIS in the app (docs/jarvis.md); /jarvis/api and /jarvis/mcp belong to the service.
         {
           path: 'jarvis/:conversationId?',

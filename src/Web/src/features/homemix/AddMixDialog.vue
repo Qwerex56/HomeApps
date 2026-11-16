@@ -1,25 +1,31 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { RouterLink } from 'vue-router'
 import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import SelectButton from 'primevue/selectbutton'
+import Skeleton from 'primevue/skeleton'
 import { useSubmit } from '@/shared/composables/useSubmit'
 import { fullConsent, homemixApi, type Installation, type MixTarget, type Package, type StoreEntry } from './api'
 import ConsentPanel from './ConsentPanel.vue'
-import StoreList from './StoreList.vue'
 
-// Adding an add-on: from the store, a GitHub repository or a zip, then the consent screen, then installing (docs/homemix.md).
+// Adding an add-on: from a GitHub repository or a zip (or an `entry` chosen on the store page), then the consent
+// screen, then installing (docs/homemix.md). The store itself is its own page now (homemix-2.md 2.2).
 // With `update`, the package is a new version of that installation that asked for more, so it needs consent again.
-const props = defineProps<{ target: MixTarget; update?: { installation: Installation; pkg: Package } | null }>()
+const props = defineProps<{
+  target: MixTarget
+  update?: { installation: Installation; pkg: Package } | null
+  entry?: StoreEntry | null
+}>()
 const emit = defineEmits<{ done: [installation: Installation] }>()
 const visible = defineModel<boolean>('visible', { required: true })
 const { t } = useI18n()
 const { busy, formError, submit } = useSubmit()
 
-const source = ref<'store' | 'github' | 'zip'>('store')
+const source = ref<'github' | 'zip'>('github')
 const repository = ref('')
 const file = ref<File | null>(null)
 const pkg = ref<Package | null>(null)
@@ -32,11 +38,11 @@ watch(visible, (open) => {
     repository.value = ''
     file.value = null
     formError.value = null
+    if (props.entry && !props.update) void choose(props.entry)
   }
 })
 
 const sources = computed(() => [
-  { label: t('homemix.store.title'), value: 'store' },
   { label: t('homemix.add.github'), value: 'github' },
   { label: t('homemix.add.zip'), value: 'zip' },
 ])
@@ -83,7 +89,7 @@ async function install() {
     class="w-full max-w-xl"
   >
     <div class="flex flex-col gap-4">
-      <template v-if="!pkg">
+      <template v-if="!pkg && !entry">
         <SelectButton
           v-model="source"
           :options="sources"
@@ -91,23 +97,26 @@ async function install() {
           option-value="value"
           :allow-empty="false"
         />
-        <StoreList v-if="source === 'store'" :busy="busy" @choose="choose" />
+        <RouterLink :to="{ name: 'store' }" class="flex items-center gap-2 text-sm text-primary hover:underline">
+          <i class="pi pi-shop" aria-hidden="true" />{{ t('homemix.store.browse') }}
+        </RouterLink>
         <InputText
-          v-else-if="source === 'github'"
+          v-if="source === 'github'"
           v-model="repository"
           placeholder="https://github.com/owner/repo"
           :aria-label="t('homemix.add.github')"
         />
         <input v-else type="file" accept=".zip,application/zip" :aria-label="t('homemix.add.zip')" @change="pick" />
-        <p v-if="source !== 'store'" class="text-sm text-muted-color">{{ t('homemix.add.hint') }}</p>
+        <p class="text-sm text-muted-color">{{ t('homemix.add.hint') }}</p>
       </template>
+      <Skeleton v-else-if="!pkg && busy" height="6rem" />
       <ConsentPanel v-else-if="pkg" v-model:jarvis="jarvis" :pkg="pkg" :not-supported="notSupported" />
       <Message v-if="formError" severity="error" :closable="false">{{ formError }}</Message>
     </div>
     <template #footer>
       <Button :label="t('common.cancel')" severity="secondary" text @click="visible = false" />
       <Button
-        v-if="!pkg && source !== 'store'"
+        v-if="!pkg && !entry"
         :label="t('homemix.add.read')"
         :loading="busy"
         :disabled="source === 'github' ? !repository.trim() : !file"

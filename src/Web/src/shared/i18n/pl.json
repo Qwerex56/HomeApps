@@ -8,7 +8,8 @@
     "admin": "Administracja",
     "households": "Domy",
     "menu": "Menu główne",
-    "jarvis": "JARVIS"
+    "jarvis": "JARVIS",
+    "store": "Sklep"
   },
   "colorScheme": {
     "label": "Motyw",
@@ -148,7 +149,13 @@
       "block_in_configuration": "Ta blokada pochodzi z konfiguracji serwera (HomeMix:Blocked) i tam się ją zdejmuje.",
       "widget_place": "Ten widget nie może stać w tym miejscu.",
       "widget_unknown": "Ten dodatek nie ma takiego widgetu w tym miejscu.",
-      "widget_size": "Ten widget nie ma takiego rozmiaru."
+      "widget_size": "Ten widget nie ma takiego rozmiaru.",
+      "store_unusable": "Tego repozytorium nie da się jeszcze wystawić w sklepie: potrzebne jest wydanie z plikiem addon.zip.",
+      "store_limit": "Możesz zgłosić 5 dodatków na dobę. Spróbuj jutro.",
+      "not_author": "Ten wpis zmienia tylko osoba, która go zgłosiła, albo właściciel serwera.",
+      "listing_official": "Oficjalne dodatki zmienia się w addons.json.",
+      "listing_not_found": "Nie ma takiego dodatku w sklepie.",
+      "id_in_use": "W tym miejscu stoi już inny dodatek o tym samym identyfikatorze."
     },
     "jarvis": {
       "conversation_not_found": "Nie ma takiej rozmowy.",
@@ -724,9 +731,6 @@
     "store": {
       "title": "Sklep",
       "official": "Oficjalny",
-      "choose": "Wybierz",
-      "readme": "Pokaż opis (README)",
-      "hideReadme": "Ukryj opis",
       "published": "wydano {date}",
       "empty": "Sklep jest pusty. Dodatek dodasz też z linku do GitHuba albo z pliku zip.",
       "problem": {
@@ -734,6 +738,81 @@
         "no_addon_zip": "Najnowsze wydanie nie ma pliku addon.zip.",
         "no_digest": "GitHub nie podaje SHA-256 dla addon.zip.",
         "unavailable": "Nie udało się odczytać repozytorium z GitHuba."
+      },
+      "subtitle": "Dodatki do domów i kont: oficjalne i zgłoszone przez innych z GitHuba.",
+      "browse": "Przeglądaj sklep",
+      "search": "Szukaj po nazwie lub opisie",
+      "tab": {
+        "all": "Wszystkie",
+        "featured": "Oficjalne",
+        "popular": "Najczęściej pobierane",
+        "hearts": "Najwięcej domków",
+        "new": "Nowe",
+        "mine": "Konto"
+      },
+      "filter": {
+        "target": "Gdzie",
+        "any": "Dom lub konto",
+        "household": "Dom",
+        "user": "Konto",
+        "jarvis": "Z JARVIS-em",
+        "offline": "Bez sieci"
+      },
+      "nothing": "Nic nie pasuje do wyszukiwania.",
+      "more": "Pokaż więcej",
+      "installs": "{count} instalacja | {count} instalacje | {count} instalacji",
+      "installs30": "+{n} w 30 dni",
+      "hearts": "{count} domek | {count} domki | {count} domków",
+      "giveHeart": "Daj domek",
+      "takeHeart": "Zabierz domek",
+      "back": "Sklep",
+      "mine": "Twój wpis",
+      "hidden": "Ukryty",
+      "version": "Wersja {version}",
+      "repository": "Repozytorium",
+      "asks": "O co prosi",
+      "network": "Łączy się z: {hosts}",
+      "noNetwork": "Nie łączy się z internetem.",
+      "jarvis": "Może współpracować z JARVIS-em.",
+      "targets": "Gdzie działa",
+      "noReadme": "Autor nie dodał opisu (README).",
+      "install": "Zainstaluj",
+      "installWhere": "Gdzie zainstalować?",
+      "myAccount": "Moje konto",
+      "noPlace": "Nie masz miejsca na ten dodatek: zainstalujesz go jako administrator domu albo na swoim koncie, jeśli dodatek na to pozwala.",
+      "installed": "Zainstalowano {name}.",
+      "submit": "Zgłoś dodatek",
+      "submitTitle": "Zgłoś dodatek do sklepu",
+      "submitHint": "Wklej link do repozytorium na GitHubie. Sklep czyta najnowsze wydanie z plikiem addon.zip i co godzinę sprawdza nowe. Możesz zgłosić 5 dodatków na dobę.",
+      "submitAccept": "Zgłoś",
+      "refresh": "Odśwież teraz",
+      "refreshed": "Odczytano wpis ponownie z GitHuba.",
+      "remove": "Usuń ze sklepu",
+      "removeConfirm": "Usunąć {name} ze sklepu? Instalacje zostają, a wpis możesz zgłosić ponownie.",
+      "removed": "Usunięto wpis ze sklepu.",
+      "account": {
+        "title": "Moje dodatki w sklepie",
+        "subtitle": "Liczby z tego serwera. Nie widać, kto zainstalował dodatek.",
+        "empty": "Nie zgłosiłeś jeszcze żadnego dodatku.",
+        "active": "Aktywne instalacje",
+        "households": "W domach",
+        "accounts": "Na kontach",
+        "installs": "Instalacje łącznie",
+        "updates": "Aktualizacje",
+        "removals": "Odinstalowania",
+        "chart": "Instalacje w ostatnich 30 dniach",
+        "day": "{date}: {n}",
+        "versions": "Wersje w użyciu",
+        "noVersions": "Nikt teraz nie używa tego dodatku."
+      },
+      "admin": {
+        "title": "Wpisy sklepu",
+        "subtitle": "Ukryty wpis znika ze sklepu dla wszystkich poza autorem; instalacje działają dalej.",
+        "empty": "W sklepie nie ma zgłoszonych wpisów.",
+        "hide": "Ukryj",
+        "show": "Pokaż",
+        "hiddenDone": "Ukryto: {name}",
+        "shownDone": "Przywrócono: {name}"
       }
     },
     "widgets": {
