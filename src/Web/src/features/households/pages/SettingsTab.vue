@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { useToast } from 'primevue/usetoast'
@@ -17,11 +17,20 @@ import { useSubmit } from '@/shared/composables/useSubmit'
 import { errorMessage } from '@/api/errorMessage'
 import { toProblem } from '@/api/problem'
 import { householdKeys, householdsApi, type Household, type HouseholdPermissions } from '../api'
+import InvitesTab from './InvitesTab.vue'
 
 // My membership (nickname, leaving) for everyone; name and description for Owner and Admins; archive for the Owner.
 const props = defineProps<{ household: Household; can: HouseholdPermissions }>()
 const { t, d } = useI18n()
 const router = useRouter()
+const route = useRoute()
+
+// The old invites tab and links to it land here with #invites (2.4.1, U3).
+onMounted(async () => {
+  if (route.hash !== '#invites') return
+  await nextTick()
+  document.getElementById('invites')?.scrollIntoView({ behavior: 'smooth' })
+})
 const toast = useToast()
 const confirm = useConfirm()
 const queryClient = useQueryClient()
@@ -173,6 +182,10 @@ function archive() {
         </form>
       </template>
     </Card>
+
+    <section v-if="can.invite" id="invites" class="scroll-mt-20">
+      <InvitesTab :household="household" :can="can" />
+    </section>
 
     <PluginsSettings v-if="can.member" :household="household" />
     <HomeMixSettings

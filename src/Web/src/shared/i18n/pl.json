@@ -518,7 +518,9 @@
       "Admin": "Administrator",
       "Owner": "Właściciel"
     },
+    "apps": "Aplikacje",
     "tabs": {
+      "main": "Główna",
       "members": "Domownicy",
       "invites": "Zaproszenia",
       "settings": "Ustawienia"

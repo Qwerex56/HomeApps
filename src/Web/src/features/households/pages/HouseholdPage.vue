@@ -10,15 +10,14 @@ import { errorMessage } from '@/api/errorMessage'
 import { toProblem } from '@/api/problem'
 import { useSessionStore } from '@/features/auth/session'
 import OwnershipBanner from '../components/OwnershipBanner.vue'
-import PluginWidgets from '@/features/plugins/PluginWidgets.vue'
 import { localized, useHouseholdPlugins } from '@/features/plugins/registry'
-import MixWidgets from '@/features/homemix/MixWidgets.vue'
 import { useInstallations } from '@/features/homemix/api'
 import { householdKeys, householdPermissions, householdsApi } from '../api'
 import { roleSeverity } from '../tags'
 import { useCurrentHousehold } from '../useCurrentHousehold'
 
-// H3: one household. The tabs below get the household and what my role allows as props.
+// H3: one household. 2.4.1 (U3): the household's own pages are tabs on top (Główna, Ustawienia), its apps stand in
+// a bar on the left. Each page gets the household and what my role allows as props.
 const props = defineProps<{ id: string }>()
 const { t } = useI18n()
 const route = useRoute()
@@ -39,18 +38,12 @@ watch(
   { immediate: true },
 )
 
-// A guest sees no members or invites (D2): only their own membership.
+// A server admin outside the household sees it only from the main page; everything else needs a role.
 watch(
   () => [household.value, route.name] as const,
   ([value, name]) => {
-    const allowed =
-      name === 'household-settings' ||
-      name === 'household-app' ||
-      name === 'household-mix' ||
-      (name === 'household-invites' ? can.value.invite : can.value.seeMembers)
-    if (value && !allowed) {
-      void router.replace({ name: 'household-settings', params: { id: props.id } })
-    }
+    const allowed = name === 'household-members' || name === 'household-settings' || !!value?.myRole
+    if (value && !allowed) void router.replace({ name: 'household-members', params: { id: props.id } })
   },
   { immediate: true },
 )
@@ -85,30 +78,15 @@ const mixTabs = computed(() =>
   ),
 )
 
-const mixHousehold = computed(() =>
-  household.value?.myRole
-    ? { id: household.value.id, name: household.value.name, myRole: household.value.myRole }
-    : null,
-)
-
 const tabs = computed(() => [
-  ...(can.value.seeMembers ? [tab('household-members', t('households.tabs.members'), 'pi pi-users')] : []),
-  ...(can.value.invite ? [tab('household-invites', t('households.tabs.invites'), 'pi pi-send')] : []),
-  ...pluginTabs.value,
-  ...mixTabs.value,
+  tab('household-members', t('households.tabs.main'), 'pi pi-home'),
   tab('household-settings', t('households.tabs.settings'), 'pi pi-cog'),
 ])
+const apps = computed(() => [...pluginTabs.value, ...mixTabs.value])
 
 function tab(name: string, label: string, icon: string) {
   return { key: name, to: { name, params: { id: props.id } }, label, icon }
 }
-
-// Widgets stand on the household's first page: the members, or the settings for a guest, who has no members tab.
-const showWidgets = computed(() => route.name === (can.value.seeMembers ? 'household-members' : 'household-settings'))
-
-const pluginHousehold = computed(() =>
-  household.value ? { id: household.value.id, name: household.value.name, myRole: household.value.myRole } : null,
-)
 </script>
 
 <template>
@@ -134,20 +112,41 @@ const pluginHousehold = computed(() =>
         </div>
       </div>
       <OwnershipBanner v-if="household.ownershipReceivedAt" :household-id="household.id" :name="household.name" />
-      <PluginWidgets v-if="pluginHousehold && showWidgets" :household="pluginHousehold" place="Household" />
-      <MixWidgets v-if="mixHousehold && showWidgets" :household="mixHousehold" place="Household" />
+
+      <nav
+        :aria-label="household.name"
+        class="flex gap-1 overflow-x-auto border-b border-surface-200 dark:border-surface-800"
+      >
+        <RouterLink
+          v-for="tab in tabs"
+          :key="tab.key"
+          :to="tab.to"
+          class="-mb-px flex items-center gap-2 border-b-2 border-transparent px-4 py-2 text-sm whitespace-nowrap text-muted-color hover:text-color"
+          exact-active-class="!border-primary !text-primary"
+        >
+          <i :class="tab.icon" aria-hidden="true" />
+          <span>{{ tab.label }}</span>
+        </RouterLink>
+      </nav>
 
       <div class="flex flex-col gap-6 md:flex-row">
-        <nav :aria-label="household.name" class="flex gap-1 overflow-x-auto md:w-52 md:shrink-0 md:flex-col">
+        <nav
+          v-if="apps.length"
+          :aria-label="t('households.apps')"
+          class="flex gap-1 overflow-x-auto md:w-52 md:shrink-0 md:flex-col"
+        >
+          <span class="hidden px-3 pb-1 text-xs font-semibold tracking-wide text-muted-color uppercase md:block">
+            {{ t('households.apps') }}
+          </span>
           <RouterLink
-            v-for="tab in tabs"
-            :key="tab.key"
-            :to="tab.to"
+            v-for="app in apps"
+            :key="app.key"
+            :to="app.to"
             class="flex items-center gap-2 rounded-md px-3 py-2 text-sm whitespace-nowrap text-muted-color hover:bg-emphasis"
             exact-active-class="!text-primary bg-highlight"
           >
-            <i :class="tab.icon" aria-hidden="true" />
-            <span>{{ tab.label }}</span>
+            <i :class="app.icon" aria-hidden="true" />
+            <span>{{ app.label }}</span>
           </RouterLink>
         </nav>
         <section class="min-w-0 flex-1">

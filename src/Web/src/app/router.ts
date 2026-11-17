@@ -111,15 +111,17 @@ export const router = createRouter({
           component: () => import('@/features/households/pages/HouseholdPage.vue'),
           children: [
             { path: '', name: 'household', redirect: { name: 'household-members' } },
+            // "Główna" (2.4.1, U3): widgets and members. The path stays /members so old links work.
             {
               path: 'members',
               name: 'household-members',
-              component: () => import('@/features/households/pages/MembersTab.vue'),
+              component: () => import('@/features/households/pages/MainTab.vue'),
             },
+            // Invites live inside the settings since 2.4.1 (U3).
             {
               path: 'invites',
               name: 'household-invites',
-              component: () => import('@/features/households/pages/InvitesTab.vue'),
+              redirect: (to) => ({ name: 'household-settings', params: to.params, hash: '#invites' }),
             },
             {
               path: 'settings',
