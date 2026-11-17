@@ -2,6 +2,7 @@ using HomeApps.BuildingBlocks.Application;
 using Jarvis.Application.Conversations;
 using Jarvis.Application.Runs;
 using Jarvis.Application.ToolCalls;
+using Jarvis.Application.Voice;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -15,6 +16,7 @@ public static class DependencyInjection
         services.AddHomeAppsApplication(typeof(DependencyInjection).Assembly);
         services.TryAddSingleton(TimeProvider.System);
         services.AddOptions<AssistantOptions>().BindConfiguration(AssistantOptions.SectionName);
+        services.AddOptions<VoiceOptions>().BindConfiguration(VoiceOptions.SectionName);
         services.AddScoped<RunAccess>();
         services.AddScoped<Agent>();
         services.AddScoped<OwnConversation>();
