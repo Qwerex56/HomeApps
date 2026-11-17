@@ -20,11 +20,17 @@ internal sealed class FakeBrain : IAssistantBrain
 
     public string? LastPrompt { get; private set; }
 
+    public string? LastSystemPrompt { get; private set; }
+
+    public int Runs { get; private set; }
+
     public Func<string, HttpClient> Gateway { get; set; } = _ => throw new InvalidOperationException("Not started.");
 
     public async IAsyncEnumerable<BrainEvent> RunAsync(BrainRequest request, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         LastPrompt = request.Prompt;
+        LastSystemPrompt = request.SystemPrompt;
+        Runs++;
         var http = Gateway(request.GatewayToken);
         http.DefaultRequestHeaders.Add(RunHeader.Name, request.RunId.ToString());
         await using var mcp = await McpTestClient.ConnectAsync(http, "jarvis/mcp", cancellationToken);
