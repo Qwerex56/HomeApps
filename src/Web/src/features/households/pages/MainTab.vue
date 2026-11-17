@@ -2,12 +2,14 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Message from 'primevue/message'
-import PluginWidgets from '@/features/plugins/PluginWidgets.vue'
-import MixWidgets from '@/features/homemix/MixWidgets.vue'
+import Skeleton from 'primevue/skeleton'
+import { useHouseholdBoard } from '@/features/widgets/board'
+import WidgetGrid from '@/features/widgets/WidgetGrid.vue'
 import MembersTab from './MembersTab.vue'
 import type { Household, HouseholdPermissions } from '../api'
 
-// "Główna" (2.4.1, U3): the household's widgets and its people. A guest sees no members (D2), only the widgets.
+// "Główna" (UI 2.4.1): the first rows of the household's widgets (3×2, 5×3 or 8×5, the household card among them)
+// and its people. A guest sees no members (D2), only the widgets.
 const props = defineProps<{ household: Household; can: HouseholdPermissions }>()
 const { t } = useI18n()
 
@@ -16,12 +18,15 @@ const widgetHousehold = computed(() =>
     ? { id: props.household.id, name: props.household.name, myRole: props.household.myRole }
     : null,
 )
+const { cells, byKey, isPending } = useHouseholdBoard(widgetHousehold, 'Household')
 </script>
 
 <template>
   <div class="flex flex-col gap-6">
-    <PluginWidgets v-if="widgetHousehold" :household="widgetHousehold" place="Household" />
-    <MixWidgets v-if="widgetHousehold" :household="widgetHousehold" place="Household" />
+    <template v-if="widgetHousehold">
+      <Skeleton v-if="isPending" height="16rem" />
+      <WidgetGrid v-else :household="widgetHousehold" place="Household" :cells="cells" :by-key="byKey" fixed />
+    </template>
     <MembersTab v-if="can.seeMembers" :household="household" :can="can" />
     <Message v-else severity="info" :closable="false">{{ t('households.settings.guestInfo') }}</Message>
   </div>
