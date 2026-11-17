@@ -16,7 +16,7 @@ async function signIn(page: Page) {
 }
 
 async function createHousehold(page: Page, name: string) {
-  await page.goto('/homes')
+  await page.goto('/')
   await page.getByRole('button', { name: 'Nowy dom' }).click()
   await page.locator('#householdName').fill(name)
   await page.getByRole('button', { name: 'Utwórz', exact: true }).click()
@@ -28,7 +28,7 @@ async function archive(page: Page, id: string) {
   await page.goto(`/homes/${id}/settings`)
   await page.getByRole('button', { name: 'Zarchiwizuj dom' }).click()
   await page.locator('.p-confirmdialog').getByRole('button', { name: 'Zarchiwizuj dom' }).click()
-  await expect(page).toHaveURL(/\/homes$/)
+  await expect(page).toHaveURL(/\/$/)
 }
 
 test('signs in, keeps the session over a reload and shows the dashboard', async ({ page }) => {

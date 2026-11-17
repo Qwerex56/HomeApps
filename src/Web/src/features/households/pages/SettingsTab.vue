@@ -65,7 +65,7 @@ async function goAway(action: () => Promise<void>, message: string) {
     await action()
     toast.add({ severity: 'success', summary: message, life: 4000 })
     await queryClient.invalidateQueries({ queryKey: householdKeys.all })
-    await router.replace({ name: 'households' })
+    await router.replace({ name: 'home' })
   } catch (error) {
     toast.add({ severity: 'error', summary: errorMessage(toProblem(error)), life: 6000 })
   }

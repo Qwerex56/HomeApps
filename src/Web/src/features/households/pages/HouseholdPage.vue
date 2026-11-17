@@ -113,7 +113,7 @@ const pluginHousehold = computed(() =>
 
 <template>
   <div class="flex flex-col gap-6">
-    <RouterLink :to="{ name: 'households' }" class="flex items-center gap-2 text-sm text-muted-color hover:underline">
+    <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2 text-sm text-muted-color hover:underline">
       <i class="pi pi-arrow-left" aria-hidden="true" />{{ t('households.title') }}
     </RouterLink>
     <Message v-if="error" severity="error" :closable="false">{{ errorMessage(toProblem(error)) }}</Message>

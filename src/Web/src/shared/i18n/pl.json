@@ -1,10 +1,9 @@
 {
   "app": {
     "name": "HomeApps",
-    "home": "Pulpit",
     "account": "Moje konto",
     "notFound": "Nie ma takiej strony",
-    "backHome": "Wróć na pulpit",
+    "backHome": "Wróć do domów",
     "admin": "Administracja",
     "households": "Domy",
     "menu": "Menu główne",
@@ -21,7 +20,8 @@
     "welcome": "Witaj w HomeApps",
     "skeleton": "Konto, domy i urządzenia pojawią się tutaj w kolejnych etapach.",
     "hello": "Cześć, {name}!",
-    "openHousehold": "Otwórz dom"
+    "openHousehold": "Otwórz dom",
+    "otherHouseholds": "Pozostałe domy"
   },
   "errors": {
     "unknown": "Coś poszło nie tak. Spróbuj ponownie.",

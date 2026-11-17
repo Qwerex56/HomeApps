@@ -103,11 +103,8 @@ export const router = createRouter({
           component: () => import('@/features/jarvis/JarvisPage.vue'),
         },
         // /homes, /join and /admin/homes: /households, /invites and /admin/households belong to the service.
-        {
-          path: 'homes',
-          name: 'households',
-          component: () => import('@/features/households/pages/HouseholdsPage.vue'),
-        },
+        // The list of households is part of the home page since 2.4.1 (U2); old links still work.
+        { path: 'homes', redirect: { name: 'home' } },
         {
           path: 'homes/:id',
           props: true,

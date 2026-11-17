@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Message from 'primevue/message'
 import ColorSchemeToggle from '@/shared/components/ColorSchemeToggle.vue'
@@ -14,10 +14,12 @@ useMixRealtime()
 
 // The main bar (2.4.1, U1): my account and administration live in the account menu, the store stands on the right.
 const links = [
-  { to: { name: 'home' }, label: 'app.home', icon: 'pi pi-home', exact: true },
-  { to: { name: 'households' }, label: 'app.households', icon: 'pi pi-building' },
+  // "Domy" is the home page and stays lit inside a household (/homes/...).
+  { to: { name: 'home' }, label: 'app.households', icon: 'pi pi-home', exact: true },
   { to: { name: 'jarvis' }, label: 'app.jarvis', icon: 'pi pi-sparkles' },
 ]
+const route = useRoute()
+const inHousehold = (link: { to: { name: string } }) => link.to.name === 'home' && route.path.startsWith('/homes/')
 const store = { to: { name: 'store' }, label: 'app.store', icon: 'pi pi-shop', exact: false }
 </script>
 
@@ -37,6 +39,7 @@ const store = { to: { name: 'store' }, label: 'app.store', icon: 'pi pi-shop', e
             :key="link.label"
             :to="link.to"
             class="flex items-center gap-2 rounded-md px-3 py-2 text-sm whitespace-nowrap text-muted-color hover:bg-emphasis"
+            :class="{ '!text-primary bg-highlight': inHousehold(link) }"
             :active-class="link.exact ? '' : '!text-primary bg-highlight'"
             exact-active-class="!text-primary bg-highlight"
           >
@@ -76,6 +79,7 @@ const store = { to: { name: 'store' }, label: 'app.store', icon: 'pi pi-shop', e
         :key="link.label"
         :to="link.to"
         class="flex flex-1 flex-col items-center gap-1 py-2 text-xs text-muted-color"
+        :class="{ '!text-primary': inHousehold(link) }"
         :active-class="link.exact ? '' : '!text-primary'"
         exact-active-class="!text-primary"
       >
