@@ -10,7 +10,7 @@ namespace Jarvis.Application.Conversations.SendMessage;
 
 /// <summary>
 /// The person's message is kept, JARVIS runs with the conversation so far as context (channel <c>app</c>, reference =
-/// the conversation) and his answer is kept with its run, whose calls are the card.
+/// the conversation, <c>voice</c> when spoken) and his answer is kept with its run, whose calls are the card.
 /// </summary>
 internal sealed class SendMessageHandler(
     OwnConversation own, IConversationRepository conversations, Agent agent, TimeProvider time)
@@ -31,7 +31,7 @@ internal sealed class SendMessageHandler(
         conversations.Add(conversation.Write(command.Text, time));
 
         var answer = await agent.RunAsync(
-            new AskCommand(command.UserId, command.Text, command.HouseholdId, "app", conversation.Id.ToString(), history),
+            new AskCommand(command.UserId, command.Text, command.HouseholdId, command.Spoken ? Prompts.VoiceChannel : "app", conversation.Id.ToString(), history),
             command.StreamId,
             cancellationToken);
 

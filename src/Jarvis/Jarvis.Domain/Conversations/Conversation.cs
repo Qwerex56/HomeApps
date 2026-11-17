@@ -52,7 +52,7 @@ public sealed class Conversation
         return ConversationMessage.Create(Id, MessageRole.Person, text, null, time);
     }
 
-    public ConversationMessage Answer(string text, Guid runId, TimeProvider time)
+    public ConversationMessage Answer(string text, Guid? runId, TimeProvider time)
     {
         ArgumentNullException.ThrowIfNull(time);
         LastActivityAt = time.GetUtcNow();

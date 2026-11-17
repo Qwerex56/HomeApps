@@ -50,7 +50,7 @@ internal sealed partial class Agent(
         {
             var token = await delegation.TokenForAsync(command.UserId, command.Channel, $"run:{run.Id}", cancellationToken);
             var prompt = Prompts.User(command.Text, command.HouseholdId, command.Context, time.GetLocalNow());
-            await foreach (var said in brain.RunAsync(new BrainRequest(run.Id, Prompts.System, prompt, token), cancellationToken))
+            await foreach (var said in brain.RunAsync(new BrainRequest(run.Id, Prompts.SystemFor(command.Channel), prompt, token), cancellationToken))
             {
                 if (said is BrainText piece)
                 {
