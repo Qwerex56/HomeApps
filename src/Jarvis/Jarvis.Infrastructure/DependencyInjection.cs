@@ -8,6 +8,8 @@ using Jarvis.Infrastructure.Gateway;
 using Jarvis.Infrastructure.Jobs;
 using Jarvis.Infrastructure.Persistence;
 using Jarvis.Infrastructure.Tools;
+using Jarvis.Infrastructure.Voice;
+using Jarvis.Application.Voice;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -18,7 +20,8 @@ public static class DependencyInjection
 {
     /// <summary>
     /// Postgres with the outbox and the consumers (<c>AssistantInvoked</c>, <c>AssistantConfirmed</c>, <c>UserErased</c>),
-    /// the gateway's adapters (Auth's delegation, the sources, MCP clients), the Claude Code brain and the retention job.
+    /// the gateway's adapters (Auth's delegation, the sources, MCP clients), the Claude Code brain, the speech engines
+    /// (OpenAI audio API, jarvis-voice-bridge.md) and the retention job.
     /// </summary>
     public static IServiceCollection AddJarvisInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
@@ -45,9 +48,29 @@ public static class DependencyInjection
         services.AddOptions<ClaudeCodeOptions>().BindConfiguration(ClaudeCodeOptions.SectionName);
         services.AddScoped<IAssistantBrain, ClaudeCodeBrain>();
 
+        services.AddHttpClient<ISpeechToText, OpenAiSpeechToText>((sp, http) => Engine(sp, http, v => v.SttUrl));
+        services.AddHttpClient<ITextToSpeech, OpenAiTextToSpeech>((sp, http) => Engine(sp, http, v => v.TtsUrl));
+
         services.AddHostedService<RetentionJob>();
         services.AddSingleton<InvocationQueue>();
         services.AddHostedService<InvocationWorker>();
         return services;
+    }
+
+    /// <summary>A speech engine at its configured URL, with the key for a cloud one; long enough for a slow CPU.</summary>
+    private static void Engine(IServiceProvider services, HttpClient http, Func<VoiceOptions, string> url)
+    {
+        var voice = services.GetRequiredService<IOptions<VoiceOptions>>().Value;
+        if (!string.IsNullOrWhiteSpace(url(voice)))
+        {
+            http.BaseAddress = new Uri(url(voice).TrimEnd('/') + "/");
+        }
+
+        if (!string.IsNullOrWhiteSpace(voice.ApiKey))
+        {
+            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", voice.ApiKey);
+        }
+
+        http.Timeout = TimeSpan.FromSeconds(60);
     }
 }
