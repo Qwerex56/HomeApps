@@ -15,6 +15,9 @@ public sealed class Installation
     private List<string> _network = [];
     private List<WidgetChoice> _widgets = [];
 
+    /// <summary>The quick links bar holds at most this many add-ons (UI 2.4.1, P5).</summary>
+    public const int MaxPins = 8;
+
     private Installation() { }
 
     public Guid Id { get; private set; }
@@ -51,6 +54,9 @@ public sealed class Installation
     public Guid? RemovedBy { get; private set; }
 
     public DateTimeOffset? RemovedAt { get; private set; }
+
+    /// <summary>Where an account's add-on stands on its owner's quick links bar (0 first), or null when not pinned (UI 2.4.1).</summary>
+    public int? Pin { get; private set; }
 
     public bool IsActive => RemovedAt is null;
 
@@ -182,6 +188,28 @@ public sealed class Installation
         }
 
         _widgets = [.. _widgets.Where(c => c.Place != place)];
+        return Result.Ok();
+    }
+
+    /// <summary>Puts an account's add-on on its owner's quick links bar at <paramref name="position"/>, or takes it off with null.</summary>
+    public Result PinAt(int? position)
+    {
+        if (!IsActive)
+        {
+            return Result.Fail(InstallationErrors.NotFound);
+        }
+
+        if (TargetKind != TargetKind.User)
+        {
+            return Result.Fail(InstallationErrors.PinOnlyMine);
+        }
+
+        if (position is < 0 or >= MaxPins)
+        {
+            return Result.Fail(InstallationErrors.TooManyPins);
+        }
+
+        Pin = position;
         return Result.Ok();
     }
 

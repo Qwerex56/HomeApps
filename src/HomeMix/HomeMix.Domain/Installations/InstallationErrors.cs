@@ -38,6 +38,12 @@ public static class InstallationErrors
     public static Error WidgetSize(string size, IEnumerable<string> sizes) => new AppError(
         "homemix.widget_size", $"This widget comes in {string.Join(", ", sizes)}, not {size}.", ErrorKind.Validation);
 
+    public static Error PinOnlyMine => new AppError(
+        "homemix.pin_only_mine", "Only the add-ons on your own account go on the quick links bar.", ErrorKind.Validation);
+
+    public static Error TooManyPins => new AppError(
+        "homemix.too_many_pins", $"The quick links bar holds at most {Installation.MaxPins} add-ons.", ErrorKind.Validation);
+
     public static Error NotARecipient => new AppError(
         "homemix.not_a_recipient", "A notification can go only to people of this add-on's household.", ErrorKind.Validation);
 }

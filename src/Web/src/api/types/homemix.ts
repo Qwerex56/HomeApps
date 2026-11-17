@@ -850,6 +850,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/homemix/api/me/pins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PinMyAppsRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["InstallationView"][];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/homemix/api/installations/{id}": {
         parameters: {
             query?: never;
@@ -1293,6 +1332,8 @@ export interface components {
             installedAt: string;
             /** Format: date-time */
             updatedAt: null | string;
+            /** Format: int32 */
+            pin: null | number | string;
         };
         InstallRequest: {
             sha256: string;
@@ -1337,6 +1378,9 @@ export interface components {
             official: boolean;
             /** Format: int64 */
             size: number | string;
+        };
+        PinMyAppsRequest: {
+            installations: string[];
         };
         PushNotificationResult: {
             /** Format: int32 */

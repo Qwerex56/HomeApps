@@ -26,7 +26,8 @@ public sealed record InstallationView(
     bool Official,
     Guid InstalledBy,
     DateTimeOffset InstalledAt,
-    DateTimeOffset? UpdatedAt)
+    DateTimeOffset? UpdatedAt,
+    int? Pin)
 {
     public static InstallationView From(Installation installation, AddonPackage package)
     {
@@ -37,6 +38,6 @@ public sealed record InstallationView(
             installation.Id, installation.AddonId, installation.Version, installation.TargetKind, installation.TargetId,
             m.Name, m.Icon, $"/homemix/run/{installation.Id}/", m.Entry, m.Pages, m.Widgets, installation.Widgets, m.Permissions,
             installation.Capabilities, installation.Network, installation.JarvisAllowed, package.Repository, package.IsOfficial,
-            installation.InstalledBy, installation.InstalledAt, installation.UpdatedAt);
+            installation.InstalledBy, installation.InstalledAt, installation.UpdatedAt, installation.Pin);
     }
 }

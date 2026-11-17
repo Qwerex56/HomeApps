@@ -7,6 +7,7 @@ using HomeMix.Application.Installations.GetInstallation;
 using HomeMix.Application.Installations.GetMyAccess;
 using HomeMix.Application.Installations.GetMyInstallations;
 using HomeMix.Application.Installations.Install;
+using HomeMix.Application.Installations.PinMyApps;
 using HomeMix.Application.Installations.RemoveInstallation;
 using HomeMix.Application.Installations.ChooseWidget;
 using HomeMix.Application.Installations.ResetWidget;
@@ -44,6 +45,11 @@ internal sealed class InstallationEndpoints : IEndpoint
                 (await sender.Send(new InstallCommand(body.Sha256, TargetKind.User, null, body.Consent), ct))
                 .ToCreatedHttpResult(view => $"/homemix/api/installations/{view.Id}"))
             .Produces<InstallationView>(StatusCodes.Status201Created);
+
+        // UI 2.4.1: the quick links bar, my account's add-ons in order.
+        api.MapPut("/me/pins", async (PinMyAppsRequest body, ISender sender, CancellationToken ct) =>
+                (await sender.Send(new PinMyAppsCommand(body.Installations ?? []), ct)).ToHttpResult())
+            .Produces<IReadOnlyList<InstallationView>>();
 
         api.MapGet("/installations/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
                 (await sender.Send(new GetInstallationQuery(id), ct)).ToHttpResult())
