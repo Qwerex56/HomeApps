@@ -22,6 +22,8 @@ const props = defineProps<{
   wall?: boolean
   /** Starting height before the add-on reports its own. */
   height?: number
+  /** Fill the parent instead (a widget in a grid cell, UI 2.4.1): the cell decides the height. */
+  fill?: boolean
 }>()
 const { t } = useI18n()
 const session = useSessionStore()
@@ -43,7 +45,7 @@ useMixHost(frame, () => ({
 </script>
 
 <template>
-  <figure class="flex flex-col gap-1">
+  <figure class="flex flex-col gap-1" :class="{ 'h-full': fill }">
     <iframe
       ref="frame"
       :src="src"
@@ -51,7 +53,8 @@ useMixHost(frame, () => ({
       sandbox="allow-scripts allow-forms allow-popups"
       referrerpolicy="no-referrer"
       class="w-full rounded-lg border-0"
-      :style="{ height: `${reported ?? height ?? 480}px` }"
+      :class="{ 'flex-1': fill }"
+      :style="fill ? undefined : { height: `${reported ?? height ?? 480}px` }"
     />
     <!-- Only under a page: a widget has its own header with the add-on's name (W3). -->
     <figcaption v-if="!widget" class="flex items-center gap-1 text-xs text-muted-color">

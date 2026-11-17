@@ -23,6 +23,7 @@
     "@primeuix/themes": "~2.0.3",
     "@tanstack/vue-query": "^5.105.0",
     "axios": "^1.21.0",
+    "grid-layout-plus": "1.1.1",
     "markdown-it": "^14.3.3",
     "pinia": "^4.1.0",
     "primeicons": "^7.0.0",

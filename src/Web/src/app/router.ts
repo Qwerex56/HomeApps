@@ -117,6 +117,12 @@ export const router = createRouter({
               name: 'household-members',
               component: () => import('@/features/households/pages/MainTab.vue'),
             },
+            // All widgets and their editor (2.4.1, U4).
+            {
+              path: 'widgets',
+              name: 'household-widgets',
+              component: () => import('@/features/households/pages/WidgetsTab.vue'),
+            },
             // Invites live inside the settings since 2.4.1 (U3).
             {
               path: 'invites',

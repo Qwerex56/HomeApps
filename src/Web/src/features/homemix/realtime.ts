@@ -27,6 +27,7 @@ export type MixEvent =
       data: { installationId: string; title: string; body: string | null; path: string | null; tag: string | null }
     }
   | { event: 'permissions.changed'; data: { householdId: string; role: string | null } }
+  | { event: 'board.changed'; data: { householdId: string; place: 'Household' | 'Wall' } }
 
 type Listener = (event: MixEvent) => void
 
@@ -56,6 +57,8 @@ function hub(token: () => Promise<string>) {
 /** What the app itself does on an event, once per tab; frames get theirs through their listeners. */
 function dispatch(event: MixEvent) {
   if (event.event === 'installation.changed') void queryClient?.invalidateQueries({ queryKey: mixKeys.all })
+  if (event.event === 'board.changed')
+    void queryClient?.invalidateQueries({ queryKey: ['homemix', 'boards', event.data.householdId, event.data.place] })
   if (event.event === 'permissions.changed') {
     void queryClient?.invalidateQueries({ queryKey: householdKeys.all })
     void queryClient?.invalidateQueries({ queryKey: mixKeys.all })

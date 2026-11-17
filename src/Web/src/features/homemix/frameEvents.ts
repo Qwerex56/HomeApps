@@ -22,6 +22,9 @@ export function frameEvent(
       const { title, body, path, tag } = event.data
       return { name: 'notification', data: { title, body, path, tag } }
     }
+    case 'board.changed':
+      // The household's layout is the app's own business.
+      return null
     case 'permissions.changed':
       // The new permissions are asked for by the host before the frame hears about them.
       return event.data.householdId === frame.householdId ? 'permissions' : null

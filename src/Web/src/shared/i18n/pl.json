@@ -23,6 +23,29 @@
     "openHousehold": "Otwórz dom",
     "otherHouseholds": "Pozostałe domy"
   },
+  "widgets": {
+    "householdCard": "Karta domu",
+    "arrange": "Ułóż widżety",
+    "placeLabel": "Gdzie",
+    "place": {
+      "Household": "Główna",
+      "Wall": "Tablet"
+    },
+    "hint": {
+      "Household": "Na Głównej widać pierwsze wiersze: 3×2 na telefonie, 5×3 na tablecie, 8×5 na komputerze.",
+      "Wall": "Tablet na ścianie pokazuje pierwsze 5 wierszy i rozciąga je na cały ekran."
+    },
+    "fit": {
+      "Center": "Wyśrodkuj",
+      "Fill": "Wypełnij"
+    },
+    "editor": {
+      "narrow": "Układ ma 8 kolumn, na telefonie przewiń go w bok.",
+      "visibleLine": "Powyżej linii: widoczne na Głównej i tablecie",
+      "rows": "{n} wiersz | {n} wiersze | {n} wierszy",
+      "reset": "Ułóż od nowa"
+    }
+  },
   "errors": {
     "unknown": "Coś poszło nie tak. Spróbuj ponownie.",
     "network": "Brak połączenia z serwerem.",
@@ -521,6 +544,7 @@
     "apps": "Aplikacje",
     "tabs": {
       "main": "Główna",
+      "widgets": "Widżety",
       "members": "Domownicy",
       "invites": "Zaproszenia",
       "settings": "Ustawienia"
