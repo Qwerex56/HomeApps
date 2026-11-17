@@ -428,6 +428,22 @@ in `Account`.
   that place), `homemix.widget_size` (not one of its `sizes`), `homemix.forbidden` (not a manager). Both answer the
   installation with `widgetChoices`. An update keeps the choices: a widget that is gone is dropped, a size that is gone
   falls back to the widget's default.
+- **Grid (UI 2.4.1).** A household's widgets stand on a grid of 8 columns, one layout per place (`Household`,
+  `Wall`); narrower screens flow it into 5 or 3 columns. A widget is as wide as its size (1, 2 or 3 columns) and as
+  high as the editor says. "Główna" and the wall tablet show only the first rows (3×2, 5×3, 8×5); the household's
+  "Widżety" tab shows them all, and there admins and up arrange them. The household card (`core:household`) is a
+  widget too. On the wall a widget is either centred in its own proportions (`Center`, the default) or fills its
+  stretched cell (`Fill`). The `order` of a widget choice is not used on the grid.
+
+  ```
+  GET /homemix/api/households/{id}/boards/{Household|Wall}   any member; no items until someone arranged it
+  PUT /homemix/api/households/{id}/boards/{Household|Wall}   { "items": [{ "key": "mix:{installationId}/{widgetId}", "x": 0, "y": 0, "w": 2, "h": 1, "fit": "Center" }] }
+  ```
+
+  Keys: `core:household`, `mix:{installationId}/{widgetId}`, `plugin:{pluginId}/{widgetId}`. Widgets missing from the
+  layout go to the first free places; gone ones are skipped. Errors: `homemix.board_overlap`, `homemix.board_out_of_grid`
+  (x + w over 8, w not 1-3, h not 1-12), `homemix.board_duplicate`, `homemix.board_fit`, `homemix.board_forbidden`
+  (not an admin). Saving sends `board.changed` (`householdId`, `place`) to the household.
 - **Going to the app.** The frame is sandboxed, so a click inside it stays there. Each widget has a header with the
   add-on's name and "Przejdź do aplikacji"; the add-on itself can call `homemix.open(path?)` (e.g. on a click on its
   tile). On the wall tablet this opens the add-on in full at `/wall/mix/{id}/{path}` with a way back, elsewhere at its

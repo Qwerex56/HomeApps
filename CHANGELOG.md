@@ -2,6 +2,25 @@
 
 Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`.
 
+## 2.4.1 (unreleased)
+
+UI fixes: a simpler main bar, households in one place and a widget grid you arrange yourself.
+
+Updating: HomeMix migrates its database on start (widget boards).
+
+### Changed
+
+- **Main bar (U1):** the store on the right; no household switcher and no "Moje konto" (it stays in the account menu);
+  "Administracja" moved into the account menu.
+- **Domy (U2):** the dashboard and the households list are one page: the household opened last across the whole width,
+  the other households under it. `/homes` leads there.
+- **Household (U3):** tabs on top ("Główna", "Widżety", "Ustawienia"), invites inside the settings, the household's
+  apps in a bar on the left.
+- **Widget grid (U4-U6):** 8 / 5 / 3 columns, one layout per household for its page and its wall tablet
+  (`GET/PUT /homemix/api/households/{id}/boards/{place}`), arranged by drag and drop in "Widżety". "Główna" shows
+  3×2 / 5×3 / 8×5, the wall 8×5 over the whole screen with "Wyśrodkuj" or "Wypełnij" per widget; the household card
+  is a widget.
+
 ## 2.4.0 (2026-11-16)
 
 HomeMix 2.0: widgets you can choose, a store page with stats, RealTime and a framework for add-on authors.
