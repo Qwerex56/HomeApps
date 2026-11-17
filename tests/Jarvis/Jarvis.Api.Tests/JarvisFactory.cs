@@ -27,6 +27,8 @@ public sealed class JarvisFactory : HomeAppsApiFactory<Program, JarvisDbContext>
 
     internal FakeBrain Brain { get; } = new();
 
+    internal FakeEars Ears { get; } = new();
+
     /// <summary>What JARVIS published, e.g. his answers to a channel.</summary>
     public ConcurrentQueue<object> Published { get; } = new();
 
@@ -71,12 +73,15 @@ public sealed class JarvisFactory : HomeAppsApiFactory<Program, JarvisDbContext>
         builder.UseSetting("Jarvis:Sources:2:Prefix", string.Empty);
 
         builder.UseSetting("Jarvis:DailyBudgetUsd", "1");
+        builder.UseSetting("Jarvis:Voice:Enabled", "true");
     }
 
     protected override void ConfigureServices(IServiceCollection services)
     {
         services.AddSingleton<IDelegation>(Delegation);
         services.AddSingleton<IAssistantBrain>(Brain);
+        services.AddSingleton<ISpeechToText>(Ears);
+        services.AddSingleton<ITextToSpeech, FakeVoice>();
         services.AddScoped<IEventBus>(sp => new RecordingEventBus(sp.GetRequiredService<MassTransit.IPublishEndpoint>(), Published));
         services.AddHttpClient(SourceConnector.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => new HostRouter(_hosts));
         services.AddHttpClient(nameof(IToolSources)).ConfigurePrimaryHttpMessageHandler(() => new HostRouter(_hosts));

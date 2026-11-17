@@ -18,6 +18,8 @@ builder.Services.ConfigureHttpJsonOptions(json => json.SerializerOptions.Convert
 
 var app = builder.Build();
 
+// The voice listeners' sockets (/jarvis/voice); pings keep Cloudflare and Traefik from closing a quiet one.
+app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(20) });
 app.UseHomeAppsDefaults();
 app.MapJarvisGateway();
 
