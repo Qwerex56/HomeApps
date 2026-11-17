@@ -1,30 +1,24 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Message from 'primevue/message'
 import ColorSchemeToggle from '@/shared/components/ColorSchemeToggle.vue'
 import { useMyAccount } from '@/features/account/api'
-import { useSessionStore } from '@/features/auth/session'
-import HouseholdSwitcher from '@/features/households/components/HouseholdSwitcher.vue'
 import { useMixRealtime } from '@/features/homemix/realtime'
 import UserMenu from './UserMenu.vue'
 
 const { t } = useI18n()
 const { pending } = useMyAccount()
-const session = useSessionStore()
 // HomeMix realtime while signed in: notifications of add-ons show as toasts on any page (docs/homemix.md, "RealTime").
 useMixRealtime()
 
-// Administration only for Admin and Owner.
-const links = computed(() => [
+// The main bar (2.4.1, U1): my account and administration live in the account menu, the store stands on the right.
+const links = [
   { to: { name: 'home' }, label: 'app.home', icon: 'pi pi-home', exact: true },
   { to: { name: 'households' }, label: 'app.households', icon: 'pi pi-building' },
-  { to: { name: 'store' }, label: 'app.store', icon: 'pi pi-shop' },
   { to: { name: 'jarvis' }, label: 'app.jarvis', icon: 'pi pi-sparkles' },
-  { to: { name: 'account-profile' }, label: 'app.account', icon: 'pi pi-user' },
-  ...(session.isAdmin ? [{ to: { name: 'admin-users' }, label: 'app.admin', icon: 'pi pi-users' }] : []),
-])
+]
+const store = { to: { name: 'store' }, label: 'app.store', icon: 'pi pi-shop', exact: false }
 </script>
 
 <template>
@@ -50,10 +44,16 @@ const links = computed(() => [
             <span>{{ t(link.label) }}</span>
           </RouterLink>
         </nav>
-        <div class="flex min-w-0 flex-1 justify-end sm:flex-none">
-          <HouseholdSwitcher />
-        </div>
-        <div class="flex shrink-0 items-center">
+        <div class="flex min-w-0 flex-1 sm:hidden" />
+        <div class="flex shrink-0 items-center gap-1">
+          <RouterLink
+            :to="store.to"
+            class="hidden items-center gap-2 rounded-md px-3 py-2 text-sm whitespace-nowrap text-muted-color hover:bg-emphasis sm:flex"
+            active-class="!text-primary bg-highlight"
+          >
+            <i :class="store.icon" aria-hidden="true" />
+            <span>{{ t(store.label) }}</span>
+          </RouterLink>
           <ColorSchemeToggle />
           <UserMenu />
         </div>
@@ -72,7 +72,7 @@ const links = computed(() => [
       class="fixed inset-x-0 bottom-0 z-10 flex border-t border-surface-200 bg-surface-0/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden dark:border-surface-800 dark:bg-surface-900/95"
     >
       <RouterLink
-        v-for="link in links"
+        v-for="link in [...links, store]"
         :key="link.label"
         :to="link.to"
         class="flex flex-1 flex-col items-center gap-1 py-2 text-xs text-muted-color"

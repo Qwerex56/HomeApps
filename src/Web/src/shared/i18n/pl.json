@@ -509,7 +509,6 @@
       "removed": "Usunięto z domu"
     },
     "current": "Bieżący",
-    "switch": "Bieżący dom",
     "archived": "Zarchiwizowany",
     "nickname": "Pseudonim w tym domu",
     "nicknameHint": "Puste = {name}.",

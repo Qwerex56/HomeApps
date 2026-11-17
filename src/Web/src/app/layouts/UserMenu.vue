@@ -24,6 +24,13 @@ const items = computed(() => [
   { label: t('account.tabs.security'), icon: 'pi pi-lock', command: () => router.push({ name: 'account-security' }) },
   { label: t('homemix.mine'), icon: 'pi pi-box', command: () => router.push({ name: 'account-mix' }) },
   { label: t('wall.open'), icon: 'pi pi-tablet', command: () => router.push({ name: 'wall' }) },
+  // Administration only for Admin and Owner, right above signing out (2.4.1, U1).
+  ...(session.isAdmin
+    ? [
+        { separator: true },
+        { label: t('app.admin'), icon: 'pi pi-users', command: () => router.push({ name: 'admin-users' }) },
+      ]
+    : []),
   { separator: true },
   { label: t('auth.logout'), icon: 'pi pi-sign-out', command: () => session.signOut() },
   { label: t('auth.logoutEverywhere'), icon: 'pi pi-power-off', command: () => session.signOut(true) },
