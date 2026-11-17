@@ -6,7 +6,8 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 
 UI fixes: a simpler main bar, households in one place and a widget grid you arrange yourself.
 
-Updating: HomeMix migrates its database on start (widget boards).
+Updating: HomeMix migrates its database on start (widget boards, quick links). The web app has a new dependency
+(`grid-layout-plus`), so run `npm install` in `src/Web` for local development.
 
 ### Changed
 
@@ -20,6 +21,9 @@ Updating: HomeMix migrates its database on start (widget boards).
   (`GET/PUT /homemix/api/households/{id}/boards/{place}`), arranged by drag and drop in "Widżety". "Główna" shows
   3×2 / 5×3 / 8×5, the wall 8×5 over the whole screen with "Wyśrodkuj" or "Wypełnij" per widget; the household card
   is a widget.
+- **Apps (U7):** "Aplikacje" on the main bar with every add-on of my account (what "Moje aplikacje" in the account
+  was; `/account/mix` leads there) and a quick links bar under the header with up to 8 of them, chosen with ✎
+  (`PUT /homemix/api/me/pins`, `pin` in the installation).
 
 ## 2.4.0 (2026-11-16)
 

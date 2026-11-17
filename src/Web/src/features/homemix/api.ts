@@ -75,6 +75,10 @@ export const homemixApi = {
   async list(target: MixTarget) {
     return (await http.get<Installation[]>(listUrl(target))).data
   },
+  /** My account's add-ons on the quick links bar, in this order (UI 2.4.1, at most 8). */
+  async pin(installationIds: string[]) {
+    return (await http.put<Installation[]>(`${base}/me/pins`, { installations: installationIds })).data
+  },
   async addZip(file: File) {
     const form = new FormData()
     form.append('file', file)

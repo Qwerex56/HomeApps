@@ -8,7 +8,8 @@
     "households": "Domy",
     "menu": "Menu główne",
     "jarvis": "JARVIS",
-    "store": "Sklep"
+    "store": "Sklep",
+    "apps": "Aplikacje"
   },
   "colorScheme": {
     "label": "Motyw",
@@ -22,6 +23,16 @@
     "hello": "Cześć, {name}!",
     "openHousehold": "Otwórz dom",
     "otherHouseholds": "Pozostałe domy"
+  },
+  "quickLinks": {
+    "label": "Szybkie linki",
+    "title": "Szybkie linki",
+    "edit": "Edytuj szybkie linki",
+    "pin": "Przypnij aplikacje",
+    "hint": "Zaznacz do {max} aplikacji z konta. Na pasku stoją w tej kolejności.",
+    "up": "W górę",
+    "down": "W dół",
+    "onBar": "Na pasku szybkich linków"
   },
   "widgets": {
     "householdCard": "Karta domu",

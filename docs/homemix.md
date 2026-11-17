@@ -444,6 +444,9 @@ in `Account`.
   layout go to the first free places; gone ones are skipped. Errors: `homemix.board_overlap`, `homemix.board_out_of_grid`
   (x + w over 8, w not 1-3, h not 1-12), `homemix.board_duplicate`, `homemix.board_fit`, `homemix.board_forbidden`
   (not an admin). Saving sends `board.changed` (`householdId`, `place`) to the household.
+- **Quick links (UI 2.4.1).** Up to 8 add-ons of one's own account stand on the bar under the header, in order:
+  `PUT /homemix/api/me/pins { "installations": [id, ...] }` pins those and unpins the rest; `pin` (0 first, or null)
+  is in every installation. A household's add-ons and other people's cannot be pinned (`homemix.installation_not_found`).
 - **Going to the app.** The frame is sandboxed, so a click inside it stays there. Each widget has a header with the
   add-on's name and "Przejdź do aplikacji"; the add-on itself can call `homemix.open(path?)` (e.g. on a click on its
   tile). On the wall tablet this opens the add-on in full at `/wall/mix/{id}/{path}` with a way back, elsewhere at its

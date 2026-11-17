@@ -5,6 +5,7 @@ import Message from 'primevue/message'
 import ColorSchemeToggle from '@/shared/components/ColorSchemeToggle.vue'
 import { useMyAccount } from '@/features/account/api'
 import { useMixRealtime } from '@/features/homemix/realtime'
+import QuickLinks from '@/features/homemix/QuickLinks.vue'
 import UserMenu from './UserMenu.vue'
 
 const { t } = useI18n()
@@ -16,6 +17,7 @@ useMixRealtime()
 const links = [
   // "Domy" is the home page and stays lit inside a household (/homes/...).
   { to: { name: 'home' }, label: 'app.households', icon: 'pi pi-home', exact: true },
+  { to: { name: 'my-apps' }, label: 'app.apps', icon: 'pi pi-th-large' },
   { to: { name: 'jarvis' }, label: 'app.jarvis', icon: 'pi pi-sparkles' },
 ]
 const route = useRoute()
@@ -61,6 +63,7 @@ const store = { to: { name: 'store' }, label: 'app.store', icon: 'pi pi-shop', e
           <UserMenu />
         </div>
       </div>
+      <QuickLinks class="border-t border-surface-200 dark:border-surface-800" />
     </header>
     <main
       class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))]"

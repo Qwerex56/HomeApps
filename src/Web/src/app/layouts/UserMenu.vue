@@ -22,7 +22,6 @@ const items = computed(() => [
   { separator: true },
   { label: t('app.account'), icon: 'pi pi-user', command: () => router.push({ name: 'account-profile' }) },
   { label: t('account.tabs.security'), icon: 'pi pi-lock', command: () => router.push({ name: 'account-security' }) },
-  { label: t('homemix.mine'), icon: 'pi pi-box', command: () => router.push({ name: 'account-mix' }) },
   { label: t('wall.open'), icon: 'pi pi-tablet', command: () => router.push({ name: 'wall' }) },
   // Administration only for Admin and Owner, right above signing out (2.4.1, U1).
   ...(session.isAdmin

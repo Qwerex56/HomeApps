@@ -70,13 +70,12 @@ export const router = createRouter({
               component: () => import('@/features/account/pages/HistoryPage.vue'),
             },
             // "Moje aplikacje": HomeMix add-ons on my account (docs/homemix.md).
-            {
-              path: 'mix',
-              name: 'account-mix',
-              component: () => import('@/features/homemix/MyMixesPage.vue'),
-            },
+            // "Moje aplikacje" moved to "Aplikacje" on the main bar (2.4.1, U7).
+            { path: 'mix', name: 'account-mix', redirect: { name: 'my-apps' } },
           ],
         },
+        // My account's add-ons (2.4.1, U7).
+        { path: 'apps', name: 'my-apps', component: () => import('@/features/homemix/AppsPage.vue') },
         {
           path: 'me/mix/:addon/:path(.*)?',
           name: 'my-mix',
