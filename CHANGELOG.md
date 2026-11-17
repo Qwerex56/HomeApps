@@ -10,6 +10,9 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
   the usual agent (channel `voice`, answers in the person's conversation), text to speech sentence by sentence, and
   "tak" / "nie" to confirm waiting actions. Engines through the OpenAI audio API (`JARVIS_VOICE_URL`), for tests
   Speaches on the Mac (`compose.voice.yaml`). Off without a URL. See docs/jarvis.md "Voice".
+- **Voice bridge on the Mac (V0b):** `src/Jarvis/Jarvis.VoiceBridge`, a console app that listens for "Hey Jarvis"
+  locally (openWakeWord through ONNX Runtime), streams the utterance until a short quiet, plays the answer, takes
+  "tak" / "nie" for confirmations, and signs in through "Połączone aplikacje". See docs/jarvis.md "The Mac bridge".
 
 ## 2.4.1 (unreleased)
 

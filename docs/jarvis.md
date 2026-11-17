@@ -63,7 +63,7 @@ Settings (`Jarvis`):
 ## Voice (V0a)
 
 JARVIS hears and speaks through `/jarvis/voice`, a WebSocket that every listener uses: the Mac bridge
-(`tools/Jarvis.VoiceBridge`, stage V0b) now, satellites later. The listener only carries sound; speech to text, the
+(`src/Jarvis/Jarvis.VoiceBridge`, below) now, satellites later. The listener only carries sound; speech to text, the
 agent and text to speech all happen on the server. Plan: `plans/features/jarvis-voice-bridge.md`.
 
 - **Token:** the person's, as `Authorization: Bearer`: an app token from "Połączone aplikacje" (resource
@@ -104,6 +104,29 @@ Other voices and models: `curl 'localhost:8000/v1/registry?task=text-to-speech'`
 `?task=automatic-speech-recognition` (look for `turbo`); a different id goes to `Jarvis__Voice__SttModel` / `TtsModel`. Then on the server
 `JARVIS_VOICE_URL=http://<Mac's address>:8000` in `.env` (give the Mac a fixed address in the router); in dev the
 compose file already points at `host.docker.internal:8000`.
+
+### The Mac bridge (V0b)
+
+`src/Jarvis/Jarvis.VoiceBridge` is a console app for the Mac (it also runs on Linux): it only listens for
+"Hey Jarvis" locally and carries sound, everything else happens on the server.
+
+```bash
+dotnet run --project src/Jarvis/Jarvis.VoiceBridge -- --server https://home-apps.dev --device mac-biuro
+# dev: --server https://app.localhost --insecure
+```
+
+- **First run:** downloads the three openWakeWord models (v0.5.1, checked by hash) into `~/.homeapps/voice-bridge`,
+  macOS asks for microphone access for the terminal, and the browser opens HomeApps' consent screen ("Zezwól"). The
+  bridge then keeps its refresh token in the Keychain and appears under "Połączone aplikacje" as "JARVIS: most głosowy".
+  `--logout` forgets it on this Mac.
+- **Using it:** "Hey Jarvis" (a rising chime) → say the request → after ~0.7 s of quiet a falling chime, the transcript
+  and JARVIS's answer are printed and spoken (`afplay`). When he asks to confirm, a chime and 8 s for "tak" / "nie"
+  without the wake word. Enter starts without the wake word, ends the utterance early, or stops JARVIS mid-answer;
+  `q` quits. While he speaks the microphone is ignored (a Mac has no echo cancellation here), so press Enter to interrupt him.
+- **Tuning:** `--threshold` (0.5) is the wake word's score. `--save-recordings <folder>` keeps each turn as a WAV on
+  this Mac only (V7); `--check-wake <file.wav>` prints the best score in a 16 kHz recording, e.g. one of yours, to pick a
+  threshold. Synthetic English "hey jarvis" scores 0.96-0.99, unrelated speech 0.00; a Polish accent may score lower.
+- **Licence:** the "hey jarvis" model is CC BY-NC-SA 4.0 (non-commercial), fine for a home.
 
 ## Production
 
