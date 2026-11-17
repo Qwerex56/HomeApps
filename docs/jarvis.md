@@ -58,7 +58,52 @@ Settings (`Jarvis`):
   then `message` (the kept answer with its card) or `error` (`{code, detail}`). JARVIS sees the last 20 messages.
 - Messages stay until the person deletes the conversation (or the account is erased); the run behind an answer follows
   the log's retention, so after 30 days the message keeps its text but loses its card.
-- Traefik sends only `/jarvis/api`, `/jarvis/mcp` and the metadata to the service; `/jarvis` itself is the web app.
+- Traefik sends only `/jarvis/api`, `/jarvis/mcp`, `/jarvis/voice` and the metadata to the service; `/jarvis` itself is the web app.
+
+## Voice (V0a)
+
+JARVIS hears and speaks through `/jarvis/voice`, a WebSocket that every listener uses: the Mac bridge
+(`tools/Jarvis.VoiceBridge`, stage V0b) now, satellites later. The listener only carries sound; speech to text, the
+agent and text to speech all happen on the server. Plan: `plans/features/jarvis-voice-bridge.md`.
+
+- **Token:** the person's, as `Authorization: Bearer`: an app token from "Połączone aplikacje" (resource
+  `https://<domain>/jarvis/mcp`, the same OAuth as Claude Code) or a normal one.
+- **Listener → server:** text frames `{"type":"hello","conversationId"?,"householdId"?}`, `{"type":"start"}`,
+  `{"type":"stop"}`, `{"type":"cancel"}`; between `start` and `stop` binary frames of 16 kHz 16-bit mono PCM (at most
+  `Jarvis:Voice:MaxSeconds`, 30 s).
+- **Server → listener:** `ready`, then per turn `transcript` `{text}`, `reply` `{conversationId, text, actions,
+  awaiting}`, for each sentence `audio` `{format: "wav", text}` followed by one binary frame with the WAV, then `done`
+  (`cancelled: true` after `cancel` or a new `start`); or `error` `{code}` (`voice.engine_unavailable`, ...).
+- **Conversation:** spoken turns go to the person's conversation on the JARVIS page (channel `voice`, a shorter answer
+  for the ear); the first turn without `conversationId` starts one. Audio is never kept, the text like any message.
+- **Confirmations by voice:** when `awaiting` is true, the listener records the next answer without the wake word. A
+  short "tak / potwierdzam / zrób to" confirms the waiting actions, "nie / anuluj" cancels them (without the model);
+  anything longer is a new request. The buttons on the JARVIS page keep working.
+- **Engines:** `Jarvis:Voice:SttUrl` and `TtsUrl` speak the OpenAI audio API (`/v1/audio/transcriptions`,
+  `/v1/audio/speech`), so Speaches, a whisper server or a cloud service is only a URL (`ApiKey` for a cloud one).
+  Defaults: `SttModel` `deepdml/faster-whisper-large-v3-turbo-ct2`, `TtsModel` `speaches-ai/piper-pl_PL-gosia-medium`,
+  `TtsVoice` `gosia`, `Language` `pl`. `Jarvis:Voice:Enabled` false (the default) answers 503.
+
+### Speaches on the Mac
+
+The home server (Dell Wyse 5070) is too slow for Whisper, so for tests the engines run on the Mac:
+
+```bash
+docker compose -f compose.voice.yaml up -d
+# once: the models into the volume
+curl -X POST http://localhost:8000/v1/models/deepdml/faster-whisper-large-v3-turbo-ct2
+curl -X POST http://localhost:8000/v1/models/speaches-ai/piper-pl_PL-gosia-medium
+# check: Polish speech out, then back in
+curl -s localhost:8000/v1/audio/speech -H 'Content-Type: application/json' \
+  -d '{"model":"speaches-ai/piper-pl_PL-gosia-medium","voice":"gosia","input":"Cześć, tu JARVIS.","response_format":"wav"}' -o hej.wav
+curl -s localhost:8000/v1/audio/transcriptions -F file=@hej.wav \
+  -F model=deepdml/faster-whisper-large-v3-turbo-ct2 -F language=pl
+```
+
+Other voices and models: `curl 'localhost:8000/v1/registry?task=text-to-speech'` (look for `piper-pl_PL`) and
+`?task=automatic-speech-recognition` (look for `turbo`); a different id goes to `Jarvis__Voice__SttModel` / `TtsModel`. Then on the server
+`JARVIS_VOICE_URL=http://<Mac's address>:8000` in `.env` (give the Mac a fixed address in the router); in dev the
+compose file already points at `host.docker.internal:8000`.
 
 ## Production
 
@@ -69,6 +114,7 @@ Settings (`Jarvis`):
 | `JARVIS_CLIENT_SECRET` | Required. The secret of Auth's `jarvis-service` client, which JARVIS asks delegated tokens with: `openssl rand -base64 32`. Both services read it from `.env`. |
 | `JARVIS_CLAUDE_MODEL` | Optional. The model of JARVIS's answers: `haiku` (the cheapest, for tests), `sonnet`, `opus` or a full model id; empty = Claude Code's default. |
 | `JARVIS_CLAUDE_CODE_OAUTH_TOKEN` | Optional. JARVIS's own answers run on the owner's Claude subscription: on any computer with Claude Code, `claude setup-token`, then paste the token here. Empty: the JARVIS page and `@Jarvis` answer "JARVIS jest teraz wyłączony", while the gateway still serves your own Claude Code. A secret. |
+| `JARVIS_VOICE_URL` | Optional. JARVIS's ears and voice: the speech engine's URL as the server reaches it, e.g. Speaches on the Mac `http://192.168.1.20:8000` ("Voice" above). Empty: no voice. |
 
 The compose file also gives Auth the `jarvis-service` client and `Auth__ConnectedApps__Resources__0` =
 `https://${HOMEAPPS_DOMAIN}/jarvis/mcp`, so apps can sign in to the gateway. More settings, as environment variables of

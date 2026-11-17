@@ -1,0 +1,19 @@
+# JARVIS's ears and voice for tests (docs/jarvis.md "Voice"): Speaches on the owner's Mac, which the server's JARVIS
+# reaches over the home network (JARVIS_VOICE_URL). Whisper for speech to text, Piper for the Polish voice, both
+# through the OpenAI audio API, so another engine is only another URL.
+#   docker compose -f compose.voice.yaml up -d
+# Models are downloaded once into the volume (commands in docs/jarvis.md).
+services:
+  speaches:
+    image: ghcr.io/speaches-ai/speaches:latest-cpu
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # int8 keeps large-v3-turbo fast enough on an Apple Silicon CPU (Docker on macOS has no Metal).
+      WHISPER__COMPUTE_TYPE: int8
+    volumes:
+      - speaches-models:/home/ubuntu/.cache/huggingface/hub
+
+volumes:
+  speaches-models:

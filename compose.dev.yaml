@@ -250,6 +250,10 @@ services:
       Jarvis__ClientSecret: ${JARVIS_CLIENT_SECRET:-development-only-jarvis-secret-0123456789}
       # Owner's Claude subscription (`claude setup-token`); without it JARVIS answers that he is switched off.
       Jarvis__ClaudeCode__OAuthToken: ${JARVIS_CLAUDE_CODE_OAUTH_TOKEN:-}
+      # Ears and voice: Speaches from compose.voice.yaml on the same Mac (docs/jarvis.md "Voice").
+      Jarvis__Voice__Enabled: "true"
+      Jarvis__Voice__SttUrl: ${JARVIS_VOICE_URL:-http://host.docker.internal:8000}
+      Jarvis__Voice__TtsUrl: ${JARVIS_VOICE_URL:-http://host.docker.internal:8000}
       ConnectionStrings__Database: "Host=postgres;Database=homeapps_jarvis;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
       RabbitMq__Host: rabbitmq
       RabbitMq__Username: ${RABBITMQ_USER:-guest}
@@ -264,7 +268,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Only the gateway and its RFC 9728 metadata; the services' own MCP servers stay inside the Docker network.
-      - "traefik.http.routers.jarvis.rule=Host(`app.localhost`) && (PathPrefix(`/jarvis/api`) || PathPrefix(`/jarvis/mcp`) || Path(`/.well-known/oauth-protected-resource/jarvis/mcp`))"
+      - "traefik.http.routers.jarvis.rule=Host(`app.localhost`) && (PathPrefix(`/jarvis/api`) || PathPrefix(`/jarvis/mcp`) || Path(`/jarvis/voice`) || Path(`/.well-known/oauth-protected-resource/jarvis/mcp`))"
       - "traefik.http.routers.jarvis.priority=300"
       - "traefik.http.routers.jarvis.entrypoints=websecure"
       - "traefik.http.routers.jarvis.tls=true"

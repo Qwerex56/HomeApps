@@ -2,6 +2,15 @@
 
 Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`.
 
+## Unreleased: JARVIS voice
+
+### Added
+
+- **JARVIS hears and speaks (V0a):** `/jarvis/voice`, a WebSocket for listeners such as the Mac bridge: speech to text,
+  the usual agent (channel `voice`, answers in the person's conversation), text to speech sentence by sentence, and
+  "tak" / "nie" to confirm waiting actions. Engines through the OpenAI audio API (`JARVIS_VOICE_URL`), for tests
+  Speaches on the Mac (`compose.voice.yaml`). Off without a URL. See docs/jarvis.md "Voice".
+
 ## 2.4.1 (unreleased)
 
 UI fixes: a simpler main bar, households in one place and a widget grid you arrange yourself.

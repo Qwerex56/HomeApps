@@ -211,11 +211,16 @@ services:
       Jarvis__ClaudeCode__OAuthToken: ${JARVIS_CLAUDE_CODE_OAUTH_TOKEN:-}
       # The model for Claude Code: an alias (haiku, sonnet, opus) or a full id; empty = Claude Code's default.
       Jarvis__ClaudeCode__Model: ${JARVIS_CLAUDE_MODEL:-}
+      # His ears and voice (docs/jarvis.md "Voice"): a speech engine with the OpenAI audio API, e.g. Speaches on the
+      # owner's Mac. Empty URL: /jarvis/voice answers 503 and nothing else changes.
+      Jarvis__Voice__Enabled: ${JARVIS_VOICE_URL:+true}
+      Jarvis__Voice__SttUrl: ${JARVIS_VOICE_URL:-}
+      Jarvis__Voice__TtsUrl: ${JARVIS_VOICE_URL:-}
       # Optional (docs/jarvis.md): Jarvis__DailyBudgetUsd (default 2 USD a day for the home).
     labels:
       - "traefik.enable=true"
       # The gateway, the API and the gateway's OAuth metadata; /jarvis itself is a page of the web app.
-      - "traefik.http.routers.jarvis.rule=Host(`${HOMEAPPS_DOMAIN}`) && (PathPrefix(`/jarvis/api`) || PathPrefix(`/jarvis/mcp`) || Path(`/.well-known/oauth-protected-resource/jarvis/mcp`))"
+      - "traefik.http.routers.jarvis.rule=Host(`${HOMEAPPS_DOMAIN}`) && (PathPrefix(`/jarvis/api`) || PathPrefix(`/jarvis/mcp`) || Path(`/jarvis/voice`) || Path(`/.well-known/oauth-protected-resource/jarvis/mcp`))"
       - "traefik.http.routers.jarvis.priority=300"
       - "traefik.http.routers.jarvis.entrypoints=websecure"
       - "traefik.http.services.jarvis.loadbalancer.server.port=8080"
