@@ -532,6 +532,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/homemix/api/households/{householdId}/boards/{place}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    householdId: string;
+                    place: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BoardView"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    householdId: string;
+                    place: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SaveBoardRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BoardView"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/homemix/api/installations/{id}/data/{collection}": {
         parameters: {
             query?: never;
@@ -1137,6 +1201,36 @@ export interface components {
             blockedAt: null | string;
             fromConfiguration: boolean;
         };
+        BoardItem: {
+            key: string;
+            /** Format: int32 */
+            x: number | string;
+            /** Format: int32 */
+            y: number | string;
+            /** Format: int32 */
+            w: number | string;
+            /** Format: int32 */
+            h: number | string;
+            fit: string;
+        };
+        BoardItemInput: {
+            key: string;
+            /** Format: int32 */
+            x: number | string;
+            /** Format: int32 */
+            y: number | string;
+            /** Format: int32 */
+            w: number | string;
+            /** Format: int32 */
+            h: number | string;
+            fit: null | string;
+        };
+        BoardView: {
+            place: string;
+            items: components["schemas"]["BoardItem"][];
+            /** Format: date-time */
+            updatedAt: null | string;
+        };
         ChooseWidgetRequest: {
             widget: null | string;
             size: null | string;
@@ -1252,6 +1346,9 @@ export interface components {
             value: components["schemas"]["JsonElement"];
             /** Format: int32 */
             version: null | number | string;
+        };
+        SaveBoardRequest: {
+            items: components["schemas"]["BoardItemInput"][];
         };
         StoreCounts: {
             /** Format: int32 */

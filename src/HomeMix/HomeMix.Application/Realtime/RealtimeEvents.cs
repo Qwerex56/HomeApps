@@ -21,6 +21,10 @@ public static class RealtimeEvents
             "installation.changed",
             new { installationId = installation.Id, addonId = installation.AddonId, version = installation.Version, change });
 
+    /// <summary>A household's widgets were arranged: its people read the board again (UI 2.4.1).</summary>
+    public static RealtimeMessage BoardChanged(Guid householdId, string place) =>
+        new(RealtimeGroups.Household(householdId), "board.changed", new { householdId, place });
+
     /// <summary>A push() from the add-on, shown as a toast to recipients who have the app open.</summary>
     public static RealtimeMessage Notification(Guid userId, Guid installationId, string title, string? body, string? path, string? tag) =>
         new(RealtimeGroups.User(userId), "notification", new { installationId, title, body, path, tag });

@@ -44,6 +44,33 @@ namespace HomeMix.Infrastructure.Persistence.Migrations
                     b.ToTable("Blocks", (string)null);
                 });
 
+            modelBuilder.Entity("HomeMix.Domain.Boards.WidgetBoard", b =>
+                {
+                    b.Property<Guid>("HouseholdId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Place")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("_items")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("Items")
+                        .HasDefaultValueSql("'[]'::jsonb");
+
+                    b.HasKey("HouseholdId", "Place");
+
+                    b.ToTable("Boards", (string)null);
+                });
+
             modelBuilder.Entity("HomeMix.Domain.Data.AddonDocument", b =>
                 {
                     b.Property<Guid>("Id")

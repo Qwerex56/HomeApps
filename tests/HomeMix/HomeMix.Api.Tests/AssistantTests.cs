@@ -92,6 +92,7 @@ public sealed class AssistantTests(HomeMixApiFactory api) : IClassFixture<HomeMi
             "POST /mcp/ Allow",
             "PUT /homemix/api/admin/blocks/{value} Default",
             "PUT /homemix/api/admin/store/{key}/hidden Default",
+            "PUT /homemix/api/households/{householdId:guid}/boards/{place} Default",
             "PUT /homemix/api/installations/{id:guid} Default",
             "PUT /homemix/api/installations/{id:guid}/data/{collection}/{key} Allow",
             "PUT /homemix/api/installations/{id:guid}/widgets/{place} Default",
