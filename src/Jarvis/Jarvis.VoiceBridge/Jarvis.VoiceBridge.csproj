@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    JARVIS's ears and mouth on the Mac (jarvis-voice-bridge.md, V0b): listens for "Hey Jarvis" locally, then only
+    carries sound to /jarvis/voice and plays the answer. Not a service: run it in a terminal, `dotnet run`.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Jarvis.VoiceBridge</RootNamespace>
+    <AssemblyName>jarvis-voice-bridge</AssemblyName>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PortAudioSharp2" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Jarvis.VoiceBridge.Tests" />
+  </ItemGroup>
+
+</Project>
