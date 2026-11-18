@@ -74,13 +74,20 @@ public static class CapabilityResolver
             }
 
             var current = known.Definition;
-            if (!ownsNamespace || capability.Definition is null)
+            if (!ownsNamespace || !isHouseholdDevice || capability.Definition is null)
             {
                 return current;
             }
 
+            var extended = current.ExtendedBy(capability.Definition);
+            if (capability.Definition.Version > current.Version && extended.Version == current.Version)
+            {
+                warnings.Add($"Capability '{capability.Type}': extension ignored: more than {CapabilityDefinition.MaxFields} fields.");
+                return current;
+            }
+
             brings = capability.Definition;
-            return current.ExtendedBy(capability.Definition);
+            return extended;
         }
 
         if (capability.Definition is null)

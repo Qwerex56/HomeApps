@@ -110,8 +110,13 @@ public sealed partial record CapabilityDefinition(
             return this;
         }
 
-        var added = newer.Fields.Where(f => !Fields.Any(o => o.Kind == f.Kind && o.Name == f.Name));
-        return this with { Version = newer.Version, Fields = [.. Fields, .. added.Select(f => f with { Required = false })] };
+        var addedList = newer.Fields.Where(f => !Fields.Any(o => o.Kind == f.Kind && o.Name == f.Name)).ToList();
+        if (Fields.Count + addedList.Count > MaxFields)
+        {
+            return this;
+        }
+
+        return this with { Version = newer.Version, Fields = [.. Fields, .. addedList.Select(f => f with { Required = false })] };
     }
 
     /// <summary>The same shape <see cref="Parse"/> reads, as stored for a registered capability.</summary>
