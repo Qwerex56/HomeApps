@@ -62,7 +62,13 @@ One JSON document; [the JSON Schema](schemas/homeapps.device-1.schema.json) chec
 | `actions` | one-off commands: `name`, `label`, `description`, `input` (JSON Schema of type object), `readOnly`, `confirm` |
 
 Values are described with JSON Schema (a `type`, or `enum`/`const`, at most 4000 characters). Names are lowercase letters,
-digits and `_`; `id.name` addresses a field of a capability instance. At most 50 items in each list.
+digits and `_`; `id.name` addresses a field of a capability instance. At most 50 items in each list and at most 10
+`roles`. The whole document is at most 64,000 characters (the pairing request is limited to 256 KB).
+
+A namespaced capability (`author/name`) counts when its definition is registered and not hidden, or when a household
+device whose `model` has the same author brings it. A registered definition wins over the one a device brings; only the
+namespace author's devices extend it. A hidden capability is ignored on new descriptors with a warning. See
+[device-capabilities.md](device-capabilities.md).
 
 What happens to it: the document is checked (all problems are reported at once), stored as is on the device, and its
 capabilities are resolved. Unknown or incomplete capabilities and unknown roles are **ignored with a warning** kept on

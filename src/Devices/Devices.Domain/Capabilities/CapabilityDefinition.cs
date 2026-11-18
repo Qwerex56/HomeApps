@@ -14,6 +14,8 @@ public sealed partial record CapabilityDefinition(
     string Name, int Version, string? Description, IReadOnlyList<CapabilityField> Fields, IReadOnlyList<string> AnyOf)
 {
     public const int MaxFields = 30;
+    public const int MaxVersion = 10000;
+    public const int MaxDescription = 300;
 
     /// <summary>Parses <c>{ version, description, anyOf, fields: [{ kind, name, value, required }] }</c>; <paramref name="problems"/> gets what is wrong.</summary>
     public static CapabilityDefinition? Parse(JsonElement json, string name, List<string> problems)
@@ -26,10 +28,10 @@ public sealed partial record CapabilityDefinition(
             return null;
         }
 
-        var version = json.TryGetProperty("version", out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out var n) && n >= 1 ? n : 0;
+        var version = json.TryGetProperty("version", out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out var n) && n >= 1 && n <= MaxVersion ? n : 0;
         if (version == 0)
         {
-            problems.Add($"capability '{name}': definition.version must be an integer of at least 1");
+            problems.Add($"capability '{name}': definition.version must be an integer from 1 to {MaxVersion}");
         }
 
         var fields = new List<CapabilityField>();
@@ -58,20 +60,41 @@ public sealed partial record CapabilityDefinition(
             }
         }
 
+        if (fields.Count == 0 && name.Contains('/', StringComparison.Ordinal))
+        {
+            problems.Add($"capability '{name}': definition needs at least one field");
+        }
+
         if (fields.Count > MaxFields || fields.Select(f => (f.Kind, f.Name)).Distinct().Count() != fields.Count)
         {
             problems.Add($"capability '{name}': definition has at most {MaxFields} fields, each once");
         }
 
-        var anyOf = json.TryGetProperty("anyOf", out var any) && any.ValueKind == JsonValueKind.Array
-            ? any.EnumerateArray().Select(e => e.GetString() ?? string.Empty).ToList()
-            : [];
+        var anyOf = new List<string>();
+        if (json.TryGetProperty("anyOf", out var any) && any.ValueKind == JsonValueKind.Array)
+        {
+            var items = any.EnumerateArray().ToList();
+            if (items.Count > MaxFields || items.Exists(e => e.ValueKind != JsonValueKind.String))
+            {
+                problems.Add($"capability '{name}': anyOf is a list of field names (at most {MaxFields})");
+            }
+            else
+            {
+                anyOf.AddRange(items.Select(e => e.GetString() ?? string.Empty));
+            }
+        }
+
         if (anyOf.Exists(a => !fields.Exists(f => f.Name == a)))
         {
             problems.Add($"capability '{name}': anyOf names a field that is not defined");
         }
 
         var description = Text(json, "description");
+        if (description is { Length: > MaxDescription })
+        {
+            problems.Add($"capability '{name}': description is at most {MaxDescription} characters");
+        }
+
         return problems.Count > start ? null : new CapabilityDefinition(name, version, description, fields, anyOf);
     }
 

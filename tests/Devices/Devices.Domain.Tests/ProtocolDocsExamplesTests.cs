@@ -34,7 +34,7 @@ public sealed partial class ProtocolDocsExamplesTests
         var parsed = DescriptorParser.Parse(json);
 
         Assert.True(parsed.IsSuccess, string.Join("; ", parsed.Errors.Select(e => e.Message)));
-        var resolution = CapabilityResolver.Resolve(parsed.Value, CapabilityCatalog.BuiltIn);
+        var resolution = CapabilityResolver.Resolve(parsed.Value, CapabilityCatalog.BuiltIn, new Dictionary<string, RegisteredCapability>(), isHouseholdDevice: true);
         Assert.Empty(resolution.Warnings);
         Assert.Equal(parsed.Value.Capabilities.Count, resolution.Accepted.Count);
         Assert.Equal(parsed.Value.Roles.Count, resolution.Roles.Count);
