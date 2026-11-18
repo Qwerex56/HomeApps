@@ -5,6 +5,8 @@ using Devices.Application.HouseholdDevices.AddHouseholdDevice;
 using Devices.Application.HouseholdDevices.GetHouseholdDevices;
 using Devices.Application.HouseholdDevices.NewPairingCode;
 using Devices.Application.HouseholdDevices.PairDevice;
+using Devices.Application.HouseholdDevices.RenameDevice;
+using Devices.Application.HouseholdDevices.SetAdminNotes;
 using HomeApps.BuildingBlocks.Api.Endpoints;
 using HomeApps.BuildingBlocks.Api.Results;
 using MediatR;
@@ -13,7 +15,7 @@ namespace Devices.Api.Endpoints;
 
 /// <summary>
 /// A household's satellites (jarvis-satellites.md 3a, S-1a): the list for members, adding one and a new pairing code
-/// for admins, and pairing for the satellite itself (S-1b). Under <c>/devices</c>, since Traefik sends <c>/households</c> to Households.
+/// for admins, renaming and notes for JARVIS (admins), and pairing for the device itself (S-1b), with its descriptor. Under <c>/devices</c>, since Traefik sends <c>/households</c> to Households.
 /// </summary>
 internal sealed class HouseholdDevicesEndpoints : IEndpoint
 {
@@ -34,9 +36,18 @@ internal sealed class HouseholdDevicesEndpoints : IEndpoint
             .WithTags("Devices")
             .Produces<PairingCodeView>();
 
+        // D6: admins (and a person for their own computer) rename a device and write notes for JARVIS.
+        app.MapPut("/devices/{deviceId:guid}/name", async (Guid deviceId, RenameDeviceRequest body, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new RenameDeviceCommand(deviceId, body.Name), ct)).ToHttpResult())
+            .WithTags("Devices");
+
+        app.MapPut("/devices/{deviceId:guid}/notes", async (Guid deviceId, SetAdminNotesRequest body, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new SetAdminNotesCommand(deviceId, body.Notes), ct)).ToHttpResult())
+            .WithTags("Devices");
+
         // S13: the satellite has no account yet, only the code (8 of 31 characters, valid 10 minutes, one use).
         app.MapPost("/devices/pair", async (PairDeviceRequest body, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new PairDeviceCommand(body.Code), ct)).ToHttpResult())
+            (await sender.Send(new PairDeviceCommand(body.Code, body.Descriptor is { ValueKind: not System.Text.Json.JsonValueKind.Null } d ? d.GetRawText() : null), ct)).ToHttpResult())
             .AllowAnonymous()
             .WithTags("Devices")
             .Produces<PairedDeviceView>();
