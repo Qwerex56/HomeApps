@@ -89,6 +89,9 @@ namespace Households.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("InvitedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsDevice")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTimeOffset>("JoinedAt")
                         .HasColumnType("timestamp with time zone");
 

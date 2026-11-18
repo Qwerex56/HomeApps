@@ -24,7 +24,8 @@ public sealed record MyHouseholdView(Guid Id, string Name, string? Description, 
 
 /// <summary>
 /// M1. <see cref="Name"/> is the nickname or else the display name from Accounts (Q4). <see cref="IsActive"/> false:
-/// shown greyed out as "account inactive" (D6). <see cref="InvitedBy"/> per D3c.
+/// shown greyed out as "account inactive" (D6). <see cref="InvitedBy"/> per D3c. <see cref="IsDevice"/>: a household
+/// satellite (jarvis-satellites.md S13), managed on the Devices page.
 /// </summary>
 public sealed record MemberView(
     Guid UserId,
@@ -37,7 +38,8 @@ public sealed record MemberView(
     DateTimeOffset JoinedAt,
     Guid? InvitedBy,
     string? InvitedByName,
-    DateTimeOffset? AccessUntil);
+    DateTimeOffset? AccessUntil,
+    bool IsDevice = false);
 
 /// <summary>S5: my membership, for the front and for other services asking about the caller.</summary>
 public sealed record MyMembershipView(Guid HouseholdId, HouseholdRole Role, string? Nickname, DateTimeOffset JoinedAt, DateTimeOffset? AccessUntil);

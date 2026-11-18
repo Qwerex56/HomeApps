@@ -35,7 +35,7 @@ public sealed partial class Household
             RemoveMembership(existing, MemberLeftReason.Expired);
         }
 
-        if (_members.Count >= maxMembers)
+        if (_members.Count(m => !m.IsDevice) >= maxMembers)
         {
             return Result.Fail(HouseholdErrors.Full);
         }
@@ -77,6 +77,11 @@ public sealed partial class Household
         if (target is null)
         {
             return Result.Fail(HouseholdErrors.NotMember);
+        }
+
+        if (target.IsDevice)
+        {
+            return Result.Fail(HouseholdErrors.DeviceMember);
         }
 
         if (target.UserId == actor.Id || target.Role >= acting.Value.Role)
@@ -134,6 +139,11 @@ public sealed partial class Household
         if (target is null)
         {
             return Result.Fail(HouseholdErrors.NotMember);
+        }
+
+        if (target.IsDevice)
+        {
+            return Result.Fail(HouseholdErrors.DeviceMember);
         }
 
         if (target.Role == HouseholdRole.Owner)
@@ -247,6 +257,43 @@ public sealed partial class Household
         }
 
         return expired.Count;
+    }
+
+    /// <summary>
+    /// jarvis-satellites.md 3a (S13): Devices paired a satellite, which joins as a Member. It does not count towards
+    /// the member limit (it is not a person). A second delivery changes nothing.
+    /// </summary>
+    public Result AddDevice(Guid deviceId, TimeProvider time)
+    {
+        ArgumentNullException.ThrowIfNull(time);
+
+        if (Status == HouseholdStatus.Archived)
+        {
+            return Result.Fail(HouseholdErrors.NotFound);
+        }
+
+        if (MemberOf(deviceId) is { } existing)
+        {
+            return existing.IsDevice ? Result.Ok() : Result.Fail(HouseholdErrors.AlreadyMember);
+        }
+
+        var now = time.GetUtcNow();
+        _members.Add(Membership.CreateDevice(Id, deviceId, now));
+        Touch(now);
+        _domainEvents.Add(new MemberJoined(Id, deviceId, HouseholdRole.Member, null));
+        return Result.Ok();
+    }
+
+    /// <summary>S13: the satellite was removed or got a new pairing code. A second delivery changes nothing.</summary>
+    public void RemoveDevice(Guid deviceId, TimeProvider time)
+    {
+        ArgumentNullException.ThrowIfNull(time);
+
+        if (MemberOf(deviceId) is { IsDevice: true } device)
+        {
+            RemoveMembership(device, MemberLeftReason.Removed);
+            Touch(time.GetUtcNow());
+        }
     }
 
     private void RemoveMembership(Membership membership, MemberLeftReason reason)
