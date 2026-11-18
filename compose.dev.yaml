@@ -271,6 +271,7 @@ services:
       Devices__Resource: "https://app.localhost/jarvis/mcp"
       Devices__AuthUrl: "http://auth:8080"
       Devices__ClientSecret: ${DEVICES_CLIENT_SECRET:-development-only-devices-secret-0123456789}
+      Devices__Internal__ClientSecret: ${JARVIS_CLIENT_SECRET:-development-only-jarvis-secret-0123456789}
     depends_on:
       postgres:
         condition: service_healthy

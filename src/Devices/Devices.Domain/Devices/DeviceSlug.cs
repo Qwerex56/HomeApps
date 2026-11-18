@@ -12,11 +12,14 @@ public static class DeviceSlug
     public const int MaxLength = 36;
     private const string Fallback = "device";
 
+    /// <summary>The slug base of the <c>devices_describe</c> tool: no device takes it as it is (it gets <c>devices-2</c>).</summary>
+    private const string Reserved = "devices";
+
     public static string From(string name, IReadOnlyCollection<string> taken)
     {
         ArgumentNullException.ThrowIfNull(taken);
         var baseSlug = Slugify(name);
-        if (!taken.Contains(baseSlug, StringComparer.Ordinal))
+        if (baseSlug != Reserved && !taken.Contains(baseSlug, StringComparer.Ordinal))
         {
             return baseSlug;
         }

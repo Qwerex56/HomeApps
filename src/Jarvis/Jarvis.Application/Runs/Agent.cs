@@ -27,6 +27,7 @@ internal sealed partial class Agent(
     TimeProvider time,
     IRunFeed feed,
     IHouseholdCeilings ceilings,
+    IHouseholdDevices householdDevices,
     ILogger<Agent> logger)
 {
     public async Task<AnswerView> RunAsync(AskCommand command, Guid? streamId, CancellationToken cancellationToken)
@@ -50,7 +51,7 @@ internal sealed partial class Agent(
         try
         {
             var token = await delegation.TokenForAsync(command.UserId, command.Channel, $"run:{run.Id}", cancellationToken);
-            var prompt = Prompts.User(command.Text, command.HouseholdId, command.Context, time.GetLocalNow());
+            var prompt = Prompts.User(command.Text, command.HouseholdId, command.Context, time.GetLocalNow(), await DevicesAsync(command.HouseholdId, command.UserId, cancellationToken));
             await foreach (var said in brain.RunAsync(new BrainRequest(run.Id, Prompts.SystemFor(command.Channel), prompt, token), cancellationToken))
             {
                 if (said is BrainText piece)
@@ -77,6 +78,25 @@ internal sealed partial class Agent(
             .Select(c => ActionView.From(c, now))
             .ToList();
         return new AnswerView(run.Id, run.Response ?? Answers.Broken, actions);
+    }
+
+    /// <summary>
+    /// "Urządzenia w tym domu" (H-3c): only in a household context, and only while the household lets JARVIS use Devices (H-2); what Devices cannot say leaves it out.
+    /// </summary>
+    private async Task<string?> DevicesAsync(Guid? householdId, Guid userId, CancellationToken cancellationToken)
+    {
+        if (householdId is not { } household)
+        {
+            return null;
+        }
+
+        var ceiling = await ceilings.GetAsync(household, cancellationToken);
+        if (!ceiling.Enabled || !ceiling.Devices)
+        {
+            return null;
+        }
+
+        return await householdDevices.ListAsync(household, userId, cancellationToken) is { } devices ? DevicesSection.Build(devices) : null;
     }
 
     private async Task<string?> RefusalAsync(AskCommand command, CancellationToken cancellationToken)

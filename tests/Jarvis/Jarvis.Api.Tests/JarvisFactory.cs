@@ -30,6 +30,8 @@ public sealed class JarvisFactory : HomeAppsApiFactory<Program, JarvisDbContext>
 
     internal FakeCeilings Ceilings { get; } = new();
 
+    internal FakeHouseholdDevices Devices { get; } = new();
+
     internal FakeBrain Brain { get; } = new();
 
     internal FakeEars Ears { get; } = new();
@@ -88,6 +90,7 @@ public sealed class JarvisFactory : HomeAppsApiFactory<Program, JarvisDbContext>
         services.AddSingleton<ISpeechToText>(Ears);
         services.AddSingleton<ISpeakers>(Speakers);
         services.AddSingleton<IHouseholdCeilings>(Ceilings);
+        services.AddSingleton<IHouseholdDevices>(Devices);
         services.AddSingleton<ITextToSpeech, FakeVoice>();
         services.AddScoped<IEventBus>(sp => new RecordingEventBus(sp.GetRequiredService<MassTransit.IPublishEndpoint>(), Published));
         services.AddHttpClient(SourceConnector.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => new HostRouter(_hosts));

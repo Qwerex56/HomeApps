@@ -15,9 +15,11 @@ internal sealed class FakeDevices : IDeviceRepository
 
     public Task<Device?> FindByPairingCodeAsync(string pairingCodeHash, CancellationToken cancellationToken) => throw new NotSupportedException();
 
-    public Task<IReadOnlyList<Device>> OfOwnerAsync(Guid ownerId, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public Task<IReadOnlyList<Device>> OfOwnerAsync(Guid ownerId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<Device>>([.. All.Where(d => !d.IsHouseholdDevice && d.OwnerId == ownerId)]);
 
-    public Task<IReadOnlyList<Device>> OfHouseholdsAsync(IReadOnlyCollection<Guid> householdIds, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public Task<IReadOnlyList<Device>> OfHouseholdsAsync(IReadOnlyCollection<Guid> householdIds, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<Device>>([.. All.Where(d => d.HouseholdId is { } h && householdIds.Contains(h))]);
 
     public Task<IReadOnlyList<Device>> HeartbeatCandidatesAsync(CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<Device>>([.. All.Where(d => d is { IsPairedSatellite: true, IsDisabled: false, Descriptor: not null } && d.Purpose != DevicePurpose.Computer)]);

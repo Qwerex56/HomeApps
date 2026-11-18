@@ -214,6 +214,8 @@ services:
       Devices__Resource: "https://${HOMEAPPS_DOMAIN}/jarvis/mcp"
       # Household satellites get their identity from Auth with this service client (S13).
       Devices__ClientSecret: ${DEVICES_CLIENT_SECRET:?set DEVICES_CLIENT_SECRET in .env}
+      # JARVIS reads the household's devices for its prompt on /internal (H-3c), with its own service secret.
+      Devices__Internal__ClientSecret: ${JARVIS_CLIENT_SECRET:?set JARVIS_CLIENT_SECRET in .env}
     labels:
       - "traefik.enable=true"
       # Not /mcp: the MCP server is reached only inside the Docker network (through the JARVIS gateway).

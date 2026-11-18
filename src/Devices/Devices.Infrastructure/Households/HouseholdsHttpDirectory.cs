@@ -18,7 +18,13 @@ internal sealed class HouseholdsHttpDirectory(HttpClient http, IConfiguration co
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
 
-    public async Task<IReadOnlyList<Guid>> GetAdminIdsAsync(Guid householdId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<Guid>> GetAdminIdsAsync(Guid householdId, CancellationToken cancellationToken) =>
+        [.. (await PeopleAsync(householdId, cancellationToken)).Where(p => p.Role >= HouseholdRole.Admin).Select(p => p.UserId)];
+
+    public async Task<IReadOnlyList<Guid>> GetMemberIdsAsync(Guid householdId, CancellationToken cancellationToken) =>
+        [.. (await PeopleAsync(householdId, cancellationToken)).Select(p => p.UserId)];
+
+    private async Task<List<PersonResponse>> PeopleAsync(Guid householdId, CancellationToken cancellationToken)
     {
         using var response = await SendAsync($"internal/households/{householdId}/members", cancellationToken);
         if (response.StatusCode == HttpStatusCode.NotFound)
@@ -27,8 +33,7 @@ internal sealed class HouseholdsHttpDirectory(HttpClient http, IConfiguration co
         }
 
         response.EnsureSuccessStatusCode();
-        var people = await response.Content.ReadFromJsonAsync<List<PersonResponse>>(Json, cancellationToken) ?? [];
-        return [.. people.Where(p => p.Role >= HouseholdRole.Admin).Select(p => p.UserId)];
+        return await response.Content.ReadFromJsonAsync<List<PersonResponse>>(Json, cancellationToken) ?? [];
     }
 
     public async Task<EventRetention> GetEventRetentionAsync(Guid householdId, CancellationToken cancellationToken)

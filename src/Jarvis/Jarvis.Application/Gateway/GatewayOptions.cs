@@ -34,6 +34,10 @@ public sealed class GatewayOptions
     [Required]
     public string HouseholdsUrl { get; set; } = "http://households:8080";
 
+    /// <summary>Devices inside the Docker network: the household's devices for the prompt section and the voice check (H-3c). Its <c>Devices:Internal</c> secret is the same service secret.</summary>
+    [Required]
+    public string DevicesUrl { get; set; } = "http://devices:8080";
+
     /// <summary>The <c>Service</c> client in Auth's <c>Auth:Clients</c>.</summary>
     [Required]
     public string ClientId { get; set; } = "jarvis-service";

@@ -27,13 +27,18 @@ public static class Prompts
 
     public static string SystemFor(string channel) => channel == VoiceChannel ? System + Spoken : System;
 
-    public static string User(string text, Guid? householdId, IReadOnlyList<ContextLine> context, DateTimeOffset now)
+    public static string User(string text, Guid? householdId, IReadOnlyList<ContextLine> context, DateTimeOffset now, string? devices = null)
     {
         var prompt = new StringBuilder();
         prompt.AppendLine(CultureInfo.InvariantCulture, $"Teraz: {now:yyyy-MM-dd HH:mm} (czas serwera).");
         if (householdId is { } id)
         {
             prompt.AppendLine(CultureInfo.InvariantCulture, $"Dom, w którym jest osoba: {id}. Podawaj go jako argument household, chyba że prosi o inny.");
+        }
+
+        if (!string.IsNullOrEmpty(devices))
+        {
+            prompt.AppendLine(devices);
         }
 
         if (context.Count > 0)

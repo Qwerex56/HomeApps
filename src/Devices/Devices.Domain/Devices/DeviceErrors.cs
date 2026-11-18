@@ -7,6 +7,9 @@ public static class DeviceErrors
 {
     public static Error NotFound => new AppError("devices.not_found", "There is no such device.", ErrorKind.NotFound);
 
+    public static Error HouseholdRequired => new AppError(
+        "devices.household_required", "devices_describe needs the household (its id) to describe.", ErrorKind.Validation);
+
     public static Error Disabled => new AppError(
         "devices.disabled", "This device was removed; add it again to use it.", ErrorKind.Conflict);
 
@@ -83,4 +86,7 @@ public static class DeviceErrors
 
     public static Error MembersOnly => new AppError(
         "devices.members_only", "The history of a device's events is for the household's members.", ErrorKind.Forbidden);
+
+    public static Error MembersUnavailable => new AppError(
+        "devices.members_unavailable", "Households could not say who is in the household; try again in a moment.", ErrorKind.Conflict);
 }
