@@ -88,7 +88,7 @@ public sealed class PersistenceTests(PostgresFixture database) : IClassFixture<P
         var email = A.Unique("twice");
         await Saved(email);
 
-        await Assert.ThrowsAsync<DbUpdateException>(() => Saved(email));
+        await Assert.ThrowsAsync<ConcurrencyConflictException>(() => Saved(email));
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public sealed class PersistenceTests(PostgresFixture database) : IClassFixture<P
             }
             else
             {
-                await Assert.ThrowsAsync<DbUpdateException>(() => db.SaveChangesAsync());
+                await Assert.ThrowsAsync<ConcurrencyConflictException>(() => db.SaveChangesAsync());
             }
         }
     }
