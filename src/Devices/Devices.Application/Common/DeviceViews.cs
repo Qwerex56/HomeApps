@@ -19,5 +19,7 @@ internal static class DeviceViews
         device.LastSeenAt,
         [.. device.Actions.Select(a => new DeviceActionView(a.Name, a.Description, a.ReadOnly, a.Confirm, a.AutoApprove))],
         new DeviceDescriptorView(device.Descriptor is not null, device.Model, device.DescriptorVersion, device.Roles, device.Capabilities, device.Warnings),
-        includeNotes ? device.AdminNotes : null);
+        includeNotes ? device.AdminNotes : null,
+        device.JarvisMayControl,
+        device.JarvisAsks);
 }

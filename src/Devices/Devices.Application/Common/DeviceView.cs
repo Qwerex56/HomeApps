@@ -14,4 +14,6 @@ public sealed record DeviceView(
     DateTimeOffset LastSeenAt,
     IReadOnlyList<DeviceActionView> Actions,
     DeviceDescriptorView Descriptor,
-    string? AdminNotes);
+    string? AdminNotes,
+    bool JarvisMayControl = true,
+    bool JarvisAsks = true);

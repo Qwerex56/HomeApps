@@ -2,8 +2,10 @@ using HomeApps.BuildingBlocks.Application.Abstractions;
 
 namespace Devices.Application.Tests.Fakes;
 
-internal sealed class FakeUser(Guid id) : ICurrentUser
+internal sealed class FakeUser(Guid id, bool delegated = false) : ICurrentUser
 {
+    public bool IsDelegated => delegated;
+
     public bool IsAuthenticated => true;
 
     public Guid? UserId => id;

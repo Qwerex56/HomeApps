@@ -7,6 +7,7 @@ using Devices.Application.HouseholdDevices.NewPairingCode;
 using Devices.Application.HouseholdDevices.PairDevice;
 using Devices.Application.HouseholdDevices.RenameDevice;
 using Devices.Application.HouseholdDevices.SetAdminNotes;
+using Devices.Application.HouseholdDevices.SetJarvisAccess;
 using HomeApps.BuildingBlocks.Api.Endpoints;
 using HomeApps.BuildingBlocks.Api.Results;
 using MediatR;
@@ -44,6 +45,11 @@ internal sealed class HouseholdDevicesEndpoints : IEndpoint
 
         app.MapPut("/devices/{deviceId:guid}/notes", async (Guid deviceId, SetAdminNotesRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(new SetAdminNotesCommand(deviceId, body.Notes), ct)).ToHttpResult())
+            .WithTags("Devices");
+
+        // D6: admins decide whether JARVIS may control the device and whether it asks first ("Nie pytaj").
+        app.MapPut("/devices/{deviceId:guid}/jarvis", async (Guid deviceId, SetJarvisAccessRequest body, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new SetJarvisAccessCommand(deviceId, body.MayControl, body.Asks), ct)).ToHttpResult())
             .WithTags("Devices");
 
         // S13: the satellite has no account yet, only the code (8 of 31 characters, valid 10 minutes, one use).

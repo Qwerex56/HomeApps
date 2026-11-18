@@ -6,8 +6,32 @@ namespace Jarvis.Api.Tests;
 /// <summary>H-3c: the "Urządzenia w tym domu" prompt section: budget, names only when too long, device text as sanitized data; and who counts as an assistant.</summary>
 public sealed class DevicesSectionTests
 {
-    private static HouseholdDevice Device(string name, string purpose = "smart_home", string? jarvis = null, string? notes = null, double? battery = null, bool silent = false) =>
-        new(Guid.NewGuid(), name, purpose, true, silent, false, battery, jarvis, notes);
+    private static HouseholdDevice Device(string name, string purpose = "smart_home", string? jarvis = null, string? notes = null, double? battery = null, bool silent = false, bool mayControl = true) =>
+        new(Guid.NewGuid(), name, purpose, true, silent, false, battery, jarvis, notes, mayControl);
+
+    [Fact]
+    public void A_device_JARVIS_may_not_control_says_so_and_others_do_not()
+    {
+        var section = DevicesSection.Build([Device("Fotel", mayControl: false), Device("Lampa")]);
+
+        Assert.Equal(2, section.Split("JARVIS nie może sterować").Length);
+        Assert.Contains("\"Fotel\" (smart_home; online, JARVIS nie może sterować)", section, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_names_only_fallback_still_marks_a_device_JARVIS_may_not_control()
+    {
+        var devices = Enumerable.Range(0, 40)
+            .Select(i => Device($"Urządzenie {i:00}", jarvis: new string('a', 400), mayControl: i != 1))
+            .ToList();
+
+        var section = DevicesSection.Build(devices);
+
+        Assert.Contains("Lista jest skrócona do nazw", section, StringComparison.Ordinal);
+        Assert.Contains("\"Urządzenie 01\" (smart_home; online, JARVIS nie może sterować)", section, StringComparison.Ordinal);
+        Assert.Contains("\"Urządzenie 00\" (smart_home; online)", section, StringComparison.Ordinal);
+        Assert.True(section.Length <= DevicesSection.MaxLength);
+    }
 
     [Fact]
     public void No_devices_no_section() => Assert.Empty(DevicesSection.Build([]));

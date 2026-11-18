@@ -80,4 +80,18 @@ public sealed class HttpContextCurrentUserTests
 
         Assert.Null(user.SatelliteHouseholdId);
     }
+
+    [Theory]
+    [InlineData("""{"sub":"jarvis"}""")]
+    [InlineData("""{"sub":"device"}""")]
+    public void A_token_with_an_act_claim_is_delegated(string actor) =>
+        Assert.True(For(Sub(), new Claim(ClaimNames.Actor, actor)).IsDelegated);
+
+    [Fact]
+    public void A_token_without_an_act_claim_is_not_delegated() =>
+        Assert.False(For(Sub(), new Claim(ClaimNames.Role, "User")).IsDelegated);
+
+    [Fact]
+    public void An_unauthenticated_caller_is_not_delegated() =>
+        Assert.False(For(authenticated: false, new Claim(ClaimNames.Actor, """{"sub":"jarvis"}""")).IsDelegated);
 }
