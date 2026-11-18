@@ -54,9 +54,23 @@ online devices are listed, and only in that person's runs.
 | DELETE | `/devices/{id}` | turn a device off (its link is dropped and it may not connect again) |
 | POST | `/devices/{id}/restore` | turn it back on |
 | PUT | `/devices/{id}/actions/{action}/allow` | `{"allowed": true}` = "Nie pytaj" for this action |
+| GET | `/devices/households/{householdId}` | the household's devices (any member) |
+| POST | `/devices/households/{householdId}` | `{"name": "salon"}`: add a satellite (admin), answers `{deviceId, name, code, expiresAt}` |
+| POST | `/devices/{id}/pairing-code` | a new code for a household device (admin); the old pairing ends |
 
-When an account is erased (`UserErased`), its devices go with it. Household devices, pairing codes and the GUI come in
-S-1.
+Removing, restoring and "Nie pytaj" work on a household device for the household's admins and owner. When an account
+is erased (`UserErased`), its own devices go with it; household devices it added stay with the household.
+
+## Household devices (S-1)
+
+A household admin adds a satellite by name and gets a one-time **pairing code**: 8 characters without look-alikes,
+valid for 10 minutes, stored only as SHA-256. Names are unique in the household. Until the device pairs it cannot
+connect (`devices.not_paired`). Members see the list; only admins change it; someone outside the household gets 404.
+Devices asks Households for roles with the caller's own token (`Devices:HouseholdsUrl`).
+
+JARVIS sees the online devices of every household the person is in next to their own (S3); when two have the same
+name, the person's own device wins. Pairing (`/devices/pair`), the satellite's own identity as a household member and
+the GUI follow in S-1b to S-1e.
 
 ## The bridge's actions
 
