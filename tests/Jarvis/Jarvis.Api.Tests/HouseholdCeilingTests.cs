@@ -28,6 +28,28 @@ public sealed class HouseholdCeilingTests
         Assert.False(ceiling.ReadOnly);
     }
 
+    [Theory]
+    [InlineData("All")]
+    [InlineData("all")]
+    [InlineData("Plugins, All")]
+    public void All_allows_every_source(string sources)
+    {
+        var ceiling = HouseholdCeiling.From(true, "Member", sources);
+
+        Assert.True(ceiling.Allows(Source(ToolSourceKind.Plugins)));
+        Assert.True(ceiling.Allows(Source(ToolSourceKind.HomeMix)));
+        Assert.True(ceiling.Allows(Source(ToolSourceKind.Devices)));
+    }
+
+    [Fact]
+    public void Unavailable_is_as_closed_as_closed_but_distinct()
+    {
+        Assert.False(HouseholdCeiling.Unavailable.Allows(Source(ToolSourceKind.Plugins)));
+        Assert.True(HouseholdCeiling.Unavailable.ReadOnly);
+        Assert.True(HouseholdCeiling.Unavailable.SettingsUnavailable);
+        Assert.False(HouseholdCeiling.Closed.SettingsUnavailable);
+    }
+
     [Fact]
     public void A_disabled_assistant_leaves_only_the_core_sources()
     {

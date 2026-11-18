@@ -23,6 +23,10 @@ internal sealed class Caller(IHttpContextAccessor accessor, IDelegation delegati
         User.HasClaim(c => c.Type == ClaimNames.Actor)
         && Guid.TryParse(Context.Request.Headers[RunHeader.Name].ToString(), out var run) ? run : null;
 
+    /// <summary>The household a satellite's own token is fixed to (<c>household_id</c>); such a caller acts only there.</summary>
+    public Guid? HouseholdClaim =>
+        Guid.TryParse(User.FindFirst(ClaimNames.Household)?.Value, out var household) ? household : null;
+
     private HttpContext Context =>
         accessor.HttpContext ?? throw new InvalidOperationException("The gateway runs only inside an HTTP request.");
 

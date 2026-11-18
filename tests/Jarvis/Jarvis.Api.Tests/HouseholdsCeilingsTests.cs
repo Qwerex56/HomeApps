@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace Jarvis.Api.Tests;
 
-/// <summary>H-2: Households' assistant view is kept 45 seconds; a 404 counts as closed and is kept, a failure closes without being kept.</summary>
+/// <summary>H-2: Households' assistant view is kept 45 seconds; a 404 counts as closed and is kept, a failure is unavailable and kept only briefly (5 s).</summary>
 public sealed class HouseholdsCeilingsTests
 {
     private static readonly Guid Household = Guid.NewGuid();
@@ -24,11 +24,12 @@ public sealed class HouseholdsCeilingsTests
         }
     }
 
-    private static HouseholdsCeilings Ceilings(Handler handler) => new(
+    private static HouseholdsCeilings Ceilings(Handler handler, TimeSpan? failureLifetime = null) => new(
         new HttpClient(handler),
         Options.Create(new GatewayOptions { HouseholdsUrl = "http://households:8080/", ClientId = "jarvis-service", ClientSecret = "s3cret" }),
         new MemoryCache(new MemoryCacheOptions()),
-        NullLogger<HouseholdsCeilings>.Instance);
+        NullLogger<HouseholdsCeilings>.Instance,
+        failureLifetime);
 
     private static HttpResponseMessage Json(string body) =>
         new(HttpStatusCode.OK) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
@@ -68,26 +69,39 @@ public sealed class HouseholdsCeilingsTests
     [Theory]
     [InlineData(HttpStatusCode.InternalServerError)]
     [InlineData(HttpStatusCode.Unauthorized)]
-    public async Task A_failure_closes_the_household_but_is_not_kept(HttpStatusCode status)
+    public async Task A_failure_is_unavailable_and_kept_only_briefly(HttpStatusCode status)
     {
         var handler = new Handler(_ => new HttpResponseMessage(status));
         var ceilings = Ceilings(handler);
 
-        Assert.Same(HouseholdCeiling.Closed, await ceilings.GetAsync(Household, CancellationToken.None));
-        Assert.Same(HouseholdCeiling.Closed, await ceilings.GetAsync(Household, CancellationToken.None));
-        Assert.Equal(2, handler.Requests.Count);
+        Assert.Same(HouseholdCeiling.Unavailable, await ceilings.GetAsync(Household, CancellationToken.None));
+        Assert.Same(HouseholdCeiling.Unavailable, await ceilings.GetAsync(Household, CancellationToken.None));
+        Assert.Single(handler.Requests);
     }
 
     [Fact]
-    public async Task A_network_error_closes_the_household_and_the_next_call_asks_again()
+    public async Task A_network_error_is_asked_again_once_its_short_lifetime_passed()
     {
         var calls = 0;
         var handler = new Handler(_ => ++calls == 1
             ? throw new HttpRequestException("down")
             : Json("""{"enabled":true,"accessLevel":"Member","toolSources":"HomeMix"}"""));
-        var ceilings = Ceilings(handler);
+        var ceilings = Ceilings(handler, TimeSpan.FromMilliseconds(50));
 
-        Assert.Same(HouseholdCeiling.Closed, await ceilings.GetAsync(Household, CancellationToken.None));
+        Assert.Same(HouseholdCeiling.Unavailable, await ceilings.GetAsync(Household, CancellationToken.None));
+        await Task.Delay(150);
         Assert.True((await ceilings.GetAsync(Household, CancellationToken.None)).HomeMix);
+    }
+
+    [Fact]
+    public async Task The_default_enum_name_All_allows_every_source()
+    {
+        var ceilings = Ceilings(new Handler(_ => Json("""{"enabled":true,"accessLevel":"Member","toolSources":"All"}""")));
+
+        var ceiling = await ceilings.GetAsync(Household, CancellationToken.None);
+
+        Assert.True(ceiling.Plugins);
+        Assert.True(ceiling.HomeMix);
+        Assert.True(ceiling.Devices);
     }
 }
