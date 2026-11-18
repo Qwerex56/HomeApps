@@ -13,6 +13,9 @@ public static class FrameValidation
     public const int MaxStateLength = 16_000;
     public const int MaxEventDataLength = 4_000;
 
+    /// <summary>PostgreSQL text cannot hold NUL, so the raw payload (the character or its <c>\u0000</c> escape) is refused.</summary>
+    private static bool HasNul(string raw) => raw.Contains('\0', StringComparison.Ordinal) || raw.Contains("\\u0000", StringComparison.OrdinalIgnoreCase);
+
     /// <summary>A state frame: every name is a control or a sensor of the descriptor and its value fits that schema.</summary>
     public static Result CheckState(DeviceDescriptor descriptor, JsonElement? values)
     {
@@ -20,6 +23,11 @@ public static class FrameValidation
         if (values is not { ValueKind: JsonValueKind.Object } state || !state.EnumerateObject().Any() || state.GetRawText().Length > MaxStateLength)
         {
             return Fail($"values must be a JSON object with at least one value, at most {MaxStateLength} characters");
+        }
+
+        if (HasNul(state.GetRawText()))
+        {
+            return Fail("values must not contain NUL characters");
         }
 
         var problems = new List<string>();
@@ -70,6 +78,11 @@ public static class FrameValidation
 
         if (data is { ValueKind: not JsonValueKind.Null } payload)
         {
+            if (HasNul(payload.GetRawText()))
+            {
+                return Fail("data must not contain NUL characters");
+            }
+
             if (payload.GetRawText().Length > MaxEventDataLength)
             {
                 return Fail($"data is at most {MaxEventDataLength} characters");

@@ -105,6 +105,11 @@ internal sealed class ProcessFramesHandler(
         stream.Publish(new DeviceStreamMessage(
             device.HouseholdId!.Value, "status",
             new { deviceId = device.Id, silent = false, battery = state.Battery, voltage = state.Voltage, rssi = state.Rssi, uptime = state.Uptime, firmware = state.Firmware, error = state.Error, at = now }));
+        if (outcome.Returned)
+        {
+            await notices.SendAsync(device, "silent", "Urządzenie znów zgłasza stan.", cancellationToken);
+        }
+
         if (outcome.BatteryLow)
         {
             await notices.SendAsync(device, "battery", $"Niski poziom baterii: {state.Battery:0}%.", cancellationToken);
