@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Devices domain: the devices of a person (later of a household) and the actions they offer JARVIS. Only the kit's domain building blocks and FluentResults. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Domain\HomeApps.BuildingBlocks.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentResults" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Devices.Domain.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -90,6 +90,16 @@
 		<Project Path="tests/Notifications/Notifications.Infrastructure.Tests/Notifications.Infrastructure.Tests.csproj" />
 	</Folder>
 
+	<Folder Name="/Devices/">
+		<Project Path="src/Devices/Devices.Api/Devices.Api.csproj" />
+		<Project Path="src/Devices/Devices.Application/Devices.Application.csproj" />
+		<Project Path="src/Devices/Devices.Domain/Devices.Domain.csproj" />
+		<Project Path="src/Devices/Devices.Infrastructure/Devices.Infrastructure.csproj" />
+	</Folder>
+	<Folder Name="/Devices/tests/">
+		<Project Path="tests/Devices/Devices.Api.Tests/Devices.Api.Tests.csproj" />
+		<Project Path="tests/Devices/Devices.Domain.Tests/Devices.Domain.Tests.csproj" />
+	</Folder>
 	<Folder Name="/HomeMix/">
 		<Project Path="src/HomeMix/HomeMix.Api/HomeMix.Api.csproj" />
 		<Project Path="src/HomeMix/HomeMix.Application/HomeMix.Application.csproj" />

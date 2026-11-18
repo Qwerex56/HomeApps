@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Devices.Infrastructure\Devices.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Mcp\HomeApps.BuildingBlocks.Mcp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Devices.Api.Tests" />
+  </ItemGroup>
+
+</Project>
