@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Devices.Domain.Capabilities;
 using Devices.Domain.Descriptors;
+using Devices.Domain.Devices;
 
 namespace Devices.Domain.Tests;
 
@@ -40,7 +41,70 @@ public sealed partial class ProtocolDocsExamplesTests
         Assert.Equal(parsed.Value.Roles.Count, resolution.Roles.Count);
     }
 
-    private static List<string> Descriptors()
+    [Fact]
+    public void The_documented_state_set_and_event_frames_fit_the_armchair_descriptor()
+    {
+        var chair = DescriptorParser.Parse(Descriptor("qwerex56/fotel-v1")).Value;
+
+        var state = Frame("state");
+        Assert.True(FrameValidation.CheckState(chair, state.GetProperty("values")).IsSuccess);
+
+        var set = Frame("set");
+        Assert.True(FrameValidation.CheckSet(chair, set.GetProperty("name").GetString(), set.GetProperty("value")).IsSuccess);
+
+        var @event = Frame("event");
+        Assert.True(FrameValidation.CheckEvent(chair, @event.GetProperty("name").GetString(), @event.GetProperty("data")).IsSuccess);
+        Assert.True(DateTimeOffset.TryParse(@event.GetProperty("at").GetString(), out _));
+    }
+
+    [Fact]
+    public void The_documented_status_frame_is_a_valid_heartbeat()
+    {
+        var status = Frame("status");
+
+        var report = new StatusReport(
+            status.GetProperty("battery").GetDouble(), status.GetProperty("voltage").GetDouble(), status.GetProperty("rssi").GetInt32(),
+            status.GetProperty("uptime").GetInt64(), status.GetProperty("firmware").GetString(), null);
+
+        Assert.True(report.Check().IsSuccess);
+    }
+
+    [Fact]
+    public void The_documented_report_fits_the_weather_station_descriptor()
+    {
+        var station = DescriptorParser.Parse(Descriptor("qwerex56/stacja-v2")).Value;
+        var report = Blocks().Select(b => JsonDocument.Parse(b).RootElement)
+            .Single(r => r.ValueKind == JsonValueKind.Array && r.GetArrayLength() > 0 && r[0].TryGetProperty("type", out _));
+
+        Assert.InRange(report.GetArrayLength(), 1, 50);
+        foreach (var frame in report.EnumerateArray())
+        {
+            switch (frame.GetProperty("type").GetString())
+            {
+                case "state":
+                    Assert.True(FrameValidation.CheckState(station, frame.GetProperty("values")).IsSuccess);
+                    break;
+                case "event":
+                    frame.TryGetProperty("data", out var data);
+                    Assert.True(FrameValidation.CheckEvent(station, frame.GetProperty("name").GetString(), data.ValueKind == JsonValueKind.Undefined ? null : data).IsSuccess);
+                    break;
+                case "status":
+                    var battery = frame.GetProperty("battery").GetDouble();
+                    Assert.True(new StatusReport(battery, null, frame.GetProperty("rssi").GetInt32(), null, null, null).Check().IsSuccess);
+                    break;
+                default:
+                    Assert.Fail("unknown frame type in the documented report");
+                    break;
+            }
+        }
+    }
+
+    private static string Descriptor(string model) => Descriptors().Single(d => d.Contains($"\"{model}\"", StringComparison.Ordinal));
+
+    private static JsonElement Frame(string type) => Blocks().Select(b => JsonDocument.Parse(b).RootElement.Clone())
+        .Single(r => r.ValueKind == JsonValueKind.Object && r.TryGetProperty("type", out var t) && t.GetString() == type);
+
+    private static List<string> Blocks()
     {
         var directory = AppContext.BaseDirectory;
         while (directory is not null && !File.Exists(Path.Combine(directory, "HomeApps.slnx")))
@@ -50,10 +114,14 @@ public sealed partial class ProtocolDocsExamplesTests
 
         Assert.NotNull(directory);
         var text = File.ReadAllText(Path.Combine(directory, "docs", "devices-protocol.md"));
+        return JsonBlock().Matches(text).Select(m => m.Groups[1].Value).ToList();
+    }
+
+    private static List<string> Descriptors()
+    {
         var result = new List<string>();
-        foreach (Match block in JsonBlock().Matches(text))
+        foreach (var json in Blocks())
         {
-            var json = block.Groups[1].Value;
             using var document = JsonDocument.Parse(json);
             if (document.RootElement is { ValueKind: JsonValueKind.Object } root && root.TryGetProperty("format", out _))
             {
