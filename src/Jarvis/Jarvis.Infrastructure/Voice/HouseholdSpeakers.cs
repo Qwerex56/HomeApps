@@ -1,7 +1,5 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using Jarvis.Application.Common;
 using Jarvis.Application.Gateway;
 using Jarvis.Application.Voice;
 using Microsoft.Extensions.Options;
@@ -9,21 +7,21 @@ using Microsoft.Extensions.Options;
 namespace Jarvis.Infrastructure.Voice;
 
 /// <summary>
-/// The household's people from Households (<c>GET /households/{id}/members</c> with the satellite's delegated token),
-/// narrowed by the spoken name, then Auth's <c>POST /internal/devices/speaker</c> with JARVIS's service secret.
+/// The household's people from Households (<c>GET /internal/households/{id}/members</c> with JARVIS's service secret;
+/// a satellite is not a member, so it could not read <c>/members</c>), narrowed by the spoken name, then Auth's <c>POST /internal/devices/speaker</c> with JARVIS's service secret.
 /// </summary>
-internal sealed class HouseholdSpeakers(HttpClient http, IDelegation delegation, IOptions<GatewayOptions> options) : ISpeakers
+internal sealed class HouseholdSpeakers(HttpClient http, IOptions<GatewayOptions> options) : ISpeakers
 {
     public async Task<SpeakerMatch> IdentifyAsync(Guid deviceId, Guid householdId, string? name, string pin, CancellationToken cancellationToken)
     {
         var settings = options.Value;
-        var token = await delegation.TokenForAsync(deviceId, Prompts.VoiceChannel, $"device/{deviceId}", cancellationToken);
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"{settings.HouseholdsUrl.TrimEnd('/')}/households/{householdId}/members");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"{settings.HouseholdsUrl.TrimEnd('/')}/internal/households/{householdId}/members");
+        request.Headers.Add("X-Client-Id", settings.ClientId);
+        request.Headers.Add("X-Client-Secret", settings.ClientSecret);
         using var listed = await http.SendAsync(request, cancellationToken);
         listed.EnsureSuccessStatusCode();
         var people = (await listed.Content.ReadFromJsonAsync<List<Member>>(cancellationToken) ?? [])
-            .Where(m => m is { IsActive: true, IsDevice: false })
+            .Where(m => m.IsActive)
             .ToList();
         var named = people.Where(m => PinIntro.SameName(name, m.Nickname) || PinIntro.SameName(name, m.DisplayName) || PinIntro.SameName(name, m.Name)).ToList();
         var candidates = named.Count > 0 ? named : people;
@@ -55,7 +53,7 @@ internal sealed class HouseholdSpeakers(HttpClient http, IDelegation delegation,
             : new SpeakerMatch(SpeakerOutcome.Unknown);
     }
 
-    private sealed record Member(Guid UserId, string Name, string? Nickname, string DisplayName, bool IsActive, bool IsDevice);
+    private sealed record Member(Guid UserId, string Name, string? Nickname, string DisplayName, bool IsActive);
 
     private sealed record Speaker(Guid? UserId);
 }

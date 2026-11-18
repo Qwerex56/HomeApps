@@ -26,10 +26,6 @@ public static class HouseholdErrors
 
     public static Error NotMember => new AppError("household.not_member", "This person is not a member of the household.", ErrorKind.NotFound);
 
-    /// <summary>S13: a household satellite is added and removed only on the Devices page.</summary>
-    public static Error DeviceMember => new AppError("household.device_member",
-        "This member is a household device; manage it on the Devices page.", ErrorKind.Conflict);
-
     public static Error Forbidden => new AppError("household.forbidden", "Your role in this household does not allow this.", ErrorKind.Forbidden);
 
     public static Error AlreadyMember => new AppError("household.already_member", "You are already a member of this household.", ErrorKind.Conflict);

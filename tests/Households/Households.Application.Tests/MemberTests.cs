@@ -1,4 +1,6 @@
+using Households.Application.Households;
 using Households.Application.Members;
+using Households.Application.Members.ListHouseholdPeople;
 using Households.Domain.Households;
 using Contracts = HomeApps.Contracts.Households;
 
@@ -33,6 +35,25 @@ public sealed class MemberTests
         Assert.Equal("household.forbidden", (await w.Send(new ListMembersQuery(f.Id))).Code());
         w.SignInAs(Guid.NewGuid());
         Assert.Equal("household.not_found", (await w.Send(new ListMembersQuery(f.Id))).Code());
+    }
+
+    [Fact]
+    public async Task H0_PeopleForTheServiceNeedNoMembershipAndSkipExpiredGuests()
+    {
+        using var w = new World();
+        var f = await w.Family();
+        await w.Join(f.Owner, f.Id, "Expired", HouseholdRole.Guest, w.Time.Now.AddHours(3));
+        w.Time.Advance(TimeSpan.FromHours(4));
+        w.SignInAs(Guid.NewGuid());
+
+        var people = (await w.Send(new ListHouseholdPeopleQuery(f.Id))).Value;
+
+        Assert.Equal(["Ola", "Adam", "Marek", "Gosia"], people.Select(m => m.DisplayName));
+        Assert.Equal("household.not_found", (await w.Send(new ListHouseholdPeopleQuery(Guid.NewGuid()))).Code());
+        w.SignInAs(f.Owner);
+        Assert.True((await w.Send(new ArchiveHouseholdCommand(f.Id))).IsSuccess);
+        w.SignInAs(Guid.NewGuid());
+        Assert.Equal("household.not_found", (await w.Send(new ListHouseholdPeopleQuery(f.Id))).Code());
     }
 
     [Fact]

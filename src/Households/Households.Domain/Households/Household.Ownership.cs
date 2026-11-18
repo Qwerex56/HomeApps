@@ -26,7 +26,7 @@ public sealed partial class Household
             return Result.Fail(HouseholdErrors.NotMember);
         }
 
-        if (target.IsDevice || target.Role is not (HouseholdRole.Member or HouseholdRole.Admin))
+        if (target.Role is not (HouseholdRole.Member or HouseholdRole.Admin))
         {
             return Result.Fail(HouseholdErrors.TransferTargetInvalid);
         }
@@ -124,7 +124,7 @@ public sealed partial class Household
     /// <summary>D5: oldest active Admin, then oldest active Member; guests and inactive accounts never (D6).</summary>
     private Membership? Successor(Guid leavingOwnerId, Func<Guid, bool> isActive, DateTimeOffset now) =>
         _members
-            .Where(m => m.UserId != leavingOwnerId && !m.IsDevice && m.Role is HouseholdRole.Admin or HouseholdRole.Member)
+            .Where(m => m.UserId != leavingOwnerId && m.Role is HouseholdRole.Admin or HouseholdRole.Member)
             .Where(m => m.HasAccess(now) && isActive(m.UserId))
             .OrderByDescending(m => m.Role)
             .ThenBy(m => m.JoinedAt)
