@@ -2,6 +2,7 @@ using FluentResults;
 using HomeApps.BuildingBlocks.Application.Messaging;
 using Households.Application.Abstractions;
 using Households.Application.Common;
+using Households.Domain.Households;
 using Households.Domain.Users;
 
 namespace Households.Application.Members.ListHouseholdPeople;
@@ -15,6 +16,11 @@ internal sealed class ListHouseholdPeopleHandler(IHouseholdRepository households
         if (found.IsFailed)
         {
             return found.ToResult<IReadOnlyList<MemberView>>();
+        }
+
+        if (found.Value.Status == HouseholdStatus.Archived)
+        {
+            return Result.Fail<IReadOnlyList<MemberView>>(HouseholdErrors.NotFound);
         }
 
         var now = time.GetUtcNow();
