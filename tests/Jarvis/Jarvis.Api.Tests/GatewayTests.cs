@@ -1,6 +1,8 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using HomeApps.BuildingBlocks.Testing;
+using Jarvis.Application.Gateway;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 
@@ -88,6 +90,56 @@ public sealed class GatewayTests(JarvisFactory factory)
         Assert.Equal("homemix:homemix://pomodoro/summary", resource.Uri);
         var text = Assert.IsType<TextResourceContents>(Assert.Single(read.Contents));
         Assert.Equal(("3 sessions today", "homemix:homemix://pomodoro/summary"), (text.Text, text.Uri));
+    }
+
+    [Fact]
+    public async Task In_a_household_run_without_plugins_no_plugin_tool_is_offered_or_called()
+    {
+        var household = Guid.NewGuid();
+        factory.Ceilings.Set[household] = new HouseholdCeiling(true, false, false, true, true);
+        IReadOnlyList<string> listed = [];
+        (string Text, bool IsError) called = default;
+        factory.Brain.Script = async mcp =>
+        {
+            listed = [.. (await mcp.ListToolsAsync()).Select(t => t.Name)];
+            called = await mcp.CallTextAsync("todo_my_tasks", new Dictionary<string, object?>());
+            return "Gotowe.";
+        };
+
+        var response = await factory.CreateAuthenticatedClient(_person)
+            .PostAsJsonAsync("/jarvis/api/ask", new { text = "co mam do zrobienia?", householdId = household });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.DoesNotContain(listed, name => name.StartsWith("todo_", StringComparison.Ordinal));
+        Assert.Contains("households_my_households", listed);
+        Assert.True(called.IsError);
+        Assert.Contains("do not allow", called.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_call_naming_a_read_only_household_cannot_change_anything()
+    {
+        var household = Guid.NewGuid();
+        factory.Ceilings.Set[household] = new HouseholdCeiling(true, true, true, true, true);
+        await using var mcp = await Connect(TestJwt.CreateToken(_person));
+
+        var change = await mcp.CallTextAsync("todo_add_task", new Dictionary<string, object?> { ["title"] = "Mleko", ["householdId"] = household.ToString() });
+        var look = await mcp.CallTextAsync("todo_my_tasks", new Dictionary<string, object?> { ["householdId"] = household.ToString() });
+
+        Assert.True(change.IsError);
+        Assert.Contains("read-only", change.Text, StringComparison.Ordinal);
+        Assert.False(look.IsError);
+    }
+
+    [Fact]
+    public async Task A_household_given_by_name_is_refused()
+    {
+        await using var mcp = await Connect(TestJwt.CreateToken(_person));
+
+        var refused = await mcp.CallTextAsync("todo_my_tasks", new Dictionary<string, object?> { ["household"] = "Dom X" });
+
+        Assert.True(refused.IsError);
+        Assert.Contains("household's id", refused.Text, StringComparison.Ordinal);
     }
 
     private Task<McpClient> Connect(string token) => McpTestClient.ConnectAsync(factory.CreateClient(token), Endpoint);
