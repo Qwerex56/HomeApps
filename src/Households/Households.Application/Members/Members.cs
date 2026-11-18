@@ -50,7 +50,7 @@ internal sealed class ListMembersHandler(IHouseholdRepository households, IUserC
                 string? invitedByName = m.InvitedBy is { } by && copies.TryGetValue(by, out var inviter) ? inviter.DisplayName : null;
                 return new MemberView(
                     m.UserId, m.Nickname?.Value ?? displayName, m.Nickname?.Value, displayName, user?.AvatarUrl, m.Role,
-                    user?.IsActive ?? true, m.JoinedAt, m.InvitedBy, invitedByName, m.AccessUntil, m.IsDevice);
+                    user?.IsActive ?? true, m.JoinedAt, m.InvitedBy, invitedByName, m.AccessUntil);
             })
             .ToList();
     }
