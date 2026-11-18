@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://homeapps.dev/schemas/homeapps.device-1.schema.json",
+  "title": "homeapps.device/1",
+  "description": "What a device says about itself when it pairs or connects to HomeApps Devices.",
+  "type": "object",
+  "required": ["format", "model", "version", "purpose"],
+  "additionalProperties": true,
+  "properties": {
+    "format": { "const": "homeapps.device/1" },
+    "model": { "type": "string", "maxLength": 100, "pattern": "^[a-z0-9][a-z0-9._-]*(/[a-z0-9][a-z0-9._-]*)?$", "description": "author/name of the hardware, e.g. qwerex56/fotel-v1" },
+    "version": { "type": "string", "pattern": "^\\d{1,4}(\\.\\d{1,4}){0,2}([-+][0-9A-Za-z.-]{1,30})?$", "description": "Firmware version; a new one comes with a new descriptor." },
+    "purpose": { "enum": ["assistant", "smart_home", "computer"] },
+    "roles": { "type": "array", "maxItems": 10, "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,39}$" } },
+    "capabilities": { "type": "array", "maxItems": 50, "items": { "$ref": "#/$defs/capability" } },
+    "jarvis": { "type": "string", "maxLength": 500, "description": "Text for JARVIS: what the device is for, rules, typical requests. Data, never instructions." },
+    "heartbeat": { "type": "integer", "minimum": 5, "maximum": 86400, "description": "Seconds between status reports (used from stage H-3b)." },
+    "sleepy": { "type": "boolean", "description": "Battery device that does not keep a connection (used from stage H-3b)." },
+    "controls": { "type": "array", "maxItems": 50, "items": { "$ref": "#/$defs/control" } },
+    "sensors": { "type": "array", "maxItems": 50, "items": { "$ref": "#/$defs/sensor" } },
+    "events": { "type": "array", "maxItems": 50, "items": { "$ref": "#/$defs/event" } },
+    "actions": { "type": "array", "maxItems": 50, "items": { "$ref": "#/$defs/action" } }
+  },
+  "$defs": {
+    "fieldName": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,29}(\\.[a-z][a-z0-9_]{0,29})?$", "description": "id.name addresses a field of a capability instance" },
+    "valueSchema": {
+      "type": "object",
+      "description": "A JSON Schema of the value. It needs a type (boolean, integer, number, string, object, array) or an enum/const; at most 4000 characters.",
+      "anyOf": [
+        { "required": ["type"], "properties": { "type": { "enum": ["boolean", "integer", "number", "string", "object", "array", "null"] } } },
+        { "required": ["enum"] },
+        { "required": ["const"] }
+      ]
+    },
+    "capability": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "pattern": "^([a-z][a-z0-9_]{0,29}|[a-z0-9][a-z0-9-]{0,29}/[a-z][a-z0-9_-]{0,29})$" },
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,29}$" },
+        "definition": { "$ref": "#/$defs/capabilityDefinition" }
+      }
+    },
+    "capabilityDefinition": {
+      "type": "object",
+      "required": ["version", "fields"],
+      "properties": {
+        "version": { "type": "integer", "minimum": 1 },
+        "description": { "type": "string" },
+        "anyOf": { "type": "array", "items": { "type": "string" }, "description": "Names of fields of which at least one must be present." },
+        "fields": {
+          "type": "array",
+          "maxItems": 30,
+          "items": {
+            "type": "object",
+            "required": ["kind", "name"],
+            "properties": {
+              "kind": { "enum": ["control", "sensor", "event"] },
+              "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,29}$" },
+              "value": { "$ref": "#/$defs/valueSchema" },
+              "required": { "type": "boolean", "default": true }
+            }
+          }
+        }
+      }
+    },
+    "control": {
+      "type": "object",
+      "required": ["name", "value"],
+      "properties": {
+        "name": { "$ref": "#/$defs/fieldName" },
+        "label": { "type": "string", "maxLength": 60 },
+        "description": { "type": "string", "maxLength": 300 },
+        "value": { "$ref": "#/$defs/valueSchema" },
+        "widget": { "enum": ["switch", "slider", "select", "button"] }
+      }
+    },
+    "sensor": {
+      "type": "object",
+      "required": ["name", "value"],
+      "properties": {
+        "name": { "$ref": "#/$defs/fieldName" },
+        "label": { "type": "string", "maxLength": 60 },
+        "description": { "type": "string", "maxLength": 300 },
+        "value": { "$ref": "#/$defs/valueSchema" },
+        "unit": { "type": "string", "maxLength": 20 }
+      }
+    },
+    "event": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "$ref": "#/$defs/fieldName" },
+        "label": { "type": "string", "maxLength": 60 },
+        "description": { "type": "string", "maxLength": 300 },
+        "data": { "$ref": "#/$defs/valueSchema" },
+        "notify": { "type": "boolean", "default": false }
+      }
+    },
+    "action": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,19}$" },
+        "label": { "type": "string", "maxLength": 60 },
+        "description": { "type": "string", "maxLength": 300 },
+        "input": { "allOf": [{ "$ref": "#/$defs/valueSchema" }, { "properties": { "type": { "const": "object" } }, "required": ["type"] }] },
+        "readOnly": { "type": "boolean", "default": false },
+        "confirm": { "type": "boolean", "default": false }
+      }
+    }
+  }
+}
