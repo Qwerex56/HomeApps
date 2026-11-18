@@ -12,7 +12,7 @@ using MediatR;
 namespace Jarvis.Application.Voice.VoiceTurn;
 
 /// <summary>
-/// Hears the turn, then either decides the actions waiting from the turn before ("tak" / "nie") or sends what was said
+/// Hears the turn (or takes the listener's own transcript), then either decides the actions waiting from the turn before ("tak" / "nie") or sends what was said
 /// to the conversation as a message. The answer, its card and the decisions stay in the conversation as text; the
 /// audio is never kept (V7).
 /// </summary>
@@ -25,7 +25,7 @@ internal sealed class VoiceTurnHandler(
 {
     public async Task<Result<VoiceTurnView>> Handle(VoiceTurnCommand command, CancellationToken cancellationToken)
     {
-        var transcript = (await ears.TranscribeAsync(command.Audio, command.SampleRate, cancellationToken)).Trim();
+        var transcript = (command.Text ?? await ears.TranscribeAsync(command.Audio, command.SampleRate, cancellationToken)).Trim();
         if (transcript.Length == 0)
         {
             return new VoiceTurnView(command.ConversationId, transcript, null);

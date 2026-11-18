@@ -71,6 +71,23 @@ public sealed class VoiceTests(JarvisFactory factory)
     }
 
     [Fact]
+    public async Task A_listener_with_its_own_speech_sends_text_and_gets_text_without_audio()
+    {
+        factory.Brain.Script = _ => Task.FromResult("Dodałem mleko. Coś jeszcze?");
+        using var socket = await ConnectAsync("?speech=local");
+
+        await SendAsync(socket, new { type = "say", text = "dodaj mleko do zakupów" });
+        var heard = await UntilDoneAsync(socket);
+
+        Assert.Equal(["transcript", "reply", "done"], heard.Select(Kind));
+        Assert.Equal("dodaj mleko do zakupów", heard[0].GetProperty("text").GetString());
+        Assert.Equal("Dodałem mleko. Coś jeszcze?", heard[1].GetProperty("text").GetString());
+
+        await SendAsync(socket, new { type = "start" });
+        Assert.Equal("voice.speech_local", (await ReceiveAsync(socket)).GetProperty("code").GetString());
+    }
+
+    [Fact]
     public async Task Silence_gets_an_empty_transcript_and_no_answer()
     {
         using var socket = await ConnectAsync();
@@ -109,12 +126,12 @@ public sealed class VoiceTests(JarvisFactory factory)
         Assert.Equal(["Dodałem mleko.", "Coś jeszcze?", "Tak!"], VoiceSession.Sentences("Dodałem mleko. Coś jeszcze?  Tak!"));
 
     /// <summary>Connects like the bridge: an app token from "Połączone aplikacje" for the gateway's resource.</summary>
-    private async Task<WebSocket> ConnectAsync()
+    private async Task<WebSocket> ConnectAsync(string query = "")
     {
         var client = factory.Server.CreateWebSocketClient();
         client.ConfigureRequest = request =>
             request.Headers.Authorization = $"Bearer {TestJwt.CreateAppToken(_person, JarvisFactory.Resource, "voice-bridge")}";
-        var socket = await client.ConnectAsync(new Uri("ws://localhost/jarvis/voice"), CancellationToken.None);
+        var socket = await client.ConnectAsync(new Uri("ws://localhost/jarvis/voice" + query), CancellationToken.None);
         await SendAsync(socket, new { type = "hello", device = "test" });
         Assert.Equal("ready", Kind(await ReceiveAsync(socket)));
         return socket;
@@ -126,7 +143,11 @@ public sealed class VoiceTests(JarvisFactory factory)
         await SendAsync(socket, new { type = "start" });
         await socket.SendAsync(new byte[3200], WebSocketMessageType.Binary, true, CancellationToken.None);
         await SendAsync(socket, new { type = "stop" });
+        return await UntilDoneAsync(socket);
+    }
 
+    private static async Task<List<JsonElement>> UntilDoneAsync(WebSocket socket)
+    {
         var heard = new List<JsonElement>();
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         while (heard.Count == 0 || Kind(heard[^1]) is not ("done" or "error"))

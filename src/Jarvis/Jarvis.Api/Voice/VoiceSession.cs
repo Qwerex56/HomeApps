@@ -16,9 +16,11 @@ namespace Jarvis.Api.Voice;
 /// socket is still read, so <c>cancel</c> (or a new <c>start</c>) stops JARVIS mid-answer. The answer comes back as
 /// <c>transcript</c>, <c>reply</c>, then <c>audio</c> + one WAV per sentence, then <c>done</c>; or <c>error</c>.
 /// The session remembers the conversation and what waits for "tak"/"nie"; the audio is dropped after each turn.
+/// With <paramref name="local"/> (<c>?speech=local</c>, S1) the listener hears and speaks itself: it sends
+/// <c>say</c> with the text and gets <c>transcript</c>, <c>reply</c> and <c>done</c> without audio.
 /// </summary>
 internal sealed partial class VoiceSession(
-    WebSocket socket, Guid userId, IServiceScopeFactory scopes, VoiceOptions options, ILogger<VoiceSession> logger) : IDisposable
+    WebSocket socket, Guid userId, bool local, IServiceScopeFactory scopes, VoiceOptions options, ILogger<VoiceSession> logger) : IDisposable
 {
     public const int SampleRate = 16_000;
 
@@ -107,6 +109,15 @@ internal sealed partial class VoiceSession(
                 _householdId = control.HouseholdId;
                 await SendAsync(new { type = "ready", conversationId = _conversationId }, CancellationToken.None);
                 break;
+            case "start" or "stop" when local:
+                await SendAsync(new { type = "error", code = "voice.speech_local" }, CancellationToken.None);
+                break;
+            case "say":
+                await StopTurnAsync();
+                _turn?.Dispose();
+                _turn = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                _running = TurnAsync([], control.Text ?? string.Empty, _turn.Token);
+                break;
             case "start":
                 await StopTurnAsync();
                 _audio.SetLength(0);
@@ -119,7 +130,7 @@ internal sealed partial class VoiceSession(
                 _audio.SetLength(0);
                 _turn?.Dispose();
                 _turn = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                _running = TurnAsync(audio, _turn.Token);
+                _running = TurnAsync(audio, null, _turn.Token);
                 break;
             case "cancel":
                 _recording = false;
@@ -132,9 +143,9 @@ internal sealed partial class VoiceSession(
         }
     }
 
-    private async Task TurnAsync(byte[] audio, CancellationToken cancellationToken)
+    private async Task TurnAsync(byte[] audio, string? text, CancellationToken cancellationToken)
     {
-        if (audio.Length == 0)
+        if (text is null ? audio.Length == 0 : string.IsNullOrWhiteSpace(text))
         {
             await SendAsync(new { type = "transcript", text = string.Empty }, cancellationToken);
             await SendAsync(new { type = "done" }, cancellationToken);
@@ -145,7 +156,7 @@ internal sealed partial class VoiceSession(
         {
             await using var scope = scopes.CreateAsyncScope();
             var sender = scope.ServiceProvider.GetRequiredService<ISender>();
-            var result = await sender.Send(new VoiceTurnCommand(userId, _conversationId, _householdId, audio, SampleRate, _pending), cancellationToken);
+            var result = await sender.Send(new VoiceTurnCommand(userId, _conversationId, _householdId, audio, SampleRate, _pending, text), cancellationToken);
             if (result.IsFailed)
             {
                 var error = result.Errors.OfType<AppError>().FirstOrDefault();
@@ -169,7 +180,7 @@ internal sealed partial class VoiceSession(
                 }, cancellationToken);
 
                 var voice = scope.ServiceProvider.GetRequiredService<ITextToSpeech>();
-                foreach (var sentence in Sentences(answer.Text))
+                foreach (var sentence in local ? [] : Sentences(answer.Text))
                 {
                     var wav = await voice.SpeakAsync(sentence, cancellationToken);
                     await SendAsync(new { type = "audio", format = "wav", text = sentence }, cancellationToken);
@@ -245,5 +256,5 @@ internal sealed partial class VoiceSession(
     [LoggerMessage(Level = LogLevel.Error, Message = "A voice turn failed.")]
     private partial void LogTurnFailed(Exception exception);
 
-    private sealed record Control(string? Type, Guid? ConversationId, Guid? HouseholdId);
+    private sealed record Control(string? Type, Guid? ConversationId, Guid? HouseholdId, string? Text);
 }
