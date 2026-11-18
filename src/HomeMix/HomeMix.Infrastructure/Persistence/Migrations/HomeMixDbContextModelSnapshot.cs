@@ -181,6 +181,13 @@ namespace HomeMix.Infrastructure.Persistence.Migrations
                         .HasColumnType("text[]")
                         .HasColumnName("Capabilities");
 
+                    b.Property<string>("_devicePicks")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("DevicePicks")
+                        .HasDefaultValueSql("'[]'::jsonb");
+
                     b.PrimitiveCollection<List<string>>("_network")
                         .IsRequired()
                         .HasColumnType("text[]")

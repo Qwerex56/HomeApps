@@ -126,4 +126,45 @@ public sealed class InstallationTests
         Assert.Equal("homemix.widget_place", Assert.Single(account.Errors).Metadata[AppError.CodeKey]);
         Assert.Equal(new WidgetChoice(WidgetPlaces.Wall, "timer", "Small", 1), Assert.Single(installation.Widgets));
     }
+
+    private const string DeviceWidgets = """
+        "widgets": [ { "id": "stacja", "title": { "pl": "Stacja" }, "devices": [ { "capability": "weather" } ] }, { "id": "zegar", "title": { "pl": "Zegar" } } ]
+        """;
+
+    [Fact]
+    public void A_device_is_picked_for_a_widget_that_matches_devices_and_changed_by_picking_again()
+    {
+        var package = Package(capabilities: """["devices"]""", extra: DeviceWidgets);
+        var installation = Installation.Install(package, InstallTarget.Household(Guid.NewGuid()), new Consent(["devices"], [], false), Adam, Now).Value;
+        var first = Guid.NewGuid();
+        var second = Guid.NewGuid();
+
+        Assert.True(installation.PickDevice(package.Manifest, "stacja", first).IsSuccess);
+        Assert.True(installation.PickDevice(package.Manifest, "stacja", second).IsSuccess);
+
+        Assert.Equal(new DevicePick("stacja", second), Assert.Single(installation.DevicePicks));
+        Assert.True(installation.PickDevice(package.Manifest, "stacja", null).IsSuccess);
+        Assert.Empty(installation.DevicePicks);
+    }
+
+    [Fact]
+    public void A_widget_that_asks_for_no_devices_takes_no_pick()
+    {
+        var package = Package(capabilities: """["devices"]""", extra: DeviceWidgets);
+        var installation = Installation.Install(package, InstallTarget.Household(Guid.NewGuid()), new Consent(["devices"], [], false), Adam, Now).Value;
+
+        var result = installation.PickDevice(package.Manifest, "zegar", Guid.NewGuid());
+
+        Assert.Equal("homemix.widget_without_devices", Assert.Single(result.Errors).Metadata[AppError.CodeKey]);
+    }
+
+    [Fact]
+    public void Installing_a_device_control_add_on_needs_consent_to_it()
+    {
+        var package = Package(capabilities: """["devices", "devices.control"]""");
+
+        var result = Installation.Install(package, InstallTarget.Household(Guid.NewGuid()), new Consent(["devices"], [], false), Adam, Now);
+
+        Assert.Equal("homemix.consent_required", Assert.Single(result.Errors).Metadata[AppError.CodeKey]);
+    }
 }
