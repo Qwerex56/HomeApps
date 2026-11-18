@@ -241,7 +241,7 @@ internal sealed partial class McpGateway(
     }
 
     /// <summary>The household a tool call names (<c>household</c> or <c>householdId</c>, as JARVIS's prompt tells the model to pass it).</summary>
-    private static Guid? HouseholdIn(IDictionary<string, JsonElement>? arguments)
+    internal static Guid? HouseholdIn(IDictionary<string, JsonElement>? arguments)
     {
         foreach (var name in new[] { "household", "householdId" })
         {
