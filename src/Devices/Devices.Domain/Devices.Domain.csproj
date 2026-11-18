@@ -10,6 +10,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Capabilities\builtin-capabilities.json" LogicalName="builtin-capabilities.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="Devices.Domain.Tests" />
   </ItemGroup>
 
