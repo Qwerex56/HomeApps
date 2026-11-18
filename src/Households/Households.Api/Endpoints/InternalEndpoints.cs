@@ -12,7 +12,7 @@ namespace Households.Api.Endpoints;
 
 /// <summary>
 /// Service to service, inside the Docker network (like Auth's <c>/internal/*</c>): the JARVIS service client proves
-/// itself with its secret (<c>Households:Internal:ClientId</c>/<c>ClientSecret</c>, sent as <c>X-Client-Id</c>/<c>X-Client-Secret</c>,
+/// itself with its secret (<c>Households:Internal:ClientId</c>/<c>ClientSecret</c>, or for Devices <c>Households:Internal:Devices:*</c>; sent as <c>X-Client-Id</c>/<c>X-Client-Secret</c>,
 /// compared in constant time). Not reachable through the gateway; no secret configured means always 401.
 /// </summary>
 internal sealed class InternalEndpoints : IEndpoint
@@ -38,10 +38,14 @@ internal sealed class InternalEndpoints : IEndpoint
             .Produces<AssistantView>();
     }
 
-    private static bool Authorized(HttpRequest request, IConfiguration configuration)
+    /// <summary>The JARVIS client (<c>Households:Internal</c>) or the Devices client (<c>Households:Internal:Devices</c>), each with its own secret.</summary>
+    private static bool Authorized(HttpRequest request, IConfiguration configuration) =>
+        Matches(request, configuration.GetSection("Households:Internal")) || Matches(request, configuration.GetSection("Households:Internal:Devices"));
+
+    private static bool Matches(HttpRequest request, IConfigurationSection client)
     {
-        var clientId = configuration["Households:Internal:ClientId"];
-        var secret = configuration["Households:Internal:ClientSecret"];
+        var clientId = client["ClientId"];
+        var secret = client["ClientSecret"];
         return !string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(secret)
             && Same(clientId, request.Headers["X-Client-Id"].ToString()) && Same(secret, request.Headers["X-Client-Secret"].ToString());
     }

@@ -95,7 +95,8 @@
         "label": { "type": "string", "maxLength": 60 },
         "description": { "type": "string", "maxLength": 300 },
         "data": { "$ref": "#/$defs/valueSchema" },
-        "notify": { "type": "boolean", "default": false }
+        "notify": { "type": "boolean", "default": false },
+        "location": { "type": "boolean", "default": false }
       }
     },
     "action": {

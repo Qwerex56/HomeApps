@@ -21,6 +21,9 @@ public interface IDeviceRepository
     /// <summary>The households' devices, removed ones too.</summary>
     Task<IReadOnlyList<Device>> OfHouseholdsAsync(IReadOnlyCollection<Guid> householdIds, CancellationToken cancellationToken);
 
+    /// <summary>Paired, not removed household devices that sent a descriptor and are an assistant or smart_home device: the ones that owe a heartbeat.</summary>
+    Task<IReadOnlyList<Device>> HeartbeatCandidatesAsync(CancellationToken cancellationToken);
+
     /// <summary>The slugs already used where a new device would go: the household's, or the person's own devices.</summary>
     Task<IReadOnlyCollection<string>> SlugsAsync(Guid ownerId, Guid? householdId, CancellationToken cancellationToken);
 

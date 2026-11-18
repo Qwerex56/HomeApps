@@ -1,27 +1,33 @@
 using System.Net.WebSockets;
 using System.Text.Json;
 using Devices.Application.Common;
+using Devices.Application.Frames;
+using Devices.Application.Frames.ProcessFrames;
 using Devices.Application.Links.ConnectDevice;
 using Devices.Application.Links.DisconnectDevice;
 using Devices.Domain.Devices;
 using HomeApps.BuildingBlocks.Domain.Errors;
+using HomeApps.BuildingBlocks.Application.Abstractions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Devices.Api.Link;
 
 /// <summary>
 /// One device's connection: the first frame must be <c>hello</c> (who it is, what it can do), answered by <c>ready</c>
-/// with the device's id or by <c>error</c> and a close; after that the device only answers actions.
+/// with the device's id or by <c>error</c> and a close; after that the device answers actions and sets and reports <c>state</c>, <c>event</c> and <c>status</c> frames (a refused frame gets an <c>error</c> frame, the connection stays).
 /// </summary>
 internal sealed partial class LinkSession(WebSocket socket, DeviceLinks links, IServiceScopeFactory scopes, ILogger<LinkSession> logger)
 {
     private static readonly TimeSpan HelloTimeout = TimeSpan.FromSeconds(10);
     private const int MaxFrame = 256 * 1024;
+    private const int MaxFramesPerMinute = 120;
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {
         using var connection = new DeviceConnection(socket);
         Guid? deviceId = null;
+        var rate = new FrameRateCounter(MaxFramesPerMinute, TimeSpan.FromMinutes(1));
         try
         {
             using var helloTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -43,11 +49,23 @@ internal sealed partial class LinkSession(WebSocket socket, DeviceLinks links, I
             await connection.SendAsync(new LinkMessage("ready", DeviceId: deviceId), cancellationToken);
             LogConnected(deviceId.Value, hello.Device);
 
-            while (await ReceiveAsync(cancellationToken) is { } message)
+            while (await ReceiveRawAsync(cancellationToken) is { } raw)
             {
-                if (message.Type == "action_result" && message.Id is { } id)
+                var message = JsonSerializer.Deserialize<LinkMessage>(raw, DeviceConnection.Json);
+                if (message?.Type is "action_result" or "set_result" && message.Id is { } id)
                 {
                     connection.Answer(id, message.Ok == true, message.Text);
+                }
+                else if (message?.Type is "state" or "event" or "status")
+                {
+                    if (rate.TryTake(TimeProvider.System.GetUtcNow()))
+                    {
+                        await HandleFrameAsync(connection, deviceId.Value, raw, cancellationToken);
+                    }
+                    else
+                    {
+                        await connection.SendAsync(Refusal("devices.rate_limited", "Too many frames in a minute; this one was dropped."), cancellationToken);
+                    }
                 }
             }
         }
@@ -86,14 +104,53 @@ internal sealed partial class LinkSession(WebSocket socket, DeviceLinks links, I
         return null;
     }
 
+    private async Task HandleFrameAsync(DeviceConnection connection, Guid deviceId, byte[] raw, CancellationToken cancellationToken)
+    {
+        LinkMessage? refusal = null;
+        try
+        {
+            var frame = JsonSerializer.Deserialize<DeviceFrame>(raw, DeviceConnection.Json)!;
+            await using var scope = scopes.CreateAsyncScope();
+            var processed = await scope.ServiceProvider.GetRequiredService<ISender>().Send(new ProcessFramesCommand(deviceId, [frame]), cancellationToken);
+            if (processed.IsFailed)
+            {
+                refusal = Refusal(processed.Errors[0] is AppError app ? app.Code : "devices.invalid_frame", processed.Errors[0].Message);
+            }
+            else if (processed.Value[0] is { Ok: false } refused)
+            {
+                refusal = Refusal(refused.Code, refused.Text);
+            }
+        }
+        catch (JsonException)
+        {
+            refusal = Refusal("devices.invalid_frame", "The frame does not have the shape of a state, event or status frame.");
+        }
+        catch (Exception exception) when (exception is DbUpdateException or ConcurrencyConflictException)
+        {
+            LogFrameFailed(deviceId, exception);
+            refusal = Refusal("devices.frame_failed", "The frame could not be stored; send it again.");
+        }
+
+        if (refusal is not null)
+        {
+            await connection.SendAsync(refusal, cancellationToken);
+        }
+    }
+
+    private static LinkMessage Refusal(string? code, string? text) => new("error", Code: code, Text: text);
+
     private async Task RefuseAsync(DeviceConnection connection, string code, string message, CancellationToken cancellationToken)
     {
         await connection.SendAsync(new LinkMessage("error", Code: code, Text: message), cancellationToken);
         await socket.CloseOutputAsync(WebSocketCloseStatus.PolicyViolation, code, cancellationToken);
     }
 
-    /// <summary>The next text frame, or <c>null</c> when the device closed the connection.</summary>
-    private async Task<LinkMessage?> ReceiveAsync(CancellationToken cancellationToken)
+    /// <summary>The next text frame as a <see cref="LinkMessage"/>, or <c>null</c> when the device closed the connection.</summary>
+    private async Task<LinkMessage?> ReceiveAsync(CancellationToken cancellationToken) =>
+        await ReceiveRawAsync(cancellationToken) is { } raw ? JsonSerializer.Deserialize<LinkMessage>(raw, DeviceConnection.Json) : null;
+
+    /// <summary>The next text frame as bytes, or <c>null</c> when the device closed the connection.</summary>
+    private async Task<byte[]?> ReceiveRawAsync(CancellationToken cancellationToken)
     {
         var buffer = new byte[16 * 1024];
         using var frame = new MemoryStream();
@@ -119,12 +176,15 @@ internal sealed partial class LinkSession(WebSocket socket, DeviceLinks links, I
 
             if (received.MessageType == WebSocketMessageType.Text)
             {
-                return JsonSerializer.Deserialize<LinkMessage>(frame.ToArray(), DeviceConnection.Json);
+                return frame.ToArray();
             }
 
             frame.SetLength(0);
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "A frame of device {DeviceId} could not be stored.")]
+    private partial void LogFrameFailed(Guid deviceId, Exception exception);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Device {DeviceId} ({Name}) connected")]
     private partial void LogConnected(Guid deviceId, string? name);

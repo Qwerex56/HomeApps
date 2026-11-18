@@ -8,7 +8,7 @@ using HomeApps.BuildingBlocks.Application.Messaging;
 namespace Devices.Application.Links.ConnectDevice;
 
 internal sealed class ConnectDeviceHandler(
-    IDeviceRepository devices, DescriptorIntake intake, ICurrentUser currentUser, TimeProvider time)
+    IDeviceRepository devices, DescriptorIntake intake, ICurrentUser currentUser, IDeviceStream stream, TimeProvider time)
     : ICommandHandler<ConnectDeviceCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(ConnectDeviceCommand command, CancellationToken cancellationToken)
@@ -57,6 +57,16 @@ internal sealed class ConnectDeviceHandler(
         }
 
         var connected = device.Connect([.. actions.Select(a => a.Value)], now);
-        return connected.IsFailed ? connected : Result.Ok(device.Id);
+        if (connected.IsFailed)
+        {
+            return connected;
+        }
+
+        if (device.HouseholdId is { } householdId)
+        {
+            stream.Publish(new DeviceStreamMessage(householdId, "online", new { deviceId = device.Id, online = true }));
+        }
+
+        return Result.Ok(device.Id);
     }
 }

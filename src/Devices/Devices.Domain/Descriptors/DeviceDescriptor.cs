@@ -25,4 +25,20 @@ public sealed record DeviceDescriptor(
     public const int MaxLength = 64_000;
     public const int MaxJarvisLength = 500;
     public const int MaxSchemaLength = 4000;
+
+    /// <summary>Seconds between status reports when the descriptor does not say: a device on a permanent link.</summary>
+    public const int DefaultHeartbeat = 60;
+
+    /// <summary>The same for a sleepy (battery) device, which should declare its wake interval; 15 minutes when it does not.</summary>
+    public const int DefaultSleepyHeartbeat = 900;
+
+    /// <summary>The seconds between the device's status reports: declared, otherwise by whether it sleeps.</summary>
+    public int HeartbeatSeconds => Heartbeat ?? (Sleepy ? DefaultSleepyHeartbeat : DefaultHeartbeat);
+
+    /// <summary>An event is a location event when it is declared so, or when the device has the <c>geo</c> capability (D9).</summary>
+    public bool IsLocation(DescriptorEvent descriptorEvent)
+    {
+        ArgumentNullException.ThrowIfNull(descriptorEvent);
+        return descriptorEvent.Location || Capabilities.Any(c => c.Type == "geo");
+    }
 }
