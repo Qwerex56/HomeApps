@@ -9,7 +9,7 @@ namespace Jarvis.VoiceBridge;
 /// utterance streams to the server until the person is quiet; then the microphone is ignored while the server answers
 /// and JARVIS speaks. When he asks "tak czy nie?", the next answer is recorded without the wake word.
 /// </summary>
-internal sealed class Bridge(BridgeOptions options, WakeWord wake, OAuthLogin login, VoiceLink link, Microphone microphone) : IDisposable
+internal sealed class Bridge(BridgeOptions options, WakeWord wake, IAccessToken login, VoiceLink link, Microphone microphone) : IDisposable
 {
     private static readonly TimeSpan WaitAfterWake = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan WaitForAnswer = TimeSpan.FromSeconds(8);

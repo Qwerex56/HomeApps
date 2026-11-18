@@ -4,15 +4,17 @@ namespace Jarvis.VoiceBridge;
 
 /// <summary>
 /// The app's registration and refresh token per server: in the macOS Keychain (<c>security</c>), elsewhere in a file
-/// only the user can read under <see cref="BridgeOptions.Home"/>.
+/// only the user can read under <see cref="BridgeOptions.Home"/> (or <paramref name="folder"/>, always files: tests).
 /// </summary>
-internal sealed class TokenStore(Uri server)
+internal sealed class TokenStore(Uri server, string? folder = null)
 {
+    private bool Keychain => folder is null && OperatingSystem.IsMacOS();
+
     private const string Service = "homeapps-voice-bridge";
 
     public string? Read(string key)
     {
-        if (OperatingSystem.IsMacOS())
+        if (Keychain)
         {
             var (code, output) = Security("find-generic-password", "-s", Service, "-a", Account(key), "-w");
             return code == 0 ? output.Trim() : null;
@@ -24,7 +26,7 @@ internal sealed class TokenStore(Uri server)
 
     public void Write(string key, string value)
     {
-        if (OperatingSystem.IsMacOS())
+        if (Keychain)
         {
             Security("add-generic-password", "-U", "-s", Service, "-a", Account(key), "-w", value);
             return;
@@ -41,7 +43,7 @@ internal sealed class TokenStore(Uri server)
 
     public void Delete(string key)
     {
-        if (OperatingSystem.IsMacOS())
+        if (Keychain)
         {
             Security("delete-generic-password", "-s", Service, "-a", Account(key));
             return;
@@ -52,7 +54,7 @@ internal sealed class TokenStore(Uri server)
 
     private string Account(string key) => $"{server.Authority}:{key}";
 
-    private string File(string key) => Path.Combine(BridgeOptions.Home, "tokens", $"{server.Authority.Replace(':', '_')}.{key}");
+    private string File(string key) => Path.Combine(folder ?? Path.Combine(BridgeOptions.Home, "tokens"), $"{server.Authority.Replace(':', '_')}.{key}");
 
     private static (int Code, string Output) Security(params string[] args)
     {

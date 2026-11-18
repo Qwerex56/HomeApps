@@ -13,11 +13,13 @@ namespace Jarvis.VoiceBridge;
 /// registers itself once, opens the browser for "Zezwól" with PKCE and a loopback redirect, and then lives on the
 /// refresh token. It shows up in "Połączone aplikacje", where it can be disconnected.
 /// </summary>
-internal sealed class OAuthLogin(HttpClient http, BridgeOptions options, TokenStore store)
+internal sealed class OAuthLogin(HttpClient http, BridgeOptions options, TokenStore store) : IAccessToken
 {
     private const string ClientKey = "client_id";
     private const string RefreshKey = "refresh_token";
     private const string Callback = "/callback";
+
+    public string Kind => "computer";
 
     private string? _access;
     private DateTimeOffset _expires;

@@ -7,7 +7,7 @@ namespace Jarvis.VoiceBridge;
 /// This computer as a device of the person (jarvis-satellites.md 2a): a WebSocket to <c>/devices/link</c> that announces
 /// the <c>--actions</c> and runs what JARVIS asks for. Reconnects every 5 s while the bridge runs.
 /// </summary>
-internal sealed class DeviceLink(BridgeOptions options, OAuthLogin login, IReadOnlyList<ComputerAction> actions) : IAsyncDisposable
+internal sealed class DeviceLink(BridgeOptions options, IAccessToken login, IReadOnlyList<ComputerAction> actions) : IAsyncDisposable
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private readonly SemaphoreSlim _sending = new(1, 1);
@@ -72,7 +72,7 @@ internal sealed class DeviceLink(BridgeOptions options, OAuthLogin login, IReadO
         {
             type = "hello",
             device = options.Device,
-            kind = "computer",
+            kind = login.Kind,
             actions = actions.Select(a => new { a.Name, a.Description, a.Input, a.ReadOnly, a.Confirm }),
         }, cancellationToken);
 
