@@ -9,9 +9,26 @@ namespace Jarvis.VoiceBridge;
 /// <param name="Insecure">Accept the dev certificate of https://app.localhost.</param>
 /// <param name="SaveRecordings">V7: a folder where each turn's audio is kept, only on this computer.</param>
 /// <param name="CheckWake">A WAV file to score with the wake word, then exit (to tune the threshold).</param>
+/// <param name="Engine">S1: with <c>--speech local</c> the bridge's own speech engine (OpenAI audio API, e.g. Speaches on
+/// this Mac); the server then only gets and gives text. <c>null</c>: the server hears and speaks.</param>
+/// <param name="Actions">A JSON file with what this computer offers JARVIS (jarvis-satellites.md, S-0); <c>null</c>: nothing.</param>
 internal sealed record BridgeOptions(
-    Uri Server, string Device, float Threshold, bool Insecure, string? SaveRecordings, string? CheckWake, bool Logout)
+    Uri Server,
+    string Device,
+    float Threshold,
+    bool Insecure,
+    string? SaveRecordings,
+    string? CheckWake,
+    bool Logout,
+    Uri? Engine = null,
+    string? Actions = null)
 {
+    public const string SttModel = "deepdml/faster-whisper-large-v3-turbo-ct2";
+    public const string TtsModel = "speaches-ai/piper-pl_PL-gosia-medium";
+    public const string TtsVoice = "gosia";
+
+    public bool LocalSpeech => Engine is not null;
+
     /// <summary>Models, the app's registration and (outside macOS) the token.</summary>
     public static string Home { get; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".homeapps", "voice-bridge");
@@ -30,6 +47,7 @@ internal sealed record BridgeOptions(
         }
 
         var server = Value("--server") ?? Environment.GetEnvironmentVariable("HOMEAPPS_URL") ?? "https://home-apps.dev";
+        var engine = Value("--speech") == "local" ? Value("--engine") ?? "http://localhost:8000" : null;
         return new BridgeOptions(
             new Uri(server.TrimEnd('/') + "/"),
             Value("--device") ?? Environment.MachineName,
@@ -37,6 +55,8 @@ internal sealed record BridgeOptions(
             args.Contains("--insecure"),
             Value("--save-recordings"),
             Value("--check-wake"),
-            args.Contains("--logout"));
+            args.Contains("--logout"),
+            engine is null ? null : new Uri(engine.TrimEnd('/') + "/"),
+            Value("--actions"));
     }
 }

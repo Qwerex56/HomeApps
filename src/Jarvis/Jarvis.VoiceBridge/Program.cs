@@ -3,6 +3,7 @@ using Jarvis.VoiceBridge;
 // JARVIS's ears and mouth on the Mac (jarvis-voice-bridge.md, docs/jarvis.md "Voice bridge").
 //   dotnet run --project src/Jarvis/Jarvis.VoiceBridge -- [--server https://home-apps.dev] [--device mac-biuro]
 //     [--threshold 0.5] [--insecure] [--save-recordings ~/jarvis-nagrania] [--check-wake plik.wav] [--logout]
+//     [--speech local [--engine http://localhost:8000]] [--actions akcje.json]
 var options = BridgeOptions.Parse(args);
 using var stop = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) =>
@@ -34,6 +35,10 @@ if (options.CheckWake is { } file)
 }
 
 using var microphone = new Microphone();
-await using var link = new VoiceLink(options);
+await using var link = new VoiceLink(options, options.Engine is { } engine ? new LocalSpeech(http, engine) : null);
 using var bridge = new Bridge(options, wake, login, link, microphone);
+await using var device = options.Actions is { } actions ? new DeviceLink(options, login, ComputerActions.Load(actions)) : null;
+var linked = device?.RunAsync(stop.Token) ?? Task.CompletedTask;
 await bridge.RunAsync(stop.Token);
+await stop.CancelAsync();
+await linked;
