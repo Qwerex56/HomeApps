@@ -70,14 +70,24 @@ internal sealed class GetMyMembershipHandler(IHouseholdRepository households, IC
             return found.ToResult<MyMembershipView>();
         }
 
-        var role = found.Value.RoleOf(currentUser.Actor(), time.GetUtcNow());
+        var household = found.Value;
+        if (currentUser.SatelliteHouseholdId is { } satelliteOf)
+        {
+            // S13: a satellite is no member; it speaks with the household assistant's voice, and only in its own household.
+            var assistantRole = satelliteOf == household.Id ? household.AssistantRole() : Result.Fail<HouseholdRole>(HouseholdErrors.NotFound);
+            return assistantRole.IsFailed
+                ? assistantRole.ToResult<MyMembershipView>()
+                : new MyMembershipView(household.Id, assistantRole.Value, household.Assistant.Name, household.CreatedAt, null, IsAssistant: true);
+        }
+
+        var role = household.RoleOf(currentUser.Actor(), time.GetUtcNow());
         if (role.IsFailed)
         {
             return role.ToResult<MyMembershipView>();
         }
 
-        var me = found.Value.MemberOf(currentUser.RequiredUserId)!;
-        return new MyMembershipView(found.Value.Id, me.Role, me.Nickname?.Value, me.JoinedAt, me.AccessUntil);
+        var me = household.MemberOf(currentUser.RequiredUserId)!;
+        return new MyMembershipView(household.Id, me.Role, me.Nickname?.Value, me.JoinedAt, me.AccessUntil);
     }
 }
 
