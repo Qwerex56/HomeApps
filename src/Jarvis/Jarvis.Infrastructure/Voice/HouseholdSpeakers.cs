@@ -23,7 +23,7 @@ internal sealed class HouseholdSpeakers(HttpClient http, IDelegation delegation,
         using var listed = await http.SendAsync(request, cancellationToken);
         listed.EnsureSuccessStatusCode();
         var people = (await listed.Content.ReadFromJsonAsync<List<Member>>(cancellationToken) ?? [])
-            .Where(m => m is { IsActive: true, IsDevice: false })
+            .Where(m => m.IsActive)
             .ToList();
         var named = people.Where(m => PinIntro.SameName(name, m.Nickname) || PinIntro.SameName(name, m.DisplayName) || PinIntro.SameName(name, m.Name)).ToList();
         var candidates = named.Count > 0 ? named : people;
@@ -55,7 +55,7 @@ internal sealed class HouseholdSpeakers(HttpClient http, IDelegation delegation,
             : new SpeakerMatch(SpeakerOutcome.Unknown);
     }
 
-    private sealed record Member(Guid UserId, string Name, string? Nickname, string DisplayName, bool IsActive, bool IsDevice);
+    private sealed record Member(Guid UserId, string Name, string? Nickname, string DisplayName, bool IsActive);
 
     private sealed record Speaker(Guid? UserId);
 }
