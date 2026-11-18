@@ -159,6 +159,7 @@ services:
       Jwt__Issuer: "https://app.localhost"
       Jwt__RequireHttpsMetadata: "false"
       Households__MaxMembers: ${HOUSEHOLDS_MAX_MEMBERS:-100}
+      Households__Internal__ClientSecret: ${JARVIS_CLIENT_SECRET:-development-only-jarvis-secret-0123456789}
     depends_on:
       postgres:
         condition: service_healthy
