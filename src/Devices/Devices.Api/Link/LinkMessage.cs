@@ -3,7 +3,7 @@ using System.Text.Json;
 namespace Devices.Api.Link;
 
 /// <summary>
-/// A text frame on <c>/devices/link</c> (jarvis-satellites.md 2). The device sends <c>hello</c> once and then
+/// A text frame on <c>/devices/link</c> (jarvis-satellites.md 2). The device sends <c>hello</c> once (with its <c>homeapps.device/1</c> descriptor, if it has one) and then
 /// <c>action_result</c>s; the server sends <c>ready</c>, <c>action</c>s and <c>error</c>.
 /// </summary>
 internal sealed record LinkMessage(
@@ -17,4 +17,5 @@ internal sealed record LinkMessage(
     bool? Ok = null,
     string? Text = null,
     Guid? DeviceId = null,
-    string? Code = null);
+    string? Code = null,
+    JsonElement? Descriptor = null);

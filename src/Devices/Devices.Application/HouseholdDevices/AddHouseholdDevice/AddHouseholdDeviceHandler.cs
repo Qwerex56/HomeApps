@@ -21,14 +21,21 @@ internal sealed class AddHouseholdDeviceHandler(
                 return Result.Fail(DeviceErrors.Forbidden);
         }
 
-        if (await devices.FindInHouseholdAsync(command.HouseholdId, command.Name.Trim(), cancellationToken) is not null)
+        var name = DeviceName.Normalize(command.Name);
+        if (name.IsFailed)
+        {
+            return name.ToResult();
+        }
+
+        if (await devices.FindInHouseholdAsync(command.HouseholdId, name.Value, cancellationToken) is not null)
         {
             return Result.Fail(DeviceErrors.NameTaken);
         }
 
         var code = PairingCode.New();
         var now = time.GetUtcNow();
-        var added = Device.AddToHousehold(command.HouseholdId, currentUser.RequiredUserId, command.Name, PairingCode.Hash(code), now);
+        var added = Device.AddToHousehold(command.HouseholdId, currentUser.RequiredUserId, name.Value, PairingCode.Hash(code),
+            await devices.SlugsAsync(currentUser.RequiredUserId, command.HouseholdId, cancellationToken), now);
         if (added.IsFailed)
         {
             return added.ToResult();

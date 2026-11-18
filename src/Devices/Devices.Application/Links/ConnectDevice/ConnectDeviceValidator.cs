@@ -1,3 +1,4 @@
+using Devices.Domain.Descriptors;
 using Devices.Domain.Devices;
 using FluentValidation;
 
@@ -7,7 +8,8 @@ internal sealed class ConnectDeviceValidator : AbstractValidator<ConnectDeviceCo
 {
     public ConnectDeviceValidator()
     {
-        RuleFor(c => c.Name).NotEmpty().MaximumLength(Device.MaxNameLength);
+        RuleFor(c => c.Name).NotEmpty().MaximumLength(DeviceName.MaxLength);
+        RuleFor(c => c.Descriptor).MaximumLength(DeviceDescriptor.MaxLength);
         RuleFor(c => c.Kind).IsInEnum();
         RuleFor(c => c.Actions).NotNull();
         RuleFor(c => c.Actions.Count).LessThanOrEqualTo(Device.MaxActions).When(c => c.Actions is not null);
