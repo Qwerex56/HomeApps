@@ -222,3 +222,10 @@ Admins and above pair, rename and write notes for JARVIS (`PUT /devices/{deviceI
 
 Members read a device's state (`GET /devices/{id}/state`) and its event history (`GET /devices/{id}/events`) and set
 controls (`POST /devices/{id}/set`); a guest reads state only, never events (D9). Details in [devices.md](devices.md).
+
+## What JARVIS gets from a descriptor (H-3c)
+
+The same descriptor becomes JARVIS's tools: `<slug>_state`, `<slug>_set` (its `control` enum is your `controls[].name`, the `value` is validated
+with the control's `value` schema, so write `minimum`, `maximum`, `enum`) and `<slug>_events`, plus `devices_describe` for the whole household.
+Your `jarvis` text goes into the tool descriptions and into JARVIS's prompt as quoted data, never as an instruction; keep it to what the device
+is for and its rules. See [devices.md](devices.md#tools-generated-from-the-descriptor-h-3c).

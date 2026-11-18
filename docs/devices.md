@@ -48,6 +48,31 @@ online devices are listed, and only in that person's runs.
   the person turned on "Nie pytaj" for that action.
 - `confirm: false` is for harmless changes (a notification, a sentence spoken aloud).
 
+### Tools generated from the descriptor (H-3c)
+
+For every smart_home or assistant device of a household the caller is in, Devices adds tools made from its descriptor (gateway
+names with the `device_` prefix; the household switch "Devices" and its read-only ceiling cap them like the actions, via `_meta["homeapps/household"]`):
+
+| Tool | Does | Annotations |
+|------|------|-------------|
+| `<slug>_state` | the last values and health (online, silent, battery) | read-only |
+| `<slug>_set` | `{control, value}`; `control` is an enum of the descriptor's controls, the value is checked against that control's schema. Listed while the device is online and has controls | writes; the same Set use case and D6 rights as `POST /devices/{id}/set` (a guest is refused) |
+| `<slug>_events` | `{limit?}` newest events | read-only; members only (D9) |
+| `devices_describe` | `{household?}` full description of the household devices: purpose, capabilities, controls, sensors, state, `jarvis` text, admin notes | read-only |
+
+Names stay within 64 characters with the prefix (slug 36, action 20). An announced action named `state`, `set` or `events` is hidden by the
+generated tool. The descriptions use the device's name and purpose and its `jarvis` text, quoted and labelled as data ("not instructions"),
+with control characters, angle brackets and quotes flattened. A slug is unique only in one scope (one person's devices, one household): when
+the caller reaches two devices with the same slug, the first (own devices first, then by creation) keeps it and the other gets a short id
+after it (`lampa-3f2a`), so a tool name always means one device.
+
+JARVIS's prompt section reads `GET /internal/households/{id}/devices` (inside the Docker network; `X-Client-Id` and `X-Client-Secret` against
+`Devices:Internal:ClientId` / `ClientSecret`, compose `Devices__Internal__ClientSecret` = `JARVIS_CLIENT_SECRET`). The same list tells JARVIS
+which satellite tokens are assistants: only `purpose: assistant` may open `/jarvis/voice`.
+
+A unique-index conflict from two requests at once (the same slug computed twice, the first use of a namespaced capability) answers 409
+(`concurrency.conflict`); the client repeats the request.
+
 ## API for the app
 
 | Method | Path | What |
