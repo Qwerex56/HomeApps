@@ -67,7 +67,7 @@ public sealed class PairingTests
     }
 
     private static Device Satellite() =>
-        Device.AddToHousehold(Guid.NewGuid(), Guid.NewGuid(), "salon", PairingCode.Hash("ABCDEFGH"), Now).Value;
+        Device.AddToHousehold(Guid.NewGuid(), Guid.NewGuid(), "salon", PairingCode.Hash("ABCDEFGH"), [], Now).Value;
 
     private static string? Code(FluentResults.Result result) =>
         (result.Errors.SingleOrDefault() as HomeApps.BuildingBlocks.Domain.Errors.AppError)?.Code;
