@@ -84,7 +84,7 @@ agent and text to speech all happen on the server. Plan: `plans/features/jarvis-
   anything longer is a new request. The buttons on the JARVIS page keep working.
 - **Household satellites (S-1c):** a satellite's token (`household_id`, see devices.md) fixes the session to its
   household (`householdId` in `hello` is ignored). Its own turns go to the satellite's conversation, which JARVIS keeps
-  for 7 days (the retention job) and forgets when the satellite is unpaired; it is not a household member (until H-1 it has no plugin access; voice and the spoken PIN still work).
+  for 7 days (the retention job) and forgets when the satellite is unpaired; it is not a household member; plugins see it as the household assistant, with the role of its access level (H-1).
 - **Spoken PIN (S4):** "tu Adrian, PIN 1234, …" (digits or Polish digit words, 4–8) on a satellite: JARVIS takes the
   household's people from Households' internal endpoint (`GET /internal/households/{id}/members`, JARVIS's service secret; the satellite is not a member and cannot read `/members`), narrows them by the spoken name and asks Auth
   `POST /internal/devices/speaker` whose PIN it is. The turn then runs as that person (their permissions, their runs,

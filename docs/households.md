@@ -36,7 +36,9 @@ is not a member gets `404`, never `403`, so the ids of other households give not
 | `DELETE /households/{id}/guest-link` | Owner, Admin | Turn the guest link off. |
 | `GET /households/{id}/members` | Member and up, server admin | Members with names, roles and `isActive` (false: show greyed out). Guests get `403`. |
 | `GET /households/{id}/members/names` | member (guests too), server admin | Only `{ userId, name, avatarUrl }` per person, `name` being the nickname here or the display name (C4 of the chat plugin: a guest sees who wrote what). |
-| `GET /households/{id}/members/me` | member | My membership: role, nickname, `joinedAt`, `accessUntil`. |
+| `GET /households/{id}/members/me` | member, household satellite | My membership: role, nickname, `joinedAt`, `accessUntil`, `isAssistant` (false). A satellite token (`act` + `household_id` equal to `{id}`) gets the household assistant instead: role `Guest` (level `ReadOnly`) or `Member`, the assistant's name as `nickname`, `isAssistant: true`; `404` when the assistant is off, the household archived or it is another household. |
+| `GET /households/{id}/assistant` | member (guests too), server admin | The household's JARVIS (not a member): `{ enabled, name, accessLevel: ReadOnly\|Member, toolSources: "Plugins, HomeMix, Devices" (flags), eventDays, locationEventDays }`. Defaults: on, `JARVIS`, `ReadOnly`, all sources, 30 and 7 days. |
+| `PUT /households/{id}/assistant` `{ enabled, name, accessLevel, toolSources, eventDays, locationEventDays }` | Owner, Admin | Replace its settings and get them back. Name 1-32 characters; `eventDays` 1-365; `locationEventDays` 1-90 and not above `eventDays` (D9). Never admin; not counted in the member limit. Stored in the household's own row. |
 | `PUT /households/{id}/members/me/nickname` `{ nickname? }` | Member and up | My nickname in this household. |
 | `DELETE /households/{id}/members/me` | member but the Owner | Leave. The Owner hands over first. |
 | `PUT /households/{id}/members/{userId}/nickname` | Owner, Admin | Name someone, for example a guest. |
