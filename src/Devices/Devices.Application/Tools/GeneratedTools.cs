@@ -31,7 +31,19 @@ internal static class GeneratedTools
     /// <summary>An announced action with a generated name is hidden by the generated tool.</summary>
     public static bool IsReserved(string action) => Reserved.Contains(action, StringComparer.Ordinal);
 
-    public static IEnumerable<DeviceTool> For(ReachableDevice reachable, bool online)
+    /// <summary>
+    /// D6: JARVIS may not control a household device whose admin switched "JARVIS może sterować" off. Only JARVIS is held back (<paramref name="jarvisCaller"/>):
+    /// people use the device by REST as their role allows.
+    /// </summary>
+    public static bool Blocks(Device device, bool jarvisCaller) => jarvisCaller && device.IsHouseholdDevice && !device.JarvisMayControl;
+
+    /// <summary>
+    /// Whether JARVIS asks "tak/nie" first (it keys on MCP's destructiveHint). A household device has one switch for all its changes ("Nie pytaj" off by default,
+    /// so it asks); a person's own device keeps the device's wish and the per-action "Nie pytaj" (S6).
+    /// </summary>
+    public static bool Asks(Device device, DeviceAction action) => !action.ReadOnly && (device.IsHouseholdDevice ? device.JarvisAsks : action.NeedsConfirmation);
+
+    public static IEnumerable<DeviceTool> For(ReachableDevice reachable, bool online, bool jarvisCaller = false)
     {
         var device = reachable.Device;
         if (!Applies(device))
@@ -42,9 +54,9 @@ internal static class GeneratedTools
         var household = device.HouseholdId;
         var about = About(device);
         yield return new DeviceTool(reachable.ToolName(State), $"Last known values and health (online, silent, battery) of {about}", null, true, false, household);
-        if (online && Controls(device) is { Count: > 0 } controls)
+        if (online && !Blocks(device, jarvisCaller) && Controls(device) is { Count: > 0 } controls)
         {
-            yield return new DeviceTool(reachable.ToolName(Set), $"Set one control of {about} Controls: {Listed(controls)}", SetSchema(controls), false, false, household);
+            yield return new DeviceTool(reachable.ToolName(Set), $"Set one control of {about} Controls: {Listed(controls)}", SetSchema(controls), false, device.JarvisAsks, household);
         }
 
         yield return new DeviceTool(reachable.ToolName(Events), $"Recent events of {about} Household members only.", EventsSchema, true, false, household);

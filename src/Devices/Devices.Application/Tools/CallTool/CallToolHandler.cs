@@ -43,8 +43,14 @@ internal sealed class CallToolHandler(IDeviceRepository devices, IHouseholdRoles
 
         var device = found.Device;
         var actionName = command.Tool[(split + 1)..];
+        var jarvis = currentUser.IsDelegated;
         if (GeneratedTools.Applies(device) && GeneratedTools.IsReserved(actionName))
         {
+            if (actionName == GeneratedTools.Set && GeneratedTools.Blocks(device, jarvis))
+            {
+                return Result.Fail(DeviceErrors.JarvisNotAllowed);
+            }
+
             return await GeneratedAsync(device, actionName, command.Input, cancellationToken);
         }
 
@@ -52,6 +58,11 @@ internal sealed class CallToolHandler(IDeviceRepository devices, IHouseholdRoles
         if (action is null)
         {
             return Result.Fail(DeviceErrors.ActionNotFound);
+        }
+
+        if (!action.ReadOnly && GeneratedTools.Blocks(device, jarvis))
+        {
+            return Result.Fail(DeviceErrors.JarvisNotAllowed);
         }
 
         return await links.RunAsync(device.Id, action.Name, command.Input, cancellationToken);
