@@ -4,6 +4,7 @@ using HomeApps.BuildingBlocks.Application.Messaging;
 using Devices.Application.Abstractions;
 using Devices.Application.Common;
 using Devices.Domain.Devices;
+using HomeApps.Contracts.Households;
 
 namespace Devices.Application.HouseholdDevices.GetHouseholdDevices;
 
@@ -12,13 +13,14 @@ internal sealed class GetHouseholdDevicesHandler(IDeviceRepository devices, IHou
 {
     public async Task<Result<IReadOnlyList<DeviceView>>> Handle(GetHouseholdDevicesQuery query, CancellationToken cancellationToken)
     {
-        if (await households.GetRoleAsync(query.HouseholdId, cancellationToken) is null)
+        var role = await households.GetRoleAsync(query.HouseholdId, cancellationToken);
+        if (role is null)
         {
             return Result.Fail(DeviceErrors.NotFound);
         }
 
         var found = await devices.OfHouseholdsAsync([query.HouseholdId], cancellationToken);
         return Result.Ok<IReadOnlyList<DeviceView>>(
-            [.. found.OrderBy(d => d.IsDisabled).ThenBy(d => d.Name, StringComparer.Ordinal).Select(d => d.ToView(links))]);
+            [.. found.OrderBy(d => d.IsDisabled).ThenBy(d => d.Name, StringComparer.Ordinal).Select(d => d.ToView(links, role >= HouseholdRole.Admin))]);
     }
 }
