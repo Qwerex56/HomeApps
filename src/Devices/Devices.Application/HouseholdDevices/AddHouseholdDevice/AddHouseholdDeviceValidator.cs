@@ -11,6 +11,6 @@ internal sealed class AddHouseholdDeviceValidator : AbstractValidator<AddHouseho
     public AddHouseholdDeviceValidator()
     {
         RuleFor(c => c.HouseholdId).NotEmpty();
-        RuleFor(c => c.Name).NotEmpty().MaximumLength(DeviceName.MaxLength);
+        RuleFor(c => c.Name).NotEmpty().MaximumLength(DeviceName.MaxLength * 4);
     }
 }

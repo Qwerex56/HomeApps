@@ -17,8 +17,8 @@ namespace Devices.Infrastructure.Persistence.Migrations
             migrationBuilder.AlterColumn<string>(
                 name: "Name",
                 table: "Devices",
-                type: "character varying(60)",
-                maxLength: 60,
+                type: "character varying(240)",
+                maxLength: 240,
                 nullable: false,
                 collation: "case_insensitive",
                 oldClrType: typeof(string),
@@ -77,8 +77,8 @@ namespace Devices.Infrastructure.Persistence.Migrations
             migrationBuilder.AddColumn<string>(
                 name: "Slug",
                 table: "Devices",
-                type: "character varying(40)",
-                maxLength: 40,
+                type: "character varying(36)",
+                maxLength: 36,
                 nullable: false,
                 defaultValue: "");
 
@@ -127,6 +127,8 @@ namespace Devices.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql("UPDATE \"Devices\" SET \"Name\" = left(\"Slug\", 20) WHERE length(\"Name\") > 20 OR \"Name\" !~ '^[a-z0-9][a-z0-9-]*$'");
+
             migrationBuilder.DropTable(
                 name: "RegisteredCapabilities");
 
@@ -174,9 +176,6 @@ namespace Devices.Infrastructure.Persistence.Migrations
                 name: "Warnings",
                 table: "Devices");
 
-            migrationBuilder.AlterDatabase()
-                .OldAnnotation("Npgsql:CollationDefinition:case_insensitive", "und-u-ks-level2,und-u-ks-level2,icu,False");
-
             migrationBuilder.AlterColumn<string>(
                 name: "Name",
                 table: "Devices",
@@ -184,9 +183,12 @@ namespace Devices.Infrastructure.Persistence.Migrations
                 maxLength: 20,
                 nullable: false,
                 oldClrType: typeof(string),
-                oldType: "character varying(60)",
-                oldMaxLength: 60,
+                oldType: "character varying(240)",
+                oldMaxLength: 240,
                 oldCollation: "case_insensitive");
+
+            migrationBuilder.AlterDatabase()
+                .OldAnnotation("Npgsql:CollationDefinition:case_insensitive", "und-u-ks-level2,und-u-ks-level2,icu,False");
         }
     }
 }

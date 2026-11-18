@@ -24,6 +24,14 @@ public sealed class DeviceNameTests
         Assert.Equal("devices.invalid_name", Code(DeviceName.Normalize(new string('a', 61))));
     }
 
+    [Fact]
+    public void A_name_of_few_text_elements_but_too_many_chars_is_refused()
+    {
+        var family = "\U0001F468\u200D\U0001F469\u200D\U0001F467\u200D\U0001F466";
+        Assert.True(DeviceName.Normalize(string.Concat(Enumerable.Repeat(family, 25))).IsFailed);
+        Assert.True(DeviceName.Normalize(new string('a', DeviceName.MaxLength * 4 + 1)).IsFailed);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]

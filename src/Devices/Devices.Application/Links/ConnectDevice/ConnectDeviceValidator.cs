@@ -8,7 +8,7 @@ internal sealed class ConnectDeviceValidator : AbstractValidator<ConnectDeviceCo
 {
     public ConnectDeviceValidator()
     {
-        RuleFor(c => c.Name).NotEmpty().MaximumLength(DeviceName.MaxLength);
+        RuleFor(c => c.Name).NotEmpty().MaximumLength(DeviceName.MaxLength * 4);
         RuleFor(c => c.Descriptor).MaximumLength(DeviceDescriptor.MaxLength);
         RuleFor(c => c.Kind).IsInEnum();
         RuleFor(c => c.Actions).NotNull();

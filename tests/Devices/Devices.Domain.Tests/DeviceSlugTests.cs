@@ -34,6 +34,12 @@ public sealed class DeviceSlugTests
     }
 
     [Fact]
+    public void The_tool_name_fits_in_64_characters()
+    {
+        Assert.True("device_".Length + DeviceSlug.MaxLength + 1 + DeviceAction.MaxNameLength <= 64);
+    }
+
+    [Fact]
     public void A_device_gets_its_slug_when_created_and_the_tool_name_uses_it()
     {
         var device = Device.Create(Guid.NewGuid(), "Fotel taty", DeviceKind.Computer, ["fotel-taty"], Now).Value;
