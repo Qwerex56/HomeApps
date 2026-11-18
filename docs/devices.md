@@ -79,7 +79,7 @@ name, the person's own device wins.
 
 ### Pairing and the satellite's identity (S13)
 
-A satellite belongs to its household but is **not a household member** (stage H-0; until H-1 it has no plugin access, voice and the spoken PIN still work):
+A satellite belongs to its household but is **not a household member** (stage H-0; until H-1 it has no plugin access, voice and the spoken PIN still work, JARVIS reads the household's people through the internal Households endpoint):
 
 1. The satellite sends the code to `POST /devices/pair` (no account; the code is spent, case and dashes do not
    matter). An unknown, used or expired code is 404 `devices.pairing_expired`.
@@ -90,7 +90,7 @@ A satellite belongs to its household but is **not a household member** (stage H-
    is not in the member list and does not count towards the member limit).
 4. The satellite trades its secret for 15-minute tokens at `POST /auth/devices/token` `{deviceId, secret}`:
    `sub` = the device, `household_id`, `role` User, no email, `act` = `device`. Auth, Accounts and Households refuse
-   its changes like any assistant's; plugins do not treat it as a member (until H-1 it has no plugin access). With that token it connects to
+   its changes like any assistant's; plugins do not treat it as a member and Households answers it like a non-member (404; until H-1 it has no plugin access). With that token it connects to
    `/devices/link` and keeps the name its household gave it (the `device` in `hello` is ignored).
 5. When JARVIS answers a satellite, Auth's delegation (`/internal/delegation`) gives him a token for the device
    instead of a person, so JARVIS acts for the satellite (not a member; no plugin access until H-1).
