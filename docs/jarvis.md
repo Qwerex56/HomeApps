@@ -82,6 +82,18 @@ agent and text to speech all happen on the server. Plan: `plans/features/jarvis-
 - **Confirmations by voice:** when `awaiting` is true, the listener records the next answer without the wake word. A
   short "tak / potwierdzam / zrób to" confirms the waiting actions, "nie / anuluj" cancels them (without the model);
   anything longer is a new request. The buttons on the JARVIS page keep working.
+- **Household satellites (S-1c):** a satellite's token (`household_id`, see devices.md) fixes the session to its
+  household (`householdId` in `hello` is ignored). Its own turns go to the satellite's conversation, which JARVIS keeps
+  for 7 days (the retention job) and forgets when the satellite is unpaired; it acts as a Member of that household.
+- **Spoken PIN (S4):** "tu Adrian, PIN 1234, …" (digits or Polish digit words, 4–8) on a satellite: JARVIS takes the
+  household's people from Households with the satellite's token, narrows them by the spoken name and asks Auth
+  `POST /internal/devices/speaker` whose PIN it is. The turn then runs as that person (their permissions, their runs,
+  `reference` `device/<id>`) and is not kept in the satellite's conversation; the transcript comes back with the PIN
+  masked, and the PIN never reaches the model. The next turns stay the person's for `Jarvis:Voice:PersonMinutes` (3)
+  from their last one; "tu Adrian, PIN 1234" alone gets "Słucham, Adrian." with `awaiting`. A wrong PIN gets "Nie
+  rozpoznaję tego PIN-u."; five in a row lock the satellite for 15 minutes; a PIN two people share asks for the name.
+  `Jarvis:HouseholdsUrl` (default `http://households:8080`). Voice recognition has only its place in the flow
+  (`IVoicePrints`, nobody recognised).
 - **Engines:** `Jarvis:Voice:SttUrl` and `TtsUrl` speak the OpenAI audio API (`/v1/audio/transcriptions`,
   `/v1/audio/speech`), so Speaches, a whisper server or a cloud service is only a URL (`ApiKey` for a cloud one).
   Defaults: `SttModel` `deepdml/faster-whisper-large-v3-turbo-ct2`, `TtsModel` `speaches-ai/piper-pl_PL-gosia-medium`,

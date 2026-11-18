@@ -91,8 +91,19 @@ A satellite is a **member of its household**, not a person's device:
 5. When JARVIS answers a satellite, Auth's delegation (`/internal/delegation`) gives him a token for the device
    instead of a person, so JARVIS sees what a member of that household sees.
 
-Removing the satellite or making a new code publishes `HouseholdDeviceUnpaired`: Auth stops its secret and
-Households removes the member. Restoring a removed satellite needs a new code.
+Removing the satellite or making a new code publishes `HouseholdDeviceUnpaired`: Auth stops its secret,
+Households removes the member and JARVIS forgets the satellite's conversation. Restoring a removed satellite needs a
+new code.
+
+### Who speaks to a satellite (S4)
+
+Each person may set a **spoken PIN** of 4–8 digits in their account: `PUT /auth/me/pin` `{pin, currentPassword}` (the
+same proof as a password change; no password, then a recent sign-in), `DELETE /auth/me/pin`; `GET /auth/me` shows
+`hasPin`. Auth keeps only its hash. When a satellite hears "tu Adrian, PIN 1234", JARVIS asks
+`POST /internal/devices/speaker` `{clientId, clientSecret, deviceId, candidates, pin}` (any service client) and gets
+`{userId}` or `{userId: null}`. Five misses lock that satellite's PIN checks for 15 minutes (423
+`devices.pin_locked`); a PIN that fits two candidates is 409 `devices.pin_ambiguous` and not counted. The flow in
+JARVIS: jarvis.md, "Voice".
 
 ## The bridge's actions
 
