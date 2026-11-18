@@ -53,8 +53,8 @@ public static class DevicesSection
 
             var flat = c switch
             {
-                '\u201C' or '\u201D' or '\u201E' or '\u00AB' or '\u00BB' => '\'',
-                '\uFF1C' or '\uFF1E' => ' ',
+                '\u201C' or '\u201D' or '\u201E' or '\u201F' or '\uFF02' or '\u2039' or '\u203A' or '\u00AB' or '\u00BB' => '\'',
+                '\uFF1C' or '\uFF1E' or '\uFE64' or '\uFE65' => ' ',
                 _ => char.IsControl(c) || char.IsWhiteSpace(c) || c is '<' or '>' or '"' or '`' ? ' ' : c,
             };
             if (flat == ' ' && (builder.Length == 0 || builder[^1] == ' '))

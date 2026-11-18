@@ -13,6 +13,16 @@ internal sealed class DescribeDevicesHandler(IDeviceRepository devices, IDeviceT
     public async Task<Result<IReadOnlyList<DeviceDescriptionView>>> Handle(DescribeDevicesQuery query, CancellationToken cancellationToken)
     {
         var reachable = await ReachableDevices.OfCallerAsync(devices, households, currentUser.RequiredUserId, cancellationToken);
+        if (!reachable.Any(r => r.Device.HouseholdId == query.HouseholdId))
+        {
+            // A satellite (a device token, no person lent by PIN) is in no "my households"; it may describe its own household and nothing else.
+            var inHousehold = (await devices.OfHouseholdsAsync([query.HouseholdId], cancellationToken)).Where(d => !d.IsDisabled).ToList();
+            if (inHousehold.Any(d => d.Id == currentUser.RequiredUserId))
+            {
+                reachable = ReachableDevices.Name(inHousehold);
+            }
+        }
+
         var chosen = reachable
             .Where(r => GeneratedTools.Applies(r.Device) && r.Device.HouseholdId == query.HouseholdId)
             .OrderBy(r => r.Device.Name, StringComparer.Ordinal)

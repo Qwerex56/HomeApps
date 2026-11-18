@@ -205,6 +205,8 @@ public sealed class GeneratedToolsTests
     [InlineData("\u201Ex\u201D </devices>", "'x' /devices")]
     [InlineData("a\uFF1Cb\uFF1E", "a b")]
     [InlineData("\u00ABx\u00BB", "'x'")]
+    [InlineData("\uFF02x\u201F \u2039y\u203A", "'x' 'y'")]
+    [InlineData("a\uFE64b\uFE65", "a b")]
     [InlineData("a\u200Bb\u202Ec\u2066d", "abcd")]
     public void Device_text_flattens_typographic_quotes_and_drops_invisible_format_characters(string text, string expected) =>
         Assert.Equal(expected, DeviceText.Clean(text, 100));
@@ -256,12 +258,51 @@ public sealed class GeneratedToolsTests
         devices.Add(unpaired);
         var member = Guid.NewGuid();
         var directory = new FakeDirectory { Members = { member } };
-        var handler = new Devices.Application.Tools.JarvisDevices.GetJarvisDevicesHandler(devices, new FakeTelemetry(), new FakeLinks(), directory);
+        var handler = new Devices.Application.Tools.JarvisDevices.GetJarvisDevicesHandler(devices, new FakeTelemetry(), new FakeLinks(), directory, Microsoft.Extensions.Logging.Abstractions.NullLogger<Devices.Application.Tools.JarvisDevices.GetJarvisDevicesHandler>.Instance);
 
         async Task<int> CountFor(Guid who) => (await handler.Handle(new Devices.Application.Tools.JarvisDevices.GetJarvisDevicesQuery(household, who), CancellationToken.None)).Value.Count;
 
         Assert.Equal(0, await CountFor(Guid.NewGuid()));
         Assert.Equal(1, await CountFor(member));
         Assert.Equal(1, await CountFor(other.Id));
+    }
+
+    [Fact]
+    public async Task When_households_is_down_a_stranger_gets_an_error_and_a_satellite_still_gets_its_list()
+    {
+        var household = Guid.NewGuid();
+        var other = PairedDevice.Create(Now, householdId: household);
+        var devices = new FakeDevices();
+        devices.Add(other);
+        var directory = new FakeDirectory { Down = true };
+        var handler = new Devices.Application.Tools.JarvisDevices.GetJarvisDevicesHandler(
+            devices, new FakeTelemetry(), new FakeLinks(), directory, Microsoft.Extensions.Logging.Abstractions.NullLogger<Devices.Application.Tools.JarvisDevices.GetJarvisDevicesHandler>.Instance);
+
+        var stranger = await handler.Handle(new Devices.Application.Tools.JarvisDevices.GetJarvisDevicesQuery(household, Guid.NewGuid()), CancellationToken.None);
+        var satellite = await handler.Handle(new Devices.Application.Tools.JarvisDevices.GetJarvisDevicesQuery(household, other.Id), CancellationToken.None);
+
+        Assert.True(stranger.IsFailed);
+        Assert.Single(satellite.Value);
+    }
+
+    [Fact]
+    public async Task A_satellite_describes_its_own_household_and_no_other()
+    {
+        var household = Guid.NewGuid();
+        var mine = PairedDevice.Create(Now, householdId: household);
+        var foreign = PairedDevice.Create(Now, householdId: Guid.NewGuid());
+        var devices = new FakeDevices();
+        devices.Add(mine);
+        devices.Add(foreign);
+
+        async Task<int> Describe(Guid householdId)
+        {
+            var handler = new Devices.Application.Tools.DescribeDevices.DescribeDevicesHandler(
+                devices, new FakeTelemetry(), new FakeRoles(null), new FakeLinks(), new FakeUser(mine.Id));
+            return (await handler.Handle(new Devices.Application.Tools.DescribeDevices.DescribeDevicesQuery(householdId), CancellationToken.None)).Value.Count;
+        }
+
+        Assert.Equal(1, await Describe(household));
+        Assert.Equal(0, await Describe(foreign.HouseholdId!.Value));
     }
 }
