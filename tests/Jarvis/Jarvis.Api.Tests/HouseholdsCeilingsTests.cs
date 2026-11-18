@@ -94,6 +94,20 @@ public sealed class HouseholdsCeilingsTests
     }
 
     [Fact]
+    public async Task A_null_body_is_unavailable_and_kept_only_briefly()
+    {
+        var handler = new Handler(_ => Json("null"));
+        var ceilings = Ceilings(handler, TimeSpan.FromMilliseconds(50));
+
+        Assert.Same(HouseholdCeiling.Unavailable, await ceilings.GetAsync(Household, CancellationToken.None));
+        Assert.Same(HouseholdCeiling.Unavailable, await ceilings.GetAsync(Household, CancellationToken.None));
+        Assert.Single(handler.Requests);
+        await Task.Delay(150);
+        Assert.Same(HouseholdCeiling.Unavailable, await ceilings.GetAsync(Household, CancellationToken.None));
+        Assert.Equal(2, handler.Requests.Count);
+    }
+
+    [Fact]
     public async Task The_default_enum_name_All_allows_every_source()
     {
         var ceilings = Ceilings(new Handler(_ => Json("""{"enabled":true,"accessLevel":"Member","toolSources":"All"}""")));
