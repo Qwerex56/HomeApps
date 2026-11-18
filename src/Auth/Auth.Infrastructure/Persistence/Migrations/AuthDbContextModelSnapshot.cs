@@ -125,6 +125,12 @@ namespace Auth.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("PairedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("PinFailures")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("PinLockedUntil")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("SecretHash")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -156,6 +162,9 @@ namespace Auth.Infrastructure.Persistence.Migrations
                     b.Property<string>("PasswordHash")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<string>("PinHash")
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("RegisteredAt")
                         .HasColumnType("timestamp with time zone");

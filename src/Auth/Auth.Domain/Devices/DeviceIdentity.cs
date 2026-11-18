@@ -30,6 +30,35 @@ public sealed class DeviceIdentity
 
     public bool IsActive => UnpairedAt is null;
 
+    /// <summary>S4: five wrong PINs in a row lock the satellite's PIN checks for 15 minutes.</summary>
+    public const int MaxPinFailures = 5;
+
+    public static readonly TimeSpan PinLockout = TimeSpan.FromMinutes(15);
+
+    public int PinFailures { get; private set; }
+
+    public DateTimeOffset? PinLockedUntil { get; private set; }
+
+    public bool PinLocked(DateTimeOffset now) => PinLockedUntil > now;
+
+    /// <summary>A PIN heard on this satellite matched someone (<paramref name="matched"/>) or nobody.</summary>
+    public void PinChecked(bool matched, DateTimeOffset now)
+    {
+        if (matched)
+        {
+            PinFailures = 0;
+            PinLockedUntil = null;
+            return;
+        }
+
+        PinFailures++;
+        if (PinFailures >= MaxPinFailures)
+        {
+            PinFailures = 0;
+            PinLockedUntil = now + PinLockout;
+        }
+    }
+
     /// <summary>The first pairing; the raw secret goes to the device and is never stored.</summary>
     public static (DeviceIdentity Identity, string Secret) Pair(Guid deviceId, Guid householdId, string name, DateTimeOffset now)
     {

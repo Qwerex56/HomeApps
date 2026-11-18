@@ -1,5 +1,7 @@
 using Auth.Api.Http;
 using Auth.Application.MyAccount;
+using Auth.Application.MyAccount.ClearPin;
+using Auth.Application.MyAccount.SetPin;
 using Auth.Application.Password;
 using HomeApps.BuildingBlocks.Api.Endpoints;
 using HomeApps.BuildingBlocks.Api.Results;
@@ -43,6 +45,13 @@ internal sealed class MeEndpoints : IEndpoint
             (await sender.Send(new ConfirmEmailChangeCommand(body.Token), ct)).ToHttpResult())
             .AllowAnonymous()
             .RequireRateLimiting(RateLimits.Anonymous);
+
+        // jarvis-satellites.md S4: the spoken PIN for household satellites.
+        me.MapPut("/pin", async (SetPinRequest body, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new SetPinCommand(body.Pin, body.CurrentPassword), ct)).ToHttpResult());
+
+        me.MapDelete("/pin", async (ISender sender, CancellationToken ct) =>
+            (await sender.Send(new ClearPinCommand(), ct)).ToHttpResult());
 
         me.MapGet("/sessions", async (ISender sender, CancellationToken ct) =>
             (await sender.Send(new ListSessionsQuery(), ct)).ToHttpResult());

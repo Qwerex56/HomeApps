@@ -5,6 +5,9 @@ namespace Auth.Domain.Identities;
 
 public static class IdentityErrors
 {
+    public static Error PinInvalid => new AppError("pin.invalid",
+        $"The PIN must have {Identity.PinMinLength}–{Identity.PinMaxLength} digits.", ErrorKind.Validation);
+
     public static Error EmailTaken => new AppError("email.taken", "This email address already has an account.", ErrorKind.Conflict);
 
     public static Error RegistrationClosed => new AppError("auth.registration_closed",

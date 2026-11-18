@@ -1,5 +1,6 @@
 using Auth.Api.Http;
 using Auth.Application.Devices;
+using Auth.Application.Devices.IdentifySpeaker;
 using Auth.Application.Devices.IssueDeviceToken;
 using Auth.Application.Devices.PairDevice;
 using HomeApps.BuildingBlocks.Api.Endpoints;
@@ -23,6 +24,15 @@ internal sealed class DeviceEndpoints : IEndpoint
             .AllowAnonymous()
             .WithTags("Internal")
             .Produces<PairedDeviceView>();
+
+        // S4: JARVIS asks whose PIN a satellite heard (internal network, his service secret).
+        app.MapPost("/internal/devices/speaker", async (IdentifySpeakerRequest body, ISender sender, CancellationToken ct) =>
+            (await sender.Send(
+                new IdentifySpeakerCommand(body.ClientId, body.ClientSecret, body.DeviceId, body.Candidates, body.Pin), ct))
+            .ToHttpResult())
+            .AllowAnonymous()
+            .WithTags("Internal")
+            .Produces<SpeakerView>();
 
         app.MapPost("/auth/devices/token", async (DeviceTokenRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(new IssueDeviceTokenCommand(body.DeviceId, body.Secret), ct)).ToHttpResult())
