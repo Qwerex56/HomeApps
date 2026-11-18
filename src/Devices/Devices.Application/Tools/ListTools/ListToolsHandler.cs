@@ -13,20 +13,21 @@ internal sealed class ListToolsHandler(IDeviceRepository devices, IHouseholdRole
     public async Task<Result<IReadOnlyList<DeviceTool>>> Handle(ListToolsQuery query, CancellationToken cancellationToken)
     {
         var reachable = await ReachableDevices.OfCallerAsync(devices, households, currentUser.RequiredUserId, cancellationToken);
+        var jarvis = currentUser.IsDelegated;
         var tools = new List<DeviceTool>();
         foreach (var r in reachable)
         {
             var device = r.Device;
             var online = links.IsOnline(device.Id);
-            tools.AddRange(GeneratedTools.For(r, online));
+            tools.AddRange(GeneratedTools.For(r, online, jarvis));
             if (online)
             {
-                tools.AddRange(device.Actions.Where(a => !(GeneratedTools.Applies(device) && GeneratedTools.IsReserved(a.Name))).Select(a => new DeviceTool(
+                tools.AddRange(device.Actions.Where(a => !(GeneratedTools.Applies(device) && GeneratedTools.IsReserved(a.Name)) && !(a.ReadOnly is false && GeneratedTools.Blocks(device, jarvis))).Select(a => new DeviceTool(
                     r.ToolName(a.Name),
                     Announced(device, a),
                     a.InputSchema,
                     a.ReadOnly,
-                    a.NeedsConfirmation,
+                    GeneratedTools.Asks(device, a),
                     device.HouseholdId)));
             }
         }
