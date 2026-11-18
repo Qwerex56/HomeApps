@@ -30,6 +30,10 @@ public sealed class GatewayOptions
     [Required]
     public string AuthUrl { get; set; } = "http://auth:8080";
 
+    /// <summary>Households inside the Docker network: a satellite's household members, for its spoken PIN (S4).</summary>
+    [Required]
+    public string HouseholdsUrl { get; set; } = "http://households:8080";
+
     /// <summary>The <c>Service</c> client in Auth's <c>Auth:Clients</c>.</summary>
     [Required]
     public string ClientId { get; set; } = "jarvis-service";

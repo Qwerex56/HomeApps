@@ -2,7 +2,8 @@ namespace Jarvis.Domain.Conversations;
 
 /// <summary>
 /// A person's own conversation with JARVIS in the app (jarvis-v1.md 2.4). Only its owner sees it, the server's Owner too
-/// cannot. The title comes from the first message until the person names it.
+/// cannot. The title comes from the first message until the person names it. A household satellite's conversation
+/// (owner = the device) names its household: what a room heard is kept only for a week (jarvis-satellites.md S4).
 /// </summary>
 public sealed class Conversation
 {
@@ -19,11 +20,14 @@ public sealed class Conversation
 
     public string Title { get; private set; } = DefaultTitle;
 
+    /// <summary>The satellite's household; <c>null</c> for a person's own conversation.</summary>
+    public Guid? HouseholdId { get; private set; }
+
     public DateTimeOffset StartedAt { get; private set; }
 
     public DateTimeOffset LastActivityAt { get; private set; }
 
-    public static Conversation Start(Guid ownerId, string? title, TimeProvider time)
+    public static Conversation Start(Guid ownerId, string? title, TimeProvider time, Guid? householdId = null)
     {
         ArgumentNullException.ThrowIfNull(time);
         var now = time.GetUtcNow();
@@ -31,6 +35,7 @@ public sealed class Conversation
         {
             Id = Guid.CreateVersion7(now),
             OwnerId = ownerId,
+            HouseholdId = householdId,
             Title = string.IsNullOrWhiteSpace(title) ? DefaultTitle : Shorten(title),
             StartedAt = now,
             LastActivityAt = now,

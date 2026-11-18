@@ -20,4 +20,7 @@ public interface IConversationRepository
     void Remove(Conversation conversation);
 
     Task ForgetAsync(Guid ownerId, CancellationToken cancellationToken);
+
+    /// <summary>Household satellites' messages sent before <paramref name="before"/> go (a person's own stay).</summary>
+    Task ForgetSatelliteMessagesAsync(DateTimeOffset before, CancellationToken cancellationToken);
 }

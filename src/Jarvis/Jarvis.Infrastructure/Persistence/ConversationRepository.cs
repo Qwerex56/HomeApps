@@ -32,4 +32,9 @@ internal sealed class ConversationRepository(JarvisDbContext db) : IConversation
 
     public Task ForgetAsync(Guid ownerId, CancellationToken cancellationToken) =>
         db.Conversations.Where(c => c.OwnerId == ownerId).ExecuteDeleteAsync(cancellationToken);
+
+    public Task ForgetSatelliteMessagesAsync(DateTimeOffset before, CancellationToken cancellationToken) =>
+        db.ConversationMessages
+            .Where(m => m.SentAt < before && db.Conversations.Any(c => c.Id == m.ConversationId && c.HouseholdId != null))
+            .ExecuteDeleteAsync(cancellationToken);
 }

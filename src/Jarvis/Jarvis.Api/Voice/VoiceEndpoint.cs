@@ -1,3 +1,4 @@
+using HomeApps.BuildingBlocks.Api.Auth;
 using HomeApps.BuildingBlocks.Api.Endpoints;
 using HomeApps.BuildingBlocks.Application.Abstractions;
 using Jarvis.Application.Voice;
@@ -8,7 +9,8 @@ namespace Jarvis.Api.Voice;
 /// <summary>
 /// <c>/jarvis/voice</c>: the WebSocket every listener speaks (the Mac bridge now, satellites later), protocol in
 /// jarvis-voice-bridge.md section 2; with <c>?speech=local</c> text turns only (jarvis-satellites.md 2). The person is
-/// the token's: an app token from "Połączone aplikacje" or a normal one.
+/// the token's: an app token from "Połączone aplikacje" or a normal one. A household satellite's token names its
+/// household (S13): the session is the satellite's, in that household, and a spoken PIN lends a turn to a person (S4).
 /// </summary>
 internal sealed class VoiceEndpoint : IEndpoint
 {
@@ -31,7 +33,8 @@ internal sealed class VoiceEndpoint : IEndpoint
             }
 
             using var socket = await http.WebSockets.AcceptWebSocketAsync();
-            using var session = new VoiceSession(socket, user.RequiredUserId, local, scopes, options.Value, logger);
+            Guid? satellite = Guid.TryParse(http.User.FindFirst(ClaimNames.Household)?.Value, out var household) ? household : null;
+            using var session = new VoiceSession(socket, user.RequiredUserId, satellite, local, scopes, options.Value, logger);
             await session.RunAsync(http.RequestAborted);
             return Results.Empty;
         }).WithTags("JARVIS");

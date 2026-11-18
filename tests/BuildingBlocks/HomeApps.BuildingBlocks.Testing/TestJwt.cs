@@ -36,7 +36,12 @@ public static class TestJwt
     public static string CreateAppToken(Guid userId, string resource, string clientId) =>
         Create(userId, null, [], null, resource, clientId);
 
-    private static string Create(Guid userId, string? email, string[] roles, string? actor, string audience = Audience, string? clientId = null)
+    /// <summary>A household satellite's token (jarvis-satellites.md S13): the device as subject, its household named.</summary>
+    public static string CreateDeviceToken(Guid deviceId, Guid householdId) =>
+        Create(deviceId, null, [], null, household: householdId);
+
+    private static string Create(
+        Guid userId, string? email, string[] roles, string? actor, string audience = Audience, string? clientId = null, Guid? household = null)
     {
         ArgumentNullException.ThrowIfNull(roles);
 
@@ -54,6 +59,11 @@ public static class TestJwt
         if (clientId is not null)
         {
             claims.Add(new Claim(ClaimNames.ClientId, clientId));
+        }
+
+        if (household is not null)
+        {
+            claims.Add(new Claim(ClaimNames.Household, household.Value.ToString()));
         }
 
         if (actor is not null)

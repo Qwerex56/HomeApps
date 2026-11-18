@@ -11,7 +11,7 @@ internal sealed class StartConversationHandler(IConversationRepository conversat
 {
     public Task<Result<ConversationView>> Handle(StartConversationCommand command, CancellationToken cancellationToken)
     {
-        var conversation = Conversation.Start(command.UserId, command.Title, time);
+        var conversation = Conversation.Start(command.UserId, command.Title, time, command.HouseholdId);
         conversations.Add(conversation);
         return Task.FromResult(Result.Ok(ConversationView.From(conversation)));
     }

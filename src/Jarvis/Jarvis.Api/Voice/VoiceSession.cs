@@ -16,11 +16,13 @@ namespace Jarvis.Api.Voice;
 /// socket is still read, so <c>cancel</c> (or a new <c>start</c>) stops JARVIS mid-answer. The answer comes back as
 /// <c>transcript</c>, <c>reply</c>, then <c>audio</c> + one WAV per sentence, then <c>done</c>; or <c>error</c>.
 /// The session remembers the conversation and what waits for "tak"/"nie"; the audio is dropped after each turn.
+/// A household satellite (<paramref name="satellite"/>, its household) always speaks in that household; it also
+/// remembers who introduced themselves with a PIN while JARVIS waits for them.
 /// With <paramref name="local"/> (<c>?speech=local</c>, S1) the listener hears and speaks itself: it sends
 /// <c>say</c> with the text and gets <c>transcript</c>, <c>reply</c> and <c>done</c> without audio.
 /// </summary>
 internal sealed partial class VoiceSession(
-    WebSocket socket, Guid userId, bool local, IServiceScopeFactory scopes, VoiceOptions options, ILogger<VoiceSession> logger) : IDisposable
+    WebSocket socket, Guid userId, Guid? satellite, bool local, IServiceScopeFactory scopes, VoiceOptions options, ILogger<VoiceSession> logger) : IDisposable
 {
     public const int SampleRate = 16_000;
 
@@ -30,6 +32,7 @@ internal sealed partial class VoiceSession(
     private readonly MemoryStream _audio = new();
     private Guid? _conversationId;
     private Guid? _householdId;
+    private Guid? _speaker;
     private IReadOnlyList<Guid> _pending = [];
     private bool _recording;
     private CancellationTokenSource? _turn;
@@ -106,7 +109,7 @@ internal sealed partial class VoiceSession(
         {
             case "hello":
                 _conversationId = control.ConversationId ?? _conversationId;
-                _householdId = control.HouseholdId;
+                _householdId = satellite ?? control.HouseholdId;
                 await SendAsync(new { type = "ready", conversationId = _conversationId }, CancellationToken.None);
                 break;
             case "start" or "stop" when local:
@@ -156,7 +159,8 @@ internal sealed partial class VoiceSession(
         {
             await using var scope = scopes.CreateAsyncScope();
             var sender = scope.ServiceProvider.GetRequiredService<ISender>();
-            var result = await sender.Send(new VoiceTurnCommand(userId, _conversationId, _householdId, audio, SampleRate, _pending, text), cancellationToken);
+            var result = await sender.Send(new VoiceTurnCommand(
+                userId, _conversationId, satellite ?? _householdId, audio, SampleRate, _pending, text, satellite is not null, _speaker), cancellationToken);
             if (result.IsFailed)
             {
                 var error = result.Errors.OfType<AppError>().FirstOrDefault();
@@ -167,6 +171,7 @@ internal sealed partial class VoiceSession(
             var turn = result.Value;
             _conversationId = turn.ConversationId;
             _pending = turn.Pending;
+            _speaker = turn.Speaker;
             await SendAsync(new { type = "transcript", text = turn.Transcript }, cancellationToken);
             if (turn.Answer is { } answer)
             {
@@ -176,7 +181,7 @@ internal sealed partial class VoiceSession(
                     conversationId = _conversationId,
                     text = answer.Text,
                     actions = answer.Actions,
-                    awaiting = _pending.Count > 0,
+                    awaiting = _pending.Count > 0 || _speaker is not null,
                 }, cancellationToken);
 
                 var voice = scope.ServiceProvider.GetRequiredService<ITextToSpeech>();

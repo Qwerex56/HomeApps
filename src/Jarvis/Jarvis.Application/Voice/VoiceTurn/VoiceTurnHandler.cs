@@ -6,6 +6,9 @@ using Jarvis.Application.Common;
 using Jarvis.Application.Conversations;
 using Jarvis.Application.Conversations.SendMessage;
 using Jarvis.Application.Conversations.StartConversation;
+using Jarvis.Application.Runs;
+using Jarvis.Application.Runs.Ask;
+using Jarvis.Domain.Conversations;
 using Jarvis.Domain.ToolCalls;
 using MediatR;
 
@@ -14,13 +17,16 @@ namespace Jarvis.Application.Voice.VoiceTurn;
 /// <summary>
 /// Hears the turn (or takes the listener's own transcript), then either decides the actions waiting from the turn before ("tak" / "nie") or sends what was said
 /// to the conversation as a message. The answer, its card and the decisions stay in the conversation as text; the
-/// audio is never kept (V7).
+/// audio is never kept (V7). On a household satellite a turn with "PIN 1234" (or the one right after it) is the
+/// person's: JARVIS answers as them, with their permissions, and nothing of it goes to the satellite's conversation.
 /// </summary>
 internal sealed class VoiceTurnHandler(
     ISpeechToText ears,
     ISender sender,
     OwnConversation own,
     IConversationRepository conversations,
+    Agent agent,
+    ISpeakers speakers,
     TimeProvider time) : ICommandHandler<VoiceTurnCommand, VoiceTurnView>
 {
     public async Task<Result<VoiceTurnView>> Handle(VoiceTurnCommand command, CancellationToken cancellationToken)
@@ -31,10 +37,23 @@ internal sealed class VoiceTurnHandler(
             return new VoiceTurnView(command.ConversationId, transcript, null);
         }
 
+        if (command is { Satellite: true, HouseholdId: { } household })
+        {
+            if (PinIntro.Of(transcript) is { } intro)
+            {
+                return await IntroducedAsync(command, household, intro, cancellationToken);
+            }
+
+            if (command.Speaker is { } speaker)
+            {
+                return await AsSpeakerAsync(command, household, speaker, transcript, transcript, cancellationToken);
+            }
+        }
+
         var conversationId = command.ConversationId;
         if (conversationId is null)
         {
-            var started = await sender.Send(new StartConversationCommand(command.UserId, null), cancellationToken);
+            var started = await sender.Send(new StartConversationCommand(command.UserId, null, command.Satellite ? command.HouseholdId : null), cancellationToken);
             if (started.IsFailed)
             {
                 return started.ToResult();
@@ -54,6 +73,54 @@ internal sealed class VoiceTurnHandler(
             cancellationToken);
         return answer.IsFailed ? answer.ToResult() : new VoiceTurnView(conversationId, transcript, answer.Value);
     }
+
+    private async Task<Result<VoiceTurnView>> IntroducedAsync(
+        VoiceTurnCommand command, Guid household, PinIntro intro, CancellationToken cancellationToken)
+    {
+        var match = await speakers.IdentifyAsync(command.UserId, household, intro.Name, intro.Pin, cancellationToken);
+        if (match.Outcome != SpeakerOutcome.Known)
+        {
+            return Said(command, intro.Masked, match.Outcome switch
+            {
+                SpeakerOutcome.Ambiguous => "Ten PIN pasuje do kilku osób. Powiedz też, kto mówi.",
+                SpeakerOutcome.Locked => "Za dużo błędnych PIN-ów. Spróbuj za kwadrans.",
+                _ => "Nie rozpoznaję tego PIN-u.",
+            }, [], null);
+        }
+
+        return intro.Request.Length == 0
+            ? Said(command, intro.Masked, $"Słucham, {match.Name}.", [], match.UserId)
+            : await AsSpeakerAsync(command, household, match.UserId, intro.Request, intro.Masked, cancellationToken);
+    }
+
+    /// <summary>The person's turn on the satellite: their run (channel <c>voice</c>, reference the device), their decisions.</summary>
+    private async Task<Result<VoiceTurnView>> AsSpeakerAsync(
+        VoiceTurnCommand command, Guid household, Guid speaker, string request, string transcript, CancellationToken cancellationToken)
+    {
+        if (command.Pending.Count > 0 && Consent.Of(request) is { } approve)
+        {
+            var decided = new List<ActionView>();
+            foreach (var id in command.Pending)
+            {
+                var result = await sender.Send(new DecideCommand(speaker, id, approve), cancellationToken);
+                if (result.IsSuccess)
+                {
+                    decided.Add(result.Value);
+                }
+            }
+
+            return Said(command, transcript, Summary(decided, approve), decided, null);
+        }
+
+        var answer = await agent.RunAsync(
+            new AskCommand(speaker, request, household, Prompts.VoiceChannel, $"device/{command.UserId}", []), null, cancellationToken);
+        var waiting = answer.Actions.Any(a => a.Status == ToolCallStatus.NeedsConfirmation);
+        return Said(command, transcript, answer.Text, answer.Actions, waiting ? speaker : null);
+    }
+
+    /// <summary>An answer for the satellite only, not kept in its conversation.</summary>
+    private VoiceTurnView Said(VoiceTurnCommand command, string transcript, string text, IReadOnlyList<ActionView> actions, Guid? speaker) =>
+        new(command.ConversationId, transcript, new MessageView(Guid.NewGuid(), MessageRole.Assistant, text, time.GetUtcNow(), actions), speaker);
 
     private async Task<Result<MessageView>> DecideAsync(
         VoiceTurnCommand command, Guid conversationId, string transcript, bool approve, CancellationToken cancellationToken)
