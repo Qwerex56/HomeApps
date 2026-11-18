@@ -31,9 +31,11 @@ public sealed class JarvisSwitchesTests
         (await new ListToolsHandler(_devices, new FakeRoles(HouseholdRole.Member, _household), _links, new FakeUser(_user, jarvis))
             .Handle(new ListToolsQuery(), CancellationToken.None)).Value.ToDictionary(t => t.Name);
 
-    private Task<FluentResults.Result<string>> CallAsync(string tool, bool jarvis) =>
-        new CallToolHandler(_devices, new FakeRoles(HouseholdRole.Member, _household), _links, new FakeUser(_user, jarvis), null!)
-            .Handle(new CallToolCommand(tool, null), CancellationToken.None);
+    private readonly FakeSender _sender = new();
+
+    private Task<FluentResults.Result<string>> CallAsync(string tool, bool jarvis, System.Text.Json.JsonElement? input = null) =>
+        new CallToolHandler(_devices, new FakeRoles(HouseholdRole.Member, _household), _links, new FakeUser(_user, jarvis), _sender)
+            .Handle(new CallToolCommand(tool, input), CancellationToken.None);
 
     [Fact]
     public async Task By_default_JARVIS_may_control_and_asks_first()
@@ -106,6 +108,33 @@ public sealed class JarvisSwitchesTests
         Assert.True((await CallAsync("fotel_say", jarvis: false)).IsSuccess);
         Assert.True((await CallAsync("fotel_peek", jarvis: true)).IsSuccess);
         Assert.Equal(["say", "peek"], _links.Runs.Select(r => r.Action));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Set_goes_through_SetControl_when_JARVIS_may_control_and_for_a_person(bool jarvis)
+    {
+        var device = Chair(mayControl: jarvis ? true : false);
+        using var input = System.Text.Json.JsonDocument.Parse("""{"control":"light","value":true}""");
+
+        var result = await CallAsync("fotel_set", jarvis, input.RootElement.Clone());
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Done.", result.Value);
+        var sent = Assert.IsType<Devices.Application.Controls.SetControl.SetControlCommand>(Assert.Single(_sender.Sent));
+        Assert.Equal(device.Id, sent.DeviceId);
+        Assert.Equal("light", sent.Control);
+        Assert.Equal(System.Text.Json.JsonValueKind.True, sent.Value!.Value.ValueKind);
+    }
+
+    [Fact]
+    public async Task A_refused_set_never_reaches_SetControl()
+    {
+        Chair(mayControl: false);
+
+        Assert.True((await CallAsync("fotel_set", jarvis: true)).IsFailed);
+        Assert.Empty(_sender.Sent);
     }
 
     private SetJarvisAccessHandler Handler(HouseholdRole? role) => new(_devices, new FakeRoles(role, _household), new FakeUser(_user));
