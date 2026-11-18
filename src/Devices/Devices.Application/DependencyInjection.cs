@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.AddHomeAppsApplication(typeof(DependencyInjection).Assembly);
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<Common.DescriptorIntake>();
+        services.AddScoped<Common.AdminNotices>();
         return services;
     }
 }
