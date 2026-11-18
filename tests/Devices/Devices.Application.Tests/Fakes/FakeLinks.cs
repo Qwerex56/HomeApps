@@ -13,7 +13,13 @@ internal sealed class FakeLinks : IDeviceLinks
 
     public bool IsOnline(Guid deviceId) => Online;
 
-    public Task<Result<string>> RunAsync(Guid deviceId, string action, JsonElement? input, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public List<(Guid DeviceId, string Action)> Runs { get; } = [];
+
+    public Task<Result<string>> RunAsync(Guid deviceId, string action, JsonElement? input, CancellationToken cancellationToken)
+    {
+        Runs.Add((deviceId, action));
+        return Task.FromResult(Result.Ok("ok"));
+    }
 
     public Task<Result> SetAsync(Guid deviceId, string control, JsonElement value, CancellationToken cancellationToken)
     {
