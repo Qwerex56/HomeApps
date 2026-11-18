@@ -6,6 +6,13 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 
 ### Changed
 
+- **Local development in one path:** `docs/development.md` covers the whole local setup: `scripts/dev-cert.sh`
+  (mkcert certificate for `app.localhost` and `*.app.localhost`, so no warnings and no `--insecure` for the bridge;
+  `certs/*.pem` are no longer in git), `.env.example` with `COMPOSE_FILE`/`COMPOSE_PROFILES` (plain
+  `docker compose up -d`), every service container also on its Rider port, Auth getting the service clients' secrets
+  from the same variables as JARVIS and Devices, TLS on every `websecure` router (plugins' own compose files work in
+  dev), routes for Todo/Chat from Rider and `/homemix/hub`, JARVIS and HomeMix containers no longer pointing at
+  Rider's ports, and vite reading `HOMEAPPS_PLUGINS` from `.env`.
 - **The voice bridge moved out (S-2a):** `src/Jarvis/Jarvis.VoiceBridge` and its tests now live in their own
   repository, HomeApps.Desktop, with their history; HomeApps keeps only the server side (`/jarvis/voice`, Devices).
 

@@ -135,9 +135,9 @@ HomeApps' backups, since `pg_dumpall` takes every database) until you drop it:
 
 ## Development from an IDE
 
-Run HomeApps in development as usual ([working-with-the-repo.md](working-with-the-repo.md)), then:
+Run HomeApps in development as usual ([development.md](development.md)), then:
 
 1. In HomeApps.Todo: `src/Todo.Api` on port **5400** (`Development`); database and migrations are created on start.
-2. In HomeApps: `dynamic/plugin-todo.yaml` with the route from [plugins.md](plugins.md), "From an IDE".
-3. In `src/Web`: `HOMEAPPS_PLUGINS=todo npm run dev`.
-4. UI changes: `npm run build -- --watch` in HomeApps.Todo's `src/Todo.Web` and reload the page.
+   The route is already in `dynamic/dev-routes.yaml`.
+2. In HomeApps' `.env`: `HOMEAPPS_PLUGINS=todo` (vite reads it), then restart `npm run dev`.
+3. UI changes: `npm run build -- --watch` in HomeApps.Todo's `src/Todo.Web` and reload the page.

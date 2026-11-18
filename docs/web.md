@@ -8,7 +8,7 @@ building on it.
 
 You need Node 22 or newer (`.nvmrc` says 24).
 
-1. Start the infrastructure and the services as described in [auth.md](auth.md) and [accounts.md](accounts.md).
+1. Start the stack as described in [development.md](development.md).
 2. Start vite:
 
    ```bash
@@ -204,8 +204,8 @@ registering it again after sign-in and forgetting it before sign-out.
 household's settings) show their pieces, each through `PluginOutlet`, which hands the plugin its `HostApi`.
 `shared.ts` shares Vue and friends with plugins and registers the PrimeVue components they use by name. The plugin
 SDK (types, `useHost`, the Vite plugin for building a plugin's UI) is `plugin-sdk/`; the app imports its source
-through the `@homeapps/plugin-sdk` alias, plugins its packed build. During development `HOMEAPPS_PLUGINS=todo npm run
-dev` lists plugins.
+through the `@homeapps/plugin-sdk` alias, plugins its packed build. During development vite lists the plugins in
+`HOMEAPPS_PLUGINS` (the shell, else the repository's `.env`).
 
 `/wall` (`features/wall`) is the wall tablet (Q7, Q11): clock, date, the current household's active people and
 the widgets of the plugins that are on in that household (placeholders for weather and news until there are any), on a dark full-screen page without the app's menu. Open it from the

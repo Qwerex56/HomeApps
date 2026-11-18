@@ -1,13 +1,13 @@
 # Working with the repository
 
-How to build, test and change HomeApps day to day. For how a new service is put together, see
-[how-a-service-is-built.md](how-a-service-is-built.md).
+How to build, test and change HomeApps day to day. Running it locally (compose, Rider, plugins, add-ons, JARVIS) is
+[development.md](development.md); how a new service is put together is [how-a-service-is-built.md](how-a-service-is-built.md).
 
 ## What you need
 
 - .NET 10 SDK (`global.json` accepts 10.0 or newer).
-- Docker, for the local infrastructure (`compose.dev.yaml`), for tests that need Postgres, RabbitMQ or Mailpit
-  (Testcontainers) and for building images. See [auth.md](auth.md) for running Auth locally and [accounts.md](accounts.md) for Accounts and [households.md](households.md) for Households.
+- Docker, for the local stack (`compose.dev.yaml`, [development.md](development.md)), for tests that need Postgres,
+  RabbitMQ or Mailpit (Testcontainers) and for building images.
 
 ## What is where
 
@@ -15,10 +15,11 @@ How to build, test and change HomeApps day to day. For how a new service is put 
 | --- | --- |
 | `src/BuildingBlocks/` | The shared kit: `HomeApps.BuildingBlocks.Domain`, `.Application`, `.Infrastructure`, `.Api`, and the plugin kit `HomeApps.Plugins`, `.Hosting` ([plugins.md](plugins.md)). |
 | `src/Contracts/` | `HomeApps.Contracts`: only the messages and names that cross service boundaries. |
-| `src/<Service>/`, `tests/<Service>/` | One folder per service (Auth, Accounts, Households), written on the kit. |
+| `src/<Service>/`, `tests/<Service>/` | One folder per service (Auth, Accounts, Households, Notifications, HomeMix, Devices, Jarvis), written on the kit. |
 | `tests/BuildingBlocks/` | Kit tests, the shared integration-test fixture and `HomeApps.Plugins.Hello`, the sample plugin. |
-| `compose.dev.yaml` | Local infrastructure: Traefik, Postgres, RabbitMQ, Mailpit; services in the `services` profile. |
-| `.env.example` | What compose reads; copy to `.env` (never committed) to change it. |
+| `compose.dev.yaml`, `dynamic/`, `scripts/dev-cert.sh` | Local development: Traefik, Postgres, RabbitMQ, Mailpit, the services in the `services` profile, routes to Rider and the certificate ([development.md](development.md)). |
+| `.env.example` | What the dev compose reads; copy to `.env` (never committed). |
+| `compose.voice.yaml` | Speaches, JARVIS's ears and voice ([jarvis.md](jarvis.md)). |
 | `HomeApps.slnx` | The one solution file, with a folder for BuildingBlocks, Contracts and each service. Open it in Rider; CI builds it. |
 | `Directory.Build.props` | Settings for every project, the version among them (see below). |
 | `Directory.Packages.props` | The one list of package versions (see below). |

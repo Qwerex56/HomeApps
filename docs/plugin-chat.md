@@ -135,11 +135,10 @@ drop them (`dropdb -U homeapps homeapps_chat` in HomeApps' postgres container, `
 
 ## Development from an IDE
 
-Run HomeApps in development as usual ([working-with-the-repo.md](working-with-the-repo.md)), then:
+Run HomeApps in development as usual ([development.md](development.md)), then:
 
 1. In HomeApps.Chat: `src/Chat.Api` on port **5410** (`Development`, needs `ffmpeg` on `PATH`); files go to
    `src/Chat.Api/media`.
-2. In HomeApps: `dynamic/plugin-chat.yaml` with the route from [plugins.md](plugins.md), "From an IDE", for
-   `/plugins/chat` to `http://host.docker.internal:5410`.
-3. In `src/Web`: `HOMEAPPS_PLUGINS=chat npm run dev`.
-4. UI changes: `npm run build -- --watch` in HomeApps.Chat's `src/Chat.Web` and reload the page.
+   The route is already in `dynamic/dev-routes.yaml`.
+2. In HomeApps' `.env`: `HOMEAPPS_PLUGINS=chat` (vite reads it), then restart `npm run dev`.
+3. UI changes: `npm run build -- --watch` in HomeApps.Chat's `src/Chat.Web` and reload the page.

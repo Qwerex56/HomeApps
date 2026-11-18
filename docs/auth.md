@@ -7,12 +7,12 @@ The specification is `plans/features/auth.md`. This page covers running it and b
 ## Run it locally
 
 Everything is served at `https://app.localhost` through Traefik. `/auth` and `/.well-known` go to Auth, and
-everything else goes to the Vue app (vite on port 5173). The certificate for `*.app.localhost` is in `certs/` (mkcert).
+everything else goes to the Vue app (vite on port 5173). The certificate comes from `scripts/dev-cert.sh` (mkcert); the whole setup is [development.md](development.md).
 
 1. Start the infrastructure: Traefik, Postgres, RabbitMQ and Mailpit.
 
    ```bash
-   docker compose -f compose.dev.yaml up -d
+   docker compose -f compose.dev.yaml up -d traefik postgres rabbitmq mailpit
    ```
 
 2. Run `Auth.Api` from Rider with the `http` profile (port 5100). Traefik forwards `https://app.localhost/auth`
@@ -20,7 +20,7 @@ everything else goes to the Vue app (vite on port 5173). The certificate for `*.
    signing key in `src/Auth/Auth.Api/.keys/` (ignored by git).
 3. Open the inbox at <http://localhost:8025>. Every email Auth sends lands there.
 
-To run Auth in a container as well, add the `services` profile: `docker compose -f compose.dev.yaml --profile services up -d --build`.
+To run Auth in a container as well, add the `services` profile: `docker compose -f compose.dev.yaml --profile services up -d --build` (the default with `.env.example`).
 The container's route has a higher priority than the route to Rider, so stop one of the two.
 
 `.env.example` lists what compose reads. Every value has a working default, so `.env` is optional; it is never committed.

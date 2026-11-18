@@ -54,8 +54,9 @@ Bez publicznego adresu (CGNAT) stos wychodzi do internetu przez Cloudflare Tunne
 
 Szczegóły, kopie zapasowe, aktualizacje i testy wydania: [docs/deployment.md](docs/deployment.md).
 
-**Do pracy nad kodem:** infrastruktura w `compose.dev.yaml`, serwisy z Ridera albo w kontenerach, front z vite pod
-https://app.localhost. Opis: [docs/working-with-the-repo.md](docs/working-with-the-repo.md).
+**Do pracy nad kodem:** `scripts/dev-cert.sh`, `cp .env.example .env`, `docker compose up -d --build` i `npm run dev`
+w `src/Web`, wszystko pod https://app.localhost; pojedynczy serwis, pluginy i dodatki z Ridera. Opis:
+[docs/development.md](docs/development.md), budowanie i testy: [docs/working-with-the-repo.md](docs/working-with-the-repo.md).
 
 ## Wykorzystanie AI
 

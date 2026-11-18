@@ -314,7 +314,7 @@ be scoped (`<style scoped>`); it can use the app's Tailwind classes only where t
 
 **The instance's plugins** come from `/plugins.json`, an array of ids: in production the web image writes it at start
 from `HOMEAPPS_PLUGINS` (`.env`, e.g. `HOMEAPPS_PLUGINS=todo`), during development `vite` serves it from the same
-variable (`HOMEAPPS_PLUGINS=todo npm run dev`). A listed plugin that is not running is left out; one whose manifest
+variable in the shell or in HomeApps' `.env`. A listed plugin that is not running is left out; one whose manifest
 needs a newer HomeApps or has an unknown `manifestVersion` shows as such under "Aplikacje" and is never loaded.
 The Owner sees every listed plugin, the ones that are not running included, with its health and UI state under
 Administracja → "Pluginy serwera" (`/admin/plugins`). It is read-only: a plugin is added or removed on the server
@@ -368,8 +368,9 @@ networks:
     external: true
 ```
 
-**From an IDE** during development: put a route in `dynamic/plugin-todo.yaml` (ignored by git; Traefik picks it up
-at once).
+**From an IDE** during development: Todo (5400) and Chat (5410) already have routes in `dynamic/dev-routes.yaml`
+([development.md](development.md)). Another plugin gets one in `dynamic/plugin-<id>.yaml` (ignored by git; Traefik
+picks it up at once):
 
 ```yaml
 http:
