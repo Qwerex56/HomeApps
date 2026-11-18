@@ -19,6 +19,15 @@ internal sealed partial class ManifestReader(JsonElement root)
     [GeneratedRegex("^[a-z][a-z0-9._-]{0,63}$")]
     private static partial Regex NamePattern();
 
+    [GeneratedRegex("^[a-z][a-z0-9_]{0,40}(/[a-z0-9][a-z0-9._-]{0,63})?$")]
+    private static partial Regex CapabilityPattern();
+
+    [GeneratedRegex("^[a-z][a-z0-9_]{0,40}$")]
+    private static partial Regex RolePattern();
+
+    [GeneratedRegex("^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$")]
+    private static partial Regex ModelPattern();
+
     [GeneratedRegex("^[A-Za-z0-9._/-]{0,200}$")]
     private static partial Regex PathPattern();
 
@@ -71,6 +80,16 @@ internal sealed partial class ManifestReader(JsonElement root)
         foreach (var unknown in capabilities.Where(c => !AddonCapabilities.All.Contains(c)))
         {
             _problems.Add($"capabilities: '{unknown}' is not a capability the bridge offers.");
+        }
+
+        if (widgets.Any(w => w.Devices.Count > 0) && !capabilities.Contains(AddonCapabilities.Devices))
+        {
+            _problems.Add($"widgets: matching devices needs the capability {AddonCapabilities.Devices}.");
+        }
+
+        if (capabilities.Contains(AddonCapabilities.DevicesControl) && !capabilities.Contains(AddonCapabilities.Devices))
+        {
+            _problems.Add($"capabilities: {AddonCapabilities.DevicesControl} needs {AddonCapabilities.Devices} as well.");
         }
 
         var network = Strings("network");
@@ -205,7 +224,8 @@ internal sealed partial class ManifestReader(JsonElement root)
                 _problems.Add($"widgets['{id}'].sizes must include its size {size}.");
             }
 
-            widgets.Add(new AddonWidget(id, title ?? new LocalizedText(id, id), size, places, entry, [.. sizes.Distinct(StringComparer.Ordinal)]));
+            var devices = widget.TryGetProperty("devices", out var dv) ? DeviceMatches(dv, $"widgets['{id}'].devices") : [];
+            widgets.Add(new AddonWidget(id, title ?? new LocalizedText(id, id), size, places, entry, [.. sizes.Distinct(StringComparer.Ordinal)], devices));
         }
 
         if (widgets.Select(w => w.Id).Distinct(StringComparer.Ordinal).Count() != widgets.Count)
@@ -214,6 +234,60 @@ internal sealed partial class ManifestReader(JsonElement root)
         }
 
         return widgets;
+    }
+
+    private List<DeviceMatch> DeviceMatches(JsonElement value, string field)
+    {
+        var matches = new List<DeviceMatch>();
+        foreach (var rule in Objects(value, field))
+        {
+            string? Read(string name, Regex pattern, string what)
+            {
+                if (!rule.TryGetProperty(name, out var v))
+                {
+                    return null;
+                }
+
+                if (v.ValueKind == JsonValueKind.String && pattern.IsMatch(v.GetString()!))
+                {
+                    return v.GetString();
+                }
+
+                _problems.Add($"{field}: {name} must be {what}.");
+                return null;
+            }
+
+            var capability = Read("capability", CapabilityPattern(), "a capability name such as weather or qwerex56/akwarium");
+            var role = Read("role", RolePattern(), "a role such as weather_station");
+            var model = Read("model", ModelPattern(), "a model such as qwerex56/fotel-v1");
+            string? pick = null;
+            if (rule.TryGetProperty("pick", out var p))
+            {
+                if (p.ValueKind == JsonValueKind.String && p.GetString() == DeviceMatch.Manual)
+                {
+                    pick = DeviceMatch.Manual;
+                }
+                else
+                {
+                    _problems.Add($"{field}: pick may only be \"{DeviceMatch.Manual}\".");
+                }
+            }
+
+            if (capability is null && role is null && model is null)
+            {
+                _problems.Add($"{field}: every entry needs a capability, a role or a model, so a manual pick lists matching devices only.");
+                continue;
+            }
+
+            matches.Add(new DeviceMatch(capability, role, model, pick));
+        }
+
+        if (matches.Count > DeviceMatch.MaxPerWidget)
+        {
+            _problems.Add($"{field}: at most {DeviceMatch.MaxPerWidget} entries.");
+        }
+
+        return matches;
     }
 
     private List<AddonPermission> Permissions()

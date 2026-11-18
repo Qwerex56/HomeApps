@@ -37,6 +37,15 @@ internal sealed class InstallationConfiguration : IEntityTypeConfiguration<Insta
             .HasDefaultValueSql("'[]'::jsonb");
         builder.Ignore(i => i.Widgets);
 
+        builder.Property<List<DevicePick>>("_devicePicks").HasColumnName("DevicePicks").HasColumnType("jsonb")
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, Json),
+                v => JsonSerializer.Deserialize<List<DevicePick>>(v, Json) ?? new List<DevicePick>(),
+                new ValueComparer<List<DevicePick>>(
+                    (a, b) => a!.SequenceEqual(b!), v => v.Aggregate(0, (h, c) => HashCode.Combine(h, c.GetHashCode())), v => v.ToList()))
+            .HasDefaultValueSql("'[]'::jsonb");
+        builder.Ignore(i => i.DevicePicks);
+
         // One active installation of an add-on per household or account; removed ones stay for 30 days.
         builder.HasIndex(i => new { i.AddonId, i.TargetKind, i.TargetId }).IsUnique().HasFilter("\"RemovedAt\" IS NULL");
         builder.HasIndex(i => new { i.TargetKind, i.TargetId });

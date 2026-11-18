@@ -8,6 +8,12 @@ public static class AddonCapabilities
     public const string HouseholdMembers = "household.members";
     public const string Notify = "notify";
 
+    /// <summary>List and match the installation's household devices, read their state, subscribe to changes (docs/homemix-authoring.md, "Devices").</summary>
+    public const string Devices = "devices";
+
+    /// <summary>Change a device's controls; needs <see cref="Devices"/> as well.</summary>
+    public const string DevicesControl = "devices.control";
+
     public static IReadOnlySet<string> All { get; } =
-        new HashSet<string>(StringComparer.Ordinal) { StorageHousehold, StorageUser, HouseholdMembers, Notify };
+        new HashSet<string>(StringComparer.Ordinal) { StorageHousehold, StorageUser, HouseholdMembers, Notify, Devices, DevicesControl };
 }

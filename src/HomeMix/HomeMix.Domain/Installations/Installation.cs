@@ -14,6 +14,7 @@ public sealed class Installation
     private List<string> _capabilities = [];
     private List<string> _network = [];
     private List<WidgetChoice> _widgets = [];
+    private List<DevicePick> _devicePicks = [];
 
     /// <summary>The quick links bar holds at most this many add-ons (UI 2.4.1, P5).</summary>
     public const int MaxPins = 8;
@@ -39,6 +40,9 @@ public sealed class Installation
 
     /// <summary>The widget chosen for each place that has a choice (<see cref="WidgetChoice"/>).</summary>
     public IReadOnlyList<WidgetChoice> Widgets => _widgets;
+
+    /// <summary>The device chosen for each widget that matches devices (<see cref="DevicePick"/>); a widget without one shows the best match.</summary>
+    public IReadOnlyList<DevicePick> DevicePicks => _devicePicks;
 
     /// <summary>The add-on offers JARVIS something and the installer agreed.</summary>
     public bool JarvisAllowed { get; private set; }
@@ -134,6 +138,7 @@ public sealed class Installation
         PackageSha256 = package.Sha256;
         Version = package.Version;
         _widgets = [.. _widgets.Select(c => Fit(c, manifest)).OfType<WidgetChoice>()];
+        _devicePicks = [.. _devicePicks.Where(p => manifest.Widgets.Any(w => w.Id == p.WidgetId && w.Devices.Count > 0))];
         _capabilities = [.. manifest.Capabilities];
         _network = [.. manifest.Network];
         JarvisAllowed = manifest.Jarvis && (consent?.Jarvis ?? JarvisAllowed);
@@ -176,6 +181,32 @@ public sealed class Installation
         }
 
         _widgets = [.. _widgets.Where(c => c.Place != place), new WidgetChoice(place, widgetId, chosenSize, order)];
+        return Result.Ok();
+    }
+
+    /// <summary>
+    /// Chooses the device a widget shows (<paramref name="deviceId"/>), or goes back to the best match with <c>null</c>.
+    /// The caller checks that the device is one of the widget's matches.
+    /// </summary>
+    public Result PickDevice(AddonManifest manifest, string widgetId, Guid? deviceId)
+    {
+        ArgumentNullException.ThrowIfNull(manifest);
+        if (!IsActive)
+        {
+            return Result.Fail(InstallationErrors.NotFound);
+        }
+
+        if (!manifest.Widgets.Any(w => w.Id == widgetId && w.Devices.Count > 0))
+        {
+            return Result.Fail(InstallationErrors.WidgetWithoutDevices(widgetId));
+        }
+
+        _devicePicks = [.. _devicePicks.Where(p => p.WidgetId != widgetId)];
+        if (deviceId is { } id)
+        {
+            _devicePicks.Add(new DevicePick(widgetId, id));
+        }
+
         return Result.Ok();
     }
 

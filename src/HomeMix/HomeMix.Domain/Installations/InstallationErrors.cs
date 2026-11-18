@@ -35,6 +35,9 @@ public static class InstallationErrors
     public static Error WidgetUnknown(string widgetId, string place) => new AppError(
         "homemix.widget_unknown", $"The add-on has no widget '{widgetId}' for {place}.", ErrorKind.Validation);
 
+    public static Error WidgetWithoutDevices(string widgetId) => new AppError(
+        "homemix.widget_without_devices", $"The widget '{widgetId}' does not ask for devices.", ErrorKind.Validation);
+
     public static Error WidgetSize(string size, IEnumerable<string> sizes) => new AppError(
         "homemix.widget_size", $"This widget comes in {string.Join(", ", sizes)}, not {size}.", ErrorKind.Validation);
 
