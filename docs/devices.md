@@ -31,7 +31,9 @@ for the gateway (`https://<domain>/jarvis/mcp`, accepted through `Devices:Resour
   "id","ok","text"}`.
 - **Server → device:** `{"type":"ready","deviceId"}` or `{"type":"error","code","text"}` and a close;
   `{"type":"action","id","name","input"}`, answered within `Devices:ActionTimeout` (20 s).
-- **Names:** a device `^[a-z0-9][a-z0-9-]{0,19}$`, unique per person; an action `^[a-z][a-z0-9_]{0,19}$`, at most 50.
+- **Names:** a device has a display name (any text, up to 60 characters, unique per person or household ignoring case) and a
+  stable `slug` made from it (used in tool names); the descriptor `homeapps.device/1` is described in
+  [devices-protocol.md](devices-protocol.md). An action `^[a-z][a-z0-9_]{0,19}$`, at most 50.
   The first `hello` registers the device; later ones refresh its actions (the "Nie pytaj" switches stay). A device is
   online only while its link is open; one link per device (a second `hello` for it is refused).
 
