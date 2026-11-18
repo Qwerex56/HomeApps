@@ -10,7 +10,7 @@ public sealed class DelegationTests
     private readonly World _w = new();
 
     private DelegateToAssistantHandler Handler() =>
-        new(_w.Clients, _w.Identities, _w.Tokens, NullLogger<DelegateToAssistantHandler>.Instance);
+        new(_w.Clients, _w.Identities, _w.DeviceIdentities, _w.Tokens, NullLogger<DelegateToAssistantHandler>.Instance);
 
     private static DelegateToAssistantCommand For(Guid userId, string clientId = "jarvis-service", string secret = FakeClients.JarvisServiceSecret) =>
         new(clientId, secret, userId, "chat", "conversation/message");

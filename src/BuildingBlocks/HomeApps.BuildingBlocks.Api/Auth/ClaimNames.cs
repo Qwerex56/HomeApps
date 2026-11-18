@@ -20,6 +20,12 @@ public static class ClaimNames
     /// </summary>
     public const string Actor = "act";
 
+    /// <summary>
+    /// A household satellite's household (jarvis-satellites.md 3a, S13). Only satellites' tokens carry it; their
+    /// <c>sub</c> is the device, a member of this household with the role Member.
+    /// </summary>
+    public const string Household = "household_id";
+
     /// <summary>How the token was obtained; <c>delegated</c> for an assistant acting for the person.</summary>
     public const string AuthenticationMethods = "amr";
 }

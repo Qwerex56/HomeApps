@@ -1,5 +1,6 @@
 using System.Globalization;
 using Auth.Application.Abstractions;
+using Auth.Domain.Devices;
 using Auth.Domain.Identities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -29,6 +30,13 @@ internal sealed class TokenIssuer(SigningKeys keys, IOptions<SigningOptions> opt
     private const string AppScope = "homeapps";
 
     private static readonly string[] DelegatedMethods = ["delegated"];
+    private static readonly string[] DeviceMethods = ["device"];
+
+    /// <summary>Household satellites (S13) act as members with this server role and this client.</summary>
+    private const string DeviceRole = "User";
+    private const string DeviceClientId = "household-device";
+    private const string DeviceActor = "device";
+    private const string HouseholdClaim = "household_id";
 
     private static readonly JsonWebTokenHandler Handler = new() { SetDefaultTimesOnTokenCreation = false };
 
@@ -69,6 +77,26 @@ internal sealed class TokenIssuer(SigningKeys keys, IOptions<SigningOptions> opt
             [JwtRegisteredClaimNames.AuthTime] = now.ToUnixTimeSeconds(),
             ["act"] = new Dictionary<string, object> { [JwtRegisteredClaimNames.Sub] = actor },
             [JwtRegisteredClaimNames.Amr] = DelegatedMethods,
+            [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
+        });
+        return new AccessToken(Handler.CreateToken(descriptor), expires);
+    }
+
+    public AccessToken IssueDeviceToken(DeviceIdentity device, RegisteredClient? service)
+    {
+        ArgumentNullException.ThrowIfNull(device);
+
+        var now = time.GetUtcNow();
+        var expires = now + (service is null ? AccessTokenLifetime : DelegatedTokenLifetime);
+        var descriptor = Descriptor(AccessTokenType, service?.Audiences ?? [ClientRegistry.DefaultAudience], now, expires, new Dictionary<string, object>
+        {
+            [JwtRegisteredClaimNames.Sub] = device.Id.ToString(),
+            ["role"] = DeviceRole,
+            ["client_id"] = service?.ClientId ?? DeviceClientId,
+            [HouseholdClaim] = device.HouseholdId.ToString(),
+            [JwtRegisteredClaimNames.AuthTime] = device.PairedAt.ToUnixTimeSeconds(),
+            ["act"] = new Dictionary<string, object> { [JwtRegisteredClaimNames.Sub] = service?.ClientId ?? DeviceActor },
+            [JwtRegisteredClaimNames.Amr] = service is null ? DeviceMethods : [.. DeviceMethods, .. DelegatedMethods],
             [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
         });
         return new AccessToken(Handler.CreateToken(descriptor), expires);

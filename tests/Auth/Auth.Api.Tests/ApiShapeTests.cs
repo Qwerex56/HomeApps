@@ -49,7 +49,9 @@ public sealed class ApiShapeTests(AuthApiFactory api) : IClassFixture<AuthApiFac
             "POST /auth/reactivation/complete",
             "POST /auth/refresh",
             "POST /auth/register",
+            "POST /auth/devices/token",
             "POST /internal/delegation",
+            "POST /internal/devices",
         ];
         Assert.Equal(expected.Order(StringComparer.Ordinal), anonymous);
     }

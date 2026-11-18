@@ -30,6 +30,7 @@ public sealed class WiringTests
         services.AddSingleton<IInvitationRepository>(w.Invitations);
         services.AddSingleton<IAppClientRepository>(w.AppClients);
         services.AddSingleton<IAuthorizationCodeRepository>(w.AuthorizationCodes);
+        services.AddSingleton<IDeviceIdentityRepository>(w.DeviceIdentities);
         services.AddSingleton<IClientRegistry>(w.Clients);
         services.AddSingleton<ITokenIssuer>(w.Tokens);
         services.AddSingleton<IExternalIdentityVerifier>(w.Verifier);

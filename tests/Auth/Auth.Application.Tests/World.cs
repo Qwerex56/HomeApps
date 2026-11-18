@@ -27,6 +27,8 @@ internal sealed class World
 
     public FakeClients Clients { get; } = new();
 
+    public InMemoryDeviceIdentities DeviceIdentities { get; } = new();
+
     public FakeTokens Tokens { get; } = new();
 
     public FakeVerifier Verifier { get; } = new();

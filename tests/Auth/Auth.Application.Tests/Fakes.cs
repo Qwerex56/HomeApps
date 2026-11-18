@@ -1,3 +1,4 @@
+using Auth.Domain.Devices;
 using Auth.Application.Abstractions;
 using Auth.Domain.Common;
 using Auth.Domain.Identities;
@@ -100,8 +101,16 @@ internal sealed class FakeClients : IClientRegistry
     public RegisteredClient? Find(string clientId) =>
         new[] { Web, Jarvis, JarvisService }.FirstOrDefault(c => c.ClientId == clientId);
 
-    public RegisteredClient? AuthenticateService(string clientId, string secret) =>
-        clientId == JarvisService.ClientId && secret == JarvisServiceSecret ? JarvisService : null;
+    public static readonly RegisteredClient DevicesService = new("devices-service", "Devices (service)", ClientType.Service, [], ["homeapps"]);
+
+    public const string DevicesServiceSecret = "devices-service-secret-for-tests-0123456789";
+
+    public RegisteredClient? AuthenticateService(string clientId, string secret) => (clientId, secret) switch
+    {
+        ("jarvis-service", JarvisServiceSecret) => JarvisService,
+        ("devices-service", DevicesServiceSecret) => DevicesService,
+        _ => null,
+    };
 }
 
 /// <summary>Access tokens name the identity and session; tickets are handles to the records kept here.</summary>
@@ -114,6 +123,9 @@ internal sealed class FakeTokens : ITokenIssuer
 
     public AccessToken IssueDelegatedToken(Identity identity, RegisteredClient service, string actor) =>
         new($"delegated:{identity.Id}:{service.ClientId}:{actor}", DateTimeOffset.UnixEpoch);
+
+    public AccessToken IssueDeviceToken(DeviceIdentity device, RegisteredClient? service) =>
+        new($"device:{device.Id}:{device.HouseholdId}:{service?.ClientId ?? "self"}", DateTimeOffset.UnixEpoch);
 
     public AccessToken IssueAppAccessToken(Identity identity, IssuedRefreshToken session, string clientId) =>
         new($"app:{identity.Id}:{clientId}:{session.Audience}", session.AuthenticatedAt.AddMinutes(15));

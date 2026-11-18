@@ -109,6 +109,37 @@ namespace Auth.Infrastructure.Persistence.Migrations
                     b.ToTable("AuthorizationCodes", (string)null);
                 });
 
+            modelBuilder.Entity("Auth.Domain.Devices.DeviceIdentity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("HouseholdId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("PairedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SecretHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("UnpairedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HouseholdId");
+
+                    b.ToTable("DeviceIdentities", (string)null);
+                });
+
             modelBuilder.Entity("Auth.Domain.Identities.Identity", b =>
                 {
                     b.Property<Guid>("Id")

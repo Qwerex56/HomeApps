@@ -34,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<IInvitationRepository, InvitationRepository>();
         services.AddScoped<IAppClientRepository, AppClientRepository>();
         services.AddScoped<IAuthorizationCodeRepository, AuthorizationCodeRepository>();
+        services.AddScoped<IDeviceIdentityRepository, DeviceIdentityRepository>();
 
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddValidatedOptions<SigningOptions>(SigningOptions.SectionName);

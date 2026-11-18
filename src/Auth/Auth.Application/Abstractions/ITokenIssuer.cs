@@ -1,3 +1,4 @@
+using Auth.Domain.Devices;
 using Auth.Domain.Identities;
 
 namespace Auth.Application.Abstractions;
@@ -25,6 +26,14 @@ public interface ITokenIssuer
     /// (<see cref="IssuedRefreshToken.Audience"/>), so only that resource (the JARVIS gateway) accepts it.
     /// </summary>
     AccessToken IssueAppAccessToken(Identity identity, IssuedRefreshToken session, string clientId);
+
+    /// <summary>
+    /// A household satellite's access token (jarvis-satellites.md 3a, S13): <c>sub</c> = the device, <c>household_id</c>,
+    /// <c>role</c> User, no email, <c>amr</c> = <c>device</c>. Without <paramref name="service"/> it is the device's own
+    /// (15 minutes, <c>act</c> = <c>device</c>); with it, a 5-minute delegated token for that service (JARVIS answering
+    /// the satellite), <c>act</c> = the service.
+    /// </summary>
+    AccessToken IssueDeviceToken(DeviceIdentity device, RegisteredClient? service);
 
     /// <summary>A 10-minute signed ticket with its own <c>scope</c>; never accepted as an access token.</summary>
     string IssueTicket(Ticket ticket);

@@ -9,6 +9,7 @@ namespace Auth.Application.Delegation.DelegateToAssistant;
 internal sealed partial class DelegateToAssistantHandler(
     IClientRegistry clients,
     IIdentityRepository identities,
+    IDeviceIdentityRepository devices,
     ITokenIssuer tokens,
     ILogger<DelegateToAssistantHandler> logger)
     : ICommandHandler<DelegateToAssistantCommand, DelegatedTokenView>
@@ -23,6 +24,14 @@ internal sealed partial class DelegateToAssistantHandler(
         }
 
         var identity = await identities.GetByIdAsync(command.UserId, cancellationToken);
+        if (identity is null && await devices.GetByIdAsync(command.UserId, cancellationToken) is { IsActive: true } device)
+        {
+            // S13: JARVIS answering a household satellite acts for the satellite, a member of its household.
+            var forDevice = tokens.IssueDeviceToken(device, service);
+            LogDelegated(logger, device.Id, service.ClientId, command.Channel, command.Reference);
+            return new DelegatedTokenView(forDevice.Value, forDevice.ExpiresAt);
+        }
+
         if (identity is null || identity.Status != AccountStatus.Active)
         {
             return Result.Fail<DelegatedTokenView>(DelegationErrors.UserUnavailable);
