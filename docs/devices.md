@@ -58,12 +58,12 @@ names with the `device_` prefix; the household switch "Devices" and its read-onl
 | `<slug>_state` | the last values and health (online, silent, battery) | read-only |
 | `<slug>_set` | `{control, value}`; `control` is an enum of the descriptor's controls, the value is checked against that control's schema. Listed while the device is online and has controls | writes; the same Set use case and D6 rights as `POST /devices/{id}/set` (a guest is refused) |
 | `<slug>_events` | `{limit?}` newest events | read-only; members only (D9) |
-| `devices_describe` | `{household?}` full description of the household devices: purpose, capabilities, controls, sensors, state, `jarvis` text, admin notes | read-only |
+| `devices_describe` | `{household}` (required: the household's ceiling applies to it) full description of the household devices: purpose, capabilities, controls, sensors, state, `jarvis` text, admin notes | read-only |
 
 Names stay within 64 characters with the prefix (slug 36, action 20). An announced action named `state`, `set` or `events` is hidden by the
 generated tool. The descriptions use the device's name and purpose and its `jarvis` text, quoted and labelled as data ("not instructions"),
 with control characters, angle brackets and quotes flattened. A slug is unique only in one scope (one person's devices, one household): when
-the caller reaches two devices with the same slug, the first (own devices first, then by creation) keeps it and the other gets a short id
+the caller reaches two devices with the same slug, the oldest (by creation, then id) keeps it, so a new device never renames an existing one, and the other gets a short id
 after it (`lampa-3f2a`), so a tool name always means one device.
 
 JARVIS's prompt section reads `GET /internal/households/{id}/devices` (inside the Docker network; `X-Client-Id` and `X-Client-Secret` against
@@ -133,7 +133,7 @@ connect (`devices.not_paired`). Members see the list; only admins change it; som
 Devices asks Households for roles with the caller's own token (`Devices:HouseholdsUrl`).
 
 JARVIS sees the online devices of every household the person is in next to their own (S3); when two have the same
-name, the person's own device wins.
+name, the older device keeps the plain name.
 
 ### Pairing and the satellite's identity (S13)
 

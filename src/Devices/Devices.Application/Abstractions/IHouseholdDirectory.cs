@@ -11,6 +11,9 @@ public interface IHouseholdDirectory
     /// <summary>The people who are Admin or Owner of the household now.</summary>
     Task<IReadOnlyList<Guid>> GetAdminIdsAsync(Guid householdId, CancellationToken cancellationToken);
 
+    /// <summary>Everyone who is a member of the household now, whatever the role.</summary>
+    Task<IReadOnlyList<Guid>> GetMemberIdsAsync(Guid householdId, CancellationToken cancellationToken);
+
     /// <summary>The household's event retention (D9); <see cref="EventRetention.Default"/> when the household is gone.</summary>
     Task<EventRetention> GetEventRetentionAsync(Guid householdId, CancellationToken cancellationToken);
 }

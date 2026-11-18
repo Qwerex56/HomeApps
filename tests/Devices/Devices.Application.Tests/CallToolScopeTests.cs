@@ -14,9 +14,9 @@ public sealed class CallToolScopeTests
     private readonly FakeDevices _devices = new();
     private readonly FakeLinks _links = new();
 
-    private Device Personal(string name, string action)
+    private Device Personal(string name, string action, int minutes = 1)
     {
-        var device = Device.Create(_user, name, DeviceKind.Computer, [], Now).Value;
+        var device = Device.Create(_user, name, DeviceKind.Computer, [], Now.AddMinutes(minutes)).Value;
         device.Connect([DeviceAction.Create(action, null, null, false, false).Value], Now);
         _devices.Add(device);
         return device;
@@ -40,23 +40,23 @@ public sealed class CallToolScopeTests
     {
         var personal = Personal("Lampa", "on");
         var household = Household("Lampa", "on");
-        var suffix = household.Id.ToString("N")[..4];
+        var suffix = personal.Id.ToString("N")[..4];
 
         Assert.True((await CallAsync("lampa_on")).IsSuccess);
         Assert.True((await CallAsync($"lampa-{suffix}_on")).IsSuccess);
 
-        Assert.Equal([personal.Id, household.Id], _links.Runs.Select(r => r.DeviceId));
+        Assert.Equal([household.Id, personal.Id], _links.Runs.Select(r => r.DeviceId));
     }
 
     [Fact]
-    public async Task The_own_device_keeps_the_plain_slug_even_when_the_household_device_is_older()
+    public async Task The_older_device_keeps_the_plain_slug_so_a_new_one_never_renames_it()
     {
         var household = Household("Lampa", "on");
         var personal = Personal("Lampa", "on");
 
         await CallAsync("lampa_on");
 
-        Assert.Equal(personal.Id, Assert.Single(_links.Runs).DeviceId);
+        Assert.Equal(household.Id, Assert.Single(_links.Runs).DeviceId);
         Assert.NotEqual(household.Id, personal.Id);
     }
 

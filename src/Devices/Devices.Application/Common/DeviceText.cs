@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 
 namespace Devices.Application.Common;
@@ -18,7 +19,17 @@ internal static class DeviceText
         var builder = new StringBuilder(Math.Min(text.Length, maxLength));
         foreach (var c in text)
         {
-            var flat = char.IsControl(c) || char.IsWhiteSpace(c) || c is '<' or '>' or '"' or '`' ? ' ' : c;
+            if (CharUnicodeInfo.GetUnicodeCategory(c) == UnicodeCategory.Format)
+            {
+                continue;
+            }
+
+            var flat = c switch
+            {
+                '\u201C' or '\u201D' or '\u201E' or '\u00AB' or '\u00BB' => '\'',
+                '\uFF1C' or '\uFF1E' => ' ',
+                _ => char.IsControl(c) || char.IsWhiteSpace(c) || c is '<' or '>' or '"' or '`' ? ' ' : c,
+            };
             if (flat == ' ' && (builder.Length == 0 || builder[^1] == ' '))
             {
                 continue;

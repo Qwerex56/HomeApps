@@ -7,6 +7,9 @@ public static class DeviceErrors
 {
     public static Error NotFound => new AppError("devices.not_found", "There is no such device.", ErrorKind.NotFound);
 
+    public static Error HouseholdRequired => new AppError(
+        "devices.household_required", "devices_describe needs the household (its id) to describe.", ErrorKind.Validation);
+
     public static Error Disabled => new AppError(
         "devices.disabled", "This device was removed; add it again to use it.", ErrorKind.Conflict);
 
