@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Devices.Api.Link;
 using Devices.Api.Mcp;
+using Devices.Api.Stream;
 using Devices.Application.Abstractions;
 using HomeApps.BuildingBlocks.Api.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -12,7 +13,7 @@ namespace Devices.Api;
 internal static class DependencyInjection
 {
     /// <summary>
-    /// What only the Devices Api needs: the links (connected devices, in memory), the MCP server whose tools are the
+    /// What only the Devices Api needs: the links (connected devices, in memory), the stream (SSE) of a household's changes, the MCP server whose tools are the
     /// online devices' actions (listed per caller, not from attributes), app tokens of JARVIS's resource, enums as strings.
     /// </summary>
     public static WebApplicationBuilder AddDevicesApi(this WebApplicationBuilder builder)
@@ -21,6 +22,8 @@ internal static class DependencyInjection
         services.AddOptions<DevicesOptions>().BindConfiguration(DevicesOptions.SectionName);
         services.AddSingleton<DeviceLinks>();
         services.AddSingleton<IDeviceLinks>(provider => provider.GetRequiredService<DeviceLinks>());
+        services.AddSingleton<DeviceStream>();
+        services.AddSingleton<IDeviceStream>(provider => provider.GetRequiredService<DeviceStream>());
         services.AddScoped<DeviceToolsServer>();
         services.ConfigureHttpJsonOptions(json => json.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
