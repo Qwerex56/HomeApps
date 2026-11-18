@@ -42,7 +42,7 @@ internal sealed class ProcessFramesHandler(
         {
             var applied = frame.Type switch
             {
-                "state" => ApplyState(device, state, parsed.Value, frame, now),
+                "state" => await ApplyStateAsync(device, state, parsed.Value, frame, now, cancellationToken),
                 "event" => await ApplyEventAsync(device, parsed.Value, frame, now, cancellationToken),
                 "status" => await ApplyStatusAsync(device, state, frame, now, cancellationToken),
                 _ => Result.Fail(DeviceErrors.UnknownFrame(frame.Type)),
@@ -58,7 +58,8 @@ internal sealed class ProcessFramesHandler(
         return results;
     }
 
-    private Result ApplyState(Device device, DeviceState state, DeviceDescriptor descriptor, DeviceFrame frame, DateTimeOffset now)
+    private async Task<Result> ApplyStateAsync(
+        Device device, DeviceState state, DeviceDescriptor descriptor, DeviceFrame frame, DateTimeOffset now, CancellationToken cancellationToken)
     {
         var checkedValues = FrameValidation.CheckState(descriptor, frame.Values);
         if (checkedValues.IsFailed)
@@ -66,8 +67,13 @@ internal sealed class ProcessFramesHandler(
             return checkedValues;
         }
 
-        state.ApplyValues(frame.Values!.Value, now);
+        var changed = state.ApplyValues(frame.Values!.Value, now);
         stream.Publish(new DeviceStreamMessage(device.HouseholdId!.Value, "state", new { deviceId = device.Id, values = frame.Values.Value, at = now }));
+        if (changed is not null)
+        {
+            await bus.PublishAsync(new DeviceStateChanged(device.HouseholdId.Value, device.Id, device.Slug, changed, now), cancellationToken);
+        }
+
         return Result.Ok();
     }
 
