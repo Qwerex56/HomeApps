@@ -27,7 +27,8 @@ public sealed record InstallationView(
     Guid InstalledBy,
     DateTimeOffset InstalledAt,
     DateTimeOffset? UpdatedAt,
-    int? Pin)
+    int? Pin,
+    IReadOnlyList<DevicePick> DevicePicks)
 {
     public static InstallationView From(Installation installation, AddonPackage package)
     {
@@ -38,6 +39,6 @@ public sealed record InstallationView(
             installation.Id, installation.AddonId, installation.Version, installation.TargetKind, installation.TargetId,
             m.Name, m.Icon, $"/homemix/run/{installation.Id}/", m.Entry, m.Pages, m.Widgets, installation.Widgets, m.Permissions,
             installation.Capabilities, installation.Network, installation.JarvisAllowed, package.Repository, package.IsOfficial,
-            installation.InstalledBy, installation.InstalledAt, installation.UpdatedAt, installation.Pin);
+            installation.InstalledBy, installation.InstalledAt, installation.UpdatedAt, installation.Pin, installation.DevicePicks);
     }
 }
