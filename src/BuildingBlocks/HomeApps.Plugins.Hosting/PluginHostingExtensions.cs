@@ -5,6 +5,7 @@ using HomeApps.BuildingBlocks.Api.Assistant;
 using HomeApps.BuildingBlocks.Infrastructure;
 using HomeApps.BuildingBlocks.Infrastructure.Options;
 using HomeApps.BuildingBlocks.Mcp;
+using HomeApps.Plugins.Devices;
 using HomeApps.Plugins.Manifest;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -62,6 +63,9 @@ public static class PluginHostingExtensions
             http.BaseAddress = new Uri(sp.GetRequiredService<IOptions<PluginHostingOptions>>().Value.HouseholdsUrl.TrimEnd('/') + "/"));
         services.AddHttpClient<IHouseholdDirectory, HouseholdsHttpDirectory>((sp, http) =>
             http.BaseAddress = new Uri(sp.GetRequiredService<IOptions<PluginHostingOptions>>().Value.HouseholdsUrl.TrimEnd('/') + "/"));
+
+        services.AddHttpClient<IDevicesClient, DevicesHttpClient>((sp, http) =>
+            http.BaseAddress = new Uri(sp.GetRequiredService<IOptions<PluginHostingOptions>>().Value.DevicesUrl.TrimEnd('/') + "/"));
 
         if (manifest.Realtime is not null)
         {
