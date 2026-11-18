@@ -24,7 +24,7 @@ internal sealed partial class PruneEventsHandler(IDeviceTelemetry telemetry, IHo
                 deleted += await telemetry.DeleteEventsAsync(
                     householdId, retention.CutoffFor(isLocation: false, now), retention.CutoffFor(isLocation: true, now), cancellationToken);
             }
-            catch (HttpRequestException exception)
+            catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
             {
                 LogRetentionUnavailable(householdId, exception);
             }

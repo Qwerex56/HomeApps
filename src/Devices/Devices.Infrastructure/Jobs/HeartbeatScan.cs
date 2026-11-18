@@ -36,7 +36,7 @@ internal sealed partial class HeartbeatScan(IServiceScopeFactory scopes, TimePro
                 LogSilent(silent.Value);
             }
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
             LogFailed(exception);
         }

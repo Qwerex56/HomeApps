@@ -32,7 +32,7 @@ internal sealed partial class EventPruning(IServiceScopeFactory scopes, ILogger<
                 LogDeleted(deleted.Value);
             }
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
             LogFailed(exception);
         }
