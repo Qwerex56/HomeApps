@@ -48,6 +48,32 @@ public sealed class ProcessFramesTests
     }
 
     [Fact]
+    public async Task State_that_differs_publishes_DeviceStateChanged_with_only_the_changed_values()
+    {
+        await SendAsync(new DeviceFrame("state", Values: Json("""{ "heating": 2, "temperature": 21.5 }""")));
+        _bus.Published.Clear();
+
+        await SendAsync(new DeviceFrame("state", Values: Json("""{ "heating": 2, "temperature": 22 }""")));
+
+        var changed = Assert.IsType<DeviceStateChanged>(Assert.Single(_bus.Published));
+        Assert.Equal(_device.Id, changed.DeviceId);
+        Assert.Equal(_device.Slug, changed.Slug);
+        Assert.Equal("""{"temperature":22}""", changed.Changed);
+        Assert.Equal(Now, changed.At);
+    }
+
+    [Fact]
+    public async Task State_that_repeats_the_stored_values_publishes_nothing()
+    {
+        await SendAsync(new DeviceFrame("state", Values: Json("""{ "heating": 2 }""")));
+        _bus.Published.Clear();
+
+        await SendAsync(new DeviceFrame("state", Values: Json("""{ "heating": 2 }""")));
+
+        Assert.Empty(_bus.Published);
+    }
+
+    [Fact]
     public async Task A_report_is_applied_frame_by_frame_and_a_bad_frame_does_not_stop_the_rest()
     {
         var results = await SendAsync(
