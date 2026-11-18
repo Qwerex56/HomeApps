@@ -34,7 +34,7 @@ internal sealed partial class HouseholdDevices(HttpClient http, IOptions<Gateway
             using var response = await http.SendAsync(request, cancellationToken);
             response.EnsureSuccessStatusCode();
             var views = await response.Content.ReadFromJsonAsync<List<View>>(cancellationToken) ?? [];
-            return Keep(key, [.. views.Select(v => new HouseholdDevice(v.Id, v.Name, v.Purpose, v.Online, v.Silent, v.LowBattery, v.Battery, v.Jarvis, v.AdminNotes))], Lifetime);
+            return Keep(key, [.. views.Select(v => new HouseholdDevice(v.Id, v.Name, v.Purpose, v.Online, v.Silent, v.LowBattery, v.Battery, v.Jarvis, v.AdminNotes, v.JarvisMayControl))], Lifetime);
         }
         catch (Exception exception) when (exception is HttpRequestException or System.Text.Json.JsonException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
         {
@@ -51,7 +51,7 @@ internal sealed partial class HouseholdDevices(HttpClient http, IOptions<Gateway
 
     private sealed record Cached(IReadOnlyList<HouseholdDevice>? Devices);
 
-    private sealed record View(Guid Id, string Name, string Purpose, bool Online, bool Silent, bool LowBattery, double? Battery, string? Jarvis, string? AdminNotes);
+    private sealed record View(Guid Id, string Name, string Purpose, bool Online, bool Silent, bool LowBattery, double? Battery, string? Jarvis, string? AdminNotes, bool JarvisMayControl = true);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "The devices of household {HouseholdId} did not load; JARVIS goes without the device section for now.")]
     private partial void LogUnreadable(Guid householdId, Exception exception);
