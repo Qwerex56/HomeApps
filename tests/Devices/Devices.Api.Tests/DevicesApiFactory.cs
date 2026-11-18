@@ -22,6 +22,7 @@ public sealed class DevicesApiFactory : HomeAppsApiFactory<Program, DevicesDbCon
         base.ConfigureWebHost(builder);
         builder.UseSetting("Devices:Resource", Resource);
         builder.UseSetting("Devices:ActionTimeout", "00:00:03");
+        builder.UseSetting("Devices:StreamLifetime", "00:00:01");
     }
 
     protected override void ConfigureServices(IServiceCollection services)
