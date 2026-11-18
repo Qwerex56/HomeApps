@@ -79,28 +79,27 @@ name, the person's own device wins.
 
 ### Pairing and the satellite's identity (S13)
 
-A satellite is a **member of its household**, not a person's device:
+A satellite belongs to its household but is **not a household member** (stage H-0; until H-1 it has no plugin access, voice and the spoken PIN still work):
 
 1. The satellite sends the code to `POST /devices/pair` (no account; the code is spent, case and dashes do not
    matter). An unknown, used or expired code is 404 `devices.pairing_expired`.
 2. Devices asks Auth on the Docker network, `POST /internal/devices`, with its service client `devices-service`
    (`Devices:ClientSecret`, `DEVICES_CLIENT_SECRET` in production). Auth makes the satellite's identity (its id is the
    device's id) and hands out a **secret** once; pairing again replaces it. Only `devices-service` may do this.
-3. Auth publishes `HouseholdDevicePaired`; Households adds the device as a **Member** shown as "JARVIS · salon"
-   (`isDevice: true` in the member list). It does not count towards the member limit, its role cannot change, it
-   cannot be removed in Households (`household.device_member`, use the Devices page) and never takes the household over.
+3. Auth publishes `HouseholdDevicePaired` (Auth and JARVIS consume it; Households no longer does, so the satellite
+   is not in the member list and does not count towards the member limit).
 4. The satellite trades its secret for 15-minute tokens at `POST /auth/devices/token` `{deviceId, secret}`:
    `sub` = the device, `household_id`, `role` User, no email, `act` = `device`. Auth, Accounts and Households refuse
-   its changes like any assistant's; plugins treat it as the Member it is. With that token it connects to
+   its changes like any assistant's; plugins do not treat it as a member (until H-1 it has no plugin access). With that token it connects to
    `/devices/link` and keeps the name its household gave it (the `device` in `hello` is ignored).
 5. When JARVIS answers a satellite, Auth's delegation (`/internal/delegation`) gives him a token for the device
-   instead of a person, so JARVIS sees what a member of that household sees.
+   instead of a person, so JARVIS acts for the satellite (not a member; no plugin access until H-1).
 
 The Mac bridge is such a satellite after `--pair <code>` (S-1e, see [jarvis.md](jarvis.md) "The Mac bridge"): it
 does steps 1 and 4 itself and keeps the secret in the Keychain.
 
 Removing the satellite or making a new code publishes `HouseholdDeviceUnpaired`: Auth stops its secret,
-Households removes the member and JARVIS forgets the satellite's conversation. Restoring a removed satellite needs a
+JARVIS forgets the satellite's conversation. Restoring a removed satellite needs a
 new code.
 
 ### Who speaks to a satellite (S4)
