@@ -82,9 +82,18 @@ internal sealed partial class Agent(
     private async Task<string?> RefusalAsync(AskCommand command, CancellationToken cancellationToken)
     {
         // H-2: the household's JARVIS speaks on its satellites only while it is on; no model, no tools.
-        if (command is { Satellite: true, HouseholdId: { } household } && !(await ceilings.GetAsync(household, cancellationToken)).Enabled)
+        if (command is { Satellite: true, HouseholdId: { } household })
         {
-            return Answers.HouseholdOff;
+            var ceiling = await ceilings.GetAsync(household, cancellationToken);
+            if (ceiling.SettingsUnavailable)
+            {
+                return Answers.HouseholdUnavailable;
+            }
+
+            if (!ceiling.Enabled)
+            {
+                return Answers.HouseholdOff;
+            }
         }
 
         var settings = options.Value;

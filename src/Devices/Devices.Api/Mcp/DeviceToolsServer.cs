@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Devices.Application.Tools.CallTool;
 using Devices.Application.Tools.ListTools;
 using HomeApps.BuildingBlocks.Mcp;
@@ -13,6 +14,9 @@ namespace Devices.Api.Mcp;
 /// </summary>
 internal sealed class DeviceToolsServer(ISender sender)
 {
+    /// <summary>The <c>_meta</c> key naming the household of a household device's tool; JARVIS's gateway caps it by that household (H-2).</summary>
+    public const string HouseholdMeta = "homeapps/household";
+
     private static readonly JsonElement NoInput = JsonDocument.Parse("""{"type":"object","properties":{}}""").RootElement.Clone();
 
     public async ValueTask<ListToolsResult> ListToolsAsync(CancellationToken cancellationToken)
@@ -31,6 +35,7 @@ internal sealed class DeviceToolsServer(ISender sender)
                     DestructiveHint = t.NeedsConfirmation,
                     OpenWorldHint = false,
                 },
+                Meta = t.HouseholdId is { } household ? new JsonObject { [HouseholdMeta] = household.ToString() } : null,
             })],
         };
     }

@@ -8,12 +8,15 @@ namespace Jarvis.Infrastructure.Gateway;
 
 /// <summary>
 /// Households' <c>GET /internal/households/{id}/assistant</c> with JARVIS's service secret, kept 45 seconds per household
-/// (an admin's change reaches the satellite within a minute). A failure is not kept and closes the household meanwhile.
+/// (an admin's change reaches the satellite within a minute). A failure (the client gives up after 3 seconds) makes the household
+/// <see cref="HouseholdCeiling.Unavailable"/> (as closed as <see cref="HouseholdCeiling.Closed"/>) and is kept only 5 seconds, so a
+/// down Households is not asked on every call.
 /// </summary>
 internal sealed partial class HouseholdsCeilings(
-    HttpClient http, IOptions<GatewayOptions> options, IMemoryCache cache, ILogger<HouseholdsCeilings> logger) : IHouseholdCeilings
+    HttpClient http, IOptions<GatewayOptions> options, IMemoryCache cache, ILogger<HouseholdsCeilings> logger, TimeSpan? failureLifetime = null) : IHouseholdCeilings
 {
     private static readonly TimeSpan Lifetime = TimeSpan.FromSeconds(45);
+    private readonly TimeSpan _failureLifetime = failureLifetime ?? TimeSpan.FromSeconds(5);
 
     public async Task<HouseholdCeiling> GetAsync(Guid householdId, CancellationToken cancellationToken)
     {
@@ -37,18 +40,18 @@ internal sealed partial class HouseholdsCeilings(
 
             response.EnsureSuccessStatusCode();
             var view = await response.Content.ReadFromJsonAsync<View>(cancellationToken);
-            return Keep(key, view is null ? HouseholdCeiling.Closed : HouseholdCeiling.From(view.Enabled, view.AccessLevel, view.ToolSources));
+            return Keep(key, view is null ? HouseholdCeiling.Unavailable : HouseholdCeiling.From(view.Enabled, view.AccessLevel, view.ToolSources));
         }
         catch (Exception exception) when (exception is HttpRequestException or System.Text.Json.JsonException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
         {
             LogUnreadable(householdId, exception);
-            return HouseholdCeiling.Closed;
+            return Keep(key, HouseholdCeiling.Unavailable, _failureLifetime);
         }
     }
 
-    private HouseholdCeiling Keep((string, Guid) key, HouseholdCeiling ceiling)
+    private HouseholdCeiling Keep((string, Guid) key, HouseholdCeiling ceiling, TimeSpan? lifetime = null)
     {
-        cache.Set(key, ceiling, Lifetime);
+        cache.Set(key, ceiling, lifetime ?? Lifetime);
         return ceiling;
     }
 
