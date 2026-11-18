@@ -26,12 +26,13 @@ internal sealed partial class Agent(
     IOptions<AssistantOptions> options,
     TimeProvider time,
     IRunFeed feed,
+    IHouseholdCeilings ceilings,
     ILogger<Agent> logger)
 {
     public async Task<AnswerView> RunAsync(AskCommand command, Guid? streamId, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
-        if (await RefusalAsync(cancellationToken) is { } refusal)
+        if (await RefusalAsync(command, cancellationToken) is { } refusal)
         {
             var refused = AssistantRun.Refuse(command.UserId, command.Channel, command.Reference, command.HouseholdId, command.Text, refusal, time);
             runs.Add(refused);
@@ -78,8 +79,23 @@ internal sealed partial class Agent(
         return new AnswerView(run.Id, run.Response ?? Answers.Broken, actions);
     }
 
-    private async Task<string?> RefusalAsync(CancellationToken cancellationToken)
+    private async Task<string?> RefusalAsync(AskCommand command, CancellationToken cancellationToken)
     {
+        // H-2: the household's JARVIS speaks on its satellites only while it is on; no model, no tools.
+        if (command is { Satellite: true, HouseholdId: { } household })
+        {
+            var ceiling = await ceilings.GetAsync(household, cancellationToken);
+            if (ceiling.SettingsUnavailable)
+            {
+                return Answers.HouseholdUnavailable;
+            }
+
+            if (!ceiling.Enabled)
+            {
+                return Answers.HouseholdOff;
+            }
+        }
+
         var settings = options.Value;
         if (!settings.Enabled || !brain.IsReady)
         {

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using HomeApps.BuildingBlocks.Mcp;
 using Jarvis.Application.Gateway;
 using Jarvis.Application.ToolCalls.AwaitConfirmation;
@@ -26,18 +27,52 @@ namespace Jarvis.Api.Gateway;
 /// <c>destructiveHint</c> defaults to true, so an unmarked change counts as destructive.
 /// </para>
 internal sealed partial class McpGateway(
-    IToolSources sources, SourceConnector connector, Caller caller, ISender sender, IMemoryCache cache, ILogger<McpGateway> logger)
+    IToolSources sources, IHouseholdCeilings ceilings, SourceConnector connector, Caller caller, ISender sender, IMemoryCache cache, ILogger<McpGateway> logger)
 {
     public async ValueTask<ListToolsResult> ListToolsAsync(CancellationToken cancellationToken)
     {
         var all = await sources.ListAsync(cancellationToken);
+        var scope = caller.HouseholdClaim;
+        if (scope is null && caller.RunId is { } listing
+            && (await sender.Send(new CheckRunQuery(listing, caller.UserId), cancellationToken)) is { IsSuccess: true, Value.HouseholdId: { } runHousehold })
+        {
+            scope = runHousehold;
+        }
+
+        // H-2, D1: in a household the household's JARVIS settings are a ceiling, so a source it does not allow is not even offered.
+        HouseholdCeiling? scoped = scope is { } household ? await ceilings.GetAsync(household, cancellationToken) : null;
+        if (scoped is not null)
+        {
+            all = [.. all.Where(scoped.Allows)];
+        }
+
         var token = await caller.SourceTokenAsync(cancellationToken);
         var perSource = await Task.WhenAll(all.Select(source => ToolsOfAsync(source, token, cancellationToken)));
 
         var tools = new List<Tool>();
         var names = new HashSet<string>(StringComparer.Ordinal);
+        var byHousehold = new Dictionary<Guid, HouseholdCeiling>();
         foreach (var (source, tool) in perSource.SelectMany(list => list))
         {
+            // A household device's tool belongs to that household: its ceiling applies, and a satellite sees only its own.
+            if (HouseholdOf(source, tool) is { } toolHousehold)
+            {
+                if (caller.HouseholdClaim is { } own && own != toolHousehold)
+                {
+                    continue;
+                }
+
+                if (!byHousehold.TryGetValue(toolHousehold, out var toolCeiling))
+                {
+                    byHousehold[toolHousehold] = toolCeiling = await ceilings.GetAsync(toolHousehold, cancellationToken);
+                }
+
+                if (!toolCeiling.Allows(source))
+                {
+                    continue;
+                }
+            }
+
             var name = source.Expose(tool.Name);
             if (!names.Add(name))
             {
@@ -73,10 +108,51 @@ internal sealed partial class McpGateway(
 
             try
             {
-                var token = await caller.SourceTokenAsync(cancellationToken);
+                RunScope? run = null;
                 if (caller.RunId is { } runId)
                 {
-                    return await CallInRunAsync(runId, source, own, request, token, cancellationToken);
+                    var checkedRun = await sender.Send(new CheckRunQuery(runId, caller.UserId), cancellationToken);
+                    if (checkedRun.IsFailed)
+                    {
+                        return Failed(ToolResult.Describe(checkedRun.Errors));
+                    }
+
+                    run = checkedRun.Value;
+                }
+
+                var token = await caller.SourceTokenAsync(cancellationToken);
+                var tool = await ToolAsync(source, own, token, caller.UserId, cancellationToken);
+
+                // H-2, D1: the household of the call caps what may be called. A satellite's own household first, then the
+                // household of a household device's tool, the call's household argument, the run's household.
+                var inArguments = HouseholdIn(request.Arguments, out var named);
+                if (named)
+                {
+                    return Failed("Pass the household's id (as my_households shows it), not its name.");
+                }
+
+                var claim = caller.HouseholdClaim;
+                var fromTool = HouseholdOf(source, tool);
+                if (claim is { } own1 && ((fromTool ?? inArguments) is { } other && other != own1))
+                {
+                    return Failed("This assistant acts only in its own household.");
+                }
+
+                var household = claim ?? fromTool ?? inArguments ?? run?.HouseholdId;
+                var ceiling = household is { } id ? await ceilings.GetAsync(id, cancellationToken) : null;
+                if (ceiling is not null && !ceiling.Allows(source))
+                {
+                    return Failed($"The household's JARVIS settings do not allow {source.Name} tools in this household.");
+                }
+
+                if (ceiling is { ReadOnly: true } && tool?.Annotations?.ReadOnlyHint != true)
+                {
+                    return Failed("The household's JARVIS is read-only in this household: it can look, not change.");
+                }
+
+                if (run is not null)
+                {
+                    return await CallInRunAsync(run.Id, source, own, request, token, tool?.Annotations, cancellationToken);
                 }
 
                 await using var client = await connector.ConnectAsync(source, token, cancellationToken);
@@ -98,18 +174,12 @@ internal sealed partial class McpGateway(
     }
 
     private async Task<CallToolResult> CallInRunAsync(
-        Guid runId, ToolSource source, string own, CallToolRequestParams request, string token, CancellationToken cancellationToken)
+        Guid runId, ToolSource source, string own, CallToolRequestParams request, string token, ToolAnnotations? annotations, CancellationToken cancellationToken)
     {
         var userId = caller.UserId;
-        var run = await sender.Send(new CheckRunQuery(runId, userId), cancellationToken);
-        if (run.IsFailed)
-        {
-            return Failed(ToolResult.Describe(run.Errors));
-        }
-
         var arguments = request.Arguments is null ? null : JsonSerializer.Serialize(request.Arguments);
-        var annotations = await AnnotationsAsync(source, own, token, userId, cancellationToken);
         var readOnly = annotations?.ReadOnlyHint == true;
+
         if (!readOnly && annotations?.DestructiveHint != false)
         {
             var waiting = await sender.Send(new AwaitConfirmationCommand(runId, userId, request.Name, arguments), cancellationToken);
@@ -127,20 +197,28 @@ internal sealed partial class McpGateway(
         return result;
     }
 
-    /// <summary>The tool's hints, from the source's list for this person; kept a few minutes per person.</summary>
-    private async Task<ToolAnnotations?> AnnotationsAsync(ToolSource source, string own, string token, Guid userId, CancellationToken cancellationToken)
+    /// <summary>The tool as the source lists it for this person; kept a few minutes per person.</summary>
+    private async Task<Tool?> ToolAsync(ToolSource source, string own, string token, Guid userId, CancellationToken cancellationToken)
     {
-        var key = (nameof(AnnotationsAsync), userId, source.Name, own);
-        if (cache.TryGetValue(key, out ToolAnnotations? known))
+        var key = (nameof(ToolAsync), userId, source.Name, own);
+        if (cache.TryGetValue(key, out Tool? known))
         {
             return known;
         }
 
         var tools = await ToolsOfAsync(source, token, cancellationToken);
-        var annotations = tools.FirstOrDefault(t => t.Tool.Name == own).Tool?.Annotations;
-        cache.Set(key, annotations, TimeSpan.FromMinutes(5));
-        return annotations;
+        var tool = tools.FirstOrDefault(t => t.Tool.Name == own).Tool;
+        if (tool is not null)
+        {
+            cache.Set(key, tool, TimeSpan.FromMinutes(5));
+        }
+
+        return tool;
     }
+
+    /// <summary>The household a tool belongs to (<c>_meta</c> "homeapps/household"): only Devices sets it, so only its tools are trusted; never throws.</summary>
+    internal static Guid? HouseholdOf(ToolSource source, Tool? tool) =>
+        source.Kind == ToolSourceKind.Devices && tool?.Meta?["homeapps/household"] is JsonValue v && v.TryGetValue<string>(out var s) && Guid.TryParse(s, out var id) ? id : null;
 
     public async ValueTask<ListResourcesResult> ListResourcesAsync(CancellationToken cancellationToken)
     {
@@ -211,6 +289,35 @@ internal sealed partial class McpGateway(
             LogUnreachable(source.Name, exception);
             return [];
         }
+    }
+
+    /// <summary>
+    /// The household a tool call names (<c>household</c> or <c>householdId</c>, as JARVIS's prompt tells the model to pass it).
+    /// <paramref name="named"/> is true when the argument is a string that is neither an id nor HomeMix's "my account": a
+    /// household name, which this gateway cannot cap.
+    /// </summary>
+    internal static Guid? HouseholdIn(IDictionary<string, JsonElement>? arguments, out bool named)
+    {
+        named = false;
+        foreach (var name in new[] { "household", "householdId" })
+        {
+            if (arguments is not null && arguments.TryGetValue(name, out var value) && value.ValueKind == JsonValueKind.String)
+            {
+                var text = value.GetString();
+                if (Guid.TryParse(text, out var id))
+                {
+                    return id;
+                }
+
+                if (!string.Equals(text?.Trim(), "my account", StringComparison.OrdinalIgnoreCase))
+                {
+                    named = true;
+                    return null;
+                }
+            }
+        }
+
+        return null;
     }
 
     private static bool Unreachable(Exception exception) =>

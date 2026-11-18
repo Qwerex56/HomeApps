@@ -20,7 +20,8 @@ internal sealed class ListToolsHandler(IDeviceRepository devices, IHouseholdRole
                     $"On the device \"{d.Name}\"{(d.IsHouseholdDevice ? " (household)" : string.Empty)}: {a.Description}".TrimEnd(' ', ':'),
                     a.InputSchema,
                     a.ReadOnly,
-                    a.NeedsConfirmation))),
+                    a.NeedsConfirmation,
+                    d.HouseholdId))),
         ]);
     }
 }

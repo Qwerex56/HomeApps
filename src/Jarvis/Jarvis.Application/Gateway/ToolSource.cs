@@ -1,8 +1,9 @@
 namespace Jarvis.Application.Gateway;
 
 /// <summary>An MCP server the gateway forwards to: a core service, HomeMix, or a plugin.</summary>
+/// <param name="Kind">The household switch that governs it (H-2).</param>
 /// <param name="Prefix">Before each tool name, with <see cref="Separator"/>; empty for HomeMix.</param>
-public sealed record ToolSource(string Name, string Prefix, Uri Endpoint)
+public sealed record ToolSource(string Name, string Prefix, Uri Endpoint, ToolSourceKind Kind = ToolSourceKind.Core)
 {
     public const char Separator = '_';
 

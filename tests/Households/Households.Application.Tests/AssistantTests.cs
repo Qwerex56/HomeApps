@@ -1,5 +1,6 @@
 using Households.Application.Assistant;
 using Households.Application.Assistant.GetAssistant;
+using Households.Application.Assistant.GetHouseholdAssistant;
 using Households.Application.Assistant.UpdateAssistant;
 using Households.Application.Households;
 using Households.Application.Members;
@@ -111,5 +112,20 @@ public sealed class AssistantTests
         var me = (await w.Send(new GetMyMembershipQuery(f.Id))).Value;
 
         Assert.Equal((HouseholdRole.Member, false), (me.Role, me.IsAssistant));
+    }
+
+    [Fact]
+    public async Task TheServiceReadsTheSettingsWithoutAnActorAndUnknownIsNotFound()
+    {
+        using var w = new World();
+        var f = await w.Family();
+        w.SignInAs(f.Admin);
+        await w.Send(Change(f.Id, level: AssistantAccessLevel.Member));
+        w.SignInAs(Guid.NewGuid());
+
+        var view = (await w.Send(new GetHouseholdAssistantQuery(f.Id))).Value;
+
+        Assert.Equal(new AssistantView(true, "Jarvis", AssistantAccessLevel.Member, AssistantToolSources.Plugins, 14, 3), view);
+        Assert.Equal("household.not_found", (await w.Send(new GetHouseholdAssistantQuery(Guid.NewGuid()))).Code());
     }
 }

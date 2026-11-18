@@ -2,6 +2,8 @@ using System.Net.WebSockets;
 using System.Text.Json;
 using HomeApps.BuildingBlocks.Testing;
 using Jarvis.Application.Abstractions;
+using Jarvis.Application.Gateway;
+using Jarvis.Application.Runs.Ask;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Jarvis.Api.Tests;
@@ -34,6 +36,32 @@ public sealed class SatelliteVoiceTests(JarvisFactory factory)
         Assert.Contains("co mam dziś w planie?", factory.Brain.LastPrompt, StringComparison.Ordinal);
         Assert.DoesNotContain("4821", factory.Brain.LastPrompt, StringComparison.Ordinal);
         Assert.Equal((_device, _household, "Adrian"), factory.Speakers.Asked.Last());
+    }
+
+    [Fact]
+    public async Task A_satellite_of_a_household_with_JARVIS_off_is_refused_without_the_model()
+    {
+        factory.Ceilings.Set[_household] = new HouseholdCeiling(false, true, true, true, true);
+        var runs = factory.Brain.Runs;
+        using var socket = await ConnectAsync();
+
+        var heard = await SayAsync(socket, "włącz światło");
+
+        Assert.Equal("JARVIS jest wyłączony w tym domu.", heard.Single(m => Kind(m) == "reply").GetProperty("text").GetString());
+        Assert.Equal(runs, factory.Brain.Runs);
+    }
+
+    [Fact]
+    public async Task A_satellite_of_a_household_whose_settings_did_not_load_hears_that_JARVIS_is_unavailable()
+    {
+        factory.Ceilings.Set[_household] = HouseholdCeiling.Unavailable;
+        var runs = factory.Brain.Runs;
+        using var socket = await ConnectAsync();
+
+        var heard = await SayAsync(socket, "włącz światło");
+
+        Assert.Equal(Answers.HouseholdUnavailable, heard.Single(m => Kind(m) == "reply").GetProperty("text").GetString());
+        Assert.Equal(runs, factory.Brain.Runs);
     }
 
     [Fact]

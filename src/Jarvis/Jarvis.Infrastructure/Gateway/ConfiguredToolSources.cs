@@ -21,7 +21,7 @@ internal sealed partial class ConfiguredToolSources(
     {
         var settings = options.Value;
         var sources = settings.Sources
-            .Select(s => new ToolSource(s.Name, s.Prefix ?? s.Name, new Uri(s.Url)))
+            .Select(s => new ToolSource(s.Name, s.Prefix ?? s.Name, new Uri(s.Url), KindOf(s.Name)))
             .ToList();
 
         foreach (var id in settings.PluginIds)
@@ -36,6 +36,14 @@ internal sealed partial class ConfiguredToolSources(
         return [.. sources.OrderBy(s => s.Prefix.Length == 0)];
     }
 
+    /// <summary>A configured source is HomeMix or the devices by name (H-2); the others (Households, Accounts) are JARVIS's own.</summary>
+    internal static ToolSourceKind KindOf(string name) => name switch
+    {
+        "homemix" => ToolSourceKind.HomeMix,
+        "devices" => ToolSourceKind.Devices,
+        _ => ToolSourceKind.Core,
+    };
+
     private async Task<ToolSource?> PluginSourceAsync(string id, string baseUrl, CancellationToken cancellationToken)
     {
         var key = (nameof(ConfiguredToolSources), id);
@@ -49,7 +57,7 @@ internal sealed partial class ConfiguredToolSources(
             var manifest = await http.GetFromJsonAsync<JsonElement>($"{baseUrl}/plugins/{id}/manifest", cancellationToken);
             var path = manifest.TryGetProperty("endpoints", out var endpoints) && endpoints.TryGetProperty("mcp", out var mcp)
                 && mcp.ValueKind == JsonValueKind.String ? mcp.GetString() : null;
-            var source = path is null ? null : new ToolSource(id, id, new Uri($"{baseUrl}{path}"));
+            var source = path is null ? null : new ToolSource(id, id, new Uri($"{baseUrl}{path}"), ToolSourceKind.Plugins);
             cache.Set(key, source, ManifestLifetime);
             return source;
         }

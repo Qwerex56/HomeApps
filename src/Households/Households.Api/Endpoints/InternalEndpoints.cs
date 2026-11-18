@@ -2,6 +2,8 @@ using System.Security.Cryptography;
 using System.Text;
 using HomeApps.BuildingBlocks.Api.Endpoints;
 using HomeApps.BuildingBlocks.Api.Results;
+using Households.Application.Assistant;
+using Households.Application.Assistant.GetHouseholdAssistant;
 using Households.Application.Common;
 using Households.Application.Members.ListHouseholdPeople;
 using MediatR;
@@ -19,20 +21,29 @@ internal sealed class InternalEndpoints : IEndpoint
     {
         // H-0: JARVIS reads the people for the spoken PIN (a satellite is not a member, so it cannot use /members).
         app.MapGet("/internal/households/{id:guid}/members", async (Guid id, HttpRequest request, IConfiguration configuration, ISender sender, CancellationToken ct) =>
-        {
-            var clientId = configuration["Households:Internal:ClientId"];
-            var secret = configuration["Households:Internal:ClientSecret"];
-            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(secret)
-                || !Same(clientId, request.Headers["X-Client-Id"].ToString()) || !Same(secret, request.Headers["X-Client-Secret"].ToString()))
-            {
-                return Results.Unauthorized();
-            }
-
-            return (await sender.Send(new ListHouseholdPeopleQuery(id), ct)).ToHttpResult();
-        })
+            Authorized(request, configuration)
+                ? (await sender.Send(new ListHouseholdPeopleQuery(id), ct)).ToHttpResult()
+                : Results.Unauthorized())
             .AllowAnonymous()
             .WithTags("Internal")
             .Produces<IReadOnlyList<MemberView>>();
+
+        // H-2: JARVIS filters a satellite's tools, and caps a person's, by the household's assistant settings.
+        app.MapGet("/internal/households/{id:guid}/assistant", async (Guid id, HttpRequest request, IConfiguration configuration, ISender sender, CancellationToken ct) =>
+            Authorized(request, configuration)
+                ? (await sender.Send(new GetHouseholdAssistantQuery(id), ct)).ToHttpResult()
+                : Results.Unauthorized())
+            .AllowAnonymous()
+            .WithTags("Internal")
+            .Produces<AssistantView>();
+    }
+
+    private static bool Authorized(HttpRequest request, IConfiguration configuration)
+    {
+        var clientId = configuration["Households:Internal:ClientId"];
+        var secret = configuration["Households:Internal:ClientSecret"];
+        return !string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(secret)
+            && Same(clientId, request.Headers["X-Client-Id"].ToString()) && Same(secret, request.Headers["X-Client-Secret"].ToString());
     }
 
     private static bool Same(string expected, string given) =>

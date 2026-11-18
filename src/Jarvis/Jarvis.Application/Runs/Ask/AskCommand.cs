@@ -13,7 +13,8 @@ public sealed record AskCommand(
     Guid? HouseholdId,
     string Channel,
     string? Reference,
-    IReadOnlyList<ContextLine> Context) : ICommand<AnswerView>
+    IReadOnlyList<ContextLine> Context,
+    bool Satellite = false) : ICommand<AnswerView>
 {
     public const int MaxLength = 4000;
 }
