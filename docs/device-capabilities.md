@@ -48,10 +48,21 @@ definition in the descriptor.
 ```
 
 - The first device that pairs with it registers it for the **whole instance** (not per household: it is a contract for
-  store add-ons and must mean the same everywhere).
-- A newer `version` only **extends** it: fields it adds are kept (as optional), fields already registered do not change.
+  store add-ons and must mean the same everywhere). It is registered only when the namespace author equals the author
+  part of the descriptor's `model` (`qwerex56/fotel-v1` may register `qwerex56/akwarium`) **and** the device is a
+  household device. Otherwise the capability is ignored with a warning.
+- The model author is **self-declared**: nothing verifies it. This is first-come registration plus the Owner's power to
+  hide, not real verification of who owns a namespace.
+- Once registered, **the registered definition wins**: a device is checked against it, whatever definition it brings.
+  Only a device whose model author is the namespace author can extend it: a newer `version` only **extends** it, fields
+  it adds are kept (as optional), fields already registered do not change.
+- A definition has at least 1 and at most 30 fields, a `version` from 1 to 10000, a `description` of at most 300
+  characters and an `anyOf` of at most 30 field names. The whole descriptor is at most 64,000 characters and has at
+  most 10 `roles`.
 - A namespaced capability without a definition, a built-in name that is not in the catalog, or a capability whose fields
   the device does not declare is **ignored with a warning**. The device still pairs; the warning is stored on the device
   and shown with it (`warnings` in the device list).
 - The server's Owner sees the registered ones at `GET /devices/admin/capabilities` and can hide or show them
-  (`POST .../{author}/{name}/hide`, `.../unhide`). Promoting one to a built-in is a release step.
+  (`POST .../{author}/{name}/hide`, `.../unhide`). A **hidden** capability is ignored on new descriptors (with a
+  warning on the device); devices already paired keep what they have until they send a descriptor again. Promoting one
+  to a built-in is a release step.

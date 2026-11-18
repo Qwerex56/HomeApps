@@ -5,9 +5,27 @@ namespace Devices.Domain.Tests;
 
 public sealed class CapabilityTests
 {
-    private static CapabilityResolution Resolve(string body) => CapabilityResolver.Resolve(
-        DescriptorParser.Parse($$"""{ "format": "homeapps.device/1", "model": "a/b", "version": "1", "purpose": "smart_home", {{body}} }""").Value,
-        CapabilityCatalog.BuiltIn);
+    private static CapabilityResolution Resolve(
+        string body, string model = "qwerex56/b", RegisteredCapability? registered = null, bool household = true) => CapabilityResolver.Resolve(
+        DescriptorParser.Parse($$"""{ "format": "homeapps.device/1", "model": "{{model}}", "version": "1", "purpose": "smart_home", {{body}} }""").Value,
+        CapabilityCatalog.BuiltIn,
+        registered is null ? new Dictionary<string, RegisteredCapability>() : new Dictionary<string, RegisteredCapability> { [registered.Name] = registered },
+        household);
+
+    private const string Aquarium = """
+        "capabilities": [ { "type": "qwerex56/akwarium", "definition": { "version": 2, "fields": [
+          { "kind": "sensor", "name": "ph", "value": { "type": "number" } },
+          { "kind": "sensor", "name": "temp", "value": { "type": "number" }, "required": false } ] } } ],
+        "sensors": [ { "name": "ph", "value": { "type": "number" } } ]
+        """;
+
+    private static List<string> ParseProblems(string json)
+    {
+        var problems = new List<string>();
+        using var document = System.Text.Json.JsonDocument.Parse(json);
+        CapabilityDefinition.Parse(document.RootElement, "a/b", problems);
+        return problems;
+    }
 
     [Fact]
     public void The_built_in_catalog_is_loaded_from_the_embedded_json()
@@ -92,6 +110,98 @@ public sealed class CapabilityTests
         Assert.Empty(resolution.Accepted);
         Assert.Empty(resolution.ToRegister);
         Assert.Contains("definition", resolution.Warnings.Single(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_registered_definition_wins_over_the_one_the_device_brings()
+    {
+        var registered = RegisteredCapability.Register(Definition(1, "ph", "temp"), DateTimeOffset.UnixEpoch);
+        var body = """
+            "capabilities": [ { "type": "qwerex56/akwarium", "definition": { "version": 1, "fields": [ { "kind": "sensor", "name": "x", "value": { "type": "number" } } ] } } ],
+            "sensors": [ { "name": "ph", "value": { "type": "number" } }, { "name": "temp", "value": { "type": "number" } } ]
+            """;
+
+        var stranger = Resolve(body, "other/device", registered);
+        var author = Resolve(body, "qwerex56/device", registered);
+
+        Assert.Equal(["qwerex56/akwarium"], stranger.Accepted);
+        Assert.Empty(stranger.ToRegister);
+        Assert.Equal(["qwerex56/akwarium"], author.Accepted);
+        Assert.Single(author.ToRegister);
+    }
+
+    [Fact]
+    public void A_stranger_with_a_registered_definition_needs_the_registered_fields_not_its_own()
+    {
+        var registered = RegisteredCapability.Register(Definition(1, "ph"), DateTimeOffset.UnixEpoch);
+        var body = """
+            "capabilities": [ { "type": "qwerex56/akwarium", "definition": { "version": 1, "fields": [ { "kind": "sensor", "name": "x", "value": { "type": "number" } } ] } } ],
+            "sensors": [ { "name": "x", "value": { "type": "number" } } ]
+            """;
+
+        var resolution = Resolve(body, "other/device", registered);
+
+        Assert.Empty(resolution.Accepted);
+        Assert.Contains("ph", resolution.Warnings.Single(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_hidden_registered_capability_is_ignored_with_a_warning()
+    {
+        var registered = RegisteredCapability.Register(Definition(1, "ph"), DateTimeOffset.UnixEpoch);
+        registered.Hide();
+
+        var resolution = Resolve(Aquarium, "qwerex56/b", registered);
+
+        Assert.Empty(resolution.Accepted);
+        Assert.Empty(resolution.ToRegister);
+        Assert.Contains("hid", resolution.Warnings.Single(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_unregistered_capability_of_another_author_is_ignored()
+    {
+        var resolution = Resolve(Aquarium, "other/device");
+
+        Assert.Empty(resolution.Accepted);
+        Assert.Empty(resolution.ToRegister);
+        Assert.Single(resolution.Warnings);
+    }
+
+    [Fact]
+    public void An_unregistered_capability_is_ignored_when_the_device_is_not_a_household_device()
+    {
+        var resolution = Resolve(Aquarium, household: false);
+
+        Assert.Empty(resolution.Accepted);
+        Assert.Empty(resolution.ToRegister);
+        Assert.Single(resolution.Warnings);
+    }
+
+    [Fact]
+    public void A_definition_needs_a_field_and_a_sane_version()
+    {
+        Assert.Contains("at least one field", ParseProblems("""{ "version": 1, "fields": [] }""").Single(), StringComparison.Ordinal);
+        Assert.NotEmpty(ParseProblems("""{ "version": 10001, "fields": [ { "kind": "sensor", "name": "ph" } ] }"""));
+        Assert.Empty(ParseProblems("""{ "version": 10000, "fields": [ { "kind": "sensor", "name": "ph" } ] }"""));
+    }
+
+    [Fact]
+    public void A_definition_with_a_non_string_anyOf_is_a_problem_not_an_exception()
+    {
+        var problems = ParseProblems("""{ "version": 1, "anyOf": [1, null], "fields": [ { "kind": "sensor", "name": "ph" } ] }""");
+
+        Assert.Contains("anyOf is a list of field names", problems.Single(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_definition_caps_anyOf_and_the_description()
+    {
+        var many = string.Join(",", Enumerable.Repeat("\"ph\"", CapabilityDefinition.MaxFields + 1));
+        Assert.NotEmpty(ParseProblems($$"""{ "version": 1, "anyOf": [{{many}}], "fields": [ { "kind": "sensor", "name": "ph" } ] }"""));
+
+        var longText = new string('x', 301);
+        Assert.NotEmpty(ParseProblems($$"""{ "version": 1, "description": "{{longText}}", "fields": [ { "kind": "sensor", "name": "ph" } ] }"""));
     }
 
     [Fact]

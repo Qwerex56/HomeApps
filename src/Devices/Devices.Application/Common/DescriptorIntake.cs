@@ -21,7 +21,16 @@ internal sealed class DescriptorIntake(ICapabilityRegistry registry, TimeProvide
             return parsed;
         }
 
-        var resolution = CapabilityResolver.Resolve(parsed.Value, CapabilityCatalog.BuiltIn);
+        var registered = new Dictionary<string, RegisteredCapability>(StringComparer.Ordinal);
+        foreach (var type in parsed.Value.Capabilities.Where(c => c.IsNamespaced).Select(c => c.Type).Distinct())
+        {
+            if (await registry.FindAsync(type, cancellationToken) is { } entry)
+            {
+                registered[type] = entry;
+            }
+        }
+
+        var resolution = CapabilityResolver.Resolve(parsed.Value, CapabilityCatalog.BuiltIn, registered, device.IsHouseholdDevice);
         var applied = device.ApplyDescriptor(parsed.Value, resolution);
         if (applied.IsFailed)
         {
@@ -31,7 +40,7 @@ internal sealed class DescriptorIntake(ICapabilityRegistry registry, TimeProvide
         var now = time.GetUtcNow();
         foreach (var definition in resolution.ToRegister)
         {
-            if (await registry.FindAsync(definition.Name, cancellationToken) is { } known)
+            if (registered.TryGetValue(definition.Name, out var known))
             {
                 known.Extend(definition, now);
             }

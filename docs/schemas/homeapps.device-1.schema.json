@@ -45,11 +45,12 @@
       "type": "object",
       "required": ["version", "fields"],
       "properties": {
-        "version": { "type": "integer", "minimum": 1 },
-        "description": { "type": "string" },
-        "anyOf": { "type": "array", "items": { "type": "string" }, "description": "Names of fields of which at least one must be present." },
+        "version": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "description": { "type": "string", "maxLength": 300 },
+        "anyOf": { "type": "array", "maxItems": 30, "items": { "type": "string" }, "description": "Names of fields of which at least one must be present." },
         "fields": {
           "type": "array",
+          "minItems": 1,
           "maxItems": 30,
           "items": {
             "type": "object",

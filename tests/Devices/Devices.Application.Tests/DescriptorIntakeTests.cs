@@ -17,7 +17,7 @@ public sealed class DescriptorIntakeTests
         """;
 
     private static string Aquarium(int version, string extraField) => $$"""
-        { "format": "homeapps.device/1", "model": "a/b", "version": "1.0.0", "purpose": "smart_home",
+        { "format": "homeapps.device/1", "model": "qwerex56/b", "version": "1.0.0", "purpose": "smart_home",
           "capabilities": [ { "type": "qwerex56/akwarium", "definition": { "version": {{version}}, "fields": [
             { "kind": "sensor", "name": "ph", "value": { "type": "number" } }{{extraField}} ] } } ],
           "sensors": [ { "name": "ph", "value": { "type": "number" } } ] }
@@ -96,6 +96,45 @@ public sealed class DescriptorIntakeTests
         var registered = Assert.Single(_registry.Added);
         Assert.Equal("qwerex56/akwarium", registered.Name);
         Assert.Equal(1, registered.Version);
+    }
+
+    [Fact]
+    public async Task A_namespaced_capability_of_another_author_is_ignored_with_a_warning()
+    {
+        var device = HouseholdDevice();
+
+        var result = await _intake.ApplyAsync(device, Aquarium(1, "").Replace("qwerex56/b", "other/b", StringComparison.Ordinal), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(device.Capabilities);
+        Assert.Single(device.Warnings);
+        Assert.Empty(_registry.Added);
+    }
+
+    [Fact]
+    public async Task A_hidden_capability_is_ignored_with_a_warning()
+    {
+        await _intake.ApplyAsync(HouseholdDevice(), Aquarium(1, ""), CancellationToken.None);
+        _registry.Added.Single().Hide();
+        var device = HouseholdDevice();
+
+        await _intake.ApplyAsync(device, Aquarium(1, ""), CancellationToken.None);
+
+        Assert.Empty(device.Capabilities);
+        Assert.Single(device.Warnings);
+    }
+
+    [Fact]
+    public async Task Another_author_uses_the_registered_definition_and_does_not_extend_it()
+    {
+        await _intake.ApplyAsync(HouseholdDevice(), Aquarium(1, ""), CancellationToken.None);
+        var extra = """, { "kind": "sensor", "name": "temp", "value": { "type": "number" }, "required": false }""";
+        var device = HouseholdDevice();
+
+        await _intake.ApplyAsync(device, Aquarium(2, extra).Replace("qwerex56/b", "other/b", StringComparison.Ordinal), CancellationToken.None);
+
+        Assert.Equal(["qwerex56/akwarium"], device.Capabilities);
+        Assert.Equal(1, Assert.Single(_registry.Added).Version);
     }
 
     [Fact]
