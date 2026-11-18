@@ -24,4 +24,10 @@ public interface ICurrentUser
     /// which means an endpoint was opened to anonymous callers by mistake.
     /// </summary>
     Guid RequiredUserId { get; }
+
+    /// <summary>
+    /// The household of a satellite's token (it carries <c>act</c> and <c>household_id</c>; <c>sub</c> is the device),
+    /// otherwise <c>null</c>. Only Households uses it, to answer <c>members/me</c> in the household assistant's voice.
+    /// </summary>
+    Guid? SatelliteHouseholdId => null;
 }

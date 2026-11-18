@@ -6,4 +6,6 @@ namespace HomeApps.Plugins;
 /// <param name="JoinedAt">When they joined this time; a guest who left and came back has the later date. A plugin
 /// can hide what happened before it (the chat shows guests messages only from then on).</param>
 /// <param name="AccessUntil">When a guest's access ends; <c>null</c> for members and for guests without an end.</param>
-public sealed record HouseholdMembership(HouseholdRole Role, DateTimeOffset JoinedAt, DateTimeOffset? AccessUntil);
+/// <param name="IsAssistant">The caller is a household satellite speaking as the household assistant, not a member;
+/// <paramref name="Role"/> is then the assistant's level.</param>
+public sealed record HouseholdMembership(HouseholdRole Role, DateTimeOffset JoinedAt, DateTimeOffset? AccessUntil, bool IsAssistant = false);

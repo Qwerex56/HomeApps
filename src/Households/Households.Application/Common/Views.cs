@@ -39,8 +39,12 @@ public sealed record MemberView(
     string? InvitedByName,
     DateTimeOffset? AccessUntil);
 
-/// <summary>S5: my membership, for the front and for other services asking about the caller.</summary>
-public sealed record MyMembershipView(Guid HouseholdId, HouseholdRole Role, string? Nickname, DateTimeOffset JoinedAt, DateTimeOffset? AccessUntil);
+/// <summary>
+/// S5: my membership, for the front and for other services asking about the caller. For a satellite
+/// (<see cref="IsAssistant"/>) it is the household assistant: its level as the role, its name as the nickname.
+/// </summary>
+public sealed record MyMembershipView(
+    Guid HouseholdId, HouseholdRole Role, string? Nickname, DateTimeOffset JoinedAt, DateTimeOffset? AccessUntil, bool IsAssistant = false);
 
 /// <summary>I1, I2. <see cref="Code"/> as people see it (<c>ABCDE-FGHJK</c>, Q1).</summary>
 public sealed record InviteView(
