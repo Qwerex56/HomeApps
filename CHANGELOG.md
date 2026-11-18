@@ -13,6 +13,13 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 - **Voice bridge on the Mac (V0b):** `src/Jarvis/Jarvis.VoiceBridge`, a console app that listens for "Hey Jarvis"
   locally (openWakeWord through ONNX Runtime), streams the utterance until a short quiet, plays the answer, takes
   "tak" / "nie" for confirmations, and signs in through "Połączone aplikacje". See docs/jarvis.md "The Mac bridge".
+- **Devices service (S-0):** a registry of each person's devices and their actions. Devices connect over
+  `/devices/link` and announce what they can do; JARVIS gets the actions as tools `device_<device>_<action>`, with a
+  confirmation for changes unless "Nie pytaj" is on. See docs/devices.md. New container `devices`, database
+  `homeapps_devices`.
+- **Bridge with its own speech and computer actions (S-0):** `--speech local` transcribes and speaks on the Mac and
+  sends only text (`say` on `/jarvis/voice?speech=local`); `--actions <file>` lets JARVIS run commands from that file
+  on the Mac.
 
 ## 2.4.1 (unreleased)
 

@@ -44,7 +44,7 @@ On an empty database Auth sends an invitation to `AUTH_BOOTSTRAP_EMAIL`. That pe
 is off): everyone else joins through an invitation from an existing account.
 
 Every service creates its database (`homeapps_auth`, `homeapps_accounts`, `homeapps_households`, `homeapps_notifications`,
-`homeapps_homemix`, `homeapps_jarvis`) and applies its
+`homeapps_homemix`, `homeapps_jarvis`, `homeapps_devices`) and applies its
 migrations on start (`Database:MigrateOnStartup`, set by the compose file). Each runs as a single instance, so two
 copies never migrate at the same time.
 

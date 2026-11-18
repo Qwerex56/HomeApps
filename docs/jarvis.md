@@ -71,6 +71,9 @@ agent and text to speech all happen on the server. Plan: `plans/features/jarvis-
 - **Listener → server:** text frames `{"type":"hello","conversationId"?,"householdId"?}`, `{"type":"start"}`,
   `{"type":"stop"}`, `{"type":"cancel"}`; between `start` and `stop` binary frames of 16 kHz 16-bit mono PCM (at most
   `Jarvis:Voice:MaxSeconds`, 30 s).
+- **Own speech (S1):** a listener that hears and speaks itself connects with `?speech=local` and sends
+  `{"type":"say","text"}` instead of `start` / audio / `stop`; it gets `transcript`, `reply` and `done`, never `audio`.
+  This works even when `Jarvis:Voice:Enabled` is false, since the server needs no engine for it.
 - **Server → listener:** `ready`, then per turn `transcript` `{text}`, `reply` `{conversationId, text, actions,
   awaiting}`, for each sentence `audio` `{format: "wav", text}` followed by one binary frame with the WAV, then `done`
   (`cancelled: true` after `cancel` or a new `start`); or `error` `{code}` (`voice.engine_unavailable`, ...).
@@ -126,6 +129,11 @@ dotnet run --project src/Jarvis/Jarvis.VoiceBridge -- --server https://home-apps
 - **Tuning:** `--threshold` (0.5) is the wake word's score. `--save-recordings <folder>` keeps each turn as a WAV on
   this Mac only (V7); `--check-wake <file.wav>` prints the best score in a 16 kHz recording, e.g. one of yours, to pick a
   threshold. Synthetic English "hey jarvis" scores 0.96-0.99, unrelated speech 0.00; a Polish accent may score lower.
+- **Speech on this Mac (S1):** `--speech local` keeps the sound here: Speaches on `localhost:8000` (`--engine` for
+  another address) transcribes and speaks, and only text goes to the server. Use it when the server has no engine of
+  its own, e.g. a home server too slow for Whisper.
+- **Computer actions:** `--actions <file>` also connects this Mac as a device, so JARVIS can run the actions from the
+  file (see [devices.md](devices.md) "The bridge's actions").
 - **Licence:** the "hey jarvis" model is CC BY-NC-SA 4.0 (non-commercial), fine for a home.
 
 ## Production
