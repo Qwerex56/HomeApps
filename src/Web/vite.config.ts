@@ -1,5 +1,5 @@
 import { fileURLToPath, URL } from 'node:url'
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -13,14 +13,17 @@ function pluginIds(list: string | undefined) {
     .filter((id) => /^[a-z][a-z0-9-]{1,31}$/.test(id))
 }
 
-// The instance's plugins (docs/plugins.md): during development from HOMEAPPS_PLUGINS, like nginx in production.
+// The instance's plugins (docs/plugins.md): during development from HOMEAPPS_PLUGINS, like nginx in production. The
+// shell's value wins; otherwise the repository's .env, the one compose reads, so the list is set in one place.
 function pluginList(): Plugin {
   return {
     name: 'homeapps-plugin-list',
     configureServer(server) {
+      const repositoryRoot = fileURLToPath(new URL('../..', import.meta.url))
+      const list = loadEnv('', repositoryRoot, 'HOMEAPPS_').HOMEAPPS_PLUGINS
       server.middlewares.use('/plugins.json', (_request, response) => {
         response.setHeader('Content-Type', 'application/json')
-        response.end(JSON.stringify(pluginIds(process.env.HOMEAPPS_PLUGINS)))
+        response.end(JSON.stringify(pluginIds(list)))
       })
     },
   }
