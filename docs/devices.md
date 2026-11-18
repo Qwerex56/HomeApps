@@ -96,6 +96,9 @@ A satellite is a **member of its household**, not a person's device:
 5. When JARVIS answers a satellite, Auth's delegation (`/internal/delegation`) gives him a token for the device
    instead of a person, so JARVIS sees what a member of that household sees.
 
+The Mac bridge is such a satellite after `--pair <code>` (S-1e, see [jarvis.md](jarvis.md) "The Mac bridge"): it
+does steps 1 and 4 itself and keeps the secret in the Keychain.
+
 Removing the satellite or making a new code publishes `HouseholdDeviceUnpaired`: Auth stops its secret,
 Households removes the member and JARVIS forgets the satellite's conversation. Restoring a removed satellite needs a
 new code.

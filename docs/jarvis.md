@@ -146,6 +146,12 @@ dotnet run --project src/Jarvis/Jarvis.VoiceBridge -- --server https://home-apps
   its own, e.g. a home server too slow for Whisper.
 - **Computer actions:** `--actions <file>` also connects this Mac as a device, so JARVIS can run the actions from the
   file (see [devices.md](devices.md) "The bridge's actions").
+- **Satellite of a household (S-1e):** `--pair ABCD-EFGH` spends a code made by the household's admin on the
+  Urządzenia page; the bridge keeps the device id and secret in the Keychain (a file under `~/.homeapps/voice-bridge/tokens`
+  elsewhere) and from then on speaks for the household instead of a person: no browser login, 15-minute device
+  tokens, always connected to `/devices/link` as a satellite. `--unpair` makes it a person's bridge again; `--logout`
+  forgets both. If the household removes the satellite or makes a new code, the bridge forgets its pairing and asks
+  for a new `--pair`.
 - **Licence:** the "hey jarvis" model is CC BY-NC-SA 4.0 (non-commercial), fine for a home.
 
 ## Production
