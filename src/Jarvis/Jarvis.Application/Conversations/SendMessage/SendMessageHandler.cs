@@ -31,7 +31,7 @@ internal sealed class SendMessageHandler(
         conversations.Add(conversation.Write(command.Text, time));
 
         var answer = await agent.RunAsync(
-            new AskCommand(command.UserId, command.Text, command.HouseholdId, command.Spoken ? Prompts.VoiceChannel : "app", conversation.Id.ToString(), history),
+            new AskCommand(command.UserId, command.Text, command.HouseholdId, command.Spoken ? Prompts.VoiceChannel : "app", conversation.Id.ToString(), history, command.Satellite),
             command.StreamId,
             cancellationToken);
 

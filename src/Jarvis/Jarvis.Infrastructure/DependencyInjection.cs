@@ -51,6 +51,7 @@ public static class DependencyInjection
         services.AddHttpClient<ISpeechToText, OpenAiSpeechToText>((sp, http) => Engine(sp, http, v => v.SttUrl));
         services.AddHttpClient<ITextToSpeech, OpenAiTextToSpeech>((sp, http) => Engine(sp, http, v => v.TtsUrl));
         services.AddHttpClient<ISpeakers, HouseholdSpeakers>();
+        services.AddHttpClient<IHouseholdCeilings, HouseholdsCeilings>();
         services.AddSingleton<IVoicePrints, NoVoicePrints>();
 
         services.AddHostedService<RetentionJob>();

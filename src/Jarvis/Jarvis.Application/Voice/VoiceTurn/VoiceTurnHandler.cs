@@ -73,7 +73,7 @@ internal sealed class VoiceTurnHandler(
         }
 
         var answer = await sender.Send(
-            new SendMessageCommand(command.UserId, conversationId.Value, transcript, command.HouseholdId, null, Spoken: true),
+            new SendMessageCommand(command.UserId, conversationId.Value, transcript, command.HouseholdId, null, Spoken: true, Satellite: command.Satellite),
             cancellationToken);
         return answer.IsFailed ? answer.ToResult() : new VoiceTurnView(conversationId, transcript, answer.Value);
     }

@@ -4,6 +4,7 @@ namespace Jarvis.Application.Runs.Ask;
 public static class Answers
 {
     public const string SwitchedOff = "JARVIS jest teraz wyłączony.";
+    public const string HouseholdOff = "JARVIS jest wyłączony w tym domu.";
     public const string BudgetSpent = "Na dziś wystarczy, wrócę jutro.";
     public const string Broken = "Coś poszło nie tak, spróbuj jeszcze raz za chwilę.";
 }

@@ -26,11 +26,19 @@ namespace Jarvis.Api.Gateway;
 /// <c>destructiveHint</c> defaults to true, so an unmarked change counts as destructive.
 /// </para>
 internal sealed partial class McpGateway(
-    IToolSources sources, SourceConnector connector, Caller caller, ISender sender, IMemoryCache cache, ILogger<McpGateway> logger)
+    IToolSources sources, IHouseholdCeilings ceilings, SourceConnector connector, Caller caller, ISender sender, IMemoryCache cache, ILogger<McpGateway> logger)
 {
     public async ValueTask<ListToolsResult> ListToolsAsync(CancellationToken cancellationToken)
     {
         var all = await sources.ListAsync(cancellationToken);
+        if (caller.RunId is { } listing
+            && (await sender.Send(new CheckRunQuery(listing, caller.UserId), cancellationToken)) is { IsSuccess: true, Value.HouseholdId: { } household })
+        {
+            // H-2, D1: in a household the household's JARVIS settings are a ceiling, so a source it does not allow is not even offered.
+            var ceiling = await ceilings.GetAsync(household, cancellationToken);
+            all = [.. all.Where(ceiling.Allows)];
+        }
+
         var token = await caller.SourceTokenAsync(cancellationToken);
         var perSource = await Task.WhenAll(all.Select(source => ToolsOfAsync(source, token, cancellationToken)));
 
@@ -73,10 +81,30 @@ internal sealed partial class McpGateway(
 
             try
             {
-                var token = await caller.SourceTokenAsync(cancellationToken);
+                RunScope? run = null;
                 if (caller.RunId is { } runId)
                 {
-                    return await CallInRunAsync(runId, source, own, request, token, cancellationToken);
+                    var checkedRun = await sender.Send(new CheckRunQuery(runId, caller.UserId), cancellationToken);
+                    if (checkedRun.IsFailed)
+                    {
+                        return Failed(ToolResult.Describe(checkedRun.Errors));
+                    }
+
+                    run = checkedRun.Value;
+                }
+
+                // H-2, D1: the household of the call (its household argument, else the run's) caps what may be called.
+                var household = HouseholdIn(request.Arguments) ?? run?.HouseholdId;
+                var ceiling = household is { } id ? await ceilings.GetAsync(id, cancellationToken) : null;
+                if (ceiling is not null && !ceiling.Allows(source))
+                {
+                    return Failed($"The household's JARVIS settings do not allow {source.Name} tools in this household.");
+                }
+
+                var token = await caller.SourceTokenAsync(cancellationToken);
+                if (run is not null)
+                {
+                    return await CallInRunAsync(run.Id, source, own, request, token, ceiling, cancellationToken);
                 }
 
                 await using var client = await connector.ConnectAsync(source, token, cancellationToken);
@@ -98,18 +126,17 @@ internal sealed partial class McpGateway(
     }
 
     private async Task<CallToolResult> CallInRunAsync(
-        Guid runId, ToolSource source, string own, CallToolRequestParams request, string token, CancellationToken cancellationToken)
+        Guid runId, ToolSource source, string own, CallToolRequestParams request, string token, HouseholdCeiling? ceiling, CancellationToken cancellationToken)
     {
         var userId = caller.UserId;
-        var run = await sender.Send(new CheckRunQuery(runId, userId), cancellationToken);
-        if (run.IsFailed)
-        {
-            return Failed(ToolResult.Describe(run.Errors));
-        }
-
         var arguments = request.Arguments is null ? null : JsonSerializer.Serialize(request.Arguments);
         var annotations = await AnnotationsAsync(source, own, token, userId, cancellationToken);
         var readOnly = annotations?.ReadOnlyHint == true;
+        if (ceiling is { ReadOnly: true } && !readOnly)
+        {
+            return Failed("The household's JARVIS is read-only in this household: it can look, not change.");
+        }
+
         if (!readOnly && annotations?.DestructiveHint != false)
         {
             var waiting = await sender.Send(new AwaitConfirmationCommand(runId, userId, request.Name, arguments), cancellationToken);
@@ -211,6 +238,21 @@ internal sealed partial class McpGateway(
             LogUnreachable(source.Name, exception);
             return [];
         }
+    }
+
+    /// <summary>The household a tool call names (<c>household</c> or <c>householdId</c>, as JARVIS's prompt tells the model to pass it).</summary>
+    private static Guid? HouseholdIn(IDictionary<string, JsonElement>? arguments)
+    {
+        foreach (var name in new[] { "household", "householdId" })
+        {
+            if (arguments is not null && arguments.TryGetValue(name, out var value)
+                && value.ValueKind == JsonValueKind.String && Guid.TryParse(value.GetString(), out var id))
+            {
+                return id;
+            }
+        }
+
+        return null;
     }
 
     private static bool Unreachable(Exception exception) =>
