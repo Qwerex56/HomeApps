@@ -4,7 +4,7 @@ using Devices.Domain.Devices;
 namespace Devices.Application.Common;
 
 /// <summary>
-/// The devices JARVIS may use for the caller (S3): their own, then those of every household they are in. A name is
+/// The devices JARVIS may use for the caller (S3): their own, then those of every household they are in. A slug is
 /// taken by the first device that has it, so the caller's own device wins over a household's of the same name.
 /// </summary>
 internal static class ReachableDevices
@@ -19,6 +19,6 @@ internal static class ReachableDevices
         var seen = new HashSet<string>(StringComparer.Ordinal);
         return [.. own.OrderBy(d => d.Name, StringComparer.Ordinal)
             .Concat(shared.OrderBy(d => d.Name, StringComparer.Ordinal))
-            .Where(d => !d.IsDisabled && seen.Add(d.Name))];
+            .Where(d => !d.IsDisabled && seen.Add(d.Slug))];
     }
 }

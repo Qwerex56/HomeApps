@@ -17,6 +17,7 @@ public static class DependencyInjection
 
         services.AddHomeAppsInfrastructure<DevicesDbContext>(configuration, "devices", typeof(DependencyInjection).Assembly);
         services.AddScoped<IDeviceRepository, DeviceRepository>();
+        services.AddScoped<ICapabilityRegistry, CapabilityRegistry>();
         services.AddHttpContextAccessor();
         var households = configuration["Devices:HouseholdsUrl"] is { Length: > 0 } url ? url : "http://households:8080";
         services.AddHttpClient<IHouseholdRoles, HouseholdsHttpRoles>(http => http.BaseAddress = new Uri(households.TrimEnd('/') + "/"));

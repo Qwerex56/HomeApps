@@ -96,6 +96,7 @@
 	</Folder>
 	<Folder Name="/Devices/tests/">
 		<Project Path="tests/Devices/Devices.Api.Tests/Devices.Api.Tests.csproj" />
+		<Project Path="tests/Devices/Devices.Application.Tests/Devices.Application.Tests.csproj" />
 		<Project Path="tests/Devices/Devices.Domain.Tests/Devices.Domain.Tests.csproj" />
 	</Folder>
 	<Folder Name="/HomeMix/">

@@ -75,7 +75,7 @@ internal sealed partial class LinkSession(WebSocket socket, DeviceLinks links, I
 
         await using var scope = scopes.CreateAsyncScope();
         var connected = await scope.ServiceProvider.GetRequiredService<ISender>()
-            .Send(new ConnectDeviceCommand(hello.Device ?? string.Empty, kind, actions), cancellationToken);
+            .Send(new ConnectDeviceCommand(hello.Device ?? string.Empty, kind, actions, hello.Descriptor is { ValueKind: not JsonValueKind.Null } descriptor ? descriptor.GetRawText() : null), cancellationToken);
         if (connected.IsSuccess)
         {
             return connected.Value;

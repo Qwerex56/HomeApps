@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Devices.Api.Tests" />
+    <InternalsVisibleTo Include="Devices.Application.Tests" />
   </ItemGroup>
 
 </Project>

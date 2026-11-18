@@ -17,18 +17,61 @@ namespace Devices.Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasAnnotation("Npgsql:CollationDefinition:case_insensitive", "und-u-ks-level2,und-u-ks-level2,icu,False")
                 .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Devices.Domain.Capabilities.RegisteredCapability", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasMaxLength(70)
+                        .HasColumnType("character varying(70)");
+
+                    b.Property<string>("DefinitionJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<bool>("Hidden")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("RegisteredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Name");
+
+                    b.ToTable("RegisteredCapabilities", (string)null);
+                });
 
             modelBuilder.Entity("Devices.Domain.Devices.Device", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AdminNotes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.PrimitiveCollection<string[]>("Capabilities")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Descriptor")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("DescriptorVersion")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTimeOffset?>("DisabledAt")
                         .HasColumnType("timestamp with time zone");
@@ -44,10 +87,15 @@ namespace Devices.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("LastSeenAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Model")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasMaxLength(240)
+                        .HasColumnType("character varying(240)")
+                        .UseCollation("case_insensitive");
 
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid");
@@ -62,6 +110,24 @@ namespace Devices.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("PairingExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.PrimitiveCollection<string[]>("Roles")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.PrimitiveCollection<string[]>("Warnings")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PairingCodeHash")
@@ -72,7 +138,15 @@ namespace Devices.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"HouseholdId\" IS NOT NULL");
 
+                    b.HasIndex("HouseholdId", "Slug")
+                        .IsUnique()
+                        .HasFilter("\"HouseholdId\" IS NOT NULL");
+
                     b.HasIndex("OwnerId", "Name")
+                        .IsUnique()
+                        .HasFilter("\"HouseholdId\" IS NULL");
+
+                    b.HasIndex("OwnerId", "Slug")
                         .IsUnique()
                         .HasFilter("\"HouseholdId\" IS NULL");
 

@@ -24,6 +24,12 @@ internal sealed class DeviceRepository(DevicesDbContext db) : IDeviceRepository
     public async Task<IReadOnlyList<Device>> OfHouseholdsAsync(IReadOnlyCollection<Guid> householdIds, CancellationToken cancellationToken) =>
         await db.Devices.Where(d => d.HouseholdId != null && householdIds.Contains(d.HouseholdId.Value)).ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyCollection<string>> SlugsAsync(Guid ownerId, Guid? householdId, CancellationToken cancellationToken) =>
+        await db.Devices
+            .Where(d => householdId == null ? d.OwnerId == ownerId && d.HouseholdId == null : d.HouseholdId == householdId)
+            .Select(d => d.Slug)
+            .ToListAsync(cancellationToken);
+
     public void Add(Device device) => db.Devices.Add(device);
 
     public void Remove(Device device) => db.Devices.Remove(device);

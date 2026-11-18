@@ -12,7 +12,7 @@ internal sealed class CallToolHandler(IDeviceRepository devices, IHouseholdRoles
 {
     public async Task<Result<string>> Handle(CallToolCommand command, CancellationToken cancellationToken)
     {
-        // Device names have no '_', so the first one splits "mac-biuro_say_hello" into the device and its action.
+        // Device slugs have no '_', so the first one splits "mac-biuro_say_hello" into the device and its action.
         var split = command.Tool.IndexOf('_', StringComparison.Ordinal);
         if (split <= 0)
         {
@@ -21,7 +21,7 @@ internal sealed class CallToolHandler(IDeviceRepository devices, IHouseholdRoles
 
         var name = command.Tool[..split];
         var reachable = await ReachableDevices.OfCallerAsync(devices, households, currentUser.RequiredUserId, cancellationToken);
-        var device = reachable.FirstOrDefault(d => d.Name == name);
+        var device = reachable.FirstOrDefault(d => d.Slug == name);
         if (device is null)
         {
             return Result.Fail(DeviceErrors.NotFound);

@@ -1,0 +1,80 @@
+{
+  "capabilities": [
+    {
+      "name": "power", "version": 1, "description": "Power supply: battery level, voltage and where the power comes from.",
+      "anyOf": ["battery", "voltage", "source"],
+      "fields": [
+        { "kind": "sensor", "name": "battery", "value": { "type": "number", "minimum": 0, "maximum": 100 }, "required": false },
+        { "kind": "sensor", "name": "voltage", "value": { "type": "number" }, "required": false },
+        { "kind": "sensor", "name": "source", "value": { "type": "string", "enum": ["mains", "battery", "usb"] }, "required": false }
+      ]
+    },
+    {
+      "name": "weather", "version": 1, "description": "Weather readings of a station.",
+      "anyOf": ["temperature", "humidity", "pressure"],
+      "fields": [
+        { "kind": "sensor", "name": "temperature", "value": { "type": "number" }, "required": false },
+        { "kind": "sensor", "name": "humidity", "value": { "type": "number", "minimum": 0, "maximum": 100 }, "required": false },
+        { "kind": "sensor", "name": "pressure", "value": { "type": "number" }, "required": false },
+        { "kind": "sensor", "name": "rain", "value": { "type": "number" }, "required": false },
+        { "kind": "sensor", "name": "wind", "value": { "type": "number" }, "required": false }
+      ]
+    },
+    {
+      "name": "geo", "version": 1, "description": "Where the device is, and when it is seen somewhere (a tracker).",
+      "fields": [
+        { "kind": "sensor", "name": "location", "value": { "type": "object" } },
+        { "kind": "event", "name": "seen", "value": { "type": "object" } }
+      ]
+    },
+    {
+      "name": "presence", "version": 1, "description": "Someone is present or moves.",
+      "fields": [
+        { "kind": "sensor", "name": "present", "value": { "type": "boolean" } },
+        { "kind": "event", "name": "motion", "required": false }
+      ]
+    },
+    {
+      "name": "switch", "version": 1, "description": "On or off.",
+      "fields": [ { "kind": "control", "name": "on", "value": { "type": "boolean" } } ]
+    },
+    {
+      "name": "level", "version": 1, "description": "A level from 0 to 100 (dimmer, blind).",
+      "fields": [ { "kind": "control", "name": "level", "value": { "type": "integer", "minimum": 0, "maximum": 100 } } ]
+    },
+    {
+      "name": "heating", "version": 1, "description": "Heating, by a level or a target temperature.",
+      "anyOf": ["level", "target"],
+      "fields": [
+        { "kind": "control", "name": "level", "value": { "type": "integer" }, "required": false },
+        { "kind": "control", "name": "target", "value": { "type": "number" }, "required": false },
+        { "kind": "sensor", "name": "temperature", "value": { "type": "number" }, "required": false }
+      ]
+    },
+    {
+      "name": "button", "version": 1, "description": "A button press: single, double or long.",
+      "fields": [ { "kind": "event", "name": "pressed", "value": { "type": "object" } } ]
+    },
+    {
+      "name": "audio", "version": 1, "description": "Speaker volume and mute.",
+      "fields": [
+        { "kind": "control", "name": "volume", "value": { "type": "integer", "minimum": 0, "maximum": 100 } },
+        { "kind": "control", "name": "muted", "value": { "type": "boolean" } }
+      ]
+    },
+    {
+      "name": "voice", "version": 1, "description": "Speech with JARVIS through /jarvis/voice; no fields, the capability is the speech itself.",
+      "fields": []
+    }
+  ],
+  "roles": [
+    { "name": "weather_station", "description": "Measures the weather outside or inside." },
+    { "name": "seat_heater", "description": "Heats a seat or an armchair." },
+    { "name": "tracker", "description": "Tells where a thing or a person is." },
+    { "name": "doorbell", "description": "A doorbell or an entrance button." },
+    { "name": "light", "description": "A lamp or a light strip." },
+    { "name": "blind", "description": "A blind, shutter or curtain." },
+    { "name": "thermostat", "description": "Controls room temperature." },
+    { "name": "satellite", "description": "JARVIS's ears and mouth in a room." }
+  ]
+}
