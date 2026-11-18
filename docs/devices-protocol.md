@@ -184,8 +184,9 @@ declare its wake interval as `heartbeat`.
   only means the link is closed. Devices publishes `DeviceWentSilent` and notifies the household's admins (Admin and
   Owner), **once**. The next `status` ends the state. A device that never reported counts from its pairing. Time before
   a Devices restart does not count, so a restart does not make every device silent.
-- A battery below **20%** notifies the admins once; the next notice needs the battery to have been at 20% or more in
-  between. A report without `battery` changes nothing.
+- A battery below **20%** notifies the admins once; the next notice needs the battery to have been at 25% or more in
+  between (a 5 point hysteresis). A report without `battery` changes nothing.
+- The first `status` after silence notifies the admins once more (silent notice, "the device reports again").
 - Only `status` counts as a heartbeat, not `state` or `event`. Devices are scanned every 30 s, so the notice comes up to
   30 s late.
 
@@ -206,6 +207,12 @@ The answer is `200` with one result per frame, in order:
 `[{ "ok": true }, { "ok": false, "code": "devices.invalid_frame", "text": "..." }, ...]`. A bad frame does not stop the
 others. At most **50 frames** and **64 KB** per request (400 / 413 above that). A token that is not a paired household
 device with a descriptor gets `devices.frames_unsupported`.
+
+**Limits.** At most **60 requests per minute** per device token (`429` with `Retry-After` above that). On the WebSocket, at
+most **120 frames per minute** per connection: a frame above that is dropped and answered with
+`{"type":"error","code":"devices.rate_limited"}`; the connection stays. Payloads containing a NUL (`\u0000`) are refused as
+`devices.invalid_frame`. If a frame cannot be stored, the WebSocket answers `devices.frame_failed` (connection stays) and
+`/devices/report` answers `409`.
 
 ## Who may do what (D6)
 

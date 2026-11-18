@@ -153,4 +153,26 @@ public sealed class ProcessFramesTests
         Assert.True(validator.Validate(new ProcessFramesCommand(Guid.NewGuid(), [.. Enumerable.Repeat(new DeviceFrame("status"), 50)])).IsValid);
         Assert.False(validator.Validate(new ProcessFramesCommand(Guid.NewGuid(), [.. Enumerable.Repeat(new DeviceFrame("status"), 51)])).IsValid);
     }
+
+    [Fact]
+    public async Task The_first_status_after_silence_notifies_the_admins_once()
+    {
+        await SendAsync(new DeviceFrame("status", Battery: 80));
+        _telemetry.States[_device.Id].GoSilent(Now, TimeSpan.FromMinutes(1), Now.AddHours(1));
+        _bus.Published.Clear();
+
+        await SendAsync(new DeviceFrame("status", Battery: 80));
+        await SendAsync(new DeviceFrame("status", Battery: 80));
+
+        var notice = Assert.IsType<NotificationRequested>(Assert.Single(_bus.Published));
+        Assert.Equal("silent", notice.Category);
+    }
+
+    [Fact]
+    public async Task A_null_frame_is_refused_by_the_validator()
+    {
+        var validator = new ProcessFramesValidator();
+
+        Assert.False((await validator.ValidateAsync(new ProcessFramesCommand(_device.Id, [null!]))).IsValid);
+    }
 }

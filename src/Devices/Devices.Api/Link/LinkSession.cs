@@ -7,7 +7,9 @@ using Devices.Application.Links.ConnectDevice;
 using Devices.Application.Links.DisconnectDevice;
 using Devices.Domain.Devices;
 using HomeApps.BuildingBlocks.Domain.Errors;
+using HomeApps.BuildingBlocks.Application.Abstractions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Devices.Api.Link;
 
@@ -19,11 +21,13 @@ internal sealed partial class LinkSession(WebSocket socket, DeviceLinks links, I
 {
     private static readonly TimeSpan HelloTimeout = TimeSpan.FromSeconds(10);
     private const int MaxFrame = 256 * 1024;
+    private const int MaxFramesPerMinute = 120;
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {
         using var connection = new DeviceConnection(socket);
         Guid? deviceId = null;
+        var rate = new FrameRateCounter(MaxFramesPerMinute, TimeSpan.FromMinutes(1));
         try
         {
             using var helloTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -54,7 +58,14 @@ internal sealed partial class LinkSession(WebSocket socket, DeviceLinks links, I
                 }
                 else if (message?.Type is "state" or "event" or "status")
                 {
-                    await HandleFrameAsync(connection, deviceId.Value, raw, cancellationToken);
+                    if (rate.TryTake(TimeProvider.System.GetUtcNow()))
+                    {
+                        await HandleFrameAsync(connection, deviceId.Value, raw, cancellationToken);
+                    }
+                    else
+                    {
+                        await connection.SendAsync(Refusal("devices.rate_limited", "Too many frames in a minute; this one was dropped."), cancellationToken);
+                    }
                 }
             }
         }
@@ -114,6 +125,11 @@ internal sealed partial class LinkSession(WebSocket socket, DeviceLinks links, I
         {
             refusal = Refusal("devices.invalid_frame", "The frame does not have the shape of a state, event or status frame.");
         }
+        catch (Exception exception) when (exception is DbUpdateException or ConcurrencyConflictException)
+        {
+            LogFrameFailed(deviceId, exception);
+            refusal = Refusal("devices.frame_failed", "The frame could not be stored; send it again.");
+        }
 
         if (refusal is not null)
         {
@@ -166,6 +182,9 @@ internal sealed partial class LinkSession(WebSocket socket, DeviceLinks links, I
             frame.SetLength(0);
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "A frame of device {DeviceId} could not be stored.")]
+    private partial void LogFrameFailed(Guid deviceId, Exception exception);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Device {DeviceId} ({Name}) connected")]
     private partial void LogConnected(Guid deviceId, string? name);

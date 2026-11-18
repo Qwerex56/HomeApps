@@ -15,6 +15,7 @@ using HomeApps.BuildingBlocks.Api.Results;
 using HomeApps.BuildingBlocks.Application.Abstractions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Devices.Api.Endpoints;
 
@@ -25,6 +26,7 @@ namespace Devices.Api.Endpoints;
 internal sealed class DeviceStateEndpoints : IEndpoint
 {
     private const int MaxReportBytes = 64 * 1024;
+    private static readonly TimeSpan MaxLifetime = TimeSpan.FromMinutes(15);
     private static readonly TimeSpan KeepAlive = TimeSpan.FromSeconds(20);
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -47,7 +49,20 @@ internal sealed class DeviceStateEndpoints : IEndpoint
 
         // The device's own token (its subject is the device); the frames are the same as on /devices/link.
         app.MapPost("/devices/report", async (List<DeviceFrame> frames, ICurrentUser user, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new ProcessFramesCommand(user.RequiredUserId, frames), ct)).ToHttpResult())
+        {
+            try
+            {
+                return (await sender.Send(new ProcessFramesCommand(user.RequiredUserId, frames), ct)).ToHttpResult();
+            }
+            catch (Exception exception) when (exception is DbUpdateException or ConcurrencyConflictException)
+            {
+                return Results.Problem(
+                    statusCode: StatusCodes.Status409Conflict, title: "The report could not be saved",
+                    detail: "The device's data changed in the meantime or could not be stored. Send the report again.",
+                    extensions: new Dictionary<string, object?> { [ResultHttpMapper.CodeExtension] = "devices.frame_failed" });
+            }
+        })
+            .RequireRateLimiting(DependencyInjection.ReportRateLimit)
             .WithMetadata(new RequestSizeLimitAttribute(MaxReportBytes))
             .WithTags("Devices")
             .Produces<IReadOnlyList<FrameResult>>();
@@ -55,13 +70,18 @@ internal sealed class DeviceStateEndpoints : IEndpoint
         app.MapGet("/devices/households/{householdId:guid}/stream", async (Guid householdId, ISender sender, DeviceStream stream, CancellationToken ct) =>
         {
             var access = await sender.Send(new GetStreamAccessQuery(householdId), ct);
-            return access.IsFailed ? access.ToHttpResult() : TypedResults.ServerSentEvents(ReadAsync(stream.Subscribe(householdId, access.Value), ct));
+            return access.IsFailed ? access.ToHttpResult() : TypedResults.ServerSentEvents(ReadAsync(stream, householdId, access.Value, ct));
         }).WithTags("Devices");
     }
 
-    private static async IAsyncEnumerable<SseItem<string>> ReadAsync(StreamSubscription subscription, [EnumeratorCancellation] CancellationToken cancellationToken)
+    private static async IAsyncEnumerable<SseItem<string>> ReadAsync(
+        DeviceStream stream, Guid householdId, bool access, [EnumeratorCancellation] CancellationToken requestAborted)
     {
-        using (subscription)
+        // The stream ends after MaxLifetime so the client reconnects and its access is checked again.
+        using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(requestAborted);
+        lifetime.CancelAfter(MaxLifetime);
+        var cancellationToken = lifetime.Token;
+        using var subscription = stream.Subscribe(householdId, access);
         {
             while (!cancellationToken.IsCancellationRequested)
             {
