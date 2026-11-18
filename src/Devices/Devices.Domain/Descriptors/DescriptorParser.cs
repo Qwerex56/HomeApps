@@ -167,7 +167,8 @@ public static partial class DescriptorParser
         var name = FieldName(item, "event", problems);
         var data = Schema(item, "data", name, problems, required: false);
         var notify = item.TryGetProperty("notify", out var n) && n.ValueKind == JsonValueKind.True;
-        return name is null ? null : new DescriptorEvent(name, Label(item, name, problems), Description(item, name, problems), data, notify);
+        var location = item.TryGetProperty("location", out var l) && l.ValueKind == JsonValueKind.True;
+        return name is null ? null : new DescriptorEvent(name, Label(item, name, problems), Description(item, name, problems), data, notify, location);
     }
 
     private static DescriptorAction? Action(JsonElement item, List<string> problems)

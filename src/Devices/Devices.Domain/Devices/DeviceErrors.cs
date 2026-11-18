@@ -62,4 +62,25 @@ public static class DeviceErrors
 
     public static Error NoAnswer => new AppError(
         "devices.no_answer", "The device did not answer in time.", ErrorKind.Conflict);
+
+    public static Error InvalidFrame(IReadOnlyCollection<string> problems) => new AppError(
+        "devices.invalid_frame",
+        "The frame does not fit the device's descriptor: " + string.Join("; ", problems.Take(10)) + (problems.Count > 10 ? "; ..." : "."),
+        ErrorKind.Validation);
+
+    public static Error UnknownFrame(string? type) => new AppError(
+        "devices.unknown_frame", $"Unknown frame type '{type}'; a device sends state, event or status.", ErrorKind.Validation);
+
+    public static Error FramesUnsupported => new AppError(
+        "devices.frames_unsupported",
+        "Only a paired household device with a homeapps.device/1 descriptor sends state, events and status.",
+        ErrorKind.Conflict);
+
+    public static Error ControlNotFound => new AppError("devices.control_not_found", "The device has no such control.", ErrorKind.NotFound);
+
+    public static Error ReadOnly => new AppError(
+        "devices.read_only", "A guest can only look at the household's devices.", ErrorKind.Forbidden);
+
+    public static Error MembersOnly => new AppError(
+        "devices.members_only", "The history of a device's events is for the household's members.", ErrorKind.Forbidden);
 }
