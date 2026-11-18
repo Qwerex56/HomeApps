@@ -17,6 +17,8 @@ internal sealed class DeviceConfiguration : IEntityTypeConfiguration<Device>
         builder.Property(d => d.Kind).HasConversion<string>().HasMaxLength(20);
         builder.Property(d => d.Purpose).HasConversion<string>().HasMaxLength(20);
         builder.Property(d => d.AdminNotes).HasMaxLength(Device.MaxNotesLength);
+        builder.Property(d => d.JarvisMayControl).HasDefaultValue(true);
+        builder.Property(d => d.JarvisAsks).HasDefaultValue(true);
         builder.Property(d => d.Descriptor).HasColumnType("jsonb");
         builder.Property(d => d.Model).HasMaxLength(100);
         builder.Property(d => d.DescriptorVersion).HasMaxLength(50);

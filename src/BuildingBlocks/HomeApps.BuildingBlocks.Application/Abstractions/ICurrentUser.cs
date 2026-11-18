@@ -30,4 +30,10 @@ public interface ICurrentUser
     /// otherwise <c>null</c>. Only Households uses it, to answer <c>members/me</c> in the household assistant's voice.
     /// </summary>
     Guid? SatelliteHouseholdId => null;
+
+    /// <summary>
+    /// The token carries <c>act</c>: someone acts for the subject (JARVIS's delegated token or a satellite's), not the person themselves.
+    /// Devices uses it to apply a device's "JARVIS may control" switch only to JARVIS.
+    /// </summary>
+    bool IsDelegated => false;
 }

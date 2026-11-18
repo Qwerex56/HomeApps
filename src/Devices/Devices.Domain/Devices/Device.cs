@@ -51,6 +51,12 @@ public sealed class Device
     /// <summary>What a household admin tells JARVIS about this device ("to fotel taty, pytaj go").</summary>
     public string? AdminNotes { get; private set; }
 
+    /// <summary>D6: JARVIS may control this household device (<c>_set</c>, announced actions); off, JARVIS neither sees nor can call them. People are not affected.</summary>
+    public bool JarvisMayControl { get; private set; } = true;
+
+    /// <summary>D6: JARVIS asks for a "tak" before controlling this household device; off is "Nie pytaj" for the whole device.</summary>
+    public bool JarvisAsks { get; private set; } = true;
+
     /// <summary>The <c>homeapps.device/1</c> document as the device sent it, or <c>null</c> for one that sent none (an old bridge).</summary>
     public string? Descriptor { get; private set; }
 
@@ -146,6 +152,13 @@ public sealed class Device
 
         Name = clean.Value;
         return Result.Ok();
+    }
+
+    /// <summary>A household admin sets whether JARVIS may control the device and whether it asks first (D6).</summary>
+    public void SetJarvisAccess(bool mayControl, bool asks)
+    {
+        JarvisMayControl = mayControl;
+        JarvisAsks = asks;
     }
 
     /// <summary>A household admin's notes for JARVIS; empty clears them.</summary>
