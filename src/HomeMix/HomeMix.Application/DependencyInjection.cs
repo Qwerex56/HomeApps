@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<PackageIntake>();
         services.AddScoped<InstallationAccess>();
         services.AddScoped<DataAccess>();
+        services.AddScoped<Devices.DevicesAccess>();
         services.AddScoped<Blocks.Blocklist>();
         services.AddScoped<Store.StoreCatalog>();
         services.AddScoped<Store.StoreNumbers>();

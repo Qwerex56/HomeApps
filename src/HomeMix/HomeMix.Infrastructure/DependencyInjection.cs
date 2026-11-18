@@ -2,6 +2,7 @@ using HomeApps.BuildingBlocks.Infrastructure;
 using HomeApps.BuildingBlocks.Infrastructure.Options;
 using HomeMix.Application;
 using HomeMix.Application.Abstractions;
+using HomeMix.Infrastructure.Devices;
 using HomeMix.Infrastructure.GitHub;
 using HomeMix.Infrastructure.Households;
 using HomeMix.Infrastructure.Jobs;
@@ -47,6 +48,9 @@ public static class DependencyInjection
 
         services.AddHttpClient<IHouseholdRoles, HouseholdsHttpRoles>((sp, http) =>
             http.BaseAddress = new Uri(sp.GetRequiredService<IOptions<HomeMixOptions>>().Value.HouseholdsUrl.TrimEnd('/') + "/"));
+
+        services.AddHttpClient<IHouseholdDevices, DevicesHttp>((sp, http) =>
+            http.BaseAddress = new Uri(sp.GetRequiredService<IOptions<HomeMixOptions>>().Value.DevicesUrl.TrimEnd('/') + "/"));
 
         return services;
     }
