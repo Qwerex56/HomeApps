@@ -127,7 +127,7 @@ namespace Devices.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql("UPDATE \"Devices\" SET \"Name\" = left(\"Slug\", 20) WHERE length(\"Name\") > 20 OR \"Name\" !~ '^[a-z0-9][a-z0-9-]*$'");
+            migrationBuilder.Sql("UPDATE \"Devices\" SET \"Name\" = CASE WHEN length(\"Slug\") <= 20 THEN \"Slug\" ELSE left(\"Slug\", 11) || '-' || left(md5(\"Id\"::text), 8) END");
 
             migrationBuilder.DropTable(
                 name: "RegisteredCapabilities");

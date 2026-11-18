@@ -232,6 +232,38 @@ public sealed class CapabilityTests
         Assert.False(registered.Hidden);
     }
 
+    [Fact]
+    public void An_extension_past_the_field_limit_is_ignored_with_a_warning()
+    {
+        var names = Enumerable.Range(0, CapabilityDefinition.MaxFields).Select(i => $"s{i}").ToArray();
+        var registered = RegisteredCapability.Register(Definition(1, names), DateTimeOffset.UnixEpoch);
+        var body = """
+            "capabilities": [ { "type": "qwerex56/akwarium", "definition": { "version": 2, "fields": [ { "kind": "sensor", "name": "extra", "value": { "type": "number" } } ] } } ],
+            "sensors": [ { "name": "s0", "value": { "type": "number" } } ]
+            """;
+
+        var resolution = Resolve(body, "qwerex56/b", registered);
+
+        Assert.Empty(resolution.ToRegister);
+        Assert.Contains(resolution.Warnings, w => w.Contains("extension ignored: more than 30 fields", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_personal_device_never_extends_a_registered_capability()
+    {
+        var registered = RegisteredCapability.Register(Definition(1, "ph"), DateTimeOffset.UnixEpoch);
+        var body = """
+            "capabilities": [ { "type": "qwerex56/akwarium", "definition": { "version": 2, "fields": [ { "kind": "sensor", "name": "x", "value": { "type": "number" } } ] } } ],
+            "sensors": [ { "name": "x", "value": { "type": "number" } } ]
+            """;
+
+        var resolution = Resolve(body, "qwerex56/b", registered, household: false);
+
+        Assert.Empty(resolution.ToRegister);
+        Assert.Empty(resolution.Accepted);
+        Assert.Contains("ph", resolution.Warnings.Single(), StringComparison.Ordinal);
+    }
+
     private static CapabilityDefinition Definition(int version, params string[] sensors) =>
         new("qwerex56/akwarium", version, null, [.. sensors.Select(s => new CapabilityField(CapabilityFieldKind.Sensor, s, """{"type":"number"}""", true))], []);
 }
