@@ -357,6 +357,53 @@ namespace Households.Infrastructure.Persistence.Migrations
                     b.ToTable("OutboxState");
                 });
 
+            modelBuilder.Entity("Households.Domain.Households.Household", b =>
+                {
+                    b.OwnsOne("Households.Domain.Households.HouseholdAssistant", "Assistant", b1 =>
+                        {
+                            b1.Property<Guid>("HouseholdId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("AccessLevel")
+                                .IsRequired()
+                                .HasMaxLength(32)
+                                .HasColumnType("character varying(32)")
+                                .HasColumnName("AssistantAccessLevel");
+
+                            b1.Property<bool>("Enabled")
+                                .HasColumnType("boolean")
+                                .HasColumnName("AssistantEnabled");
+
+                            b1.Property<int>("EventDays")
+                                .HasColumnType("integer")
+                                .HasColumnName("AssistantEventDays");
+
+                            b1.Property<int>("LocationEventDays")
+                                .HasColumnType("integer")
+                                .HasColumnName("AssistantLocationEventDays");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasMaxLength(32)
+                                .HasColumnType("character varying(32)")
+                                .HasColumnName("AssistantName");
+
+                            b1.Property<int>("ToolSources")
+                                .HasColumnType("integer")
+                                .HasColumnName("AssistantToolSources");
+
+                            b1.HasKey("HouseholdId");
+
+                            b1.ToTable("Households");
+
+                            b1.WithOwner()
+                                .HasForeignKey("HouseholdId");
+                        });
+
+                    b.Navigation("Assistant")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Households.Domain.Households.Membership", b =>
                 {
                     b.HasOne("Households.Domain.Households.Household", null)

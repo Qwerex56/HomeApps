@@ -21,6 +21,16 @@ public static class HouseholdErrors
     public static Error AccessUntilInvalid => new AppError("household.access_until_invalid",
         "The end of a guest's access must be in the future.", ErrorKind.Validation);
 
+    public static Error AssistantNameInvalid => new AppError("household.assistant_name_invalid",
+        $"The assistant's name must have 1–{HouseholdAssistant.MaxNameLength} characters and no control characters.", ErrorKind.Validation);
+
+    public static Error AssistantSettingsInvalid => new AppError("household.assistant_settings_invalid",
+        "The assistant's access level or tool sources are not valid.", ErrorKind.Validation);
+
+    public static Error AssistantRetentionInvalid => new AppError("household.assistant_retention_invalid",
+        $"Events are kept 1–{HouseholdAssistant.MaxEventDays} days and events with a location 1–{HouseholdAssistant.MaxLocationEventDays} days, not longer than the rest.",
+        ErrorKind.Validation);
+
     /// <summary>Q3: also for households the caller may not know about, and for archived ones (D7).</summary>
     public static Error NotFound => new AppError("household.not_found", "The household does not exist.", ErrorKind.NotFound);
 
