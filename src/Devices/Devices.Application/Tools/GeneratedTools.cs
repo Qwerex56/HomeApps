@@ -93,5 +93,5 @@ internal static class GeneratedTools
 
     /// <summary>Reads <c>limit</c> from the input of <c>_events</c>.</summary>
     public static int EventLimit(JsonElement? input) =>
-        input is { ValueKind: JsonValueKind.Object } o && o.TryGetProperty("limit", out var limit) && limit.TryGetInt32(out var n) ? Math.Clamp(n, 1, 50) : 20;
+        input is { ValueKind: JsonValueKind.Object } o && o.TryGetProperty("limit", out var limit) && limit.ValueKind == JsonValueKind.Number && limit.TryGetInt32(out var n) ? Math.Clamp(n, 1, 50) : 20;
 }
