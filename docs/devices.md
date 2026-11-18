@@ -87,7 +87,7 @@ report and the `silent`/`lowBattery` flags) and the events (`DeviceEvents`). For
 (`event:` name, `data:` JSON): `state` `{deviceId, values, at}`, `status` `{deviceId, silent, battery, ..., at}` (a silent
 device sends `silent: true`, the next report `silent: false`), `online` `{deviceId, online}` (the link opened or closed),
 and `event` `{deviceId, name, data, at, isLocation}`, which **members only** receive (guests get no events, D9). A `ping`
-comes every 20 s. The stream lives in the memory of the one Devices instance.
+comes every 20 s. The stream lives in the memory of the one Devices instance. It ends after 15 minutes at most, so the client reconnects and its access is checked again.
 
 **Jobs.** Every 30 s the heartbeat scan marks devices that missed 2.5 periods as silent. Once a day the pruning job asks
 Households for each household's retention and deletes older events (`eventDays`, default 30; `locationEventDays`,
