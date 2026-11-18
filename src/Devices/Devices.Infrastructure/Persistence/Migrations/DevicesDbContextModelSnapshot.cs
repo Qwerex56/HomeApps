@@ -153,6 +153,86 @@ namespace Devices.Infrastructure.Persistence.Migrations
                     b.ToTable("Devices", (string)null);
                 });
 
+            modelBuilder.Entity("Devices.Domain.Devices.DeviceEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Data")
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("HouseholdId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsLocation")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceId", "OccurredAt");
+
+                    b.HasIndex("HouseholdId", "OccurredAt");
+
+                    b.ToTable("DeviceEvents", (string)null);
+                });
+
+            modelBuilder.Entity("Devices.Domain.Devices.DeviceState", b =>
+                {
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<double?>("Battery")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Firmware")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset?>("LastStatusAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("LowBattery")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("Rssi")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Silent")
+                        .HasColumnType("boolean");
+
+                    b.Property<long?>("Uptime")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Values")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset?>("ValuesAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double?>("Voltage")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("DeviceId");
+
+                    b.ToTable("DeviceStates", (string)null);
+                });
+
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.InboxState", b =>
                 {
                     b.Property<long>("Id")
@@ -359,6 +439,24 @@ namespace Devices.Infrastructure.Persistence.Migrations
                         });
 
                     b.Navigation("Actions");
+                });
+
+            modelBuilder.Entity("Devices.Domain.Devices.DeviceEvent", b =>
+                {
+                    b.HasOne("Devices.Domain.Devices.Device", null)
+                        .WithMany()
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Devices.Domain.Devices.DeviceState", b =>
+                {
+                    b.HasOne("Devices.Domain.Devices.Device", null)
+                        .WithOne()
+                        .HasForeignKey("Devices.Domain.Devices.DeviceState", "DeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.OutboxMessage", b =>

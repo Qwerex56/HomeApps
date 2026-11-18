@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Devices.Infrastructure.Persistence;
 
-/// <summary>Devices' own database: the registry of devices with their actions and descriptors, and the namespaced capabilities they brought.</summary>
+/// <summary>Devices' own database: the registry of devices with their actions and descriptors, what they reported (last state, event history) and the namespaced capabilities they brought.</summary>
 public sealed class DevicesDbContext(DbContextOptions<DevicesDbContext> options, IPublisher publisher)
     : HomeAppsDbContext(options, publisher)
 {
@@ -14,6 +14,10 @@ public sealed class DevicesDbContext(DbContextOptions<DevicesDbContext> options,
     public const string CaseInsensitive = "case_insensitive";
 
     public DbSet<Device> Devices => Set<Device>();
+
+    public DbSet<DeviceState> DeviceStates => Set<DeviceState>();
+
+    public DbSet<DeviceEvent> DeviceEvents => Set<DeviceEvent>();
 
     public DbSet<RegisteredCapability> RegisteredCapabilities => Set<RegisteredCapability>();
 
