@@ -59,6 +59,11 @@ online devices are listed, and only in that person's runs.
 | POST | `/devices/{id}/pairing-code` | a new code for a household device (admin); the old pairing ends |
 | POST | `/devices/pair` | anonymous, `{"code": "ABCD-EFGH"}`: the satellite pairs, answers `{deviceId, householdId, name, secret}` |
 
+In the app (S-1d): **Konto → Komputery** (`/account/devices`) lists my computers; the household's satellites are
+the **Urządzenia** tab of each household (`/homes/<id>/devices`), where admins add one (the code is shown once, as
+`ABCD-EFGH`), give a new code, turn it off or back on and switch "Nie pytaj" per action. The spoken PIN is set in
+**Konto → Bezpieczeństwo**. The SPA never uses `/devices` itself: that prefix belongs to this service.
+
 Removing, restoring and "Nie pytaj" work on a household device for the household's admins and owner. When an account
 is erased (`UserErased`), its own devices go with it; household devices it added stay with the household.
 

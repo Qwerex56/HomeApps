@@ -56,6 +56,37 @@ async function changePassword() {
   if (passwordSent.value) Object.assign(password, { current: '', next: '' })
 }
 
+// The spoken PIN for household satellites (S4): "tu Adrian, PIN 1234" makes JARVIS answer as me for a few minutes.
+const pin = reactive({ value: '', password: '' })
+const pinForm = useSubmit()
+async function setPin() {
+  const ok = await pinForm.submit(
+    () => securityApi.setPin(pin.value, me.value?.hasPassword ? pin.password : null),
+    wrongPassword(pinForm),
+  )
+  if (!ok) return
+  Object.assign(pin, { value: '', password: '' })
+  toast.add({ severity: 'success', summary: t('account.security.pinSaved'), life: 4000 })
+  await queryClient.invalidateQueries({ queryKey: securityKeys.me })
+}
+
+function clearPin() {
+  confirm.require({
+    header: t('account.security.pinClearTitle'),
+    message: t('account.security.pinClearText'),
+    acceptProps: { label: t('account.security.pinClear'), severity: 'danger' },
+    rejectProps: { label: t('common.cancel'), severity: 'secondary', text: true },
+    accept: async () => {
+      try {
+        await securityApi.clearPin()
+        await queryClient.invalidateQueries({ queryKey: securityKeys.me })
+      } catch (error) {
+        toast.add({ severity: 'error', summary: errorMessage(toProblem(error)), life: 6000 })
+      }
+    },
+  })
+}
+
 // Changing the email: confirmed from the new address (/confirm-email).
 const email = reactive({ next: '', password: '' })
 const emailSent = ref(false)
@@ -214,6 +245,71 @@ onMounted(() => {
           </FormField>
           <div class="flex justify-end">
             <Button type="submit" :label="t('account.security.sendLink')" :loading="passwordForm.busy.value" />
+          </div>
+        </form>
+      </template>
+    </Card>
+
+    <Card>
+      <template #title>{{ t('account.security.pin') }}</template>
+      <template #subtitle>{{ t('account.security.pinHint') }}</template>
+      <template #content>
+        <form class="flex flex-col gap-4" novalidate @submit.prevent="setPin">
+          <div class="flex items-center justify-between gap-4">
+            <Tag
+              :value="me?.hasPin ? t('account.security.set') : t('account.security.notSet')"
+              :severity="me?.hasPin ? 'success' : 'secondary'"
+            />
+            <Button
+              v-if="me?.hasPin"
+              :label="t('account.security.pinClear')"
+              severity="danger"
+              text
+              size="small"
+              @click="clearPin"
+            />
+          </div>
+          <Message v-if="pinForm.formError.value" severity="error" :closable="false">{{
+            pinForm.formError.value
+          }}</Message>
+          <FormField id="pin" :label="t('account.security.newPin')" :errors="pinForm.fieldErrors.value.pin">
+            <template #default="{ invalid }">
+              <InputText
+                id="pin"
+                v-model="pin.value"
+                type="password"
+                inputmode="numeric"
+                autocomplete="off"
+                maxlength="8"
+                :invalid="invalid"
+              />
+            </template>
+          </FormField>
+          <FormField
+            v-if="me?.hasPassword"
+            id="pinPassword"
+            :label="t('account.security.currentPassword')"
+            :errors="pinForm.fieldErrors.value.currentPassword"
+          >
+            <template #default="{ invalid }">
+              <Password
+                v-model="pin.password"
+                input-id="pinPassword"
+                :feedback="false"
+                toggle-mask
+                fluid
+                :input-props="{ autocomplete: 'current-password' }"
+                :invalid="invalid"
+              />
+            </template>
+          </FormField>
+          <div class="flex justify-end">
+            <Button
+              type="submit"
+              :label="me?.hasPin ? t('account.security.pinChange') : t('account.security.pinSet')"
+              :disabled="!/^\d{4,8}$/.test(pin.value)"
+              :loading="pinForm.busy.value"
+            />
           </div>
         </form>
       </template>

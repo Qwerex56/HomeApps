@@ -13,6 +13,8 @@ export interface Me {
   email: string
   role: 'User' | 'Admin' | 'Owner'
   hasPassword: boolean
+  /** A spoken PIN for household satellites ("tu Adrian, PIN 1234", S4). */
+  hasPin: boolean
   logins: LinkedLogin[]
 }
 
@@ -51,6 +53,15 @@ export const securityApi = {
   /** 202: the change waits for the link in the email (/confirm-password). Without a password only `newPassword`. */
   async changePassword(currentPassword: string | null, newPassword: string) {
     await http.put('/auth/me/password', { currentPassword, newPassword })
+  },
+
+  /** 4-8 digits, with the same proof as a password change; Auth keeps only its hash. */
+  async setPin(pin: string, currentPassword: string | null) {
+    await http.put('/auth/me/pin', { pin, currentPassword })
+  },
+
+  async clearPin() {
+    await http.delete('/auth/me/pin')
   },
 
   /** 202: the change waits for the link sent to the new address (/confirm-email). */
