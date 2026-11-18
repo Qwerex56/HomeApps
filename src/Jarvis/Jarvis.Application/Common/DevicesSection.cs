@@ -101,6 +101,11 @@ public static class DevicesSection
             health.Add(string.Create(CultureInfo.InvariantCulture, $"bateria {battery:0}%") + (device.LowBattery ? " (niska)" : string.Empty));
         }
 
+        if (!device.JarvisMayControl)
+        {
+            health.Add("JARVIS nie może sterować");
+        }
+
         return $"- \"{Clean(device.Name, 60)}\" ({device.Purpose}; {string.Join(", ", health)})";
     }
 
