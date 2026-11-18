@@ -55,7 +55,7 @@ public sealed partial class ProtocolDocsExamplesTests
         {
             var json = block.Groups[1].Value;
             using var document = JsonDocument.Parse(json);
-            if (document.RootElement.TryGetProperty("format", out _))
+            if (document.RootElement is { ValueKind: JsonValueKind.Object } root && root.TryGetProperty("format", out _))
             {
                 result.Add(json);
             }
