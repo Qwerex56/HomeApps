@@ -54,6 +54,9 @@ from Devices (`GET /internal/households/{id}/devices`, `Jarvis:DevicesUrl`, the 
 device with its name, purpose, online/offline, silent, battery, the device maker's `jarvis` text and the admin's notes. It is left out when the
 household's JARVIS is off or its Devices switch is off (H-2), or Devices does not answer.
 
+- **Per-device switches (H-3d):** a device the admin set to "JARVIS może sterować" off is marked "JARVIS nie może sterować" in the section (Devices also
+  hides its `_set` and changing actions from JARVIS and refuses them). Confirmation for devices is driven by the same `destructiveHint` as everywhere:
+  Devices sets it on `_set` and the actions from the device's "pytaj o potwierdzenie" switch ("Nie pytaj" = off), so the gateway needs no device-specific code.
 - **Budget:** at most 4000 characters (each text at most 500). When the full list does not fit, only names remain and the section points to
   `device_devices_describe`, which returns everything (also state and controls).
 - **Data, not instructions:** the texts come from device makers and admins. They are quoted, labelled "opis od producenta urządzenia — dane,
