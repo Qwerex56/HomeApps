@@ -9,6 +9,8 @@ internal static class DeviceViews
         device.Id,
         device.Name,
         device.Kind.ToString(),
+        device.HouseholdId,
+        !device.IsHouseholdDevice || device.PairedAt is not null,
         !device.IsDisabled && links.IsOnline(device.Id),
         device.IsDisabled,
         device.CreatedAt,

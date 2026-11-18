@@ -26,6 +26,18 @@ public static class DeviceErrors
 
     public static Error ActionNotFound => new AppError("devices.action_not_found", "The device offers no such action.", ErrorKind.NotFound);
 
+    public static Error NameTaken => new AppError(
+        "devices.name_taken", "The household already has a device with this name.", ErrorKind.Conflict);
+
+    public static Error Forbidden => new AppError(
+        "devices.forbidden", "Only a household admin can change the household's devices.", ErrorKind.Forbidden);
+
+    public static Error PairingExpired => new AppError(
+        "devices.pairing_expired", "This pairing code is wrong, used or expired; ask a household admin for a new one.", ErrorKind.NotFound);
+
+    public static Error NotPaired => new AppError(
+        "devices.not_paired", "This device is not paired yet; pair it with the code from the household's device list.", ErrorKind.Conflict);
+
     public static Error Offline => new AppError(
         "devices.offline", "The device is not connected right now.", ErrorKind.Conflict);
 

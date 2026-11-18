@@ -3,6 +3,7 @@
   <!-- Devices use cases: one folder per command or query (Command/Query, Validator, Handler), ports for Infrastructure and the Api. -->
   <ItemGroup>
     <ProjectReference Include="..\Devices.Domain\Devices.Domain.csproj" />
+    <ProjectReference Include="..\..\Contracts\HomeApps.Contracts\HomeApps.Contracts.csproj" />
     <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Application\HomeApps.BuildingBlocks.Application.csproj" />
   </ItemGroup>
 

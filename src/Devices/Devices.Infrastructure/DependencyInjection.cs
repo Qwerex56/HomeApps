@@ -1,3 +1,4 @@
+using Devices.Infrastructure.Households;
 using Devices.Application.Abstractions;
 using Devices.Infrastructure.Persistence;
 using HomeApps.BuildingBlocks.Infrastructure;
@@ -8,13 +9,16 @@ namespace Devices.Infrastructure;
 
 public static class DependencyInjection
 {
-    /// <summary>Postgres with the outbox and the <c>UserErased</c> consumer. The Api adds the links (<see cref="IDeviceLinks"/>).</summary>
+    /// <summary>Postgres with the outbox, the <c>UserErased</c> consumer and Households (<c>Devices:HouseholdsUrl</c>). The Api adds the links (<see cref="IDeviceLinks"/>).</summary>
     public static IServiceCollection AddDevicesInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddHomeAppsInfrastructure<DevicesDbContext>(configuration, "devices", typeof(DependencyInjection).Assembly);
         services.AddScoped<IDeviceRepository, DeviceRepository>();
+        services.AddHttpContextAccessor();
+        var households = configuration["Devices:HouseholdsUrl"] is { Length: > 0 } url ? url : "http://households:8080";
+        services.AddHttpClient<IHouseholdRoles, HouseholdsHttpRoles>(http => http.BaseAddress = new Uri(households.TrimEnd('/') + "/"));
         return services;
     }
 }

@@ -13,8 +13,12 @@ internal sealed class DeviceConfiguration : IEntityTypeConfiguration<Device>
         builder.Property(d => d.Id).ValueGeneratedNever();
         builder.Property(d => d.Name).HasMaxLength(Device.MaxNameLength);
         builder.Property(d => d.Kind).HasConversion<string>().HasMaxLength(20);
-        builder.HasIndex(d => new { d.OwnerId, d.Name }).IsUnique();
+        builder.HasIndex(d => new { d.OwnerId, d.Name }).IsUnique().HasFilter("\"HouseholdId\" IS NULL");
+        builder.HasIndex(d => new { d.HouseholdId, d.Name }).IsUnique().HasFilter("\"HouseholdId\" IS NOT NULL");
+        builder.HasIndex(d => d.PairingCodeHash).IsUnique().HasFilter("\"PairingCodeHash\" IS NOT NULL");
+        builder.Property(d => d.PairingCodeHash).HasMaxLength(64);
         builder.Ignore(d => d.IsDisabled);
+        builder.Ignore(d => d.IsHouseholdDevice);
 
         builder.OwnsMany(d => d.Actions, action =>
         {

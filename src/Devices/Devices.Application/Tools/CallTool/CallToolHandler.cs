@@ -1,3 +1,4 @@
+using Devices.Application.Common;
 using Devices.Application.Abstractions;
 using Devices.Domain.Devices;
 using FluentResults;
@@ -6,7 +7,7 @@ using HomeApps.BuildingBlocks.Application.Messaging;
 
 namespace Devices.Application.Tools.CallTool;
 
-internal sealed class CallToolHandler(IDeviceRepository devices, IDeviceLinks links, ICurrentUser currentUser)
+internal sealed class CallToolHandler(IDeviceRepository devices, IHouseholdRoles households, IDeviceLinks links, ICurrentUser currentUser)
     : ICommandHandler<CallToolCommand, string>
 {
     public async Task<Result<string>> Handle(CallToolCommand command, CancellationToken cancellationToken)
@@ -18,8 +19,10 @@ internal sealed class CallToolHandler(IDeviceRepository devices, IDeviceLinks li
             return Result.Fail(DeviceErrors.ActionNotFound);
         }
 
-        var device = await devices.FindByNameAsync(currentUser.RequiredUserId, command.Tool[..split], cancellationToken);
-        if (device is null || device.IsDisabled)
+        var name = command.Tool[..split];
+        var reachable = await ReachableDevices.OfCallerAsync(devices, households, currentUser.RequiredUserId, cancellationToken);
+        var device = reachable.FirstOrDefault(d => d.Name == name);
+        if (device is null)
         {
             return Result.Fail(DeviceErrors.NotFound);
         }

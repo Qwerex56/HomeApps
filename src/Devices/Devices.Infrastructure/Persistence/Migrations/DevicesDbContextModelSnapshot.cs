@@ -33,6 +33,9 @@ namespace Devices.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("DisabledAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("HouseholdId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Kind")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -49,10 +52,29 @@ namespace Devices.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("PairedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PairingCodeHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("PairingExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("PairingCodeHash")
+                        .IsUnique()
+                        .HasFilter("\"PairingCodeHash\" IS NOT NULL");
+
+                    b.HasIndex("HouseholdId", "Name")
+                        .IsUnique()
+                        .HasFilter("\"HouseholdId\" IS NOT NULL");
+
                     b.HasIndex("OwnerId", "Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"HouseholdId\" IS NULL");
 
                     b.ToTable("Devices", (string)null);
                 });

@@ -10,10 +10,19 @@ internal sealed class DeviceRepository(DevicesDbContext db) : IDeviceRepository
         db.Devices.FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
 
     public Task<Device?> FindByNameAsync(Guid ownerId, string name, CancellationToken cancellationToken) =>
-        db.Devices.FirstOrDefaultAsync(d => d.OwnerId == ownerId && d.Name == name, cancellationToken);
+        db.Devices.FirstOrDefaultAsync(d => d.OwnerId == ownerId && d.HouseholdId == null && d.Name == name, cancellationToken);
+
+    public Task<Device?> FindInHouseholdAsync(Guid householdId, string name, CancellationToken cancellationToken) =>
+        db.Devices.FirstOrDefaultAsync(d => d.HouseholdId == householdId && d.Name == name, cancellationToken);
+
+    public Task<Device?> FindByPairingCodeAsync(string pairingCodeHash, CancellationToken cancellationToken) =>
+        db.Devices.FirstOrDefaultAsync(d => d.PairingCodeHash == pairingCodeHash, cancellationToken);
 
     public async Task<IReadOnlyList<Device>> OfOwnerAsync(Guid ownerId, CancellationToken cancellationToken) =>
-        await db.Devices.Where(d => d.OwnerId == ownerId).ToListAsync(cancellationToken);
+        await db.Devices.Where(d => d.OwnerId == ownerId && d.HouseholdId == null).ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<Device>> OfHouseholdsAsync(IReadOnlyCollection<Guid> householdIds, CancellationToken cancellationToken) =>
+        await db.Devices.Where(d => d.HouseholdId != null && householdIds.Contains(d.HouseholdId.Value)).ToListAsync(cancellationToken);
 
     public void Add(Device device) => db.Devices.Add(device);
 

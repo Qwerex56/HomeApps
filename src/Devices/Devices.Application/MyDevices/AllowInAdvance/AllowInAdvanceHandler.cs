@@ -6,11 +6,11 @@ using HomeApps.BuildingBlocks.Application.Messaging;
 
 namespace Devices.Application.MyDevices.AllowInAdvance;
 
-internal sealed class AllowInAdvanceHandler(IDeviceRepository devices, ICurrentUser currentUser) : ICommandHandler<AllowInAdvanceCommand>
+internal sealed class AllowInAdvanceHandler(IDeviceRepository devices, IHouseholdRoles households, ICurrentUser currentUser) : ICommandHandler<AllowInAdvanceCommand>
 {
     public async Task<Result> Handle(AllowInAdvanceCommand command, CancellationToken cancellationToken)
     {
-        var device = await devices.FindMineAsync(command.DeviceId, currentUser.RequiredUserId, cancellationToken);
+        var device = await devices.FindManageableAsync(households, command.DeviceId, currentUser.RequiredUserId, cancellationToken);
         return device.IsFailed ? device.ToResult() : device.Value.AllowInAdvance(command.Action, command.Allowed);
     }
 }

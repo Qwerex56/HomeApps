@@ -6,11 +6,11 @@ using HomeApps.BuildingBlocks.Application.Messaging;
 
 namespace Devices.Application.MyDevices.RestoreDevice;
 
-internal sealed class RestoreDeviceHandler(IDeviceRepository devices, ICurrentUser currentUser) : ICommandHandler<RestoreDeviceCommand>
+internal sealed class RestoreDeviceHandler(IDeviceRepository devices, IHouseholdRoles households, ICurrentUser currentUser) : ICommandHandler<RestoreDeviceCommand>
 {
     public async Task<Result> Handle(RestoreDeviceCommand command, CancellationToken cancellationToken)
     {
-        var device = await devices.FindMineAsync(command.DeviceId, currentUser.RequiredUserId, cancellationToken);
+        var device = await devices.FindManageableAsync(households, command.DeviceId, currentUser.RequiredUserId, cancellationToken);
         if (device.IsFailed)
         {
             return device.ToResult();
