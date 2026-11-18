@@ -50,12 +50,12 @@ public static class ValueSchema
     private static string? CheckNumber(JsonElement schema, JsonElement value, string path)
     {
         var number = value.GetDouble();
-        if (schema.TryGetProperty("minimum", out var min) && min.TryGetDouble(out var low) && number < low)
+        if (schema.TryGetProperty("minimum", out var min) && min.ValueKind == JsonValueKind.Number && min.TryGetDouble(out var low) && number < low)
         {
             return $"{path} must be at least {low}";
         }
 
-        return schema.TryGetProperty("maximum", out var max) && max.TryGetDouble(out var high) && number > high
+        return schema.TryGetProperty("maximum", out var max) && max.ValueKind == JsonValueKind.Number && max.TryGetDouble(out var high) && number > high
             ? $"{path} must be at most {high}"
             : null;
     }
@@ -63,12 +63,12 @@ public static class ValueSchema
     private static string? CheckString(JsonElement schema, JsonElement value, string path)
     {
         var length = value.GetString()!.Length;
-        if (schema.TryGetProperty("minLength", out var min) && min.TryGetInt32(out var low) && length < low)
+        if (schema.TryGetProperty("minLength", out var min) && min.ValueKind == JsonValueKind.Number && min.TryGetInt32(out var low) && length < low)
         {
             return $"{path} must be at least {low} characters";
         }
 
-        return schema.TryGetProperty("maxLength", out var max) && max.TryGetInt32(out var high) && length > high
+        return schema.TryGetProperty("maxLength", out var max) && max.ValueKind == JsonValueKind.Number && max.TryGetInt32(out var high) && length > high
             ? $"{path} must be at most {high} characters"
             : null;
     }

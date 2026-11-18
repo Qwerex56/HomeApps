@@ -101,7 +101,8 @@ the device; they never stop pairing. The device list returns `purpose`, `name`, 
     { "name": "temperature", "value": { "type": "number" }, "unit": "°C" },
     { "name": "humidity", "value": { "type": "number", "minimum": 0, "maximum": 100 }, "unit": "%" },
     { "name": "pressure", "value": { "type": "number" }, "unit": "hPa" },
-    { "name": "battery", "value": { "type": "number", "minimum": 0, "maximum": 100 }, "unit": "%" } ] }
+    { "name": "battery", "value": { "type": "number", "minimum": 0, "maximum": 100 }, "unit": "%" } ],
+  "events": [ { "name": "motion", "label": "Ruch" } ] }
 ```
 
 ### An assistant satellite
@@ -129,7 +130,7 @@ Only a paired household device that sent a descriptor may send these frames (`de
 ### `state`: the current values
 
 ```json
-{ "type": "state", "values": { "heating": 2, "temperature": 21.5 } }
+{ "type": "state", "values": { "level": 2, "temperature": 21.5 } }
 ```
 
 Send it after connecting and on every change. Each name must be a control or a sensor of the descriptor and its value
@@ -139,7 +140,7 @@ stores the values with the time it received them (not a history; that is for eve
 ### `set`: change a control (server to device)
 
 ```json
-{ "type": "set", "id": "7f3c...", "name": "heating", "value": 3 }
+{ "type": "set", "id": "7f3c...", "name": "level", "value": 3 }
 ```
 
 A household member (not a guest, D6) changes a control with `POST /devices/{id}/set` ([devices.md](devices.md)). The
