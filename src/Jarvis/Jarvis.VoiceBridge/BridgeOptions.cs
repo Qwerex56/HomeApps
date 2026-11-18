@@ -12,6 +12,8 @@ namespace Jarvis.VoiceBridge;
 /// <param name="Engine">S1: with <c>--speech local</c> the bridge's own speech engine (OpenAI audio API, e.g. Speaches on
 /// this Mac); the server then only gets and gives text. <c>null</c>: the server hears and speaks.</param>
 /// <param name="Actions">A JSON file with what this computer offers JARVIS (jarvis-satellites.md, S-0); <c>null</c>: nothing.</param>
+/// <param name="Pair">S-1e: a pairing code from the household's Urządzenia page; the bridge becomes that household's satellite.</param>
+/// <param name="Unpair">Forget the satellite's pairing on this computer; the bridge is the person's again.</param>
 internal sealed record BridgeOptions(
     Uri Server,
     string Device,
@@ -21,7 +23,9 @@ internal sealed record BridgeOptions(
     string? CheckWake,
     bool Logout,
     Uri? Engine = null,
-    string? Actions = null)
+    string? Actions = null,
+    string? Pair = null,
+    bool Unpair = false)
 {
     public const string SttModel = "deepdml/faster-whisper-large-v3-turbo-ct2";
     public const string TtsModel = "speaches-ai/piper-pl_PL-gosia-medium";
@@ -57,6 +61,8 @@ internal sealed record BridgeOptions(
             Value("--check-wake"),
             args.Contains("--logout"),
             engine is null ? null : new Uri(engine.TrimEnd('/') + "/"),
-            Value("--actions"));
+            Value("--actions"),
+            Value("--pair"),
+            args.Contains("--unpair"));
     }
 }
