@@ -84,5 +84,72 @@ public sealed class DevicesSectionTests
     [InlineData("computer", false)]
     public void Only_the_assistant_purpose_may_use_voice(string purpose, bool allowed) => Assert.Equal(allowed, Device("X", purpose).IsAssistant);
 
+    [Theory]
+    [InlineData("a\u0000b\u001bc\u007fd", "a b c d")]
+    [InlineData("a<b>c", "a b c")]
+    [InlineData("say \"hi\" `now`", "say hi now")]
+    [InlineData("  \t\r\n  ", "")]
+    [InlineData(null, "")]
+    [InlineData("\u2028line\u0085break", "line break")]
+    public void Clean_flattens_control_characters_angle_brackets_quotes_and_backticks(string? text, string expected) =>
+        Assert.Equal(expected, DevicesSection.Clean(text, 100));
+
+    [Fact]
+    public void Clean_caps_a_huge_text_and_leaves_no_trailing_space()
+    {
+        var text = string.Concat(Enumerable.Repeat("ab ", 100_000));
+
+        var cleaned = DevicesSection.Clean(text, 500);
+
+        Assert.True(cleaned.Length <= 500);
+        Assert.False(cleaned.EndsWith(' '));
+    }
+
+    [Fact]
+    public void A_name_is_cut_at_60_characters_in_the_section()
+    {
+        var section = DevicesSection.Build([Device(new string('n', 200))]);
+
+        Assert.Contains("\"" + new string('n', 60) + "\"", section, StringComparison.Ordinal);
+        Assert.DoesNotContain(new string('n', 61), section, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_text_of_only_control_characters_adds_no_line()
+    {
+        var section = DevicesSection.Build([Device("Fotel", jarvis: "\u0001\u0002", notes: "<>")]);
+
+        Assert.DoesNotContain("opis od producenta", section, StringComparison.Ordinal);
+        Assert.DoesNotContain("uwagi administratora", section, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_section_of_exactly_the_budget_is_kept_in_full_and_one_more_character_drops_to_names()
+    {
+        // Six devices with the longest text and a seventh; the last one's notes grow until the full section is exactly 4000 characters.
+        string Section(int notes) => DevicesSection.Build([
+            .. Enumerable.Range(1, 6).Select(i => Device($"Urządzenie {i}", jarvis: new string('j', DevicesSection.MaxTextLength))),
+            Device("Urządzenie 7", notes: new string('n', notes)),
+        ]);
+
+        var exact = Enumerable.Range(1, DevicesSection.MaxTextLength).Select(k => (Notes: k, Section: Section(k))).FirstOrDefault(x => x.Section.Length == DevicesSection.MaxLength);
+
+        Assert.NotNull(exact.Section);
+        Assert.DoesNotContain(DevicesSection.DescribeTool, exact.Section, StringComparison.Ordinal);
+        Assert.Contains(new string('n', exact.Notes), exact.Section, StringComparison.Ordinal);
+        var over = Section(exact.Notes + 1);
+        Assert.Contains(DevicesSection.DescribeTool, over, StringComparison.Ordinal);
+        Assert.True(over.Length <= DevicesSection.MaxLength);
+    }
+
+    [Fact]
+    public void The_order_of_the_input_does_not_change_the_section()
+    {
+        var a = Device("Alfa", jarvis: "x");
+        var b = Device("Beta", jarvis: "y");
+
+        Assert.Equal(DevicesSection.Build([a, b]), DevicesSection.Build([b, a]));
+    }
+
     private static int CountOf(string text, string part) => text.Split(part).Length - 1;
 }
