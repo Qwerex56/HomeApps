@@ -16,4 +16,5 @@ public sealed record DeviceView(
     DeviceDescriptorView Descriptor,
     string? AdminNotes,
     bool JarvisMayControl = true,
-    bool JarvisAsks = true);
+    bool JarvisAsks = true,
+    DeviceStateView? State = null);

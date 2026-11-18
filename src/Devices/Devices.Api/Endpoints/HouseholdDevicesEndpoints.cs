@@ -25,8 +25,10 @@ internal sealed class HouseholdDevicesEndpoints : IEndpoint
     {
         var household = app.MapGroup("/devices/households/{householdId:guid}").WithTags("Devices");
 
-        household.MapGet("/", async (Guid householdId, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new GetHouseholdDevicesQuery(householdId), ct)).ToHttpResult())
+        // ?capability=&role=&model= narrow the list to matching devices (2.5), ?state=true adds each one's last state.
+        household.MapGet("/", async (
+                Guid householdId, ISender sender, CancellationToken ct, string? capability = null, string? role = null, string? model = null, bool state = false) =>
+            (await sender.Send(new GetHouseholdDevicesQuery(householdId, capability, role, model, state), ct)).ToHttpResult())
             .Produces<IReadOnlyList<DeviceView>>();
 
         household.MapPost("/", async (Guid householdId, AddHouseholdDeviceRequest body, ISender sender, CancellationToken ct) =>

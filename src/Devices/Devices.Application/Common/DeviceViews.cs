@@ -5,7 +5,7 @@ namespace Devices.Application.Common;
 
 internal static class DeviceViews
 {
-    public static DeviceView ToView(this Device device, IDeviceLinks links, bool includeNotes = false) => new(
+    public static DeviceView ToView(this Device device, IDeviceLinks links, bool includeNotes = false, DeviceStateView? state = null) => new(
         device.Id,
         device.Name,
         device.Slug,
@@ -21,5 +21,6 @@ internal static class DeviceViews
         new DeviceDescriptorView(device.Descriptor is not null, device.Model, device.DescriptorVersion, device.Roles, device.Capabilities, device.Warnings),
         includeNotes ? device.AdminNotes : null,
         device.JarvisMayControl,
-        device.JarvisAsks);
+        device.JarvisAsks,
+        state);
 }

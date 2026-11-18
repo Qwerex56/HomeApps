@@ -90,7 +90,7 @@ A unique-index conflict from two requests at once (the same slug computed twice,
 | DELETE | `/devices/{id}` | turn a device off (its link is dropped and it may not connect again) |
 | POST | `/devices/{id}/restore` | turn it back on |
 | PUT | `/devices/{id}/actions/{action}/allow` | `{"allowed": true}` = "Nie pytaj" for this action |
-| GET | `/devices/households/{householdId}` | the household's devices (any member) |
+| GET | `/devices/households/{householdId}?capability=&role=&model=&state=` | the household's devices (guest and above); see "Finding devices" |
 | POST | `/devices/households/{householdId}` | `{"name": "salon"}`: add a satellite (admin), answers `{deviceId, name, code, expiresAt}` |
 | POST | `/devices/{id}/pairing-code` | a new code for a household device (admin); the old pairing ends |
 | POST | `/devices/pair` | anonymous, `{"code": "ABCD-EFGH"}`: the satellite pairs, answers `{deviceId, householdId, name, secret}` |
@@ -106,7 +106,7 @@ Household devices with a descriptor report **state** (last values), **events** (
 through frames on the link or `POST /devices/report`; the frames, the heartbeat rules and examples are in
 [devices-protocol.md](devices-protocol.md). Devices stores the last state per device (`DeviceStates`, with the last status
 report and the `silent`/`lowBattery` flags) and the events (`DeviceEvents`). For each accepted event it publishes
-`DeviceEventOccurred`; for a silent device `DeviceWentSilent`; admins are told through `NotificationRequested`
+`DeviceEventOccurred`; when a `state` frame changes stored values `DeviceStateChanged` (household, device, slug, only the changed values as a JSON object, time; a frame that repeats the stored values publishes nothing); for a silent device `DeviceWentSilent`; admins are told through `NotificationRequested`
 (source `devices`, category `silent` or `battery`, page `/homes/{id}/devices`).
 
 | Method | Path | Who | What |
@@ -116,6 +116,20 @@ report and the `silent`/`lowBattery` flags) and the events (`DeviceEvents`). For
 | POST | `/devices/{id}/set` | member and above | `{"control": "level", "value": 3}`: checked against the control's schema, sent as `set`, answers when the device did (403 `devices.read_only` for a guest, 409 `devices.offline`, 404 `devices.control_not_found`) |
 | POST | `/devices/report` | the device's own token | an array of frames (at most 50, 64 KB), answers a result per frame |
 | GET | `/devices/households/{householdId}/stream` | guest and above | Server-Sent Events, see below |
+
+### Finding devices (H-4a)
+
+Add-ons and plugins find devices by what they can do, not by name (household-jarvis-devices.md 2.5).
+`GET /devices/households/{householdId}` takes optional filters, all of which must match, and returns the same
+device list as without them (id, name, slug, purpose, `online`, `descriptor` with `model`, `roles` and
+`capabilities`):
+
+- `capability=weather` matches a device that has it, with or without an instance id (`switch` matches `switch:lampka`);
+- `role=weather_station` matches a role from the descriptor, `model=qwerex56/fotel-v1` the exact model;
+- any filter also leaves out removed devices;
+- `state=true` adds each device's last state as `state` (the same object as `GET /devices/{id}/state`).
+
+Guests may read (D6); the household's own role rules apply as for every other call, with the caller's token.
 
 **The stream** is `text/event-stream` and needs the `Authorization` header (use `fetch`, not `EventSource`). Events
 (`event:` name, `data:` JSON): `state` `{deviceId, values, at}`, `status` `{deviceId, silent, battery, ..., at}` (a silent
