@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using HomeApps.BuildingBlocks.Mcp;
 using Jarvis.Application.Gateway;
 using Jarvis.Application.ToolCalls.AwaitConfirmation;
@@ -54,7 +55,7 @@ internal sealed partial class McpGateway(
         foreach (var (source, tool) in perSource.SelectMany(list => list))
         {
             // A household device's tool belongs to that household: its ceiling applies, and a satellite sees only its own.
-            if (HouseholdOf(tool) is { } toolHousehold)
+            if (HouseholdOf(source, tool) is { } toolHousehold)
             {
                 if (caller.HouseholdClaim is { } own && own != toolHousehold)
                 {
@@ -131,7 +132,7 @@ internal sealed partial class McpGateway(
                 }
 
                 var claim = caller.HouseholdClaim;
-                var fromTool = HouseholdOf(tool);
+                var fromTool = HouseholdOf(source, tool);
                 if (claim is { } own1 && ((fromTool ?? inArguments) is { } other && other != own1))
                 {
                     return Failed("This assistant acts only in its own household.");
@@ -207,13 +208,17 @@ internal sealed partial class McpGateway(
 
         var tools = await ToolsOfAsync(source, token, cancellationToken);
         var tool = tools.FirstOrDefault(t => t.Tool.Name == own).Tool;
-        cache.Set(key, tool, TimeSpan.FromMinutes(5));
+        if (tool is not null)
+        {
+            cache.Set(key, tool, TimeSpan.FromMinutes(5));
+        }
+
         return tool;
     }
 
-    /// <summary>The household a tool belongs to (<c>_meta</c> "homeapps/household", set by Devices for a household device's tool).</summary>
-    internal static Guid? HouseholdOf(Tool? tool) =>
-        tool?.Meta?["homeapps/household"]?.GetValue<string>() is { } value && Guid.TryParse(value, out var id) ? id : null;
+    /// <summary>The household a tool belongs to (<c>_meta</c> "homeapps/household"): only Devices sets it, so only its tools are trusted; never throws.</summary>
+    internal static Guid? HouseholdOf(ToolSource source, Tool? tool) =>
+        source.Kind == ToolSourceKind.Devices && tool?.Meta?["homeapps/household"] is JsonValue v && v.TryGetValue<string>(out var s) && Guid.TryParse(s, out var id) ? id : null;
 
     public async ValueTask<ListResourcesResult> ListResourcesAsync(CancellationToken cancellationToken)
     {

@@ -40,7 +40,9 @@ internal sealed partial class HouseholdsCeilings(
 
             response.EnsureSuccessStatusCode();
             var view = await response.Content.ReadFromJsonAsync<View>(cancellationToken);
-            return Keep(key, view is null ? HouseholdCeiling.Unavailable : HouseholdCeiling.From(view.Enabled, view.AccessLevel, view.ToolSources));
+            return view is null
+                ? Keep(key, HouseholdCeiling.Unavailable, _failureLifetime)
+                : Keep(key, HouseholdCeiling.From(view.Enabled, view.AccessLevel, view.ToolSources));
         }
         catch (Exception exception) when (exception is HttpRequestException or System.Text.Json.JsonException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
         {
