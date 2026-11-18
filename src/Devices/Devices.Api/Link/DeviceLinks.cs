@@ -15,7 +15,13 @@ internal sealed class DeviceLinks(IOptions<DevicesOptions> options) : IDeviceLin
 
     public bool IsOnline(Guid deviceId) => _connected.ContainsKey(deviceId);
 
-    public async Task<Result<string>> RunAsync(Guid deviceId, string action, JsonElement? input, CancellationToken cancellationToken)
+    public Task<Result<string>> RunAsync(Guid deviceId, string action, JsonElement? input, CancellationToken cancellationToken) =>
+        RequestAsync(deviceId, connection => connection.RunAsync(action, input, options.Value.ActionTimeout, cancellationToken));
+
+    public async Task<Result> SetAsync(Guid deviceId, string control, JsonElement value, CancellationToken cancellationToken) =>
+        (await RequestAsync(deviceId, connection => connection.SetAsync(control, value, options.Value.ActionTimeout, cancellationToken))).ToResult();
+
+    private async Task<Result<string>> RequestAsync(Guid deviceId, Func<DeviceConnection, Task<Result<string>>> request)
     {
         if (!_connected.TryGetValue(deviceId, out var connection))
         {
@@ -24,7 +30,7 @@ internal sealed class DeviceLinks(IOptions<DevicesOptions> options) : IDeviceLin
 
         try
         {
-            return await connection.RunAsync(action, input, options.Value.ActionTimeout, cancellationToken);
+            return await request(connection);
         }
         catch (TimeoutException)
         {

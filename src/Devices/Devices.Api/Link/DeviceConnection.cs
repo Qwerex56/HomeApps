@@ -35,14 +35,21 @@ internal sealed class DeviceConnection(WebSocket socket) : IDisposable
         }
     }
 
-    public async Task<Result<string>> RunAsync(string action, JsonElement? input, TimeSpan timeout, CancellationToken cancellationToken)
+    public Task<Result<string>> RunAsync(string action, JsonElement? input, TimeSpan timeout, CancellationToken cancellationToken) =>
+        RequestAsync(id => new LinkMessage("action", Id: id, Name: action, Input: input), timeout, cancellationToken);
+
+    /// <summary>Sends <c>set</c> and waits for the device's <c>set_result</c>.</summary>
+    public Task<Result<string>> SetAsync(string control, JsonElement value, TimeSpan timeout, CancellationToken cancellationToken) =>
+        RequestAsync(id => new LinkMessage("set", Id: id, Name: control, Value: value), timeout, cancellationToken);
+
+    private async Task<Result<string>> RequestAsync(Func<string, LinkMessage> frame, TimeSpan timeout, CancellationToken cancellationToken)
     {
         var id = Guid.NewGuid().ToString("N");
         var answer = new TaskCompletionSource<Result<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
         _waiting[id] = answer;
         try
         {
-            await SendAsync(new LinkMessage("action", Id: id, Name: action, Input: input), cancellationToken);
+            await SendAsync(frame(id), cancellationToken);
             return await answer.Task.WaitAsync(timeout, cancellationToken);
         }
         finally
@@ -51,7 +58,7 @@ internal sealed class DeviceConnection(WebSocket socket) : IDisposable
         }
     }
 
-    /// <summary>The device's <c>action_result</c>; an unknown or late id is ignored.</summary>
+    /// <summary>The device's <c>action_result</c> or <c>set_result</c>; an unknown or late id is ignored.</summary>
     public void Answer(string id, bool ok, string? text)
     {
         if (_waiting.TryRemove(id, out var answer))
