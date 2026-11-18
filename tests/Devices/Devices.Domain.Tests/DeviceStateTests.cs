@@ -59,4 +59,19 @@ public sealed class DeviceStateTests
         Assert.False(state.ApplyStatus(new StatusReport(80, null, null, null, null, null), Now.AddMinutes(4)).BatteryLow);
         Assert.True(state.ApplyStatus(new StatusReport(10, null, null, null, null, null), Now.AddMinutes(5)).BatteryLow);
     }
+
+    [Fact]
+    public void Low_battery_re_arms_only_five_points_above_the_threshold()
+    {
+        var state = DeviceState.For(Guid.NewGuid());
+        StatusOutcome Report(int battery, int minute) => state.ApplyStatus(new StatusReport(battery, null, null, null, null, null), Now.AddMinutes(minute));
+
+        Assert.True(Report(19, 0).BatteryLow);
+        Assert.False(Report(20, 1).BatteryLow);
+        Assert.False(Report(19, 2).BatteryLow);
+        Assert.False(Report(24, 3).BatteryLow);
+        Assert.False(Report(19, 4).BatteryLow);
+        Assert.False(Report(25, 5).BatteryLow);
+        Assert.True(Report(19, 6).BatteryLow);
+    }
 }

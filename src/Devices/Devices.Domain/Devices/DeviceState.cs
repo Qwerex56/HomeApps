@@ -60,6 +60,8 @@ public sealed class DeviceState
         ValuesAt = now;
     }
 
+    private const int LowBatteryHysteresis = 5;
+
     /// <summary>A heartbeat arrived: remember it, end silence, and tell whether the battery just became low.</summary>
     public StatusOutcome ApplyStatus(StatusReport report, DateTimeOffset now, int lowBatteryPercent = DefaultLowBatteryPercent)
     {
@@ -82,7 +84,7 @@ public sealed class DeviceState
                 batteryLow = !LowBattery;
                 LowBattery = true;
             }
-            else
+            else if (battery >= lowBatteryPercent + LowBatteryHysteresis)
             {
                 LowBattery = false;
             }

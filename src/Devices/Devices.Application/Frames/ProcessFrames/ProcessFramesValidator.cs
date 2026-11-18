@@ -9,6 +9,7 @@ internal sealed class ProcessFramesValidator : AbstractValidator<ProcessFramesCo
 
     public ProcessFramesValidator()
     {
+        RuleForEach(c => c.Frames).NotNull();
         RuleFor(c => c.Frames).NotEmpty().Must(f => f.Count <= MaxFrames).WithMessage($"A report carries 1-{MaxFrames} frames.");
     }
 }

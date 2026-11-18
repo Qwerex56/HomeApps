@@ -114,4 +114,16 @@ public sealed class FrameValidationTests
         Assert.Equal(now.AddDays(-7), retention.CutoffFor(isLocation: true, now));
         Assert.Equal(now.AddDays(-10), new EventRetention(10, 40).CutoffFor(isLocation: true, now));
     }
+
+    [Fact]
+    public void State_with_a_nul_is_refused()
+    {
+        Assert.True(FrameValidation.CheckState(Descriptor, Json("""{ "mode": "a\u0000b" }""")).IsFailed);
+    }
+
+    [Fact]
+    public void Event_data_with_a_nul_is_refused()
+    {
+        Assert.True(FrameValidation.CheckEvent(Descriptor, "button", Json("""{ "count": 1, "x": "\u0000" }""")).IsFailed);
+    }
 }
