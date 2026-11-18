@@ -27,5 +27,11 @@ internal sealed class HttpContextCurrentUser(IHttpContextAccessor accessor) : IC
     public IReadOnlyCollection<string> Roles =>
         IsAuthenticated ? Principal!.FindAll(ClaimNames.Role).Select(c => c.Value).ToArray() : [];
 
+    public Guid? SatelliteHouseholdId =>
+        IsAuthenticated && Principal!.HasClaim(c => c.Type == ClaimNames.Actor)
+        && Guid.TryParse(Principal.FindFirstValue(ClaimNames.Household), out var household)
+            ? household
+            : null;
+
     public bool IsInRole(string role) => IsAuthenticated && Principal!.IsInRole(role);
 }
