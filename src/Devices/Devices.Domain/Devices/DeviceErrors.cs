@@ -37,6 +37,9 @@ public static class DeviceErrors
     public static Error InvalidNotes => new AppError(
         "devices.invalid_notes", $"Notes for JARVIS are at most {Device.MaxNotesLength} characters.", ErrorKind.Validation);
 
+    public static Error JarvisNotAllowed => new AppError(
+        "devices.jarvis_not_allowed", "A household admin did not allow JARVIS to control this device.", ErrorKind.Forbidden);
+
     public static Error OwnerOnly => new AppError(
         "devices.owner_only", "Only the server's owner can manage registered capabilities.", ErrorKind.Forbidden);
 

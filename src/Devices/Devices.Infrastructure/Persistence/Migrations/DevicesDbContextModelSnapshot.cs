@@ -79,6 +79,16 @@ namespace Devices.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("HouseholdId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("JarvisAsks")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("JarvisMayControl")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<string>("Kind")
                         .IsRequired()
                         .HasMaxLength(20)
