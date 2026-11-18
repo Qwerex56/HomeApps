@@ -13,7 +13,12 @@ internal sealed class ConnectDeviceHandler(IDeviceRepository devices, ICurrentUs
     {
         var now = time.GetUtcNow();
         var ownerId = currentUser.RequiredUserId;
-        var device = await devices.FindByNameAsync(ownerId, command.Name.Trim(), cancellationToken);
+
+        // S13: a household satellite signs in as itself (its token's subject is its device id); its name is the one
+        // the household admin gave it.
+        var device = await devices.FindAsync(ownerId, cancellationToken) is { IsHouseholdDevice: true } satellite
+            ? satellite
+            : await devices.FindByNameAsync(ownerId, command.Name.Trim(), cancellationToken);
         if (device is null)
         {
             var created = Device.Create(ownerId, command.Name, command.Kind, now);

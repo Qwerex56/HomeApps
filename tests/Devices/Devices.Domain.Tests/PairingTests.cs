@@ -51,6 +51,21 @@ public sealed class PairingTests
         Assert.Equal(PairingCode.Hash(code), PairingCode.Hash($" {code[..4].ToLowerInvariant()}-{code[4..]} "));
     }
 
+    [Fact]
+    public void Removing_a_paired_satellite_ends_its_pairing_so_restoring_it_needs_a_new_code()
+    {
+        var satellite = Satellite();
+        satellite.Pair(Now);
+        Assert.True(satellite.IsPairedSatellite);
+
+        satellite.Disable(Now);
+        satellite.Enable();
+
+        Assert.False(satellite.IsPairedSatellite);
+        Assert.Null(satellite.PairingCodeHash);
+        Assert.Equal("devices.not_paired", Code(satellite.Connect([], Now)));
+    }
+
     private static Device Satellite() =>
         Device.AddToHousehold(Guid.NewGuid(), Guid.NewGuid(), "salon", PairingCode.Hash("ABCDEFGH"), Now).Value;
 

@@ -1,6 +1,7 @@
 using FluentResults;
 using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.BuildingBlocks.Application.Messaging;
+using HomeApps.Contracts.Devices;
 using Devices.Application.Abstractions;
 using Devices.Application.Common;
 using Devices.Domain.Devices;
@@ -8,7 +9,7 @@ using Devices.Domain.Devices;
 namespace Devices.Application.HouseholdDevices.NewPairingCode;
 
 internal sealed class NewPairingCodeHandler(
-    IDeviceRepository devices, IHouseholdRoles households, IDeviceLinks links, ICurrentUser currentUser, TimeProvider time)
+    IDeviceRepository devices, IHouseholdRoles households, IDeviceLinks links, IEventBus bus, ICurrentUser currentUser, TimeProvider time)
     : ICommandHandler<NewPairingCodeCommand, PairingCodeView>
 {
     public async Task<Result<PairingCodeView>> Handle(NewPairingCodeCommand command, CancellationToken cancellationToken)
@@ -22,6 +23,12 @@ internal sealed class NewPairingCodeHandler(
         if (!device.Value.IsHouseholdDevice)
         {
             return Result.Fail(DeviceErrors.NotFound);
+        }
+
+        if (device.Value.IsPairedSatellite)
+        {
+            // S13: the old hardware leaves the household until the new code is used.
+            await bus.PublishAsync(new HouseholdDeviceUnpaired(device.Value.Id, device.Value.HouseholdId!.Value), cancellationToken);
         }
 
         var code = PairingCode.New();

@@ -51,6 +51,9 @@ public sealed partial class Device
 
     public bool IsHouseholdDevice => HouseholdId is not null;
 
+    /// <summary>S13: a household satellite with its own identity in Auth and a Member row in Households.</summary>
+    public bool IsPairedSatellite => IsHouseholdDevice && PairedAt is not null;
+
     public IReadOnlyList<DeviceAction> Actions => _actions;
 
     public static Result<Device> Create(Guid ownerId, string name, DeviceKind kind, DateTimeOffset now)
@@ -160,7 +163,20 @@ public sealed partial class Device
         return Result.Ok();
     }
 
-    public void Disable(DateTimeOffset now) => DisabledAt ??= now;
+    /// <summary>
+    /// Removed. A household satellite also loses its pairing (S13: it leaves the household), so restoring it needs
+    /// a new code.
+    /// </summary>
+    public void Disable(DateTimeOffset now)
+    {
+        DisabledAt ??= now;
+        if (IsHouseholdDevice)
+        {
+            PairingCodeHash = null;
+            PairingExpiresAt = null;
+            PairedAt = null;
+        }
+    }
 
     /// <summary>Added back after removing: it may connect again.</summary>
     public void Enable() => DisabledAt = null;

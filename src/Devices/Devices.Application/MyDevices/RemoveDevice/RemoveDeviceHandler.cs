@@ -3,10 +3,12 @@ using Devices.Application.Common;
 using FluentResults;
 using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.BuildingBlocks.Application.Messaging;
+using HomeApps.Contracts.Devices;
 
 namespace Devices.Application.MyDevices.RemoveDevice;
 
-internal sealed class RemoveDeviceHandler(IDeviceRepository devices, IHouseholdRoles households, IDeviceLinks links, ICurrentUser currentUser, TimeProvider time)
+internal sealed class RemoveDeviceHandler(
+    IDeviceRepository devices, IHouseholdRoles households, IDeviceLinks links, IEventBus bus, ICurrentUser currentUser, TimeProvider time)
     : ICommandHandler<RemoveDeviceCommand>
 {
     public async Task<Result> Handle(RemoveDeviceCommand command, CancellationToken cancellationToken)
@@ -17,8 +19,15 @@ internal sealed class RemoveDeviceHandler(IDeviceRepository devices, IHouseholdR
             return device.ToResult();
         }
 
+        var satellite = device.Value.IsPairedSatellite;
         device.Value.Disable(time.GetUtcNow());
         links.Drop(device.Value.Id);
+        if (satellite)
+        {
+            // S13: it leaves the household and its secret stops working.
+            await bus.PublishAsync(new HouseholdDeviceUnpaired(device.Value.Id, device.Value.HouseholdId!.Value), cancellationToken);
+        }
+
         return Result.Ok();
     }
 }

@@ -4,6 +4,7 @@ using Devices.Application.HouseholdDevices;
 using Devices.Application.HouseholdDevices.AddHouseholdDevice;
 using Devices.Application.HouseholdDevices.GetHouseholdDevices;
 using Devices.Application.HouseholdDevices.NewPairingCode;
+using Devices.Application.HouseholdDevices.PairDevice;
 using HomeApps.BuildingBlocks.Api.Endpoints;
 using HomeApps.BuildingBlocks.Api.Results;
 using MediatR;
@@ -12,7 +13,7 @@ namespace Devices.Api.Endpoints;
 
 /// <summary>
 /// A household's satellites (jarvis-satellites.md 3a, S-1a): the list for members, adding one and a new pairing code
-/// for admins. Under <c>/devices</c>, since Traefik sends <c>/households</c> to Households.
+/// for admins, and pairing for the satellite itself (S-1b). Under <c>/devices</c>, since Traefik sends <c>/households</c> to Households.
 /// </summary>
 internal sealed class HouseholdDevicesEndpoints : IEndpoint
 {
@@ -32,5 +33,12 @@ internal sealed class HouseholdDevicesEndpoints : IEndpoint
             (await sender.Send(new NewPairingCodeCommand(deviceId), ct)).ToHttpResult())
             .WithTags("Devices")
             .Produces<PairingCodeView>();
+
+        // S13: the satellite has no account yet, only the code (8 of 31 characters, valid 10 minutes, one use).
+        app.MapPost("/devices/pair", async (PairDeviceRequest body, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new PairDeviceCommand(body.Code), ct)).ToHttpResult())
+            .AllowAnonymous()
+            .WithTags("Devices")
+            .Produces<PairedDeviceView>();
     }
 }

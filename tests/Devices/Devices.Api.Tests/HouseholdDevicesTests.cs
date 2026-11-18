@@ -62,6 +62,48 @@ public sealed class HouseholdDevicesTests(DevicesApiFactory api) : IClassFixture
         Assert.NotEqual(first.GetProperty("code").GetString(), second.GetProperty("code").GetString());
     }
 
+    [Fact]
+    public async Task A_satellite_pairs_once_with_its_code_and_connects_as_itself_under_its_household_name()
+    {
+        Join();
+        using var admin = api.CreateAuthenticatedClient(_admin);
+        var added = await (await AddAsync(admin, "salon")).Content.ReadFromJsonAsync<JsonElement>();
+        var code = added.GetProperty("code").GetString()!;
+        using var anonymous = api.CreateClient();
+
+        var paired = await anonymous.PostAsJsonAsync("/devices/pair", new { code = code.ToLowerInvariant().Insert(4, "-") });
+        var again = await anonymous.PostAsJsonAsync("/devices/pair", new { code });
+
+        Assert.Equal(HttpStatusCode.OK, paired.StatusCode);
+        var satellite = await paired.Content.ReadFromJsonAsync<JsonElement>();
+        var id = satellite.GetProperty("deviceId").GetGuid();
+        Assert.Equal(_household, satellite.GetProperty("householdId").GetGuid());
+        Assert.Equal($"secret-of-{id}", satellite.GetProperty("secret").GetString());
+        Assert.Contains((id, _household, "salon"), api.Identities.Paired);
+        Assert.Equal(HttpStatusCode.NotFound, again.StatusCode);
+
+        await using var device = await FakeDevice.ConnectAsync(api, id, "jakas-inna-nazwa", FakeDevice.Action("say"));
+        Assert.Equal("ready", device.First.GetProperty("type").GetString());
+        var listed = Assert.Single((await admin.GetFromJsonAsync<JsonElement>($"/devices/households/{_household}")).EnumerateArray());
+        Assert.Equal("salon", listed.GetProperty("name").GetString());
+        Assert.True(listed.GetProperty("paired").GetBoolean());
+    }
+
+    [Fact]
+    public async Task A_removed_satellite_is_unpaired_and_cannot_connect()
+    {
+        Join();
+        using var admin = api.CreateAuthenticatedClient(_admin);
+        var added = await (await AddAsync(admin, "garaz")).Content.ReadFromJsonAsync<JsonElement>();
+        var id = added.GetProperty("deviceId").GetGuid();
+        await api.CreateClient().PostAsJsonAsync("/devices/pair", new { code = added.GetProperty("code").GetString() });
+
+        await admin.DeleteAsync($"/devices/{id}");
+        await using var device = await FakeDevice.ConnectAsync(api, id, "garaz");
+
+        Assert.Equal("error", device.First.GetProperty("type").GetString());
+    }
+
     private void Join()
     {
         api.Members.Add(_admin, _household, HouseholdRole.Admin);

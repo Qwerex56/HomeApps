@@ -14,6 +14,8 @@ public sealed class DevicesApiFactory : HomeAppsApiFactory<Program, DevicesDbCon
 
     public HouseholdMembers Members { get; } = new();
 
+    public FakeSatelliteIdentities Identities { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -28,5 +30,7 @@ public sealed class DevicesApiFactory : HomeAppsApiFactory<Program, DevicesDbCon
         services.RemoveAll<IHouseholdRoles>();
         services.AddSingleton(Members);
         services.AddScoped<IHouseholdRoles, FakeHouseholdRoles>();
+        services.RemoveAll<ISatelliteIdentities>();
+        services.AddSingleton<ISatelliteIdentities>(Identities);
     }
 }
