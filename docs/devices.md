@@ -40,7 +40,7 @@ for the gateway (`https://<domain>/jarvis/mcp`, accepted through `Devices:Resour
 ## Tools for JARVIS
 
 The gateway reads Devices' MCP server (`/mcp`, only inside the Docker network) as the source `devices` with the prefix
-`device`, so an action becomes `device_<device>_<action>`, e.g. `device_mac-biuro_open_url`. Only the person's own
+`device`, so an action becomes `device_<slug>_<action>` (the device's stable slug, not its display name), e.g. `device_mac-biuro_open_url`. Only the person's own
 online devices are listed, and only in that person's runs.
 
 - `readOnly` actions just run.
