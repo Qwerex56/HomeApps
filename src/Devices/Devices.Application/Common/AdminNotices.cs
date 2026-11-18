@@ -21,7 +21,7 @@ internal sealed partial class AdminNotices(IHouseholdDirectory households, IEven
         {
             admins = await households.GetAdminIdsAsync(householdId, cancellationToken);
         }
-        catch (HttpRequestException exception)
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
         {
             LogAdminsUnavailable(householdId, exception);
             return;
