@@ -130,6 +130,8 @@ internal sealed class FakeCurrentUser : ICurrentUser
 
     public ServerRole Role { get; set; } = ServerRole.User;
 
+    public Guid? SatelliteHouseholdId { get; set; }
+
     public DateTimeOffset? AuthenticatedAt { get; set; }
 
     public bool IsAuthenticated => UserId is not null;
