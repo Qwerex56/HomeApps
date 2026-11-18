@@ -24,7 +24,7 @@ public sealed class LinkTests(DevicesApiFactory api) : IClassFixture<DevicesApiF
     [Fact]
     public async Task A_bad_hello_is_refused_with_its_code()
     {
-        await using var device = await FakeDevice.ConnectAsync(api, Guid.NewGuid(), "Not A Name");
+        await using var device = await FakeDevice.ConnectAsync(api, Guid.NewGuid(), new string('x', 61));
 
         Assert.Equal("error", device.First.GetProperty("type").GetString());
         Assert.Equal("devices.invalid_name", device.First.GetProperty("code").GetString());
