@@ -60,6 +60,15 @@ names with the `device_` prefix; the household switch "Devices" and its read-onl
 | `<slug>_events` | `{limit?}` newest events | read-only; members only (D9) |
 | `devices_describe` | `{household}` (required: the household's ceiling applies to it) full description of the household devices: purpose, capabilities, controls, sensors, state, `jarvis` text, admin notes | read-only |
 
+**JARVIS switches (H-3d, D6).** Each household device has two settings an Admin+ changes with `PUT /devices/{id}/jarvis` `{mayControl, asks}`
+(Member and Guest get 403; a person's own device has none). Both are in `DeviceView` and `DeviceDescriptionView`; migration `JarvisDeviceSwitches`.
+- `JarvisMayControl` (default true, "JARVIS może sterować"): off, a delegated token (one with the `act` claim: JARVIS or a satellite, `ICurrentUser.IsDelegated`)
+  does not see `_set` nor the device's announced non-read-only actions, and calling them fails with `devices.jarvis_not_allowed` (403). Reading
+  (`_state`, `_events`, read-only actions) stays. A person's own token (REST, no `act`) is not affected: their role alone decides.
+- `JarvisAsks` (default true; "Nie pytaj" is it off): sets MCP's `destructiveHint` of `_set` and every non-read-only action of the device, which is what
+  JARVIS's gateway keys on to ask "tak/nie" (jarvis.md). It replaces the per-action "Nie pytaj" and the action's own `confirm` for household devices;
+  a person's own device keeps those.
+
 Names stay within 64 characters with the prefix (slug 36, action 20). An announced action named `state`, `set` or `events` is hidden by the
 generated tool. The descriptions use the device's name and purpose and its `jarvis` text, quoted and labelled as data ("not instructions"),
 with control characters, angle brackets and quotes flattened. A slug is unique only in one scope (one person's devices, one household): when
