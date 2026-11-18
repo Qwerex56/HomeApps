@@ -17,7 +17,7 @@ namespace Jarvis.Api.Voice;
 /// <c>transcript</c>, <c>reply</c>, then <c>audio</c> + one WAV per sentence, then <c>done</c>; or <c>error</c>.
 /// The session remembers the conversation and what waits for "tak"/"nie"; the audio is dropped after each turn.
 /// A household satellite (<paramref name="satellite"/>, its household) always speaks in that household; it also
-/// remembers who introduced themselves with a PIN while JARVIS waits for them.
+/// remembers for a few minutes who introduced themselves with a PIN (S4).
 /// With <paramref name="local"/> (<c>?speech=local</c>, S1) the listener hears and speaks itself: it sends
 /// <c>say</c> with the text and gets <c>transcript</c>, <c>reply</c> and <c>done</c> without audio.
 /// </summary>
@@ -33,6 +33,7 @@ internal sealed partial class VoiceSession(
     private Guid? _conversationId;
     private Guid? _householdId;
     private Guid? _speaker;
+    private DateTimeOffset _speakerUntil;
     private IReadOnlyList<Guid> _pending = [];
     private bool _recording;
     private CancellationTokenSource? _turn;
@@ -159,8 +160,10 @@ internal sealed partial class VoiceSession(
         {
             await using var scope = scopes.CreateAsyncScope();
             var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+            var time = scope.ServiceProvider.GetRequiredService<TimeProvider>();
+            var speaker = time.GetUtcNow() < _speakerUntil ? _speaker : null;
             var result = await sender.Send(new VoiceTurnCommand(
-                userId, _conversationId, satellite ?? _householdId, audio, SampleRate, _pending, text, satellite is not null, _speaker), cancellationToken);
+                userId, _conversationId, satellite ?? _householdId, audio, SampleRate, _pending, text, satellite is not null, speaker), cancellationToken);
             if (result.IsFailed)
             {
                 var error = result.Errors.OfType<AppError>().FirstOrDefault();
@@ -172,6 +175,7 @@ internal sealed partial class VoiceSession(
             _conversationId = turn.ConversationId;
             _pending = turn.Pending;
             _speaker = turn.Speaker;
+            _speakerUntil = time.GetUtcNow().AddMinutes(options.PersonMinutes);
             await SendAsync(new { type = "transcript", text = turn.Transcript }, cancellationToken);
             if (turn.Answer is { } answer)
             {
@@ -181,7 +185,7 @@ internal sealed partial class VoiceSession(
                     conversationId = _conversationId,
                     text = answer.Text,
                     actions = answer.Actions,
-                    awaiting = _pending.Count > 0 || _speaker is not null,
+                    awaiting = _pending.Count > 0 || turn.Listening,
                 }, cancellationToken);
 
                 var voice = scope.ServiceProvider.GetRequiredService<ITextToSpeech>();

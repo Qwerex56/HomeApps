@@ -19,6 +19,7 @@ namespace Jarvis.Application.Voice.VoiceTurn;
 /// to the conversation as a message. The answer, its card and the decisions stay in the conversation as text; the
 /// audio is never kept (V7). On a household satellite a turn with "PIN 1234" (or the one right after it) is the
 /// person's: JARVIS answers as them, with their permissions, and nothing of it goes to the satellite's conversation.
+/// The person's next turns stay theirs while the session keeps them (<see cref="VoiceOptions.PersonMinutes"/>).
 /// </summary>
 internal sealed class VoiceTurnHandler(
     ISpeechToText ears,
@@ -27,6 +28,7 @@ internal sealed class VoiceTurnHandler(
     IConversationRepository conversations,
     Agent agent,
     ISpeakers speakers,
+    IVoicePrints voices,
     TimeProvider time) : ICommandHandler<VoiceTurnCommand, VoiceTurnView>
 {
     public async Task<Result<VoiceTurnView>> Handle(VoiceTurnCommand command, CancellationToken cancellationToken)
@@ -44,9 +46,11 @@ internal sealed class VoiceTurnHandler(
                 return await IntroducedAsync(command, household, intro, cancellationToken);
             }
 
-            if (command.Speaker is { } speaker)
+            var speaker = command.Speaker
+                ?? (command.Audio.IsEmpty ? null : await voices.RecognizeAsync(household, command.Audio, command.SampleRate, cancellationToken));
+            if (speaker is { } person)
             {
-                return await AsSpeakerAsync(command, household, speaker, transcript, transcript, cancellationToken);
+                return await AsSpeakerAsync(command, household, person, transcript, transcript, cancellationToken);
             }
         }
 
@@ -89,7 +93,7 @@ internal sealed class VoiceTurnHandler(
         }
 
         return intro.Request.Length == 0
-            ? Said(command, intro.Masked, $"Słucham, {match.Name}.", [], match.UserId)
+            ? Said(command, intro.Masked, $"Słucham, {match.Name}.", [], match.UserId) with { Listening = true }
             : await AsSpeakerAsync(command, household, match.UserId, intro.Request, intro.Masked, cancellationToken);
     }
 
@@ -109,13 +113,12 @@ internal sealed class VoiceTurnHandler(
                 }
             }
 
-            return Said(command, transcript, Summary(decided, approve), decided, null);
+            return Said(command, transcript, Summary(decided, approve), decided, speaker);
         }
 
         var answer = await agent.RunAsync(
             new AskCommand(speaker, request, household, Prompts.VoiceChannel, $"device/{command.UserId}", []), null, cancellationToken);
-        var waiting = answer.Actions.Any(a => a.Status == ToolCallStatus.NeedsConfirmation);
-        return Said(command, transcript, answer.Text, answer.Actions, waiting ? speaker : null);
+        return Said(command, transcript, answer.Text, answer.Actions, speaker);
     }
 
     /// <summary>An answer for the satellite only, not kept in its conversation.</summary>

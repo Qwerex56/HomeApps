@@ -37,7 +37,7 @@ public sealed class SatelliteVoiceTests(JarvisFactory factory)
     }
 
     [Fact]
-    public async Task After_the_introduction_alone_the_next_turn_is_the_persons_and_then_the_satellites_again()
+    public async Task After_the_introduction_the_next_turns_are_the_persons_until_a_wrong_PIN()
     {
         factory.Speakers.Pins["7310"] = (_adrian, "Adrian");
         factory.Brain.Script = _ => Task.FromResult("Gotowe.");
@@ -45,12 +45,14 @@ public sealed class SatelliteVoiceTests(JarvisFactory factory)
 
         var hello = (await SayAsync(socket, "mówi Adrian, PIN siedem trzy jeden zero")).Single(m => Kind(m) == "reply");
         var runs = factory.Brain.Runs;
-        await SayAsync(socket, "przypomnij mi o rachunkach");
+        var reminded = (await SayAsync(socket, "przypomnij mi o rachunkach")).Single(m => Kind(m) == "reply");
         var personal = factory.Delegation.Calls.Last().UserId;
+        await SayAsync(socket, "tu Ewa, PIN 1111");
         await SayAsync(socket, "która godzina?");
 
         Assert.Equal("Słucham, Adrian.", hello.GetProperty("text").GetString());
         Assert.True(hello.GetProperty("awaiting").GetBoolean());
+        Assert.False(reminded.GetProperty("awaiting").GetBoolean());
         Assert.Equal(runs + 2, factory.Brain.Runs);
         Assert.Equal(_adrian, personal);
         Assert.Equal(_device, factory.Delegation.Calls.Last().UserId);

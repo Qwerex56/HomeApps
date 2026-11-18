@@ -13,7 +13,7 @@ namespace Jarvis.Application.Voice.VoiceTurn;
 /// The listener is a household satellite (its token names <paramref name="HouseholdId"/>): <paramref name="UserId"/> is
 /// the device, and "tu Adrian, PIN 1234" makes the turn this person's (jarvis-satellites.md S4).
 /// </param>
-/// <param name="Speaker">The person the satellite's turn before was for, while JARVIS waits for them.</param>
+/// <param name="Speaker">The person the satellite's last turns were for, while their few minutes last (S4).</param>
 public sealed record VoiceTurnCommand(
     Guid UserId,
     Guid? ConversationId,
