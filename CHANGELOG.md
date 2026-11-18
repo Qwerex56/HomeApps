@@ -4,6 +4,11 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 
 ## Unreleased: JARVIS voice
 
+### Changed
+
+- **The voice bridge moved out (S-2a):** `src/Jarvis/Jarvis.VoiceBridge` and its tests now live in their own
+  repository, HomeApps.Desktop, with their history; HomeApps keeps only the server side (`/jarvis/voice`, Devices).
+
 ### Added
 
 - **JARVIS hears and speaks (V0a):** `/jarvis/voice`, a WebSocket for listeners such as the Mac bridge: speech to text,

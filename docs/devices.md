@@ -115,9 +115,5 @@ JARVIS: jarvis.md, "Voice".
 
 ## The bridge's actions
 
-`--actions <file>` on the voice bridge connects the computer as a device. The file is a JSON array (comments allowed);
-each action has `name`, `description`, `run` (a command for `/bin/sh -c`), optionally `input` (a JSON schema),
-`readOnly` and `confirm`. The input reaches the command only as environment variables, `JARVIS_<FIELD>` for each field
-and `JARVIS_INPUT` for the whole JSON, so quote them (`"$JARVIS_TEXT"`); never paste them into the command text. A
-command has 15 s, and the first 2000 characters of its output (or of its errors when it fails) are JARVIS's answer.
-Example for a Mac: `src/Jarvis/Jarvis.VoiceBridge/actions.macos.example.json`.
+`--actions <file>` on the voice bridge connects the computer as a device; the file format and a Mac example are in
+HomeApps.Desktop `docs/bridge.md` "Computer actions".

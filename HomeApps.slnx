@@ -71,11 +71,9 @@
 		<Project Path="src/Jarvis/Jarvis.Application/Jarvis.Application.csproj" />
 		<Project Path="src/Jarvis/Jarvis.Domain/Jarvis.Domain.csproj" />
 		<Project Path="src/Jarvis/Jarvis.Infrastructure/Jarvis.Infrastructure.csproj" />
-		<Project Path="src/Jarvis/Jarvis.VoiceBridge/Jarvis.VoiceBridge.csproj" />
 	</Folder>
 	<Folder Name="/Jarvis/tests/">
 		<Project Path="tests/Jarvis/Jarvis.Api.Tests/Jarvis.Api.Tests.csproj" />
-		<Project Path="tests/Jarvis/Jarvis.VoiceBridge.Tests/Jarvis.VoiceBridge.Tests.csproj" />
 	</Folder>
 
 	<Folder Name="/Notifications/">

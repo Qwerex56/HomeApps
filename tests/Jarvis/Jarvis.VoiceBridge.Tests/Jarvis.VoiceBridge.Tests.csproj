@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <!-- The Mac bridge's logic without a microphone: end of speech, WAV files. The wake word is checked with the bridge's check-wake option. -->
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Jarvis\Jarvis.VoiceBridge\Jarvis.VoiceBridge.csproj" />
-  </ItemGroup>
-
-</Project>

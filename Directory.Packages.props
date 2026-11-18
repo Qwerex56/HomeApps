@@ -53,12 +53,6 @@
     <PackageVersion Include="Jint" Version="4.16.4" />
   </ItemGroup>
 
-  <ItemGroup Label="Voice">
-    <!-- The Mac voice bridge (jarvis-voice-bridge.md): microphone through PortAudio (MIT) and the openWakeWord models
-         ("Hey Jarvis") through ONNX Runtime (MIT). -->
-    <PackageVersion Include="PortAudioSharp2" Version="1.0.6" />
-    <PackageVersion Include="Microsoft.ML.OnnxRuntime" Version="1.30.0" />
-  </ItemGroup>
 
   <ItemGroup Label="Messaging">
     <PackageVersion Include="MassTransit" Version="8.5.11" />
