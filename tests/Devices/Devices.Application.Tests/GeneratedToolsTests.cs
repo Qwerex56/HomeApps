@@ -113,6 +113,74 @@ public sealed class GeneratedToolsTests
         Assert.All(named, n => Assert.True(n.Slug.Length <= DeviceSlug.MaxLength));
     }
 
+    [Fact]
+    public void The_set_schema_lists_every_control_and_only_the_controls_not_sensors()
+    {
+        var device = PairedDevice.Create(Now, Descriptor("x"));
+        var tool = GeneratedTools.For(Reach(device), online: true).Single(t => t.Name == "fotel_set");
+
+        using var schema = JsonDocument.Parse(tool.InputSchema!);
+        var control = schema.RootElement.GetProperty("properties").GetProperty("control");
+
+        Assert.Equal("string", control.GetProperty("type").GetString());
+        Assert.Equal(["heating", "light"], control.GetProperty("enum").EnumerateArray().Select(e => e.GetString()));
+        Assert.True(schema.RootElement.GetProperty("properties").TryGetProperty("value", out _));
+    }
+
+    [Fact]
+    public void A_control_name_cannot_inject_into_the_schema_json()
+    {
+        var schema = GeneratedTools.SetSchema([new Devices.Domain.Descriptors.DescriptorControl("a\"], \"x\": 1", null, null, "{}", null)]);
+
+        using var parsed = JsonDocument.Parse(schema);
+        Assert.Equal(["a\"], \"x\": 1"], parsed.RootElement.GetProperty("properties").GetProperty("control").GetProperty("enum").EnumerateArray().Select(e => e.GetString()));
+    }
+
+    [Fact]
+    public void The_events_tool_is_read_only_declares_a_limit_of_at_most_50_and_says_members_only()
+    {
+        var tool = GeneratedTools.For(Reach(PairedDevice.Create(Now)), online: true).Single(t => t.Name == "fotel_events");
+
+        using var schema = JsonDocument.Parse(tool.InputSchema!);
+        Assert.Equal(50, schema.RootElement.GetProperty("properties").GetProperty("limit").GetProperty("maximum").GetInt32());
+        Assert.Contains("members only", tool.Description, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData("{}", 20)]
+    [InlineData("""{"limit":5}""", 5)]
+    [InlineData("""{"limit":0}""", 1)]
+    [InlineData("""{"limit":9999}""", 50)]
+    [InlineData("""{"limit":"7"}""", 20)]
+    [InlineData("""{"limit":2.5}""", 20)]
+    public void The_events_limit_is_clamped_and_defaults_to_20(string json, int expected)
+    {
+        using var document = JsonDocument.Parse(json);
+
+        Assert.Equal(expected, GeneratedTools.EventLimit(document.RootElement));
+    }
+
+    [Fact]
+    public void Without_input_the_events_limit_is_20() => Assert.Equal(20, GeneratedTools.EventLimit(null));
+
+    [Fact]
+    public void The_naming_is_the_same_for_any_input_order()
+    {
+        var household = Guid.NewGuid();
+        var devices = Enumerable.Range(0, 5).Select(i => Device.AddToHousehold(household, Guid.NewGuid(), "Lampa", "hash", [], Now.AddMinutes(i % 2)).Value).ToList();
+        var mine = Device.Create(Guid.NewGuid(), "Lampa", DeviceKind.Computer, [], Now.AddDays(1)).Value;
+        List<Device> all = [.. devices, mine];
+
+        string Names(IEnumerable<Device> input) => string.Join(",", ReachableDevices.Name(input).Select(n => $"{n.Device.Id}={n.Slug}"));
+
+        var expected = Names(all);
+        Assert.Equal(expected, Names(Enumerable.Reverse(all)));
+        Assert.Equal(expected, Names(all.OrderBy(d => d.Id)));
+        Assert.Equal(expected, Names(all));
+        Assert.Equal("lampa", ReachableDevices.Name(all).Single(n => n.Device.Id == mine.Id).Slug);
+        Assert.Equal(6, ReachableDevices.Name(all).Select(n => n.Slug).Distinct().Count());
+    }
+
     [Theory]
     [InlineData("state")]
     [InlineData("set")]
