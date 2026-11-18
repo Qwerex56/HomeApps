@@ -196,6 +196,17 @@
       "action_not_found": "Nie ma takiej akcji.",
       "action_not_pending": "Ta akcja już nie czeka na potwierdzenie.",
       "action_expired": "Czas na potwierdzenie minął. Poproś jeszcze raz."
+    },
+    "devices": {
+      "name_taken": "W tym domu jest już urządzenie o tej nazwie.",
+      "invalid_name": "Nazwa urządzenia jest nieprawidłowa.",
+      "not_found": "Nie ma takiego urządzenia.",
+      "forbidden": "Tylko administrator domu może to zmienić.",
+      "pairing_expired": "Kod parowania wygasł albo został już użyty.",
+      "action_not_found": "To urządzenie nie ma już tej akcji."
+    },
+    "pin": {
+      "invalid": "PIN musi mieć od 4 do 8 cyfr."
     }
   },
   "auth": {
@@ -290,7 +301,8 @@
       "apps": "Połączone aplikacje",
       "invitations": "Zaproszenia",
       "history": "Historia",
-      "notifications": "Powiadomienia"
+      "notifications": "Powiadomienia",
+      "devices": "Komputery"
     },
     "profile": {
       "title": "Profil",
@@ -330,7 +342,16 @@
       "newEmail": "Nowy email",
       "emailSent": "Wysłaliśmy link na {email}. Email zmieni się po jego kliknięciu.",
       "reauth": "Ta zmiana wymaga świeżego logowania. Zaloguj się ponownie przez Google i wróć tutaj.",
-      "wrongPassword": "Obecne hasło jest nieprawidłowe."
+      "wrongPassword": "Obecne hasło jest nieprawidłowe.",
+      "pin": "PIN głosowy",
+      "pinHint": "Powiedz do satelity domu „tu Adrian, PIN 1234”, a JARVIS przez kilka minut odpowie jako Ty, z Twoimi uprawnieniami. 4–8 cyfr; nie podawaj tego samego co do karty.",
+      "newPin": "Nowy PIN (4–8 cyfr)",
+      "pinSet": "Ustaw PIN",
+      "pinChange": "Zmień PIN",
+      "pinSaved": "PIN zapisany.",
+      "pinClear": "Usuń PIN",
+      "pinClearTitle": "Usunąć PIN głosowy?",
+      "pinClearText": "Satelity w domu nie rozpoznają Cię już po PIN-ie."
     },
     "sessions": {
       "title": "Urządzenia",
@@ -558,7 +579,8 @@
       "widgets": "Widżety",
       "members": "Domownicy",
       "invites": "Zaproszenia",
-      "settings": "Ustawienia"
+      "settings": "Ustawienia",
+      "devices": "Urządzenia"
     },
     "join": {
       "title": "Dołącz do domu",
@@ -890,5 +912,39 @@
       "Denied": "Anulowane",
       "Expired": "Wygasło"
     }
+  },
+  "devices": {
+    "mine": "Moje komputery",
+    "mineHint": "Most głosowy i aplikacja JARVIS-a dopisują się tu same po połączeniu. Satelity domu są w zakładce Urządzenia danego domu.",
+    "noComputers": "Żaden komputer jeszcze się nie połączył.",
+    "household": "Urządzenia domu",
+    "householdHint": "Satelity JARVIS-a w tym domu. Działają jak domownik (Member); rzeczy osobiste po przedstawieniu się z PIN-em.",
+    "noSatellites": "W tym domu nie ma jeszcze satelitów.",
+    "add": "Dodaj satelitę",
+    "name": "Nazwa",
+    "namePlaceholder": "np. salon",
+    "addButton": "Dodaj i pokaż kod",
+    "lastSeen": "Ostatnio: {when}",
+    "state": {
+      "online": "Połączone",
+      "offline": "Rozłączone",
+      "unpaired": "Czeka na kod",
+      "removed": "Wyłączone"
+    },
+    "readOnly": "tylko odczyt",
+    "dontAsk": "Nie pytaj",
+    "remove": "Wyłącz",
+    "restore": "Przywróć",
+    "removeTitle": "Wyłączyć „{name}”?",
+    "removeComputer": "Komputer zostanie rozłączony i nie połączy się, dopóki go nie przywrócisz.",
+    "removeSatellite": "Satelita zostanie rozłączona i wypisana z domu. JARVIS zapomni jej rozmowę. Żeby ją przywrócić, potrzebny będzie nowy kod.",
+    "newCode": "Nowy kod",
+    "showCode": "Pokaż kod",
+    "newCodeTitle": "Nowy kod parowania?",
+    "newCodeText": "„{name}” zostanie rozłączona do czasu sparowania nowym kodem.",
+    "codeTitle": "Kod parowania: {name}",
+    "codeExpires": "Ważny jednorazowo, do {when}.",
+    "codeHow": "Wpisz go na satelicie. Dla mostu na Macu:",
+    "done": "Gotowe"
   }
 }

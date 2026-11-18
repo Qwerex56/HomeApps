@@ -14,4 +14,5 @@ export const servicePaths = [
   /^\/plugins\//,
   /^\/homemix\//,
   /^\/jarvis\/(api|mcp)(\/|$)/,
+  /^\/devices(\/|$)/,
 ]

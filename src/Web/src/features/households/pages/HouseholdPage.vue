@@ -81,6 +81,7 @@ const mixTabs = computed(() =>
 const tabs = computed(() => [
   tab('household-members', t('households.tabs.main'), 'pi pi-home'),
   tab('household-widgets', t('households.tabs.widgets'), 'pi pi-th-large'),
+  ...(household.value?.myRole ? [tab('household-devices', t('households.tabs.devices'), 'pi pi-microphone')] : []),
   tab('household-settings', t('households.tabs.settings'), 'pi pi-cog'),
 ])
 const apps = computed(() => [...pluginTabs.value, ...mixTabs.value])

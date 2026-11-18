@@ -55,6 +55,11 @@ export const router = createRouter({
               component: () => import('@/features/notifications/pages/NotificationsPage.vue'),
             },
             {
+              path: 'devices',
+              name: 'account-devices',
+              component: () => import('@/features/devices/pages/MyDevicesPage.vue'),
+            },
+            {
               path: 'apps',
               name: 'account-apps',
               component: () => import('@/features/account/pages/ConnectedAppsPage.vue'),
@@ -127,6 +132,12 @@ export const router = createRouter({
               path: 'invites',
               name: 'household-invites',
               redirect: (to) => ({ name: 'household-settings', params: to.params, hash: '#invites' }),
+            },
+            // Satellites (jarvis-satellites.md S-1d). /devices itself belongs to the Devices service.
+            {
+              path: 'devices',
+              name: 'household-devices',
+              component: () => import('@/features/devices/pages/HouseholdDevicesTab.vue'),
             },
             {
               path: 'settings',
