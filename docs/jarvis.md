@@ -63,7 +63,7 @@ Settings (`Jarvis`):
 ## Voice (V0a)
 
 JARVIS hears and speaks through `/jarvis/voice`, a WebSocket that every listener uses: the Mac bridge
-(`tools/Jarvis.VoiceBridge`, stage V0b) now, satellites later. The listener only carries sound; speech to text, the
+(repository HomeApps.Desktop, below) now, satellites later. The listener only carries sound; speech to text, the
 agent and text to speech all happen on the server. Plan: `plans/features/jarvis-voice-bridge.md`.
 
 - **Token:** the person's, as `Authorization: Bearer`: an app token from "Połączone aplikacje" (resource
@@ -71,6 +71,9 @@ agent and text to speech all happen on the server. Plan: `plans/features/jarvis-
 - **Listener → server:** text frames `{"type":"hello","conversationId"?,"householdId"?}`, `{"type":"start"}`,
   `{"type":"stop"}`, `{"type":"cancel"}`; between `start` and `stop` binary frames of 16 kHz 16-bit mono PCM (at most
   `Jarvis:Voice:MaxSeconds`, 30 s).
+- **Own speech (S1):** a listener that hears and speaks itself connects with `?speech=local` and sends
+  `{"type":"say","text"}` instead of `start` / audio / `stop`; it gets `transcript`, `reply` and `done`, never `audio`.
+  This works even when `Jarvis:Voice:Enabled` is false, since the server needs no engine for it.
 - **Server → listener:** `ready`, then per turn `transcript` `{text}`, `reply` `{conversationId, text, actions,
   awaiting}`, for each sentence `audio` `{format: "wav", text}` followed by one binary frame with the WAV, then `done`
   (`cancelled: true` after `cancel` or a new `start`); or `error` `{code}` (`voice.engine_unavailable`, ...).
@@ -79,6 +82,18 @@ agent and text to speech all happen on the server. Plan: `plans/features/jarvis-
 - **Confirmations by voice:** when `awaiting` is true, the listener records the next answer without the wake word. A
   short "tak / potwierdzam / zrób to" confirms the waiting actions, "nie / anuluj" cancels them (without the model);
   anything longer is a new request. The buttons on the JARVIS page keep working.
+- **Household satellites (S-1c):** a satellite's token (`household_id`, see devices.md) fixes the session to its
+  household (`householdId` in `hello` is ignored). Its own turns go to the satellite's conversation, which JARVIS keeps
+  for 7 days (the retention job) and forgets when the satellite is unpaired; it is not a household member (until H-1 it has no plugin access; voice and the spoken PIN still work).
+- **Spoken PIN (S4):** "tu Adrian, PIN 1234, …" (digits or Polish digit words, 4–8) on a satellite: JARVIS takes the
+  household's people from Households with the satellite's token, narrows them by the spoken name and asks Auth
+  `POST /internal/devices/speaker` whose PIN it is. The turn then runs as that person (their permissions, their runs,
+  `reference` `device/<id>`) and is not kept in the satellite's conversation; the transcript comes back with the PIN
+  masked, and the PIN never reaches the model. The next turns stay the person's for `Jarvis:Voice:PersonMinutes` (3)
+  from their last one; "tu Adrian, PIN 1234" alone gets "Słucham, Adrian." with `awaiting`. A wrong PIN gets "Nie
+  rozpoznaję tego PIN-u."; five in a row lock the satellite for 15 minutes; a PIN two people share asks for the name.
+  `Jarvis:HouseholdsUrl` (default `http://households:8080`). Voice recognition has only its place in the flow
+  (`IVoicePrints`, nobody recognised).
 - **Engines:** `Jarvis:Voice:SttUrl` and `TtsUrl` speak the OpenAI audio API (`/v1/audio/transcriptions`,
   `/v1/audio/speech`), so Speaches, a whisper server or a cloud service is only a URL (`ApiKey` for a cloud one).
   Defaults: `SttModel` `deepdml/faster-whisper-large-v3-turbo-ct2`, `TtsModel` `speaches-ai/piper-pl_PL-gosia-medium`,
@@ -104,6 +119,13 @@ Other voices and models: `curl 'localhost:8000/v1/registry?task=text-to-speech'`
 `?task=automatic-speech-recognition` (look for `turbo`); a different id goes to `Jarvis__Voice__SttModel` / `TtsModel`. Then on the server
 `JARVIS_VOICE_URL=http://<Mac's address>:8000` in `.env` (give the Mac a fixed address in the router); in dev the
 compose file already points at `host.docker.internal:8000`.
+
+### The Mac bridge (V0b)
+
+The bridge lives in its own repository since S-2a, **HomeApps.Desktop** (next to this one): `src/Jarvis.VoiceBridge`,
+run with `dotnet run --project src/Jarvis.VoiceBridge -- --server https://home-apps.dev`. How to use it (wake word,
+`--speech local`, `--actions`, `--pair`) is in its `docs/bridge.md`. It talks to HomeApps only over `/jarvis/voice`
+and `/devices/link`.
 
 ## Production
 
