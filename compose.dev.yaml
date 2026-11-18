@@ -1,8 +1,9 @@
-# Local development (auth-implementation.md, step 6).
-#   docker compose -f compose.dev.yaml up -d                     infrastructure only; run Auth from Rider (Q19)
-#   docker compose -f compose.dev.yaml --profile services up -d  everything in containers
-# Everything is served at https://app.localhost: /auth and /.well-known go to Auth, /users and /admin/users to Accounts,
-# /households, /invites and /admin/households to Households, /notifications to Notifications, /homemix to HomeMix, the rest to Vue (vite on :5173). Services read Auth's keys inside the Docker network (accounts plan Q10).
+# Local development: the whole story is in docs/development.md.
+#   docker compose -f compose.dev.yaml --profile services up -d --build   every service in a container (the usual way)
+#   docker compose -f compose.dev.yaml up -d                              infrastructure only, services from Rider
+# Everything is served at https://app.localhost through Traefik; the Vue app always runs on the Mac (vite on :5173).
+# Each service container is also published on its Rider port (Auth 5100 ... Devices 5800), so stopping one container
+# and running that service from Rider changes nothing for the others' routes (dynamic/dev-routes.yaml).
 # Values come from .env when present (copy .env.example); the defaults below work without it.
 name: homeapps
 
@@ -18,6 +19,8 @@ services:
       - "--entrypoints.web.address=:80"
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.websecure.address=:443"
+      # TLS for every router on websecure, so a plugin's own compose labels (no tls label, like production) work here.
+      - "--entrypoints.websecure.http.tls=true"
     ports:
       - "80:80"
       - "443:443"
@@ -80,6 +83,12 @@ services:
       Auth__Google__ClientSecret: ${AUTH_GOOGLE_CLIENT_SECRET:-}
       # Traefik is the only proxy in front of Auth; trust its X-Forwarded-For.
       Auth__Proxy__KnownNetworks__0: "0.0.0.0/0"
+      # The service clients' secrets from the same variables the devices and jarvis containers read, so both sides
+      # always match. Indexes follow Auth's appsettings.Development.json (2 jarvis-service, 3 devices-service).
+      Auth__Clients__2__ClientId: jarvis-service
+      Auth__Clients__2__Secret: ${JARVIS_CLIENT_SECRET:-development-only-jarvis-secret-0123456789}
+      Auth__Clients__3__ClientId: devices-service
+      Auth__Clients__3__Secret: ${DEVICES_CLIENT_SECRET:-development-only-devices-secret-0123456789}
     # Published as 5100 too, so Accounts from Rider reads the keys the same way when Auth runs here.
     ports:
       - "5100:8080"
@@ -106,6 +115,8 @@ services:
     build:
       context: .
       dockerfile: src/Accounts/Accounts.Api/Dockerfile
+    ports:
+      - "5200:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Database: "Host=postgres;Database=homeapps_accounts;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
@@ -136,6 +147,8 @@ services:
     build:
       context: .
       dockerfile: src/Households/Households.Api/Dockerfile
+    ports:
+      - "5300:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Database: "Host=postgres;Database=homeapps_households;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
@@ -166,6 +179,8 @@ services:
     build:
       context: .
       dockerfile: src/Notifications/Notifications.Api/Dockerfile
+    ports:
+      - "5500:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Database: "Host=postgres;Database=homeapps_notifications;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
@@ -199,6 +214,8 @@ services:
     build:
       context: .
       dockerfile: src/HomeMix/HomeMix.Api/Dockerfile
+    ports:
+      - "5600:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Database: "Host=postgres;Database=homeapps_homemix;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
@@ -212,6 +229,8 @@ services:
       HomeMix__Plugins: ${HOMEAPPS_PLUGINS:-}
       HomeMix__PackagesPath: /data/packages
       HomeMix__HouseholdsUrl: "http://households:8080"
+      # The official add-ons the image built (appsettings.Development.json points at the Rider folder instead).
+      HomeMix__OfficialPath: /app/official
     volumes:
       - homemix-packages:/data/packages
     depends_on:
@@ -235,6 +254,8 @@ services:
     build:
       context: .
       dockerfile: src/Devices/Devices.Api/Dockerfile
+    ports:
+      - "5800:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Database: "Host=postgres;Database=homeapps_devices;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
@@ -269,6 +290,8 @@ services:
     build:
       context: .
       dockerfile: src/Jarvis/Jarvis.Api/Dockerfile
+    ports:
+      - "5700:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       Jwt__Authority: "http://auth:8080"
@@ -278,6 +301,9 @@ services:
       Jarvis__AuthUrl: "http://auth:8080"
       Jarvis__Plugins: ${HOMEAPPS_PLUGINS:-}
       Jarvis__PluginUrl: "http://{id}:8080"
+      # appsettings.Development.json sends these to Rider's ports; in a container the plugins' own containers answer.
+      Jarvis__PluginUrls__todo: "http://todo:8080"
+      Jarvis__PluginUrls__chat: "http://chat:8080"
       Jarvis__Sources__0__Url: "http://households:8080/mcp"
       Jarvis__Sources__1__Url: "http://accounts:8080/mcp"
       Jarvis__Sources__2__Url: "http://homemix:8080/mcp"
@@ -285,6 +311,9 @@ services:
       Jarvis__ClientSecret: ${JARVIS_CLIENT_SECRET:-development-only-jarvis-secret-0123456789}
       # Owner's Claude subscription (`claude setup-token`); without it JARVIS answers that he is switched off.
       Jarvis__ClaudeCode__OAuthToken: ${JARVIS_CLAUDE_CODE_OAUTH_TOKEN:-}
+      Jarvis__ClaudeCode__Model: ${JARVIS_CLAUDE_MODEL:-}
+      # Claude Code inside the container calls the gateway on the container's own port, not Rider's 5700.
+      Jarvis__ClaudeCode__GatewayUrl: "http://localhost:8080/jarvis/mcp"
       # Ears and voice: Speaches from compose.voice.yaml on the same Mac (docs/jarvis.md "Voice").
       Jarvis__Voice__Enabled: "true"
       Jarvis__Voice__SttUrl: ${JARVIS_VOICE_URL:-http://host.docker.internal:8000}

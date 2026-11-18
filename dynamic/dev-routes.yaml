@@ -1,5 +1,6 @@
-# Routes to what runs on the host during development (Q19): Auth from Rider on :5100, Accounts on :5200,
-# Households on :5300, Notifications on :5500, HomeMix on :5600, JARVIS on :5700, Devices on :5800, Vue (vite) on :5173. The containers from the "services" profile override these routes with a higher priority.
+# Routes to what runs on the Mac during development (docs/development.md): Auth from Rider on :5100, Accounts :5200,
+# Households :5300, Todo :5400, Chat :5410, Notifications :5500, HomeMix :5600, JARVIS :5700, Devices :5800 and Vue
+# (vite) on :5173. Containers (the "services" profile, a plugin's own compose) win with a higher priority.
 http:
   routers:
     auth-host:
@@ -27,7 +28,7 @@ http:
       service: notifications-host
       tls: {}
     homemix-host:
-      rule: "Host(`app.localhost`) && (PathPrefix(`/homemix/api`) || PathPrefix(`/homemix/run`))"
+      rule: "Host(`app.localhost`) && (PathPrefix(`/homemix/api`) || PathPrefix(`/homemix/run`) || PathPrefix(`/homemix/hub`))"
       priority: 100
       entryPoints: [websecure]
       service: homemix-host
@@ -43,6 +44,19 @@ http:
       priority: 150
       entryPoints: [websecure]
       service: jarvis-host
+      tls: {}
+    # Plugins from an IDE. A plugin's container claims the same prefix with its default priority (the rule's length).
+    todo-host:
+      rule: "Host(`app.localhost`) && PathPrefix(`/plugins/todo`)"
+      priority: 10
+      entryPoints: [websecure]
+      service: todo-host
+      tls: {}
+    chat-host:
+      rule: "Host(`app.localhost`) && PathPrefix(`/plugins/chat`)"
+      priority: 10
+      entryPoints: [websecure]
+      service: chat-host
       tls: {}
     frontend-host:
       rule: "Host(`app.localhost`)"
@@ -79,6 +93,14 @@ http:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:5700"
+    todo-host:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:5400"
+    chat-host:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:5410"
     frontend-host:
       loadBalancer:
         servers:
