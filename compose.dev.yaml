@@ -230,6 +230,38 @@ services:
       - "traefik.http.routers.homemix.tls=true"
       - "traefik.http.services.homemix.loadbalancer.server.port=8080"
 
+  devices:
+    profiles: ["services"]
+    build:
+      context: .
+      dockerfile: src/Devices/Devices.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Database: "Host=postgres;Database=homeapps_devices;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: ${RABBITMQ_USER:-guest}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-guest}
+      Jwt__Authority: "http://auth:8080"
+      Jwt__Issuer: "https://app.localhost"
+      Jwt__RequireHttpsMetadata: "false"
+      # Bridges sign in through "Połączone aplikacje" with a token for the gateway; Devices accepts it too.
+      Devices__Resource: "https://app.localhost/jarvis/mcp"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      auth:
+        condition: service_started
+    labels:
+      - "traefik.enable=true"
+      # Not /mcp: the MCP server is reached only inside the Docker network (through the JARVIS gateway).
+      - "traefik.http.routers.devices.rule=Host(`app.localhost`) && PathPrefix(`/devices`)"
+      - "traefik.http.routers.devices.priority=200"
+      - "traefik.http.routers.devices.entrypoints=websecure"
+      - "traefik.http.routers.devices.tls=true"
+      - "traefik.http.services.devices.loadbalancer.server.port=8080"
+
   jarvis:
     profiles: ["services"]
     build:
@@ -247,6 +279,7 @@ services:
       Jarvis__Sources__0__Url: "http://households:8080/mcp"
       Jarvis__Sources__1__Url: "http://accounts:8080/mcp"
       Jarvis__Sources__2__Url: "http://homemix:8080/mcp"
+      Jarvis__Sources__3__Url: "http://devices:8080/mcp"
       Jarvis__ClientSecret: ${JARVIS_CLIENT_SECRET:-development-only-jarvis-secret-0123456789}
       # Owner's Claude subscription (`claude setup-token`); without it JARVIS answers that he is switched off.
       Jarvis__ClaudeCode__OAuthToken: ${JARVIS_CLAUDE_CODE_OAUTH_TOKEN:-}

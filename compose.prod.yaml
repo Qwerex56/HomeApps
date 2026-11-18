@@ -194,6 +194,24 @@ services:
       - "traefik.http.routers.homemix.entrypoints=websecure"
       - "traefik.http.services.homemix.loadbalancer.server.port=8080"
 
+  devices:
+    <<: *service
+    image: homeapps/devices:2.4.0
+    build:
+      context: .
+      dockerfile: src/Devices/Devices.Api/Dockerfile
+    environment:
+      <<: [*environment, *jwt]
+      ConnectionStrings__Database: "Host=postgres;Database=homeapps_devices;Username=${POSTGRES_USER:-homeapps};Password=${POSTGRES_PASSWORD}"
+      # Bridges and satellites sign in with a token for the gateway (docs/devices.md); Devices accepts it too.
+      Devices__Resource: "https://${HOMEAPPS_DOMAIN}/jarvis/mcp"
+    labels:
+      - "traefik.enable=true"
+      # Not /mcp: the MCP server is reached only inside the Docker network (through the JARVIS gateway).
+      - "traefik.http.routers.devices.rule=Host(`${HOMEAPPS_DOMAIN}`) && PathPrefix(`/devices`)"
+      - "traefik.http.routers.devices.entrypoints=websecure"
+      - "traefik.http.services.devices.loadbalancer.server.port=8080"
+
   jarvis:
     <<: *service
     image: homeapps/jarvis:2.4.0
