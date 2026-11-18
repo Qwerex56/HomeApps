@@ -59,7 +59,11 @@ internal sealed class CallToolHandler(IDeviceRepository devices, IHouseholdRoles
 
     private async Task<Result<string>> DescribeAsync(JsonElement? input, CancellationToken cancellationToken)
     {
-        Guid? household = input is { ValueKind: JsonValueKind.Object } o && o.TryGetProperty("household", out var id) && Guid.TryParse(id.GetString(), out var parsed) ? parsed : null;
+        if (input is not { ValueKind: JsonValueKind.Object } o || !o.TryGetProperty("household", out var id) || id.ValueKind != JsonValueKind.String || !Guid.TryParse(id.GetString(), out var household))
+        {
+            return Result.Fail(DeviceErrors.HouseholdRequired);
+        }
+
         var described = await sender.Send(new DescribeDevicesQuery(household), cancellationToken);
         return described.IsFailed ? described.ToResult() : Serialize(described.Value);
     }

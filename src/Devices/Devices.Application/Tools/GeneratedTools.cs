@@ -25,8 +25,8 @@ internal static class GeneratedTools
 
     private static readonly string[] Reserved = [State, Set, Events];
 
-    /// <summary>Generated tools exist for a household's smart-home or assistant device.</summary>
-    public static bool Applies(Device device) => device.IsHouseholdDevice && device.Purpose is not DevicePurpose.Computer;
+    /// <summary>Generated tools exist for a paired household smart-home or assistant device.</summary>
+    public static bool Applies(Device device) => device.IsHouseholdDevice && device.PairedAt is not null && device.Purpose is not DevicePurpose.Computer;
 
     /// <summary>An announced action with a generated name is hidden by the generated tool.</summary>
     public static bool IsReserved(string action) => Reserved.Contains(action, StringComparer.Ordinal);

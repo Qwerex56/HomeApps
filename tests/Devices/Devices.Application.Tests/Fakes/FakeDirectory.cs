@@ -14,6 +14,11 @@ internal sealed class FakeDirectory : IHouseholdDirectory
     public Task<IReadOnlyList<Guid>> GetAdminIdsAsync(Guid householdId, CancellationToken cancellationToken) =>
         Down ? throw new HttpRequestException("down") : Task.FromResult<IReadOnlyList<Guid>>([.. Admins]);
 
+    public List<Guid> Members { get; } = [];
+
+    public Task<IReadOnlyList<Guid>> GetMemberIdsAsync(Guid householdId, CancellationToken cancellationToken) =>
+        Down ? throw new HttpRequestException("down") : Task.FromResult<IReadOnlyList<Guid>>([.. Members]);
+
     public Task<EventRetention> GetEventRetentionAsync(Guid householdId, CancellationToken cancellationToken) =>
         Down ? throw new HttpRequestException("down") : Task.FromResult(Retention);
 }

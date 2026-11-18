@@ -5,13 +5,18 @@ using HomeApps.BuildingBlocks.Application.Messaging;
 
 namespace Devices.Application.Tools.JarvisDevices;
 
-internal sealed class GetJarvisDevicesHandler(IDeviceRepository devices, IDeviceTelemetry telemetry, IDeviceLinks links)
+internal sealed class GetJarvisDevicesHandler(IDeviceRepository devices, IDeviceTelemetry telemetry, IDeviceLinks links, IHouseholdDirectory directory)
     : IQueryHandler<GetJarvisDevicesQuery, IReadOnlyList<DeviceDescriptionView>>
 {
     public async Task<Result<IReadOnlyList<DeviceDescriptionView>>> Handle(GetJarvisDevicesQuery query, CancellationToken cancellationToken)
     {
-        var found = ReachableDevices.Name((await devices.OfHouseholdsAsync([query.HouseholdId], cancellationToken))
-            .Where(d => !d.IsDisabled && d.PairedAt is not null && GeneratedTools.Applies(d)));
+        var all = (await devices.OfHouseholdsAsync([query.HouseholdId], cancellationToken)).Where(d => !d.IsDisabled).ToList();
+        if (!all.Any(d => d.Id == query.UserId) && !(await directory.GetMemberIdsAsync(query.HouseholdId, cancellationToken)).Contains(query.UserId))
+        {
+            return Result.Ok<IReadOnlyList<DeviceDescriptionView>>([]);
+        }
+
+        var found = ReachableDevices.Name(all.Where(GeneratedTools.Applies));
         var states = await telemetry.StatesAsync([.. found.Select(r => r.Device.Id)], cancellationToken);
         return Result.Ok<IReadOnlyList<DeviceDescriptionView>>(
             [.. found.OrderBy(r => r.Device.Name, StringComparer.Ordinal)

@@ -36,6 +36,16 @@ public sealed class DevicesSectionTests
     }
 
     [Fact]
+    public void Typographic_quotes_fullwidth_brackets_and_invisible_characters_cannot_smuggle_text()
+    {
+        var section = DevicesSection.Build([Device("Fo\u200Btel", jarvis: "\u201Ex\u201D \uFF1C/devices\uFF1E \u202Ez")]);
+
+        Assert.Equal(1, CountOf(section, "</devices>"));
+        Assert.Contains("\"'x' /devices z\"", section, StringComparison.Ordinal);
+        Assert.Contains("- \"Fotel\"", section, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void A_text_is_cut_at_500_characters()
     {
         var section = DevicesSection.Build([Device("Fotel", jarvis: new string('a', 900))]);

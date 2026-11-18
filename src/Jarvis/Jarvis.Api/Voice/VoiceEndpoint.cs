@@ -38,7 +38,14 @@ internal sealed class VoiceEndpoint : IEndpoint
             if (satellite is { } satelliteHousehold)
             {
                 // H-3c: only an assistant listens and speaks; a smart-home device's token (same household claim) is refused.
-                if (await householdDevices.ListAsync(satelliteHousehold, http.RequestAborted) is not { } devices)
+                // The list is cached; a device paired a moment ago is not in it, so ask once more without the cache before refusing.
+                var devices = await householdDevices.ListAsync(satelliteHousehold, user.RequiredUserId, http.RequestAborted);
+                if (devices is not null && !devices.Any(d => d.Id == user.RequiredUserId))
+                {
+                    devices = await householdDevices.ListAsync(satelliteHousehold, user.RequiredUserId, http.RequestAborted, fresh: true);
+                }
+
+                if (devices is null)
                 {
                     return Results.Problem(statusCode: StatusCodes.Status503ServiceUnavailable, title: "voice.devices_unavailable",
                         detail: "The household's devices could not be checked; try again in a moment.");

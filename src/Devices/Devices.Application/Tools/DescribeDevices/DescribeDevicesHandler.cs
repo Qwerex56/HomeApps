@@ -14,7 +14,7 @@ internal sealed class DescribeDevicesHandler(IDeviceRepository devices, IDeviceT
     {
         var reachable = await ReachableDevices.OfCallerAsync(devices, households, currentUser.RequiredUserId, cancellationToken);
         var chosen = reachable
-            .Where(r => GeneratedTools.Applies(r.Device) && (query.HouseholdId is null || r.Device.HouseholdId == query.HouseholdId))
+            .Where(r => GeneratedTools.Applies(r.Device) && r.Device.HouseholdId == query.HouseholdId)
             .OrderBy(r => r.Device.Name, StringComparer.Ordinal)
             .ToList();
         var states = await telemetry.StatesAsync([.. chosen.Select(r => r.Device.Id)], cancellationToken);

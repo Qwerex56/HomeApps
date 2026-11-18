@@ -16,11 +16,13 @@ namespace Devices.Api.Endpoints;
 internal sealed class InternalEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app) =>
-        // H-3c: the household's devices for JARVIS's prompt section (and its check that a satellite is an assistant).
-        app.MapGet("/internal/households/{id:guid}/devices", async (Guid id, HttpRequest request, IConfiguration configuration, ISender sender, CancellationToken ct) =>
-            Authorized(request, configuration.GetSection("Devices:Internal"))
-                ? (await sender.Send(new GetJarvisDevicesQuery(id), ct)).ToHttpResult()
-                : Results.Unauthorized())
+        // H-3c: the household's devices for JARVIS's prompt section, for one person (?user={guid}; members and the household's own devices only) (and its check that a satellite is an assistant).
+        app.MapGet("/internal/households/{id:guid}/devices", async (Guid id, Guid? user, HttpRequest request, IConfiguration configuration, ISender sender, CancellationToken ct) =>
+            !Authorized(request, configuration.GetSection("Devices:Internal"))
+                ? Results.Unauthorized()
+                : user is not { } person || person == Guid.Empty
+                    ? Results.BadRequest()
+                    : (await sender.Send(new GetJarvisDevicesQuery(id, person), ct)).ToHttpResult())
             .AllowAnonymous()
             .WithTags("Internal")
             .Produces<IReadOnlyList<DeviceDescriptionView>>();
