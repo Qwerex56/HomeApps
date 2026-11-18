@@ -102,6 +102,11 @@ services:
       Auth__Clients__1__Name: "JARVIS (service)"
       Auth__Clients__1__Type: Service
       Auth__Clients__1__Secret: ${JARVIS_CLIENT_SECRET:?set JARVIS_CLIENT_SECRET in .env}
+      # Devices (docs/devices.md): its service client for household satellites' identities.
+      Auth__Clients__2__ClientId: devices-service
+      Auth__Clients__2__Name: "Devices (service)"
+      Auth__Clients__2__Type: Service
+      Auth__Clients__2__Secret: ${DEVICES_CLIENT_SECRET:?set DEVICES_CLIENT_SECRET in .env}
       Auth__ConnectedApps__Resources__0: "https://${HOMEAPPS_DOMAIN}/jarvis/mcp"
       Auth__Email__From: ${SMTP_FROM:?set SMTP_FROM in .env}
       Auth__Email__Smtp__Host: ${SMTP_HOST:?set SMTP_HOST in .env}
@@ -205,6 +210,8 @@ services:
       ConnectionStrings__Database: "Host=postgres;Database=homeapps_devices;Username=${POSTGRES_USER:-homeapps};Password=${POSTGRES_PASSWORD}"
       # Bridges and satellites sign in with a token for the gateway (docs/devices.md); Devices accepts it too.
       Devices__Resource: "https://${HOMEAPPS_DOMAIN}/jarvis/mcp"
+      # Household satellites get their identity from Auth with this service client (S13).
+      Devices__ClientSecret: ${DEVICES_CLIENT_SECRET:?set DEVICES_CLIENT_SECRET in .env}
     labels:
       - "traefik.enable=true"
       # Not /mcp: the MCP server is reached only inside the Docker network (through the JARVIS gateway).

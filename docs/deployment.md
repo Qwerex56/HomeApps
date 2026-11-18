@@ -64,6 +64,7 @@ copies never migrate at the same time.
 | `HOUSEHOLDS_MAX_MEMBERS` | Members per household, guests included (100). |
 | `NOTIFICATIONS_VAPID_PUBLIC_KEY`, `NOTIFICATIONS_VAPID_PRIVATE_KEY` | The Web Push keys from `scripts/generate-vapid-keys.sh`. Notifications does not start without them. Back them up and keep them: new keys mean every device has to turn notifications on again. The private key is a secret. |
 | `JARVIS_CLIENT_SECRET` | Required: the secret JARVIS asks Auth for delegated tokens with (`openssl rand -base64 32`). See [jarvis.md](jarvis.md#production). |
+| `DEVICES_CLIENT_SECRET` | Required: the secret Devices pairs household satellites with in Auth (`openssl rand -base64 32`). See [devices.md](devices.md#household-devices-s-1). |
 | `JARVIS_CLAUDE_CODE_OAUTH_TOKEN` | Optional: the owner's Claude subscription for JARVIS's answers (`claude setup-token`). Empty: JARVIS says he is switched off; Claude Code can still connect to the gateway. A secret. |
 | `NOTIFICATIONS_VAPID_SUBJECT` | Optional: how push services can reach you, `mailto:` or `https:` (the site's address by default). |
 
