@@ -29,6 +29,18 @@ internal sealed class HouseholdConfiguration : IEntityTypeConfiguration<Househol
         builder.Property(h => h.GuestCode).HasConversion(Converters.OptionalCode).HasMaxLength(InviteCode.Length);
         builder.HasIndex(h => h.GuestCode).IsUnique();
 
+        // The assistant lives in the household's own row (table splitting): always exactly one, no join, guarded by xmin.
+        builder.OwnsOne(h => h.Assistant, assistant =>
+        {
+            assistant.Property(a => a.Enabled).HasColumnName("AssistantEnabled");
+            assistant.Property(a => a.Name).HasColumnName("AssistantName").HasMaxLength(HouseholdAssistant.MaxNameLength);
+            assistant.Property(a => a.AccessLevel).HasColumnName("AssistantAccessLevel").HasConversion<string>().HasMaxLength(Converters.EnumLength);
+            assistant.Property(a => a.ToolSources).HasColumnName("AssistantToolSources");
+            assistant.Property(a => a.EventDays).HasColumnName("AssistantEventDays");
+            assistant.Property(a => a.LocationEventDays).HasColumnName("AssistantLocationEventDays");
+        });
+        builder.Navigation(h => h.Assistant).IsRequired();
+
         builder.HasMany(h => h.Members).WithOne().HasForeignKey(m => m.HouseholdId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(h => h.Members).UsePropertyAccessMode(PropertyAccessMode.Field).AutoInclude();
     }
