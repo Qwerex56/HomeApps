@@ -5,6 +5,7 @@ using HomeApps.BuildingBlocks.Domain;
 using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace HomeApps.BuildingBlocks.Infrastructure.Persistence;
 
@@ -15,7 +16,7 @@ namespace HomeApps.BuildingBlocks.Infrastructure.Persistence;
 /// Handlers may change more aggregates or publish integration messages (which land in the outbox tables).</item>
 /// <item>It repeats until no new events appear, then saves everything in one transaction.</item>
 /// </list>
-/// A lost optimistic-concurrency race surfaces as <see cref="ConcurrencyConflictException"/>, so Application code never sees EF types.
+/// A lost optimistic-concurrency race, or a unique index hit by a concurrent insert, surfaces as <see cref="ConcurrencyConflictException"/>, so Application code never sees EF types.
 /// It also maps the MassTransit outbox/inbox tables and applies every <see cref="IEntityTypeConfiguration{TEntity}"/>
 /// from the derived context's assembly.
 /// </summary>
@@ -36,6 +37,11 @@ public abstract class HomeAppsDbContext(DbContextOptions options, IPublisher pub
         catch (DbUpdateConcurrencyException exception)
         {
             throw new ConcurrencyConflictException("Another request changed the same data first.", exception);
+        }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            // Two requests added the same unique thing at once (a slug computed twice, the first use of a capability): the loser answers 409 and may retry.
+            throw new ConcurrencyConflictException("Another request added the same data first.", exception);
         }
     }
 
