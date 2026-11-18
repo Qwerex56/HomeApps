@@ -19,6 +19,21 @@ public sealed class DevicesSectionTests
     }
 
     [Fact]
+    public void The_names_only_fallback_still_marks_a_device_JARVIS_may_not_control()
+    {
+        var devices = Enumerable.Range(0, 40)
+            .Select(i => Device($"Urządzenie {i:00}", jarvis: new string('a', 400), mayControl: i != 1))
+            .ToList();
+
+        var section = DevicesSection.Build(devices);
+
+        Assert.Contains("Lista jest skrócona do nazw", section, StringComparison.Ordinal);
+        Assert.Contains("\"Urządzenie 01\" (smart_home; online, JARVIS nie może sterować)", section, StringComparison.Ordinal);
+        Assert.Contains("\"Urządzenie 00\" (smart_home; online)", section, StringComparison.Ordinal);
+        Assert.True(section.Length <= DevicesSection.MaxLength);
+    }
+
+    [Fact]
     public void No_devices_no_section() => Assert.Empty(DevicesSection.Build([]));
 
     [Fact]
