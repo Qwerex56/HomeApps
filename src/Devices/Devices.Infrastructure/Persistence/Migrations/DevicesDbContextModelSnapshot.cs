@@ -93,8 +93,8 @@ namespace Devices.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(60)
-                        .HasColumnType("character varying(60)")
+                        .HasMaxLength(240)
+                        .HasColumnType("character varying(240)")
                         .UseCollation("case_insensitive");
 
                     b.Property<Guid>("OwnerId")
@@ -121,8 +121,8 @@ namespace Devices.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
 
                     b.PrimitiveCollection<string[]>("Warnings")
                         .IsRequired()

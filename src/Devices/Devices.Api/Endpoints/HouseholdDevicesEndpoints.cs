@@ -10,6 +10,7 @@ using Devices.Application.HouseholdDevices.SetAdminNotes;
 using HomeApps.BuildingBlocks.Api.Endpoints;
 using HomeApps.BuildingBlocks.Api.Results;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Devices.Api.Endpoints;
 
@@ -49,6 +50,7 @@ internal sealed class HouseholdDevicesEndpoints : IEndpoint
         app.MapPost("/devices/pair", async (PairDeviceRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(new PairDeviceCommand(body.Code, body.Descriptor is { ValueKind: not System.Text.Json.JsonValueKind.Null } d ? d.GetRawText() : null), ct)).ToHttpResult())
             .AllowAnonymous()
+            .WithMetadata(new RequestSizeLimitAttribute(256 * 1024))
             .WithTags("Devices")
             .Produces<PairedDeviceView>();
     }

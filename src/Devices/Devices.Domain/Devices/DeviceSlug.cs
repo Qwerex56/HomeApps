@@ -9,7 +9,7 @@ namespace Devices.Domain.Devices;
 /// </summary>
 public static class DeviceSlug
 {
-    public const int MaxLength = 40;
+    public const int MaxLength = 36;
     private const string Fallback = "device";
 
     public static string From(string name, IReadOnlyCollection<string> taken)

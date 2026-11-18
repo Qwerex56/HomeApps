@@ -12,7 +12,7 @@ internal sealed class DeviceConfiguration : IEntityTypeConfiguration<Device>
         builder.HasKey(d => d.Id);
         builder.Property(d => d.Id).ValueGeneratedNever();
         // Names are unique ignoring case: a case-insensitive (non-deterministic ICU) collation does it in the index too.
-        builder.Property(d => d.Name).HasMaxLength(DeviceName.MaxLength).UseCollation(DevicesDbContext.CaseInsensitive);
+        builder.Property(d => d.Name).HasMaxLength(DeviceName.MaxLength * 4).UseCollation(DevicesDbContext.CaseInsensitive);
         builder.Property(d => d.Slug).HasMaxLength(DeviceSlug.MaxLength);
         builder.Property(d => d.Kind).HasConversion<string>().HasMaxLength(20);
         builder.Property(d => d.Purpose).HasConversion<string>().HasMaxLength(20);

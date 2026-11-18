@@ -14,7 +14,7 @@ public static class DeviceName
     public static Result<string> Normalize(string? name)
     {
         name = name?.Trim() ?? string.Empty;
-        if (name.Length == 0 || new StringInfo(name).LengthInTextElements > MaxLength || name.Any(char.IsControl))
+        if (name.Length == 0 || new StringInfo(name).LengthInTextElements > MaxLength || name.Length > MaxLength * 4 || name.Any(char.IsControl))
         {
             return Result.Fail(DeviceErrors.InvalidName);
         }
