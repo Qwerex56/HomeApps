@@ -1,0 +1,59 @@
+using System.Net.Http.Json;
+using Jarvis.Application.Gateway;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+namespace Jarvis.Infrastructure.Gateway;
+
+/// <summary>
+/// Households' <c>GET /internal/households/{id}/assistant</c> with JARVIS's service secret, kept 45 seconds per household
+/// (an admin's change reaches the satellite within a minute). A failure is not kept and closes the household meanwhile.
+/// </summary>
+internal sealed partial class HouseholdsCeilings(
+    HttpClient http, IOptions<GatewayOptions> options, IMemoryCache cache, ILogger<HouseholdsCeilings> logger) : IHouseholdCeilings
+{
+    private static readonly TimeSpan Lifetime = TimeSpan.FromSeconds(45);
+
+    public async Task<HouseholdCeiling> GetAsync(Guid householdId, CancellationToken cancellationToken)
+    {
+        var key = (nameof(HouseholdsCeilings), householdId);
+        if (cache.TryGetValue(key, out HouseholdCeiling? known) && known is not null)
+        {
+            return known;
+        }
+
+        try
+        {
+            var settings = options.Value;
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{settings.HouseholdsUrl.TrimEnd('/')}/internal/households/{householdId}/assistant");
+            request.Headers.Add("X-Client-Id", settings.ClientId);
+            request.Headers.Add("X-Client-Secret", settings.ClientSecret);
+            using var response = await http.SendAsync(request, cancellationToken);
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return Keep(key, HouseholdCeiling.Closed);
+            }
+
+            response.EnsureSuccessStatusCode();
+            var view = await response.Content.ReadFromJsonAsync<View>(cancellationToken);
+            return Keep(key, view is null ? HouseholdCeiling.Closed : HouseholdCeiling.From(view.Enabled, view.AccessLevel, view.ToolSources));
+        }
+        catch (Exception exception) when (exception is HttpRequestException or System.Text.Json.JsonException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
+        {
+            LogUnreadable(householdId, exception);
+            return HouseholdCeiling.Closed;
+        }
+    }
+
+    private HouseholdCeiling Keep((string, Guid) key, HouseholdCeiling ceiling)
+    {
+        cache.Set(key, ceiling, Lifetime);
+        return ceiling;
+    }
+
+    private sealed record View(bool Enabled, string? AccessLevel, string? ToolSources);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The assistant settings of household {HouseholdId} did not load; its tools are limited to the core ones for now.")]
+    private partial void LogUnreadable(Guid householdId, Exception exception);
+}

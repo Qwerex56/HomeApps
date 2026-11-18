@@ -93,7 +93,7 @@ A satellite belongs to its household but is **not a household member** (stage H-
    its changes like any assistant's; Households answers `GET /households/{id}/members/me` for it with the household assistant's role (`Guest` or `Member` from its access level, `isAssistant: true`; 404 when the assistant is off), so plugins authorize it as before. With that token it connects to
    `/devices/link` and keeps the name its household gave it (the `device` in `hello` is ignored).
 5. When JARVIS answers a satellite, Auth's delegation (`/internal/delegation`) gives him a token for the device
-   instead of a person, so JARVIS acts for the satellite (not a member; its plugin access is the household assistant's level).
+   instead of a person, so JARVIS acts for the satellite (not a member; its plugin access is the household assistant's level). The household's JARVIS settings also filter the tools of its session (see jarvis.md, H-2).
 
 The Mac bridge is such a satellite after `--pair <code>` (S-1e, see [jarvis.md](jarvis.md) "The Mac bridge"): it
 does steps 1 and 4 itself and keeps the secret in the Keychain.
