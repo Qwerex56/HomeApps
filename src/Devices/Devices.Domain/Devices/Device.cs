@@ -1,4 +1,5 @@
-using System.Text.RegularExpressions;
+using Devices.Domain.Capabilities;
+using Devices.Domain.Descriptors;
 using FluentResults;
 
 namespace Devices.Domain.Devices;
@@ -9,10 +10,10 @@ namespace Devices.Domain.Devices;
 /// connection and they replace the old ones; "Nie pytaj" stays for an action that keeps its name. Removing only
 /// disables it (data kept); it can connect again only after it is added back.
 /// </summary>
-public sealed partial class Device
+public sealed class Device
 {
-    public const int MaxNameLength = 20;
     public const int MaxActions = 50;
+    public const int MaxNotesLength = 500;
 
     /// <summary>How long a pairing code works.</summary>
     public static readonly TimeSpan PairingValidity = TimeSpan.FromMinutes(10);
@@ -36,10 +37,34 @@ public sealed partial class Device
 
     public DateTimeOffset? PairedAt { get; private set; }
 
-    /// <summary>Unique per owner (per household for a household device), e.g. <c>mac-biuro</c>; part of the tool names JARVIS sees.</summary>
+    /// <summary>The display name: any text of up to 60 characters, unique (ignoring case) per owner, per household for a household device. Can be changed.</summary>
     public string Name { get; private set; } = string.Empty;
 
+    /// <summary>The stable key made from the name when the device was added, e.g. <c>mac-biuro</c>; part of the tool names JARVIS sees.</summary>
+    public string Slug { get; private set; } = string.Empty;
+
     public DeviceKind Kind { get; private set; }
+
+    /// <summary>What the device is mainly for; set by the descriptor it sends, otherwise from <see cref="Kind"/>.</summary>
+    public DevicePurpose Purpose { get; private set; }
+
+    /// <summary>What a household admin tells JARVIS about this device ("to fotel taty, pytaj go").</summary>
+    public string? AdminNotes { get; private set; }
+
+    /// <summary>The <c>homeapps.device/1</c> document as the device sent it, or <c>null</c> for one that sent none (an old bridge).</summary>
+    public string? Descriptor { get; private set; }
+
+    public string? Model { get; private set; }
+
+    public string? DescriptorVersion { get; private set; }
+
+    public string[] Roles { get; private set; } = [];
+
+    /// <summary>The capabilities that counted: <c>weather</c>, <c>switch:lampka</c>.</summary>
+    public string[] Capabilities { get; private set; } = [];
+
+    /// <summary>Why something in the descriptor was ignored; shown with the device.</summary>
+    public string[] Warnings { get; private set; } = [];
 
     public DateTimeOffset CreatedAt { get; private set; }
 
@@ -56,31 +81,42 @@ public sealed partial class Device
 
     public IReadOnlyList<DeviceAction> Actions => _actions;
 
-    public static Result<Device> Create(Guid ownerId, string name, DeviceKind kind, DateTimeOffset now)
+    /// <param name="takenSlugs">The slugs already used in the same scope (the person's devices, or the household's), for the number after a collision.</param>
+    public static Result<Device> Create(Guid ownerId, string name, DeviceKind kind, IReadOnlyCollection<string> takenSlugs, DateTimeOffset now)
     {
         if (ownerId == Guid.Empty)
         {
             throw new ArgumentException("A device needs an owner.", nameof(ownerId));
         }
 
-        name = name?.Trim() ?? string.Empty;
-        if (!NamePattern().IsMatch(name))
+        var clean = DeviceName.Normalize(name);
+        if (clean.IsFailed)
         {
-            return Result.Fail(DeviceErrors.InvalidName);
+            return clean.ToResult();
         }
 
-        return new Device { Id = Guid.CreateVersion7(), OwnerId = ownerId, Name = name, Kind = kind, CreatedAt = now, LastSeenAt = now };
+        return new Device
+        {
+            Id = Guid.CreateVersion7(),
+            OwnerId = ownerId,
+            Name = clean.Value,
+            Slug = DeviceSlug.From(clean.Value, takenSlugs),
+            Kind = kind,
+            Purpose = DevicePurposes.FromKind(kind),
+            CreatedAt = now,
+            LastSeenAt = now,
+        };
     }
 
     /// <summary>A household admin adds a satellite; it can connect once it is paired with <paramref name="pairingCodeHash"/>'s code.</summary>
-    public static Result<Device> AddToHousehold(Guid householdId, Guid addedBy, string name, string pairingCodeHash, DateTimeOffset now)
+    public static Result<Device> AddToHousehold(Guid householdId, Guid addedBy, string name, string pairingCodeHash, IReadOnlyCollection<string> takenSlugs, DateTimeOffset now)
     {
         if (householdId == Guid.Empty)
         {
             throw new ArgumentException("A household device needs a household.", nameof(householdId));
         }
 
-        var device = Create(addedBy, name, DeviceKind.Satellite, now);
+        var device = Create(addedBy, name, DeviceKind.Satellite, takenSlugs, now);
         if (device.IsSuccess)
         {
             device.Value.HouseholdId = householdId;
@@ -97,6 +133,55 @@ public sealed partial class Device
         PairingCodeHash = pairingCodeHash;
         PairingExpiresAt = now + PairingValidity;
         PairedAt = null;
+    }
+
+    /// <summary>A household admin renames the device; the slug stays. Uniqueness is the caller's to check.</summary>
+    public Result Rename(string name)
+    {
+        var clean = DeviceName.Normalize(name);
+        if (clean.IsFailed)
+        {
+            return clean.ToResult();
+        }
+
+        Name = clean.Value;
+        return Result.Ok();
+    }
+
+    /// <summary>A household admin's notes for JARVIS; empty clears them.</summary>
+    public Result SetAdminNotes(string? notes)
+    {
+        notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+        if (notes is { Length: > MaxNotesLength })
+        {
+            return Result.Fail(DeviceErrors.InvalidNotes);
+        }
+
+        AdminNotes = notes;
+        return Result.Ok();
+    }
+
+    /// <summary>
+    /// The device sent its descriptor (at pairing or on a connection): it replaces the stored one, and its purpose
+    /// becomes the device's. A household device is an assistant or a smart_home device, a person's own one a computer.
+    /// </summary>
+    public Result ApplyDescriptor(DeviceDescriptor descriptor, CapabilityResolution resolution)
+    {
+        ArgumentNullException.ThrowIfNull(descriptor);
+        ArgumentNullException.ThrowIfNull(resolution);
+        if (IsHouseholdDevice == (descriptor.Purpose == DevicePurpose.Computer))
+        {
+            return Result.Fail(DeviceErrors.WrongPurpose);
+        }
+
+        Purpose = descriptor.Purpose;
+        Descriptor = descriptor.Json;
+        Model = descriptor.Model;
+        DescriptorVersion = descriptor.Version;
+        Roles = [.. resolution.Roles];
+        Capabilities = [.. resolution.Accepted];
+        Warnings = [.. resolution.Warnings];
+        return Result.Ok();
     }
 
     /// <summary>The device used its code: the code is spent and the device may connect.</summary>
@@ -187,9 +272,6 @@ public sealed partial class Device
     public string ToolName(DeviceAction action)
     {
         ArgumentNullException.ThrowIfNull(action);
-        return $"{Name}_{action.Name}";
+        return $"{Slug}_{action.Name}";
     }
-
-    [GeneratedRegex("^[a-z0-9][a-z0-9-]{0,19}$")]
-    private static partial Regex NamePattern();
 }

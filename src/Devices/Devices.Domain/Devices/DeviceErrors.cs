@@ -12,7 +12,7 @@ public static class DeviceErrors
 
     public static Error InvalidName => new AppError(
         "devices.invalid_name",
-        $"A device name is 1-{Device.MaxNameLength} characters: lowercase letters, digits and '-', starting with a letter or digit.",
+        $"A device name is 1-{DeviceName.MaxLength} characters of any text, without control characters.",
         ErrorKind.Validation);
 
     public static Error InvalidAction => new AppError(
@@ -20,6 +20,25 @@ public static class DeviceErrors
         $"An action needs a name of 1-{DeviceAction.MaxNameLength} characters (lowercase letters, digits, '_', starting with a letter), "
         + $"a description of at most {DeviceAction.MaxDescriptionLength} characters and an input schema that is a JSON object.",
         ErrorKind.Validation);
+
+    public static Error InvalidDescriptor(IReadOnlyCollection<string> problems) => new AppError(
+        "devices.invalid_descriptor",
+        "The device descriptor (homeapps.device/1) is invalid: " + string.Join("; ", problems.Take(10)) + (problems.Count > 10 ? "; ..." : "."),
+        ErrorKind.Validation);
+
+    public static Error WrongPurpose => new AppError(
+        "devices.wrong_purpose",
+        "A household device is an assistant or a smart_home device; a person's own device is a computer.",
+        ErrorKind.Validation);
+
+    public static Error InvalidNotes => new AppError(
+        "devices.invalid_notes", $"Notes for JARVIS are at most {Device.MaxNotesLength} characters.", ErrorKind.Validation);
+
+    public static Error OwnerOnly => new AppError(
+        "devices.owner_only", "Only the server's owner can manage registered capabilities.", ErrorKind.Forbidden);
+
+    public static Error CapabilityNotFound => new AppError(
+        "devices.capability_not_found", "There is no such registered capability.", ErrorKind.NotFound);
 
     public static Error TooManyActions => new AppError(
         "devices.too_many_actions", $"A device offers at most {Device.MaxActions} actions, each name once.", ErrorKind.Validation);
