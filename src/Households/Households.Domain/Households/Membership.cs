@@ -34,20 +34,11 @@ public sealed class Membership
     /// <summary>D2c: guests only; after this moment the guest has no access and is removed.</summary>
     public DateTimeOffset? AccessUntil { get; private set; }
 
-    /// <summary>
-    /// jarvis-satellites.md 3a (S13): a household satellite, not a person. Always a Member; it joins and leaves only
-    /// through Devices, never takes over the household and its role does not change.
-    /// </summary>
-    public bool IsDevice { get; private set; }
-
     public bool HasAccess(DateTimeOffset now) => AccessUntil is null || now < AccessUntil;
 
     internal static Membership Create(
         Guid householdId, Guid userId, HouseholdRole role, Guid? invitedBy, DateTimeOffset? accessUntil, DateTimeOffset joinedAt) =>
         new(householdId, userId, role, invitedBy, role == HouseholdRole.Guest ? accessUntil : null, joinedAt);
-
-    internal static Membership CreateDevice(Guid householdId, Guid deviceId, DateTimeOffset joinedAt) =>
-        new(householdId, deviceId, HouseholdRole.Member, null, null, joinedAt) { IsDevice = true };
 
     internal void ChangeRole(HouseholdRole role)
     {
