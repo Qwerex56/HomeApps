@@ -38,10 +38,10 @@ public sealed class DevicesSectionTests
     [Fact]
     public void Typographic_quotes_fullwidth_brackets_and_invisible_characters_cannot_smuggle_text()
     {
-        var section = DevicesSection.Build([Device("Fo\u200Btel", jarvis: "\u201Ex\u201D \uFF1C/devices\uFF1E \u202Ez")]);
+        var section = DevicesSection.Build([Device("Fo\u200Btel", jarvis: "\u201Ex\u201D \uFF1C/devices\uFF1E \u202Ez \uFF02a\u201F \u2039b\u203A \uFE64c\uFE65")]);
 
         Assert.Equal(1, CountOf(section, "</devices>"));
-        Assert.Contains("\"'x' /devices z\"", section, StringComparison.Ordinal);
+        Assert.Contains("\"'x' /devices z 'a' 'b' c\"", section, StringComparison.Ordinal);
         Assert.Contains("- \"Fotel\"", section, StringComparison.Ordinal);
     }
 

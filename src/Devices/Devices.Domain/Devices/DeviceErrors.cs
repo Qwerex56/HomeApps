@@ -86,4 +86,7 @@ public static class DeviceErrors
 
     public static Error MembersOnly => new AppError(
         "devices.members_only", "The history of a device's events is for the household's members.", ErrorKind.Forbidden);
+
+    public static Error MembersUnavailable => new AppError(
+        "devices.members_unavailable", "Households could not say who is in the household; try again in a moment.", ErrorKind.Conflict);
 }
