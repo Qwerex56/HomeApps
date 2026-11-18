@@ -243,6 +243,51 @@ named, or all of the caller's households, skipping those where `PluginErrors.IsO
 In tests, give the directory's client the same fake handler as `IHouseholdAccess`:
 `services.AddHttpClient(nameof(IHouseholdDirectory)).ConfigurePrimaryHttpMessageHandler(() => Households)`.
 
+## Devices
+
+A plugin finds household devices by what they can do, not by name (household-jarvis-devices.md 2.5, D8).
+`IDevicesClient` (kit namespace `HomeApps.Plugins.Devices`, registered by `AddHomeAppsPlugin`) calls Devices' REST API
+with the caller's own token, so Devices applies its own rules: guests read, members control. It works inside a
+request, like `IHouseholdAccess`.
+
+```csharp
+var stations = await devices.ListAsync(householdId, new DeviceFilter(Capability: "weather"), withState: true, ct);
+var first = stations.FirstOrDefault(d => d.Online) ?? stations.FirstOrDefault();   // the default pick: first online
+var temperature = first?.State?.Values.GetProperty("temperature").GetDouble();
+
+var state = await devices.GetStateAsync(deviceId, ct);                              // null: not there, or not yours
+var result = await devices.SetAsync(deviceId, "level", JsonDocument.Parse("40").RootElement, ct);
+if (result.IsFailed) { /* Devices' own code, e.g. devices.offline, devices.read_only, devices.control_not_found */ }
+```
+
+`DeviceFilter(Capability, Role, Model)` narrows the list; every part given must match (`capability: "switch"` also
+matches `switch:lampka`). Removed devices are left out. `Plugin:DevicesUrl` (default `http://devices:8080`, from an
+IDE `http://localhost:5800`) is the address.
+
+**Reacting without a request.** Devices publishes two contracts that a plugin may consume like any other
+(`Events = new PluginEvents([], [typeof(DeviceStateChanged), typeof(DeviceEventOccurred)])` in the manifest, then a
+MassTransit consumer in the plugin's assembly):
+
+- `DeviceStateChanged(HouseholdId, DeviceId, Slug, Changed, At)`: a state frame changed stored values; `Changed` is a
+  JSON object with only the values that differ. A frame that repeats the stored values publishes nothing.
+- `DeviceEventOccurred(HouseholdId, DeviceId, Slug, Name, Payload, OccurredAt, IsLocation)`: an event the descriptor
+  declares (`button`, `motion`). Location events (`IsLocation`) are for members only; do not show them to guests.
+
+```csharp
+public sealed class DoorbellConsumer(IPluginEnablement enablement, INotifier notifier) : IConsumer<DeviceEventOccurred>
+{
+    public async Task Consume(ConsumeContext<DeviceEventOccurred> context)
+    {
+        var e = context.Message;
+        if (e.Name != "pressed" || !await enablement.IsEnabledAsync(e.HouseholdId, context.CancellationToken)) return;
+        // ... notify the household; a consumer has no caller token, so it cannot call IDevicesClient: act on the message alone
+    }
+}
+```
+
+A consumer runs without a person, so it has no token for `IDevicesClient`; use what the message carries, or store the
+fact and let the next request read the device. Triggers declared in a manifest come with H-4b.
+
 ## Program.cs
 
 ```csharp
@@ -266,6 +311,7 @@ The DbContext derives from `PluginDbContext` instead of `HomeAppsDbContext`. Con
 | `Jwt:Authority`, `Jwt:Issuer` | | as for the core services |
 | `RabbitMq:*` | | as for the core services |
 | `Plugin:HouseholdsUrl` | `http://households:8080` | from an IDE: `http://localhost:5300` |
+| `Plugin:DevicesUrl` | `http://devices:8080` | from an IDE: `http://localhost:5800` |
 
 ## UI
 
