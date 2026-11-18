@@ -1,4 +1,11 @@
+# The development certificate for app.localhost and *.app.localhost (scripts/dev-cert.sh, docs/development.md),
+# also the default, so a request without a matching name never gets Traefik's own self-signed certificate.
 tls:
   certificates:
-    - certFile: /certs/_wildcard.app.localhost.pem
-      keyFile: /certs/_wildcard.app.localhost-key.pem
+    - certFile: /certs/app.localhost.pem
+      keyFile: /certs/app.localhost-key.pem
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certs/app.localhost.pem
+        keyFile: /certs/app.localhost-key.pem

@@ -9,6 +9,12 @@ riderModule.iml
 # Development signing keys (Auth, Q9)
 .keys/
 
+# The development certificate, made on each machine by scripts/dev-cert.sh (its own mkcert CA).
+certs/*.pem
+
+# Rider's generated compose override for running services in containers from the IDE.
+.idea/.idea.HomeApps/Docker/
+
 # Local secrets for docker compose; .env.example is the template.
 .env
 # The production signing key (scripts/generate-signing-key.sh).
