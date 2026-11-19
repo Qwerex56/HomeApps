@@ -33,10 +33,11 @@ internal sealed partial class McpGateway(
     {
         var all = await sources.ListAsync(cancellationToken);
         var scope = caller.HouseholdClaim;
-        if (scope is null && caller.RunId is { } listing
-            && (await sender.Send(new CheckRunQuery(listing, caller.UserId), cancellationToken)) is { IsSuccess: true, Value.HouseholdId: { } runHousehold })
+        var satellite = false;
+        if (caller.RunId is { } listing && (await sender.Send(new CheckRunQuery(listing, caller.UserId), cancellationToken)) is { IsSuccess: true, Value: { } listed })
         {
-            scope = runHousehold;
+            scope ??= listed.HouseholdId;
+            satellite = listed.Satellite;
         }
 
         // H-2, D1: in a household the household's JARVIS settings are a ceiling, so a source it does not allow is not even offered.
@@ -71,6 +72,12 @@ internal sealed partial class McpGateway(
                 {
                     continue;
                 }
+            }
+
+            // R1: a household satellite is not at anyone's computer, so what is on a person's computer is not offered to it.
+            if (satellite && OnComputer(source, tool))
+            {
+                continue;
             }
 
             var name = source.Expose(tool.Name);
@@ -122,6 +129,11 @@ internal sealed partial class McpGateway(
 
                 var token = await caller.SourceTokenAsync(cancellationToken);
                 var tool = await ToolAsync(source, own, token, caller.UserId, cancellationToken);
+                var onComputer = OnComputer(source, tool);
+                if (onComputer && run is { Satellite: true })
+                {
+                    return Failed("This tool is on a person's own computer and cannot be used from a satellite.");
+                }
 
                 // H-2, D1: the household of the call caps what may be called. A satellite's own household first, then the
                 // household of a household device's tool, the call's household argument, the run's household.
@@ -153,6 +165,12 @@ internal sealed partial class McpGateway(
                 if (run is not null)
                 {
                     return await CallInRunAsync(run.Id, source, own, request, token, tool?.Annotations, cancellationToken);
+                }
+
+                // H-4c, until H-7: an external MCP client has no run, so nobody can confirm; an action on a person's computer that asks ("Pytaj") is not done.
+                if (onComputer && tool?.Annotations is not { ReadOnlyHint: true } && tool?.Annotations?.DestructiveHint != false)
+                {
+                    return Failed("This action needs the person's confirmation. Use JARVIS in the HomeApps app.");
                 }
 
                 await using var client = await connector.ConnectAsync(source, token, cancellationToken);
@@ -197,18 +215,22 @@ internal sealed partial class McpGateway(
         return result;
     }
 
-    /// <summary>The tool as the source lists it for this person; kept a few minutes per person.</summary>
+    /// <summary>
+    /// The tool as the source lists it for this person; kept a few minutes per person, except a device's: its "Pytaj" switch
+    /// (<c>destructiveHint</c>) is read from Devices on every call, so turning it off works at once.
+    /// </summary>
     private async Task<Tool?> ToolAsync(ToolSource source, string own, string token, Guid userId, CancellationToken cancellationToken)
     {
+        var cached = source.Kind != ToolSourceKind.Devices;
         var key = (nameof(ToolAsync), userId, source.Name, own);
-        if (cache.TryGetValue(key, out Tool? known))
+        if (cached && cache.TryGetValue(key, out Tool? known))
         {
             return known;
         }
 
         var tools = await ToolsOfAsync(source, token, cancellationToken);
         var tool = tools.FirstOrDefault(t => t.Tool.Name == own).Tool;
-        if (tool is not null)
+        if (tool is not null && cached)
         {
             cache.Set(key, tool, TimeSpan.FromMinutes(5));
         }
@@ -219,6 +241,10 @@ internal sealed partial class McpGateway(
     /// <summary>The household a tool belongs to (<c>_meta</c> "homeapps/household"): only Devices sets it, so only its tools are trusted; never throws.</summary>
     internal static Guid? HouseholdOf(ToolSource source, Tool? tool) =>
         source.Kind == ToolSourceKind.Devices && tool?.Meta?["homeapps/household"] is JsonValue v && v.TryGetValue<string>(out var s) && Guid.TryParse(s, out var id) ? id : null;
+
+    /// <summary>A tool on a person's own computer (<c>_meta</c> "homeapps/purpose": "computer"): only Devices sets it, so only its tools are trusted; never throws.</summary>
+    internal static bool OnComputer(ToolSource source, Tool? tool) =>
+        source.Kind == ToolSourceKind.Devices && tool?.Meta?["homeapps/purpose"] is JsonValue v && v.TryGetValue<string>(out var s) && s == "computer";
 
     public async ValueTask<ListResourcesResult> ListResourcesAsync(CancellationToken cancellationToken)
     {
