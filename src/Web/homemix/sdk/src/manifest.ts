@@ -6,6 +6,13 @@ export interface LocalizedText {
   en?: string
 }
 
+export interface DeviceMatch {
+  capability?: string
+  role?: string
+  model?: string
+  pick?: 'manual'
+}
+
 export interface HomeMixManifest {
   homemixVersion: 1
   id: string
@@ -26,6 +33,8 @@ export interface HomeMixManifest {
     sizes?: WidgetSize[]
     places?: WidgetPlace[]
     entry?: string
+    /** Which devices it is for: capability, then role, then model; pick manual = an admin chooses from the matching list. */
+    devices?: DeviceMatch[]
   }[]
   capabilities?: Capability[]
   network?: string[]
@@ -58,7 +67,7 @@ export interface AddonTool {
 }
 
 export const RESERVED_IDS = ['households', 'accounts', 'jarvis', 'homemix', 'notifications', 'auth']
-export const CAPABILITIES: Capability[] = ['storage.household', 'storage.user', 'household.members', 'notify']
+export const CAPABILITIES: Capability[] = ['storage.household', 'storage.user', 'household.members', 'notify', 'devices', 'devices.control']
 export const ALLOWED_EXTENSIONS = ['.html', '.js', '.mjs', '.css', '.json', '.svg', '.png', '.webp', '.woff2', '.md']
 export const MAX_FILES = 500
 export const MAX_UNPACKED_BYTES = 25 * 1024 * 1024
@@ -116,6 +125,7 @@ export function checkManifest(json: unknown): string[] {
       if (!['Household', 'Wall', 'Account'].includes(place))
         problems.push(`widgets['${widget.id}'].places: '${place}' must be Household, Wall or Account.`)
     htmlPath(widget.entry, `widgets['${widget.id}'].entry`, false, problems)
+    checkDevices(widget, m, problems)
   }
   for (const c of m.capabilities ?? [])
     if (!CAPABILITIES.includes(c)) problems.push(`capabilities: '${c}' is not a capability the bridge offers.`)
@@ -130,8 +140,34 @@ export function checkManifest(json: unknown): string[] {
     if (!roles.includes(p.minRole))
       problems.push(`permissions['${p.id}'].minRole must be Guest, Member, Admin or Owner.`)
   }
+  if (m.capabilities?.includes('devices.control') && !m.capabilities.includes('devices'))
+    problems.push('capabilities: devices.control needs devices as well.')
   checkTools(m, problems)
   return problems
+}
+
+const capabilityName = /^[a-z][a-z0-9_]{0,40}(\/[a-z0-9][a-z0-9._-]{0,63})?$/
+const roleName = /^[a-z][a-z0-9_]{0,40}$/
+const modelName = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$/
+
+function checkDevices(widget: NonNullable<HomeMixManifest['widgets']>[number], m: Partial<HomeMixManifest>, problems: string[]) {
+  if (widget.devices === undefined) return
+  const at = `widgets['${widget.id}'].devices`
+  if (!Array.isArray(widget.devices)) return void problems.push(`${at} must be an array.`)
+  if (widget.devices.length && !m.capabilities?.includes('devices'))
+    problems.push('widgets: matching devices needs the capability devices.')
+  if (widget.devices.length > 8) problems.push(`${at}: at most 8 entries.`)
+  for (const rule of widget.devices) {
+    if (rule.capability !== undefined && !(typeof rule.capability === 'string' && capabilityName.test(rule.capability)))
+      problems.push(`${at}: capability must be a capability name such as weather or qwerex56/akwarium.`)
+    if (rule.role !== undefined && !(typeof rule.role === 'string' && roleName.test(rule.role)))
+      problems.push(`${at}: role must be a role such as weather_station.`)
+    if (rule.model !== undefined && !(typeof rule.model === 'string' && modelName.test(rule.model)))
+      problems.push(`${at}: model must be a model such as qwerex56/fotel-v1.`)
+    if (rule.pick !== undefined && rule.pick !== 'manual') problems.push(`${at}: pick may only be "manual".`)
+    if (rule.capability === undefined && rule.role === undefined && rule.model === undefined)
+      problems.push(`${at}: every entry needs a capability, a role or a model.`)
+  }
 }
 
 function checkTools(m: Partial<HomeMixManifest>, problems: string[]) {

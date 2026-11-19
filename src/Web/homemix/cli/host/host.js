@@ -173,6 +173,14 @@ const handlers = {
     setTimeout(() => toast.remove(), 4000)
     return null
   },
+  // Devices are not simulated here: an empty household.
+  'devices.list': () => ({ devices: [], selected: null, needsPick: false }),
+  'devices.state': () => {
+    throw new HomeMixError('homemix.device_not_found', 'The dev host has no devices.')
+  },
+  'devices.set': () => {
+    throw new HomeMixError('homemix.device_not_found', 'The dev host has no devices.')
+  },
   // HomeApps sends it through Notifications; here it is only shown, with whom it would reach.
   'notify.push': ({ title, body, userIds }) => {
     const everyone = state().target === 'Household' ? members.map((m) => m.id) : [me.id]

@@ -3,7 +3,7 @@
 
 export const PROTOCOL = 1
 
-export type Capability = 'storage.household' | 'storage.user' | 'household.members' | 'notify'
+export type Capability = 'storage.household' | 'storage.user' | 'household.members' | 'notify' | 'devices' | 'devices.control'
 export type Scope = 'household' | 'user'
 export type HouseholdRole = 'Guest' | 'Member' | 'Admin' | 'Owner'
 export type WidgetPlace = 'Household' | 'Wall' | 'Account'
@@ -65,6 +65,45 @@ export interface Push {
   tag?: string
 }
 
+/** A household device as the bridge shows it (capability devices); state is its last state when asked for. */
+export interface Device {
+  id: string
+  name: string
+  slug: string
+  purpose: string
+  online: boolean
+  model: string | null
+  roles: string[]
+  capabilities: string[]
+  state?: DeviceState | null
+}
+
+export interface DeviceState {
+  deviceId: string
+  /** Control and sensor names with their last values. */
+  values: Record<string, unknown>
+  valuesAt: string | null
+  online: boolean
+  silent: boolean
+  lowBattery: boolean
+}
+
+/** Devices matched for a widget: best first, the one to show, and whether an admin still has to pick one. */
+export interface DeviceList {
+  devices: Device[]
+  selected: string | null
+  needsPick: boolean
+}
+
+export interface DeviceFilter {
+  capability?: string
+  role?: string
+  model?: string
+  /** Match with the manifest's devices rules of this widget id (a widget that declares `devices`). */
+  widget?: string
+  state?: boolean
+}
+
 /** Every method and its params and result. */
 export interface Methods {
   context: { params: undefined; result: HomeMixContext }
@@ -82,6 +121,9 @@ export interface Methods {
   members: { params: undefined; result: Member[] }
   toast: { params: Toast; result: null }
   'notify.push': { params: Push; result: { recipients: number } }
+  'devices.list': { params: DeviceFilter | undefined; result: DeviceList }
+  'devices.state': { params: { id: string }; result: DeviceState }
+  'devices.set': { params: { id: string; control: string; value: unknown }; result: null }
 }
 
 export type Method = keyof Methods
@@ -95,6 +137,8 @@ export interface Events {
   /** The installation was updated, blocked or removed; on an update or a block the host reloads or closes the frame. */
   'installation.changed': { change: 'updated' | 'removed' | 'blocked' | 'unblocked' | 'widgets'; version: string }
   /** A push() of this add-on reached the person while HomeApps is open (shown as a toast too). */
+  /** A device of the household reported new values (capability devices); delivered by the host (H-9 wires the Devices stream). */
+  'device.state': { deviceId: string; values: Record<string, unknown>; at: string }
   notification: { title: string; body: string | null; path: string | null; tag: string | null }
 }
 
@@ -138,6 +182,9 @@ export const METHODS: readonly Method[] = [
   'members',
   'toast',
   'notify.push',
+  'devices.list',
+  'devices.state',
+  'devices.set',
 ]
 
 /** The capability a call needs, or null when every add-on may make it. */
@@ -147,6 +194,8 @@ export function requiredCapability(method: Method, params: unknown): Capability 
   }
   if (method === 'members') return 'household.members'
   if (method === 'toast' || method === 'notify.push') return 'notify'
+  if (method === 'devices.set') return 'devices.control'
+  if (method.startsWith('devices.')) return 'devices'
   return null
 }
 

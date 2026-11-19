@@ -246,6 +246,8 @@ Events (`homemix.on(name, listener)`): `theme`, `data.changed`, and from HomeMix
 | `storage.user` | the same with `scope: 'user'` | the person's private data inside a household installation |
 | `household.members` | `members()` | names and avatars only |
 | `notify` | `toast(...)`; `push({ title, body, userIds?, path?, tag? })` through Notifications (A5) | see below |
+| `devices` | `devices.list(filter?)`, `devices.state(id)`, `devices.onState(cb)` | the installation's household devices, read with the person's own rights (guests read); household installations only (H-4a) |
+| `devices.control` | `devices.set(id, control, value)` | members and above (Devices refuses guests); needs `devices` too; only devices of the installation's household |
 
 **Never**, whatever the consent: tokens, cookies or sessions; emails or account data beyond names and avatars; server
 roles or the list of accounts; data of other households or other installations, the same add-on elsewhere included;

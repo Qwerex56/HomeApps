@@ -168,6 +168,13 @@ export function useMixHost(frame: Ref<HTMLIFrameElement | undefined>, options: (
       })
       return null
     },
+    'devices.list': (filter) => homemixApi.devices.list(options().installation.id, { ...filter }),
+    'devices.state': ({ id }) => homemixApi.devices.state(options().installation.id, id),
+    async 'devices.set'({ id, control, value }) {
+      await homemixApi.devices.set(options().installation.id, id, control, value)
+      return null
+    },
+    // TODO(H-9): 'device.state' events (Devices SSE, GET /devices/households/{id}/stream), opened only when `devices` is granted.
     'notify.push': (notification) => homemixApi.notify(options().installation.id, notification),
   }
 

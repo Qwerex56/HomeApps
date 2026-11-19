@@ -4,6 +4,9 @@ import {
   isEvent,
   isResponse,
   type BridgeError,
+  type DeviceFilter,
+  type DeviceList,
+  type DeviceState,
   type Document,
   type EventName,
   type Events,
@@ -48,6 +51,16 @@ export interface HomeMix {
   toast(message: string, severity?: Toast['severity']): Promise<void>
   /** A notification to people's devices (capability notify); how many it was sent to. */
   push(notification: Push): Promise<number>
+  /** Household devices (capabilities devices and devices.control); see docs/homemix-authoring.md, "Devices". */
+  devices: {
+    /** The household's devices; with filter.widget those the manifest matches, best first. */
+    list(filter?: DeviceFilter): Promise<DeviceList>
+    state(id: string): Promise<DeviceState>
+    /** Needs devices.control; members and above, Devices answers when the device did. */
+    set(id: string, control: string, value: unknown): Promise<void>
+    /** New values of any device of the household as they arrive; returns the unsubscribe function. */
+    onState(listener: (data: Events['device.state']) => void): () => void
+  }
   on<E extends EventName>(event: E, listener: (data: Events[E]) => void): () => void
 }
 
@@ -97,6 +110,13 @@ export function connect(options: ConnectOptions = {}): HomeMix {
     })
   }
 
+  function listen<E extends EventName>(event: E, listener: (data: Events[E]) => void) {
+    const set = listeners.get(event) ?? new Set()
+    listeners.set(event, set)
+    set.add(listener as (data: unknown) => void)
+    return () => set.delete(listener as (data: unknown) => void)
+  }
+
   return {
     context: () => call('context'),
     can: (permission) => call('can', { permission }),
@@ -118,17 +138,20 @@ export function connect(options: ConnectOptions = {}): HomeMix {
         await call('data.delete', { collection, key, ...o })
       },
     },
+    devices: {
+      list: (filter) => call('devices.list', filter),
+      state: (id) => call('devices.state', { id }),
+      set: async (id, control, value) => {
+        await call('devices.set', { id, control, value })
+      },
+      onState: (listener) => listen('device.state', listener),
+    },
     members: () => call('members'),
     toast: async (message, severity) => {
       await call('toast', { message, severity })
     },
     push: async (notification) => (await call('notify.push', notification)).recipients,
-    on(event, listener) {
-      const set = listeners.get(event) ?? new Set()
-      listeners.set(event, set)
-      set.add(listener as (data: unknown) => void)
-      return () => set.delete(listener as (data: unknown) => void)
-    },
+    on: listen,
   }
 }
 
