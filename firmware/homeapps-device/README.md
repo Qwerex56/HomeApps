@@ -21,6 +21,14 @@ serial log, handed to `on_setup_password` for a display; Kconfig can override it
 network, password, HomeApps address, pairing code. The portal closes on success or after 10 minutes. With
 `CONFIG_HOMEAPPS_RESET_BUTTON_GPIO` set: hold 2 s to reopen setup, hold 5 s for a factory reset (erases secret and Wi-Fi).
 
+## Secrets at rest
+
+The device secret and the Wi-Fi password live in NVS. The examples ship `sdkconfig.defaults` with NVS encryption
+(`CONFIG_NVS_ENCRYPTION`, key protected by HMAC with eFuse key block 0). **Burning the eFuse key block is irreversible**:
+the key block cannot be reused or changed afterwards, so try it on a spare board first. Flash encryption and secure boot
+are documentation only here: this component neither enables nor needs them, but they are the way to protect a device
+that can be taken apart.
+
 ## TLS
 
 Default: the Mozilla bundle (`esp_crt_bundle`). Kconfig alternatives: a pinned CA (`pinned_ca.pem`) or trust on first
@@ -32,6 +40,6 @@ against the serial log). Plain http only with `HOMEAPPS_INSECURE_HTTP`: the pair
 - A fresh token for every connection and every `/report`; `devices.device_unpaired` or 3 `invalid_credentials` in a row
   send the device back to setup; 429/5xx back off (honouring `Retry-After`).
 - Events carry `at` only after SNTP; before that the server uses its receive time.
-- `sleepy: true`: no link; `homeapps_send_*` queue frames and `homeapps_flush()` posts them.
+- `sleepy: true`: no link; `homeapps_start` gives up (`ESP_ERR_TIMEOUT`) when Wi-Fi or pairing does not work, then go back to deep sleep; `homeapps_send_*` queue frames and `homeapps_flush()` posts them.
 - Descriptor `actions` are declared but this version does not deliver them to a callback yet.
 - Not build-tested locally (no ESP-IDF): CI builds the examples (`.github/workflows/firmware.yml`).

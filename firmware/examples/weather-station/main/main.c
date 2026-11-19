@@ -18,6 +18,7 @@ static const homeapps_descriptor_t desc = {
 void app_main(void)
 {
     homeapps_config_t cfg = { .descriptor = &desc };
+    /* On failure (ESP_ERR_TIMEOUT: no Wi-Fi or server) skip reporting and sleep anyway; try again at the next wake. */
     if (homeapps_start(&cfg) == ESP_OK) {
         float t = 21.5f, h = 48.0f; int battery = 80; /* replace with real sensor readings */
         char values[128];

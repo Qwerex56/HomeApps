@@ -15,6 +15,8 @@
 #include "esp_crt_bundle.h"
 #include "esp_tls.h"
 #include "mbedtls/sha256.h"
+#include "mbedtls/ssl.h"
+#include "mbedtls/x509_crt.h"
 #include "nvs_flash.h"
 #include "nvs.h"
 #include "driver/gpio.h"
@@ -38,7 +40,8 @@ static struct {
     homeapps_store_t store;
     EventGroupHandle_t events;
     SemaphoreHandle_t lock;
-    char token[1024];
+    char token[2048];
+    SemaphoreHandle_t ws_lock;
     int64_t token_expiry_us;
     int bad_logins;
     esp_websocket_client_handle_t ws;
@@ -86,49 +89,41 @@ static esp_err_t http_event(esp_http_client_event_t *e)
 }
 
 #ifdef CONFIG_HOMEAPPS_TLS_TOFU
-static void host_port(const char *url, char *host, size_t cap, int *port)
+/* Trust on first use, bound to the real connection: mbedtls calls this for every certificate of the handshake. We pin the
+ * SHA-256 of the leaf (depth 0) on the first connection and refuse any other one afterwards. */
+static int tofu_verify(void *ctx, mbedtls_x509_crt *crt, int depth, uint32_t *flags)
 {
-    const char *p = strstr(url, "://");
-    p = p ? p + 3 : url;
-    size_t n = strcspn(p, ":/");
-    if (n >= cap) n = cap - 1;
-    memcpy(host, p, n); host[n] = 0;
-    p += n;
-    *port = (*p == ':') ? atoi(p + 1) : 443;
+    (void)ctx;
+    if (depth != 0) { *flags = 0; return 0; }
+    unsigned char h[32];
+    mbedtls_sha256(crt->raw.p, crt->raw.len, h, 0);
+    char hex[72];
+    for (int i = 0; i < 32; i++) sprintf(hex + i * 2, "%02X", h[i]);
+    if (!S.store.fingerprint[0]) {
+        ESP_LOGW(TAG, "Pinning server certificate SHA-256 %s", hex);
+        strlcpy(S.store.fingerprint, hex, sizeof(S.store.fingerprint));
+        homeapps_store_save(&S.store);
+    } else {
+        char want[72]; size_t j = 0;  /* the form accepts colons and lowercase */
+        for (const char *c = S.store.fingerprint; *c && j < 64; c++) if (*c != ':') want[j++] = (char)toupper((unsigned char)*c);
+        want[j] = 0;
+        if (strcmp(want, hex)) { ESP_LOGE(TAG, "Server certificate changed (%s): refusing", hex); return MBEDTLS_ERR_X509_CERT_VERIFY_FAILED; }
+    }
+    *flags = 0;   /* the pin replaces chain and name checks */
+    return 0;
 }
 
-/* Trust on first use: pin the SHA-256 of the server certificate the first time, refuse any other afterwards. */
-static bool tofu_ok(void)
+/* Used as crt_bundle_attach by esp_http_client and esp_websocket_client. mbedtls refuses VERIFY_REQUIRED without any CA
+ * chain, so an empty (non-NULL) one is set; the callback above makes the decision. */
+static esp_err_t tofu_attach(void *conf)
 {
-    char host[96]; int port;
-    host_port(S.store.base_url, host, sizeof(host), &port);
-    esp_tls_cfg_t cfg = { .skip_common_name = true, .timeout_ms = 10000 };
-    esp_tls_t *tls = esp_tls_init();
-    if (!tls) return false;
-    bool ok = false;
-    if (esp_tls_conn_new_sync(host, strlen(host), port, &cfg, tls) == 1) {
-        const mbedtls_x509_crt *crt = mbedtls_ssl_get_peer_cert(esp_tls_get_ssl_context(tls));
-        if (crt) {
-            unsigned char h[32];
-            mbedtls_sha256(crt->raw.p, crt->raw.len, h, 0);
-            char hex[72];
-            for (int i = 0; i < 32; i++) sprintf(hex + i * 2, "%02X", h[i]);
-            if (!S.store.fingerprint[0]) {
-                ESP_LOGW(TAG, "Pinning server certificate SHA-256 %s", hex);
-                strlcpy(S.store.fingerprint, hex, sizeof(S.store.fingerprint));
-                homeapps_store_save(&S.store);
-                ok = true;
-            } else {
-                char want[72]; size_t j = 0;  /* the form accepts colons and lowercase */
-                for (const char *c = S.store.fingerprint; *c && j < 64; c++) if (*c != ':') want[j++] = (char)toupper((unsigned char)*c);
-                want[j] = 0;
-                ok = !strcmp(want, hex);
-                if (!ok) ESP_LOGE(TAG, "Server certificate changed (%s): refusing", hex);
-            }
-        }
-    }
-    esp_tls_conn_destroy(tls);
-    return ok;
+    static mbedtls_x509_crt empty;
+    mbedtls_x509_crt_init(&empty);
+    mbedtls_ssl_config *c = conf;
+    mbedtls_ssl_conf_authmode(c, MBEDTLS_SSL_VERIFY_REQUIRED);
+    mbedtls_ssl_conf_ca_chain(c, &empty, NULL);
+    mbedtls_ssl_conf_verify(c, tofu_verify, NULL);
+    return ESP_OK;
 }
 #endif
 
@@ -139,9 +134,6 @@ static int http_json(const char *path, const char *bearer, const char *body, htt
     snprintf(url, sizeof(url), "%s%s", S.store.base_url, path);
     bool https = !strncmp(url, "https://", 8);
     if (!https && !HOMEAPPS_INSECURE) { ESP_LOGE(TAG, "Plain http is off (Kconfig HOMEAPPS_INSECURE_HTTP)"); return -1; }
-#ifdef CONFIG_HOMEAPPS_TLS_TOFU
-    if (https && !tofu_ok()) return -1;
-#endif
     esp_http_client_config_t c = { .url = url, .method = HTTP_METHOD_POST, .event_handler = http_event, .user_data = out, .timeout_ms = 15000 };
 #if defined(CONFIG_HOMEAPPS_TLS_BUNDLE)
     c.crt_bundle_attach = esp_crt_bundle_attach;
@@ -149,12 +141,13 @@ static int http_json(const char *path, const char *bearer, const char *body, htt
     c.cert_pem = pinned_ca_pem_start;
 #else
     c.skip_cert_common_name_check = true;
+    c.crt_bundle_attach = tofu_attach;
 #endif
     esp_http_client_handle_t h = esp_http_client_init(&c);
     if (!h) return -1;
     esp_http_client_set_header(h, "Content-Type", "application/json");
     if (bearer) {
-        char auth[1100];
+        char auth[2100];
         snprintf(auth, sizeof(auth), "Bearer %s", bearer);
         esp_http_client_set_header(h, "Authorization", auth);
     }
@@ -170,7 +163,7 @@ static void out_init(http_out_t *o, size_t cap)
 }
 
 /* Pairing: sends the code and the descriptor, keeps the secret. Retries on 429/5xx; a bad code goes back to setup. */
-static esp_err_t pair(void)
+static esp_err_t pair(int max_attempts)
 {
     char *desc = homeapps_descriptor_to_json(S.cfg.descriptor);
     cJSON *req = cJSON_CreateObject();
@@ -179,7 +172,7 @@ static esp_err_t pair(void)
     free(desc);
     char *body = cJSON_PrintUnformatted(req);
     cJSON_Delete(req);
-    for (int attempt = 0;; attempt++) {
+    for (int attempt = 0; max_attempts == 0 || attempt < max_attempts; attempt++) {
         http_out_t out; out_init(&out, 2048);
         int status = http_json("/devices/pair", NULL, body, &out);
         if (status == 200) {
@@ -207,14 +200,16 @@ static esp_err_t pair(void)
         ESP_LOGW(TAG, "Pairing failed (%d), retry in %d ms", status, wait);
         vTaskDelay(pdMS_TO_TICKS(wait));
     }
+    free(body);
+    return ESP_ERR_TIMEOUT;
 }
 
 /* A fresh token for every connection and every /report. Returns ESP_OK with S.token filled. */
-static esp_err_t fetch_token(void)
+static esp_err_t fetch_token(int max_attempts)
 {
     char body[200];
     snprintf(body, sizeof(body), "{\"deviceId\":\"%s\",\"secret\":\"%s\"}", S.store.device_id, S.store.secret);
-    for (int attempt = 0;; attempt++) {
+    for (int attempt = 0; max_attempts == 0 || attempt < max_attempts; attempt++) {
         http_out_t out; out_init(&out, 2048);
         int status = http_json("/auth/devices/token", NULL, body, &out);
         if (status == 200) {
@@ -223,7 +218,10 @@ static esp_err_t fetch_token(void)
             esp_err_t e = ESP_FAIL;
             if (cJSON_IsString(t) && strlen(t->valuestring) < sizeof(S.token)) { strcpy(S.token, t->valuestring); e = ESP_OK; S.bad_logins = 0; }
             cJSON_Delete(r); free(out.body);
-            return e;
+            if (e == ESP_OK) return e;
+            ESP_LOGW(TAG, "Token answer malformed or too long");   /* back off below instead of a hot loop */
+            vTaskDelay(pdMS_TO_TICKS(backoff_ms(attempt, 0)));
+            continue;
         }
         if (status == 401) {
             if (out.body && strstr(out.body, "device_unpaired")) { free(out.body); to_setup_and_restart("devices.device_unpaired"); }
@@ -234,6 +232,7 @@ static esp_err_t fetch_token(void)
         ESP_LOGW(TAG, "Token request failed (%d), retry in %d ms", status, wait);
         vTaskDelay(pdMS_TO_TICKS(wait));
     }
+    return ESP_ERR_TIMEOUT;
 }
 
 /* ---------- frames ---------- */
@@ -243,6 +242,16 @@ static bool rate_ok(void)
     int64_t now = esp_timer_get_time();
     if (now - S.window_start_us > 60LL * 1000000) { S.window_start_us = now; S.frames_in_window = 0; }
     return S.frames_in_window++ < HOMEAPPS_MAX_FRAMES_PER_MINUTE;
+}
+
+/* All sends go through ws_lock: link_task destroys the client under the same lock, so a send never touches a dead handle. */
+static int ws_send(const char *text)
+{
+    int n = -1;
+    xSemaphoreTake(S.ws_lock, portMAX_DELAY);
+    if (S.ws) n = esp_websocket_client_send_text(S.ws, text, (int)strlen(text), pdMS_TO_TICKS(5000));
+    xSemaphoreGive(S.ws_lock);
+    return n;
 }
 
 static bool link_up(void) { return !S.cfg.descriptor->sleepy && (xEventGroupGetBits(S.events) & READY_BIT) && S.ws; }
@@ -262,7 +271,7 @@ static esp_err_t send_frame(cJSON *frame)
     if (!s) return ESP_ERR_NO_MEM;
     if (link_up()) {
         if (!rate_ok()) { free(s); return ESP_ERR_NOT_ALLOWED; } /* above 120/min the server would drop it */
-        int n = esp_websocket_client_send_text(S.ws, s, (int)strlen(s), pdMS_TO_TICKS(5000));
+        int n = ws_send(s);
         free(s);
         return n < 0 ? ESP_FAIL : ESP_OK;
     }
@@ -327,7 +336,7 @@ esp_err_t homeapps_flush(void)
 
     esp_err_t result = ESP_FAIL;
     for (int attempt = 0; attempt < 4; attempt++) {
-        if (fetch_token() != ESP_OK) break;
+        if (fetch_token(3) != ESP_OK) break;
         http_out_t out; out_init(&out, 4096);
         int status = http_json("/devices/report", S.token, body, &out);
         if (status == 200) {
@@ -362,7 +371,7 @@ static void drain_queue(void)
 {
     xSemaphoreTake(S.lock, portMAX_DELAY);
     while (S.queued > 0 && S.ws && rate_ok()) {
-        esp_websocket_client_send_text(S.ws, S.queue[0], (int)strlen(S.queue[0]), pdMS_TO_TICKS(5000));
+        ws_send(S.queue[0]);
         free(S.queue[0]);
         memmove(S.queue, S.queue + 1, sizeof(S.queue[0]) * (--S.queued));
     }
@@ -391,7 +400,7 @@ static void handle_message(const char *text)
         cJSON_AddBoolToObject(r, "ok", e == ESP_OK);
         if (e != ESP_OK) cJSON_AddStringToObject(r, "text", esp_err_to_name(e));
         char *s = cJSON_PrintUnformatted(r);
-        esp_websocket_client_send_text(S.ws, s, (int)strlen(s), pdMS_TO_TICKS(5000));
+        ws_send(s);
         free(s); cJSON_Delete(r);
     } else if (type && !strcmp(type, "error")) {
         ESP_LOGW(TAG, "Server: %s", text);
@@ -407,7 +416,7 @@ static void ws_event(void *arg, esp_event_base_t base, int32_t id, void *data)
         size_t cap = strlen(desc) + 256;
         char *hello = malloc(cap);
         snprintf(hello, cap, "{\"type\":\"hello\",\"device\":\"%s\",\"kind\":\"satellite\",\"descriptor\":%s}", S.cfg.descriptor->model, desc);
-        esp_websocket_client_send_text(S.ws, hello, (int)strlen(hello), pdMS_TO_TICKS(5000)); /* first frame within 10 s */
+        ws_send(hello); /* first frame within 10 s */
         free(desc); free(hello);
     } else if (id == WEBSOCKET_EVENT_DATA && (e->op_code == 0x1 || e->op_code == 0x0)) {
         if (e->payload_offset == 0) { free(rx); rx = malloc(e->payload_len + 1); rx_len = 0; }
@@ -428,8 +437,8 @@ static void link_task(void *arg)
     int heartbeat = S.cfg.descriptor->heartbeat_s ? S.cfg.descriptor->heartbeat_s : 60;
     for (;;) {
         xEventGroupWaitBits(S.events, GOT_IP_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
-        if (fetch_token() != ESP_OK) continue;           /* a new token for every connection */
-        char url[200], headers[1100];
+        if (fetch_token(0) != ESP_OK) continue;           /* a new token for every connection; the link task never gives up */
+        char url[200], headers[2100];
         {
             const char *rest = strstr(S.store.base_url, "://");
             rest = rest ? rest + 3 : S.store.base_url;
@@ -443,6 +452,7 @@ static void link_task(void *arg)
         c.cert_pem = pinned_ca_pem_start;
 #else
         c.skip_cert_common_name_check = true;
+        c.crt_bundle_attach = tofu_attach;
 #endif
         xEventGroupClearBits(S.events, LINK_DOWN_BIT);
         if (strncmp(url, "wss", 3) && !HOMEAPPS_INSECURE) {
@@ -450,9 +460,6 @@ static void link_task(void *arg)
             vTaskDelay(pdMS_TO_TICKS(backoff_ms(attempt++, 0)));
             continue;
         }
-#ifdef CONFIG_HOMEAPPS_TLS_TOFU
-        if (!strncmp(url, "wss", 3) && !tofu_ok()) { vTaskDelay(pdMS_TO_TICKS(backoff_ms(attempt++, 0))); continue; }
-#endif
         S.ws = esp_websocket_client_init(&c);
         esp_websocket_register_events(S.ws, WEBSOCKET_EVENT_ANY, ws_event, NULL);
         esp_websocket_client_start(S.ws);
@@ -466,8 +473,11 @@ static void link_task(void *arg)
             }
         }
         attempt = (xEventGroupGetBits(S.events) & READY_BIT) ? 0 : attempt + 1;
-        esp_websocket_client_destroy(S.ws);
+        xSemaphoreTake(S.ws_lock, portMAX_DELAY);
+        esp_websocket_client_handle_t dead = S.ws;
         S.ws = NULL;
+        xSemaphoreGive(S.ws_lock);
+        esp_websocket_client_destroy(dead);
         vTaskDelay(pdMS_TO_TICKS(backoff_ms(attempt, 0)));
     }
 }
@@ -540,6 +550,7 @@ esp_err_t homeapps_start(const homeapps_config_t *config)
     S.cfg = *config;
     S.events = xEventGroupCreate();
     S.lock = xSemaphoreCreateMutex();
+    S.ws_lock = xSemaphoreCreateMutex();
     esp_err_t e = nvs_flash_init();
     if (e == ESP_ERR_NVS_NO_FREE_PAGES || e == ESP_ERR_NVS_NEW_VERSION_FOUND) { nvs_flash_erase(); nvs_flash_init(); }
     esp_netif_init();
@@ -551,7 +562,7 @@ esp_err_t homeapps_start(const homeapps_config_t *config)
     if (force || !S.store.ssid[0] || (!S.store.secret[0] && !S.store.code[0])) {
         wifi_init_config_t wic = WIFI_INIT_CONFIG_DEFAULT();
         esp_wifi_init(&wic);
-        if (homeapps_setup_run(S.store.fingerprint, config->on_setup_password, config->user) != ESP_OK) { ESP_LOGW(TAG, "Setup timed out"); esp_restart(); }
+        if (homeapps_setup_run(&S.store, config->on_setup_password, config->user) != ESP_OK) { ESP_LOGW(TAG, "Setup timed out"); esp_restart(); }
         esp_wifi_deinit();
         esp_restart(); /* clean start with the saved configuration */
     }
@@ -559,14 +570,18 @@ esp_err_t homeapps_start(const homeapps_config_t *config)
     wifi_connect();
     if (!(xEventGroupWaitBits(S.events, GOT_IP_BIT, pdFALSE, pdTRUE, pdMS_TO_TICKS(30000)) & GOT_IP_BIT) && !S.store.secret[0])
         to_setup_and_restart("Wi-Fi did not connect (wrong password or a 5 GHz network)");
-    xEventGroupWaitBits(S.events, GOT_IP_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
+    if (config->descriptor->sleepy) {   /* a battery device gives up: the caller sleeps and tries at the next wake */
+        if (!(xEventGroupGetBits(S.events) & GOT_IP_BIT)) return ESP_ERR_TIMEOUT;
+    } else {
+        xEventGroupWaitBits(S.events, GOT_IP_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
+    }
 
     esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
     esp_sntp_setservername(0, CONFIG_HOMEAPPS_SNTP_SERVER);
     esp_sntp_init();
     for (int i = 0; i < 100 && !clock_synced(); i++) vTaskDelay(pdMS_TO_TICKS(100)); /* events without "at" wait for SNTP */
 
-    if (!S.store.secret[0] && pair() != ESP_OK) return ESP_FAIL;
+    if (!S.store.secret[0] && pair(config->descriptor->sleepy ? 4 : 0) != ESP_OK) return ESP_ERR_TIMEOUT;
     S.started = true;
     if (!config->descriptor->sleepy) xTaskCreate(link_task, "ha_link", 8192, NULL, 5, NULL);
     return ESP_OK;

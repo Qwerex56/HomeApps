@@ -6,6 +6,7 @@
 #include "esp_wifi.h"
 #include "esp_netif.h"
 #include "esp_random.h"
+#include "bootloader_random.h"
 #include "esp_http_server.h"
 #include "esp_timer.h"
 #include "nvs.h"
@@ -15,19 +16,31 @@
 
 static const char *TAG = "homeapps_setup";
 
-static const char PAGE[] =
+static const char PAGE_HEAD[] =
     "<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>"
     "<title>HomeApps</title><style>body{font-family:sans-serif;max-width:26rem;margin:2rem auto;padding:0 1rem}"
     "input,button{width:100%;padding:.6rem;margin:.3rem 0 1rem;box-sizing:border-box}</style></head><body>"
-    "<h1>HomeApps</h1><form method=post action=/save>"
-    "<label>Wi-Fi network (2.4 GHz only)</label><input name=ssid required maxlength=32>"
-    "<label>Wi-Fi password</label><input name=pass type=password maxlength=64>"
-    "<label>HomeApps address</label><input name=url placeholder='https://home.example.com' required maxlength=127>"
-    "<label>Pairing code</label><input name=code required maxlength=8 autocapitalize=characters>"
-    "<label>Server certificate fingerprint (only for trust on first use, optional)</label><input name=fp maxlength=95>"
-    "<button type=submit>Save</button></form></body></html>";
+    "<h1>HomeApps</h1><form method=post action=/save>";
 
 typedef struct { SemaphoreHandle_t done; homeapps_store_t cfg; bool saved; } portal_t;
+
+/* Sends an HTML-escaped value (it lands in an attribute). */
+static void send_escaped(httpd_req_t *r, const char *v)
+{
+    for (; *v; v++) {
+        const char *rep = *v == '&' ? "&amp;" : *v == '<' ? "&lt;" : *v == '>' ? "&gt;" : *v == '\'' ? "&#39;" : *v == '"' ? "&quot;" : NULL;
+        if (rep) httpd_resp_sendstr_chunk(r, rep);
+        else httpd_resp_send_chunk(r, v, 1);
+    }
+}
+
+static void send_input(httpd_req_t *r, const char *label, const char *name, const char *value, const char *extra)
+{
+    httpd_resp_sendstr_chunk(r, "<label>"); httpd_resp_sendstr_chunk(r, label);
+    httpd_resp_sendstr_chunk(r, "</label><input name="); httpd_resp_sendstr_chunk(r, name);
+    httpd_resp_sendstr_chunk(r, " value='"); send_escaped(r, value);
+    httpd_resp_sendstr_chunk(r, "' "); httpd_resp_sendstr_chunk(r, extra); httpd_resp_sendstr_chunk(r, ">");
+}
 
 static void url_decode(char *s)
 {
@@ -64,8 +77,18 @@ static void field(const char *body, const char *key, char *out, size_t cap)
 
 static esp_err_t get_page(httpd_req_t *r)
 {
+    const portal_t *p = r->user_ctx;
+    const homeapps_store_t *c = &p->cfg;   /* passwords are never sent back */
     httpd_resp_set_type(r, "text/html");
-    return httpd_resp_send(r, PAGE, HTTPD_RESP_USE_STRLEN);
+    httpd_resp_sendstr_chunk(r, PAGE_HEAD);
+    send_input(r, "Wi-Fi network (2.4 GHz only)", "ssid", c->ssid, "required maxlength=32");
+    send_input(r, c->wifi_password[0] ? "Wi-Fi password (empty keeps the saved one)" : "Wi-Fi password", "pass", "", "type=password maxlength=64");
+    send_input(r, "HomeApps address", "url", c->base_url, "placeholder='https://home.example.com' required maxlength=127");
+    send_input(r, c->secret[0] ? "New pairing code (empty keeps this device paired)" : "Pairing code", "code", "",
+               c->secret[0] ? "maxlength=8 autocapitalize=characters" : "required maxlength=8 autocapitalize=characters");
+    send_input(r, "Server certificate fingerprint (only for trust on first use; empty = pin on first connection)", "fp", c->fingerprint, "maxlength=95");
+    httpd_resp_sendstr_chunk(r, "<button type=submit>Save</button></form></body></html>");
+    return httpd_resp_sendstr_chunk(r, NULL);
 }
 
 static esp_err_t post_save(httpd_req_t *r)
@@ -76,16 +99,23 @@ static esp_err_t post_save(httpd_req_t *r)
     int got = httpd_req_recv(r, body, r->content_len);
     if (got <= 0) return ESP_FAIL;
     body[got] = 0;
-    homeapps_store_t *c = &p->cfg;
+    homeapps_store_t *c = &p->cfg;   /* starts as the saved store: secret, device id and pin survive unless replaced */
+    char pass[65], code[16];
     field(body, "ssid", c->ssid, sizeof(c->ssid));
-    field(body, "pass", c->wifi_password, sizeof(c->wifi_password));
+    field(body, "pass", pass, sizeof(pass));
+    if (pass[0]) strlcpy(c->wifi_password, pass, sizeof(c->wifi_password));     /* empty keeps the saved password */
     field(body, "url", c->base_url, sizeof(c->base_url));
-    field(body, "code", c->code, sizeof(c->code));
+    field(body, "code", code, sizeof(code));
     field(body, "fp", c->fingerprint, sizeof(c->fingerprint));
-    for (char *q = c->code; *q; q++) *q = (char)toupper((unsigned char)*q);
+    for (char *q = code; *q; q++) *q = (char)toupper((unsigned char)*q);
     size_t ul = strlen(c->base_url);
     while (ul && c->base_url[ul - 1] == '/') c->base_url[--ul] = 0;
-    if (!c->ssid[0] || !c->base_url[0] || !c->code[0]) { httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "Missing field"); return ESP_FAIL; }
+    if (code[0]) {   /* a new code means a new pairing: forget the old identity */
+        strlcpy(c->code, code, sizeof(c->code));
+        c->device_id[0] = 0;
+        c->secret[0] = 0;
+    }
+    if (!c->ssid[0] || !c->base_url[0] || (!c->code[0] && !c->secret[0])) { httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "Missing field"); return ESP_FAIL; }
     p->saved = true;
     httpd_resp_set_type(r, "text/html");
     httpd_resp_sendstr(r, "<!doctype html><meta charset=utf-8><p>Saved. The device connects now; this network closes.</p>");
@@ -113,17 +143,19 @@ static void ap_password(char *out, size_t cap)
     nvs_close(h);
 }
 
-esp_err_t homeapps_setup_run(const char *fingerprint_hint, void (*on_password)(const char *, const char *, void *), void *user)
+esp_err_t homeapps_setup_run(const homeapps_store_t *current, void (*on_password)(const char *, const char *, void *), void *user)
 {
-    (void)fingerprint_hint;
     static portal_t portal;
     memset(&portal, 0, sizeof(portal));
+    portal.cfg = *current;
     portal.done = xSemaphoreCreateBinary();
 
     char suffix[8], ssid[32], pw[65];
+    bootloader_random_enable();   /* esp_random() is only random with an entropy source: RF is still off here */
     snprintf(suffix, sizeof(suffix), "%04X", (unsigned)(esp_random() & 0xFFFF));
     snprintf(ssid, sizeof(ssid), "HomeApps-%s", suffix);
     ap_password(pw, sizeof(pw));
+    bootloader_random_disable();
 
     esp_netif_create_default_wifi_ap();
     wifi_config_t ap = { .ap = { .max_connection = 2, .authmode = WIFI_AUTH_WPA2_PSK, .channel = 1 } };
@@ -140,7 +172,7 @@ esp_err_t homeapps_setup_run(const char *fingerprint_hint, void (*on_password)(c
     httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
     esp_err_t result = ESP_ERR_TIMEOUT;
     if (httpd_start(&srv, &cfg) == ESP_OK) {
-        httpd_uri_t get = { .uri = "/", .method = HTTP_GET, .handler = get_page };
+        httpd_uri_t get = { .uri = "/", .method = HTTP_GET, .handler = get_page, .user_ctx = &portal };
         httpd_uri_t save = { .uri = "/save", .method = HTTP_POST, .handler = post_save, .user_ctx = &portal };
         httpd_register_uri_handler(srv, &get);
         httpd_register_uri_handler(srv, &save);

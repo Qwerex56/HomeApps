@@ -28,5 +28,5 @@ void homeapps_store_erase_credentials(void); /* back to setup: keeps nothing of 
 /* descriptor */
 char *homeapps_descriptor_to_json(const homeapps_descriptor_t *d); /* caller frees */
 
-/* setup portal: blocks until the user saved a configuration or the timeout hit; returns ESP_OK when saved */
-esp_err_t homeapps_setup_run(const char *fingerprint_hint, void (*on_password)(const char *, const char *, void *), void *user);
+/* setup portal: starts from the saved store (prefills SSID, address, fingerprint; keeps secret and password unless replaced). Blocks until the user saved a configuration or the timeout hit; returns ESP_OK when saved */
+esp_err_t homeapps_setup_run(const homeapps_store_t *current, void (*on_password)(const char *, const char *, void *), void *user);

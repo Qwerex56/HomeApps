@@ -25,8 +25,6 @@ menu "HomeApps device"
             bool "Pinned CA from pinned_ca.pem"
         config HOMEAPPS_TLS_TOFU
             bool "Trust on first connection (fingerprint pinned from the first connection)"
-            select ESP_TLS_INSECURE
-            select ESP_TLS_SKIP_SERVER_CERT_VERIFY
     endchoice
     config HOMEAPPS_SNTP_SERVER
         string "SNTP server"

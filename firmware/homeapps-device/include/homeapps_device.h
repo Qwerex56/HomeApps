@@ -59,7 +59,9 @@ typedef struct {
 esp_err_t homeapps_validate(const homeapps_descriptor_t *d, char *err, size_t err_len);
 
 /* Starts everything: setup portal when unconfigured, then Wi-Fi, SNTP, pairing, link. Returns once started
- * (for a sleepy device: once connected, ready for homeapps_send_* and homeapps_flush). */
+ * (for a sleepy device: once connected, ready for homeapps_send_* and homeapps_flush).
+ * A sleepy device gives up instead of waiting forever (Wi-Fi 30 s, pairing 4 attempts): it returns ESP_ERR_TIMEOUT and the
+ * caller should go back to deep sleep and try at the next wake. */ */
 esp_err_t homeapps_start(const homeapps_config_t *config);
 
 /* Frames. With a link they go out at once (120 per minute), for a sleepy device they are queued for homeapps_flush(). */
