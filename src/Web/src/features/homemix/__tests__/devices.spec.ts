@@ -18,7 +18,7 @@ describe('devices in the bridge and the manifest', () => {
   })
 
   it('accepts widget device matching with the capability', () => {
-    const m = { ...base, capabilities: ['devices'], widgets: [{ id: 'w', title: { pl: 'W' }, devices: [{ capability: 'weather' }, { role: 'x', pick: 'manual' }] }] }
+    const m = { ...base, capabilities: ['devices'], widgets: [{ id: 'w', title: { pl: 'W' }, devices: [{ capability: 'weather' }, { role: 'x', pick: 'manual' }, { capability: 'qwe-rex/akwarium' }] }] }
     expect(checkManifest(m)).toEqual([])
   })
 
@@ -27,6 +27,7 @@ describe('devices in the bridge and the manifest', () => {
     expect(checkManifest(widget([{ capability: 'weather' }]))).toHaveLength(1)
     expect(checkManifest({ ...widget([{}]), capabilities: ['devices'] })).toHaveLength(1)
     expect(checkManifest({ ...widget([{ capability: 'W' }]), capabilities: ['devices'] })).toHaveLength(1)
+    expect(checkManifest({ ...widget([{ capability: 'qwe-rex/Akwarium' }]), capabilities: ['devices'] })).toHaveLength(1)
     expect(checkManifest({ ...base, capabilities: ['devices.control'] })).toHaveLength(1)
   })
 })
