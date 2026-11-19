@@ -4,12 +4,34 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 
 ## Unreleased: JARVIS voice
 
+### Changed
+
+- **Local development in one path:** `docs/development.md` covers the whole local setup: `scripts/dev-cert.sh`
+  (mkcert certificate for `app.localhost` and `*.app.localhost`, so no warnings and no `--insecure` for the bridge;
+  `certs/*.pem` are no longer in git), `.env.example` with `COMPOSE_FILE`/`COMPOSE_PROFILES` (plain
+  `docker compose up -d`), every service container also on its Rider port, Auth getting the service clients' secrets
+  from the same variables as JARVIS and Devices, TLS on every `websecure` router (plugins' own compose files work in
+  dev), routes for Todo/Chat from Rider and `/homemix/hub`, JARVIS and HomeMix containers no longer pointing at
+  Rider's ports, and vite reading `HOMEAPPS_PLUGINS` from `.env`.
+- **The voice bridge moved out (S-2a):** `src/Jarvis/Jarvis.VoiceBridge` and its tests now live in their own
+  repository, HomeApps.Desktop, with their history; HomeApps keeps only the server side (`/jarvis/voice`, Devices).
+
 ### Added
 
 - **JARVIS hears and speaks (V0a):** `/jarvis/voice`, a WebSocket for listeners such as the Mac bridge: speech to text,
   the usual agent (channel `voice`, answers in the person's conversation), text to speech sentence by sentence, and
   "tak" / "nie" to confirm waiting actions. Engines through the OpenAI audio API (`JARVIS_VOICE_URL`), for tests
   Speaches on the Mac (`compose.voice.yaml`). Off without a URL. See docs/jarvis.md "Voice".
+- **Voice bridge on the Mac (V0b):** `src/Jarvis/Jarvis.VoiceBridge`, a console app that listens for "Hey Jarvis"
+  locally (openWakeWord through ONNX Runtime), streams the utterance until a short quiet, plays the answer, takes
+  "tak" / "nie" for confirmations, and signs in through "Połączone aplikacje". See docs/jarvis.md "The Mac bridge".
+- **Devices service (S-0):** a registry of each person's devices and their actions. Devices connect over
+  `/devices/link` and announce what they can do; JARVIS gets the actions as tools `device_<device>_<action>`, with a
+  confirmation for changes unless "Nie pytaj" is on. See docs/devices.md. New container `devices`, database
+  `homeapps_devices`.
+- **Bridge with its own speech and computer actions (S-0):** `--speech local` transcribes and speaks on the Mac and
+  sends only text (`say` on `/jarvis/voice?speech=local`); `--actions <file>` lets JARVIS run commands from that file
+  on the Mac.
 
 ## 2.4.1 (unreleased)
 

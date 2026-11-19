@@ -5,6 +5,7 @@ using HomeApps.BuildingBlocks.Testing;
 using Jarvis.Application.Gateway;
 using Jarvis.Infrastructure.Gateway;
 using Jarvis.Application.Abstractions;
+using Jarvis.Application.Voice;
 using Jarvis.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +25,12 @@ public sealed class JarvisFactory : HomeAppsApiFactory<Program, JarvisDbContext>
     private readonly List<FakeSource> _sources = [];
 
     internal FakeDelegation Delegation { get; } = new();
+
+    internal FakeSpeakers Speakers { get; } = new();
+
+    internal FakeCeilings Ceilings { get; } = new();
+
+    internal FakeHouseholdDevices Devices { get; } = new();
 
     internal FakeBrain Brain { get; } = new();
 
@@ -81,6 +88,9 @@ public sealed class JarvisFactory : HomeAppsApiFactory<Program, JarvisDbContext>
         services.AddSingleton<IDelegation>(Delegation);
         services.AddSingleton<IAssistantBrain>(Brain);
         services.AddSingleton<ISpeechToText>(Ears);
+        services.AddSingleton<ISpeakers>(Speakers);
+        services.AddSingleton<IHouseholdCeilings>(Ceilings);
+        services.AddSingleton<IHouseholdDevices>(Devices);
         services.AddSingleton<ITextToSpeech, FakeVoice>();
         services.AddScoped<IEventBus>(sp => new RecordingEventBus(sp.GetRequiredService<MassTransit.IPublishEndpoint>(), Published));
         services.AddHttpClient(SourceConnector.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => new HostRouter(_hosts));
