@@ -99,7 +99,8 @@ static esp_err_t post_save(httpd_req_t *r)
     int got = httpd_req_recv(r, body, r->content_len);
     if (got <= 0) return ESP_FAIL;
     body[got] = 0;
-    homeapps_store_t *c = &p->cfg;   /* starts as the saved store: secret, device id and pin survive unless replaced */
+    homeapps_store_t draft = p->cfg;   /* a rejected form must not change the saved values */
+    homeapps_store_t *c = &draft;   /* starts as the saved store: secret, device id and pin survive unless replaced */
     char pass[65], code[16];
     field(body, "ssid", c->ssid, sizeof(c->ssid));
     field(body, "pass", pass, sizeof(pass));
@@ -116,11 +117,19 @@ static esp_err_t post_save(httpd_req_t *r)
         c->secret[0] = 0;
     }
     if (!c->ssid[0] || !c->base_url[0] || (!c->code[0] && !c->secret[0])) { httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "Missing field"); return ESP_FAIL; }
+    p->cfg = draft;
     p->saved = true;
     httpd_resp_set_type(r, "text/html");
     httpd_resp_sendstr(r, "<!doctype html><meta charset=utf-8><p>Saved. The device connects now; this network closes.</p>");
     xSemaphoreGive(p->done);
     return ESP_OK;
+}
+
+static void random_pw(char *out)
+{
+    static const char alphabet[] = "abcdefghjkmnpqrstuvwxyz23456789"; /* no look-alikes */
+    for (int i = 0; i < 12; i++) out[i] = alphabet[esp_random() % (sizeof(alphabet) - 1)];
+    out[12] = 0;
 }
 
 /* The AP password: Kconfig override or a random one kept in NVS from the first start (serial log / display). */
@@ -132,11 +141,9 @@ static void ap_password(char *out, size_t cap)
     }
     nvs_handle_t h;
     size_t n = cap;
-    if (nvs_open("homeapps_ap", NVS_READWRITE, &h) != ESP_OK) { strlcpy(out, "changeme-ap", cap); return; }
+    if (nvs_open("homeapps_ap", NVS_READWRITE, &h) != ESP_OK) { random_pw(out); return; }   /* NVS unavailable: random for this boot, never a constant */
     if (nvs_get_str(h, "pw", out, &n) != ESP_OK) {
-        static const char alphabet[] = "abcdefghjkmnpqrstuvwxyz23456789"; /* no look-alikes */
-        for (int i = 0; i < 12; i++) out[i] = alphabet[esp_random() % (sizeof(alphabet) - 1)];
-        out[12] = 0;
+        random_pw(out);
         nvs_set_str(h, "pw", out);
         nvs_commit(h);
     }

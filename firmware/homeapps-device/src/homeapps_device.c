@@ -24,6 +24,7 @@
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
 #include "freertos/semphr.h"
+#include "freertos/queue.h"
 #include "homeapps_internal.h"
 
 static const char *TAG = "homeapps";
@@ -42,6 +43,8 @@ static struct {
     SemaphoreHandle_t lock;
     char token[2048];
     SemaphoreHandle_t ws_lock;
+    SemaphoreHandle_t rate_lock;
+    QueueHandle_t inbox;   /* messages from the ws callback, handled in link_task (no sends from inside the callback) */
     int64_t token_expiry_us;
     int bad_logins;
     esp_websocket_client_handle_t ws;
@@ -60,7 +63,8 @@ static bool clock_synced(void) { return time(NULL) > 1700000000; }
 
 static int backoff_ms(int attempt, int retry_after_s)
 {
-    if (retry_after_s > 0) return retry_after_s * 1000;
+    int cap_s = (S.cfg.descriptor && S.cfg.descriptor->sleepy) ? 30 : 300;   /* a server cannot park the device for hours */
+    if (retry_after_s > 0) return (retry_after_s > cap_s ? cap_s : retry_after_s) * 1000;
     int ms = 2000 << (attempt > 6 ? 6 : attempt);
     return ms > 120000 ? 120000 : ms;
 }
@@ -240,8 +244,12 @@ static esp_err_t fetch_token(int max_attempts)
 static bool rate_ok(void)
 {
     int64_t now = esp_timer_get_time();
+    xSemaphoreTake(S.rate_lock, portMAX_DELAY);
     if (now - S.window_start_us > 60LL * 1000000) { S.window_start_us = now; S.frames_in_window = 0; }
-    return S.frames_in_window++ < HOMEAPPS_MAX_FRAMES_PER_MINUTE;
+    bool ok = S.frames_in_window < HOMEAPPS_MAX_FRAMES_PER_MINUTE;
+    if (ok) S.frames_in_window++;
+    xSemaphoreGive(S.rate_lock);
+    return ok;
 }
 
 /* All sends go through ws_lock: link_task destroys the client under the same lock, so a send never touches a dead handle. */
@@ -366,26 +374,44 @@ esp_err_t homeapps_flush(void)
 
 /* ---------- link (WebSocket) ---------- */
 
-/* Frames queued while offline go out under the 120/min limit; the rest waits for the next second. */
+/* Frames queued while offline go out under the 120/min limit; the rest waits for the next tick. A failed send puts the
+ * frame back. The lock is held only to take or return a frame, never across a send. link_task only. */
 static void drain_queue(void)
 {
-    xSemaphoreTake(S.lock, portMAX_DELAY);
-    while (S.queued > 0 && S.ws && rate_ok()) {
-        ws_send(S.queue[0]);
-        free(S.queue[0]);
-        memmove(S.queue, S.queue + 1, sizeof(S.queue[0]) * (--S.queued));
+    for (;;) {
+        xSemaphoreTake(S.lock, portMAX_DELAY);
+        char *frame = NULL;
+        if (S.queued > 0) { frame = S.queue[0]; memmove(S.queue, S.queue + 1, sizeof(S.queue[0]) * (--S.queued)); }
+        xSemaphoreGive(S.lock);
+        if (!frame) return;
+        bool sent = rate_ok() && ws_send(frame) >= 0;
+        if (sent) { free(frame); continue; }
+        xSemaphoreTake(S.lock, portMAX_DELAY);      /* back to the front */
+        if (S.queued < MAX_QUEUE) { memmove(S.queue + 1, S.queue, sizeof(S.queue[0]) * S.queued); S.queue[0] = frame; S.queued++; }
+        else free(frame);
+        xSemaphoreGive(S.lock);
+        return;
     }
-    xSemaphoreGive(S.lock);
 }
 
 static char *rx; static size_t rx_len;
 
-static void handle_message(const char *text)
+/* Runs in link_task. Returns true for "ready". */
+static bool process_message(const char *text)
 {
+    bool ready = false;
     cJSON *m = cJSON_Parse(text);
-    if (!m) return;
+    if (!m) return false;
     const char *type = cJSON_GetStringValue(cJSON_GetObjectItem(m, "type"));
-    if (type && !strcmp(type, "ready")) {
+    if (type && !strcmp(type, "@connected")) {   /* first frame within 10 s */
+        char *desc = homeapps_descriptor_to_json(S.cfg.descriptor);
+        size_t cap = strlen(desc) + 256;
+        char *hello = malloc(cap);
+        snprintf(hello, cap, "{\"type\":\"hello\",\"device\":\"%s\",\"kind\":\"satellite\",\"descriptor\":%s}", S.cfg.descriptor->model, desc);
+        ws_send(hello);
+        free(desc); free(hello);
+    } else if (type && !strcmp(type, "ready")) {
+        ready = true;
         xEventGroupSetBits(S.events, READY_BIT);
         homeapps_send_status(-1, 0, NULL);
         drain_queue();
@@ -406,24 +432,26 @@ static void handle_message(const char *text)
         ESP_LOGW(TAG, "Server: %s", text);
     }
     cJSON_Delete(m);
+    return ready;
+}
+
+static void inbox_push(const char *text)
+{
+    char *copy = strdup(text);
+    if (copy && xQueueSend(S.inbox, &copy, 0) != pdTRUE) free(copy);   /* full: the server will resend nothing, but stay alive */
 }
 
 static void ws_event(void *arg, esp_event_base_t base, int32_t id, void *data)
 {
     esp_websocket_event_data_t *e = data;
     if (id == WEBSOCKET_EVENT_CONNECTED) {
-        char *desc = homeapps_descriptor_to_json(S.cfg.descriptor);
-        size_t cap = strlen(desc) + 256;
-        char *hello = malloc(cap);
-        snprintf(hello, cap, "{\"type\":\"hello\",\"device\":\"%s\",\"kind\":\"satellite\",\"descriptor\":%s}", S.cfg.descriptor->model, desc);
-        ws_send(hello); /* first frame within 10 s */
-        free(desc); free(hello);
+        inbox_push("{\"type\":\"@connected\"}");   /* no sends from inside the callback */
     } else if (id == WEBSOCKET_EVENT_DATA && (e->op_code == 0x1 || e->op_code == 0x0)) {
         if (e->payload_offset == 0) { free(rx); rx = malloc(e->payload_len + 1); rx_len = 0; }
         if (rx) {
             memcpy(rx + e->payload_offset, e->data_ptr, e->data_len);
             rx_len = e->payload_offset + e->data_len;
-            if (rx_len >= (size_t)e->payload_len) { rx[rx_len] = 0; handle_message(rx); free(rx); rx = NULL; }
+            if (rx_len >= (size_t)e->payload_len) { rx[rx_len] = 0; inbox_push(rx); free(rx); rx = NULL; }
         }
     } else if (id == WEBSOCKET_EVENT_DISCONNECTED || id == WEBSOCKET_EVENT_ERROR) {
         xEventGroupClearBits(S.events, READY_BIT);
@@ -460,24 +488,34 @@ static void link_task(void *arg)
             vTaskDelay(pdMS_TO_TICKS(backoff_ms(attempt++, 0)));
             continue;
         }
-        S.ws = esp_websocket_client_init(&c);
-        esp_websocket_register_events(S.ws, WEBSOCKET_EVENT_ANY, ws_event, NULL);
-        esp_websocket_client_start(S.ws);
+        esp_websocket_client_handle_t client = esp_websocket_client_init(&c);
+        if (!client) { ESP_LOGE(TAG, "websocket init failed"); vTaskDelay(pdMS_TO_TICKS(backoff_ms(attempt++, 0))); continue; }
+        esp_websocket_register_events(client, WEBSOCKET_EVENT_ANY, ws_event, NULL);
+        xSemaphoreTake(S.ws_lock, portMAX_DELAY);
+        S.ws = client;
+        xSemaphoreGive(S.ws_lock);
+        char *stale;
+        while (xQueueReceive(S.inbox, &stale, 0) == pdTRUE) free(stale);
+        bool was_ready = false;
+        if (esp_websocket_client_start(client) != ESP_OK) {
+            ESP_LOGE(TAG, "websocket start failed");
+            xEventGroupSetBits(S.events, LINK_DOWN_BIT);
+        }
         int64_t last_status = esp_timer_get_time();
         while (!(xEventGroupGetBits(S.events) & LINK_DOWN_BIT)) {
-            vTaskDelay(pdMS_TO_TICKS(1000));
+            char *msg;
+            if (xQueueReceive(S.inbox, &msg, pdMS_TO_TICKS(500)) == pdTRUE) { was_ready |= process_message(msg); free(msg); continue; }
             if (xEventGroupGetBits(S.events) & READY_BIT) drain_queue();
             if ((xEventGroupGetBits(S.events) & READY_BIT) && esp_timer_get_time() - last_status > heartbeat * 1000000LL) {
                 homeapps_send_status(S.battery, S.voltage, NULL);
                 last_status = esp_timer_get_time();
             }
         }
-        attempt = (xEventGroupGetBits(S.events) & READY_BIT) ? 0 : attempt + 1;
+        attempt = was_ready ? 0 : attempt + 1;
         xSemaphoreTake(S.ws_lock, portMAX_DELAY);
-        esp_websocket_client_handle_t dead = S.ws;
         S.ws = NULL;
         xSemaphoreGive(S.ws_lock);
-        esp_websocket_client_destroy(dead);
+        esp_websocket_client_destroy(client);
         vTaskDelay(pdMS_TO_TICKS(backoff_ms(attempt, 0)));
     }
 }
@@ -551,6 +589,8 @@ esp_err_t homeapps_start(const homeapps_config_t *config)
     S.events = xEventGroupCreate();
     S.lock = xSemaphoreCreateMutex();
     S.ws_lock = xSemaphoreCreateMutex();
+    S.rate_lock = xSemaphoreCreateMutex();
+    S.inbox = xQueueCreate(8, sizeof(char *));
     esp_err_t e = nvs_flash_init();
     if (e == ESP_ERR_NVS_NO_FREE_PAGES || e == ESP_ERR_NVS_NEW_VERSION_FOUND) { nvs_flash_erase(); nvs_flash_init(); }
     esp_netif_init();
