@@ -27,7 +27,7 @@ later rounds the previous `.claude/runs/<name>/review-feedback.md`.
    then security, correctness/data, performance, owner's quality rules, Vue states and leaks, tests.
 3. You may run read-only commands to verify a doubt (`dotnet build`, one `dotnet test` project, `npx vitest run …`,
    `grep`). **You never edit, write, commit, checkout, reset or push.**
-4. On round 2 and 3: first check each previous finding (fixed or not), then look only at what changed since
+4. On round 2 and later: first check each previous finding (fixed or not), then look only at what changed since
    (`git diff <previous-head>..HEAD`) plus anything the fixes could have broken. Don't raise new MINORs about code
    you already approved.
 
@@ -47,7 +47,7 @@ Exactly the verdict format from `code-review-checklist`:
 ```
 VERDICT: APPROVED | CHANGES_REQUESTED
 <numbered findings>
-Previous findings: 1 ✓ fixed, 2 ✗ still open …     (rounds 2–3)
+Previous findings: 1 ✓ fixed, 2 ✗ still open …     (rounds 2+)
 Spec coverage: 2.1 ✓, 2.2 ✓ …
 For the human reviewer: <2–4 places worth a close look on GitHub, with why>
 ```

@@ -36,6 +36,19 @@ Working folder for this run: `.claude/runs/<name>/` (git-ignored).
 
 ## 3. The loop
 
+**Mode** (check at the start and again before each review round):
+`curl -s -m 3 http://127.0.0.1:7340/__router/health`. `"local":true` and `"disabled":false` → **local mode**
+(Sonnet/Haiku agents run on a weaker local LLM). Anything else (no router, local down, disabled) → **Anthropic mode**:
+the limits below stay exactly as written. Local mode changes only this:
+- **At most 5 review rounds** and **5 test loops per round** (instead of 3 and 3). Rounds already used count
+  toward whichever limit applies when the mode is checked.
+- **Fixes in one batch, spelled out.** Add to the reviewer's prompt: "Local mode: the developer is a weaker model.
+  List every finding (BLOCKER and MINOR) in this one pass, each with file, line, the problem and the exact change
+  wanted (a code snippet where it helps); no 'consider…'." Step A then gets one batch: "Fix every item in
+  `review-feedback.md` and every failure in `test-report.md`, in that order, one commit per area."
+- Time is not a limit: the local model is slow, so never stop a run or ask the owner because a step takes long.
+- Say the mode in the first status line and in the PR's Review section ("after <n> round(s), local mode").
+
 Start each subagent with the Agent tool and its agent type; give it **paths, not file contents**, so it reads only
 what it needs. Each subagent waits for the previous one.
 
@@ -50,7 +63,7 @@ If it reports `BLOCKED` (spec/ADR gap), stop and ask the owner; don't guess arou
 > everything, return the report.
 
 Save its report to `.claude/runs/<name>/test-report.md`. If `VERDICT: FAIL` → back to Step A with the test report
-(this "test loop" may repeat at most **3 times** per round; then stop and ask the owner). Tests that were NOT RUN
+(this "test loop" may repeat at most **3 times** per round, 5 in local mode; then stop and ask the owner). Tests that were NOT RUN
 because Docker is off: ask the owner to start Docker once; if they can't, carry on and say so in the PR.
 
 **Step C, reviewer** (`reviewer`, Opus, effort high):
@@ -61,7 +74,7 @@ because Docker is off: ask the owner to start Docker once; if they can't, carry 
 Save its output to `.claude/runs/<name>/review-feedback.md` (overwrite; keep the round number at the top).
 - `APPROVED` → Step D.
 - `CHANGES_REQUESTED` → Step A with the feedback, then B, then C again.
-- **At most 3 review rounds.** After the third `CHANGES_REQUESTED`, stop: leave the branch as it is (no push, no
+- **At most 3 review rounds** (5 in local mode). After the last allowed `CHANGES_REQUESTED`, stop: leave the branch as it is (no push, no
   PR), and tell the owner which findings are still open and what you recommend (accept as MINOR, change the spec,
   or another round).
 
@@ -114,7 +127,7 @@ Spec: [specs/<name>.md](specs/<name>.md) · ADR: [specs/<name>-adr.md](specs/<na
 Acceptance criteria → tests: <2.1 → TestName, …>
 
 ## Review (Opus)
-Verdict: APPROVED after <n> round(s). Remaining minor points: <list or "none">.
+Verdict: APPROVED after <n> round(s) (<mode> mode). Remaining minor points: <list or "none">.
 
 ## Please look closely at
 - <from the reviewer's "For the human reviewer" + any choice the ADR didn't settle>
