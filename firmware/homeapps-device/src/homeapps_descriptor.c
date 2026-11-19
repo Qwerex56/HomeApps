@@ -191,7 +191,7 @@ static esp_err_t check_capabilities(const char *json, char *err, size_t err_len)
         if (!ok) { cJSON_Delete(arr); FAIL("capability %d needs a type (weather or author/name), an optional id and an object definition", i); }
         for (int j = 0; j < i; j++) {
             const cJSON *o = cJSON_GetArrayItem(arr, j), *ot = cJSON_GetObjectItem(o, "type"), *oi = cJSON_GetObjectItem(o, "id");
-            if (!strcmp(ot->valuestring, type->valuestring) && !strcmp(oi ? oi->valuestring : "", id ? id->valuestring : "")) { cJSON_Delete(arr); FAIL("capability '%s' is declared twice", type->valuestring); }
+            if (!strcmp(ot->valuestring, type->valuestring) && !strcmp(oi ? oi->valuestring : "", id ? id->valuestring : "")) { if (err) snprintf(err, err_len, "capability '%s' is declared twice", type->valuestring); cJSON_Delete(arr); return ESP_ERR_INVALID_ARG; }
         }
     }
     cJSON_Delete(arr);
