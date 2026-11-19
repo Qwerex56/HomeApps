@@ -28,12 +28,6 @@ public sealed class VoiceOptions
     /// <summary>Only for a cloud engine; Speaches at home needs none.</summary>
     public string? ApiKey { get; set; }
 
-    /// <summary>
-    /// How long a household satellite keeps answering as the person who said their PIN, counted from their last turn
-    /// (S4: "a few minutes"); then it speaks for itself again.
-    /// </summary>
-    public int PersonMinutes { get; set; } = 3;
-
     /// <summary>The longest utterance kept; the rest is dropped.</summary>
     public int MaxSeconds { get; set; } = 30;
 }

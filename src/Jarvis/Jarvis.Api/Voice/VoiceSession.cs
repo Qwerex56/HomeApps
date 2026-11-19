@@ -16,13 +16,9 @@ namespace Jarvis.Api.Voice;
 /// socket is still read, so <c>cancel</c> (or a new <c>start</c>) stops JARVIS mid-answer. The answer comes back as
 /// <c>transcript</c>, <c>reply</c>, then <c>audio</c> + one WAV per sentence, then <c>done</c>; or <c>error</c>.
 /// The session remembers the conversation and what waits for "tak"/"nie"; the audio is dropped after each turn.
-/// A household satellite (<paramref name="satellite"/>, its household) always speaks in that household; it also
-/// remembers for a few minutes who introduced themselves with a PIN (S4).
-/// With <paramref name="local"/> (<c>?speech=local</c>, S1) the listener hears and speaks itself: it sends
-/// <c>say</c> with the text and gets <c>transcript</c>, <c>reply</c> and <c>done</c> without audio.
 /// </summary>
 internal sealed partial class VoiceSession(
-    WebSocket socket, Guid userId, Guid? satellite, bool local, IServiceScopeFactory scopes, VoiceOptions options, ILogger<VoiceSession> logger) : IDisposable
+    WebSocket socket, Guid userId, IServiceScopeFactory scopes, VoiceOptions options, ILogger<VoiceSession> logger) : IDisposable
 {
     public const int SampleRate = 16_000;
 
@@ -32,8 +28,6 @@ internal sealed partial class VoiceSession(
     private readonly MemoryStream _audio = new();
     private Guid? _conversationId;
     private Guid? _householdId;
-    private Guid? _speaker;
-    private DateTimeOffset _speakerUntil;
     private IReadOnlyList<Guid> _pending = [];
     private bool _recording;
     private CancellationTokenSource? _turn;
@@ -110,17 +104,8 @@ internal sealed partial class VoiceSession(
         {
             case "hello":
                 _conversationId = control.ConversationId ?? _conversationId;
-                _householdId = satellite ?? control.HouseholdId;
+                _householdId = control.HouseholdId;
                 await SendAsync(new { type = "ready", conversationId = _conversationId }, CancellationToken.None);
-                break;
-            case "start" or "stop" when local:
-                await SendAsync(new { type = "error", code = "voice.speech_local" }, CancellationToken.None);
-                break;
-            case "say":
-                await StopTurnAsync();
-                _turn?.Dispose();
-                _turn = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                _running = TurnAsync([], control.Text ?? string.Empty, _turn.Token);
                 break;
             case "start":
                 await StopTurnAsync();
@@ -134,7 +119,7 @@ internal sealed partial class VoiceSession(
                 _audio.SetLength(0);
                 _turn?.Dispose();
                 _turn = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                _running = TurnAsync(audio, null, _turn.Token);
+                _running = TurnAsync(audio, _turn.Token);
                 break;
             case "cancel":
                 _recording = false;
@@ -147,9 +132,9 @@ internal sealed partial class VoiceSession(
         }
     }
 
-    private async Task TurnAsync(byte[] audio, string? text, CancellationToken cancellationToken)
+    private async Task TurnAsync(byte[] audio, CancellationToken cancellationToken)
     {
-        if (text is null ? audio.Length == 0 : string.IsNullOrWhiteSpace(text))
+        if (audio.Length == 0)
         {
             await SendAsync(new { type = "transcript", text = string.Empty }, cancellationToken);
             await SendAsync(new { type = "done" }, cancellationToken);
@@ -160,10 +145,7 @@ internal sealed partial class VoiceSession(
         {
             await using var scope = scopes.CreateAsyncScope();
             var sender = scope.ServiceProvider.GetRequiredService<ISender>();
-            var time = scope.ServiceProvider.GetRequiredService<TimeProvider>();
-            var speaker = time.GetUtcNow() < _speakerUntil ? _speaker : null;
-            var result = await sender.Send(new VoiceTurnCommand(
-                userId, _conversationId, satellite ?? _householdId, audio, SampleRate, _pending, text, satellite is not null, speaker), cancellationToken);
+            var result = await sender.Send(new VoiceTurnCommand(userId, _conversationId, _householdId, audio, SampleRate, _pending), cancellationToken);
             if (result.IsFailed)
             {
                 var error = result.Errors.OfType<AppError>().FirstOrDefault();
@@ -174,8 +156,6 @@ internal sealed partial class VoiceSession(
             var turn = result.Value;
             _conversationId = turn.ConversationId;
             _pending = turn.Pending;
-            _speaker = turn.Speaker;
-            _speakerUntil = time.GetUtcNow().AddMinutes(options.PersonMinutes);
             await SendAsync(new { type = "transcript", text = turn.Transcript }, cancellationToken);
             if (turn.Answer is { } answer)
             {
@@ -185,11 +165,11 @@ internal sealed partial class VoiceSession(
                     conversationId = _conversationId,
                     text = answer.Text,
                     actions = answer.Actions,
-                    awaiting = _pending.Count > 0 || turn.Listening,
+                    awaiting = _pending.Count > 0,
                 }, cancellationToken);
 
                 var voice = scope.ServiceProvider.GetRequiredService<ITextToSpeech>();
-                foreach (var sentence in local ? [] : Sentences(answer.Text))
+                foreach (var sentence in Sentences(answer.Text))
                 {
                     var wav = await voice.SpeakAsync(sentence, cancellationToken);
                     await SendAsync(new { type = "audio", format = "wav", text = sentence }, cancellationToken);
@@ -265,5 +245,5 @@ internal sealed partial class VoiceSession(
     [LoggerMessage(Level = LogLevel.Error, Message = "A voice turn failed.")]
     private partial void LogTurnFailed(Exception exception);
 
-    private sealed record Control(string? Type, Guid? ConversationId, Guid? HouseholdId, string? Text);
+    private sealed record Control(string? Type, Guid? ConversationId, Guid? HouseholdId);
 }
