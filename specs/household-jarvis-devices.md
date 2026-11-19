@@ -71,6 +71,7 @@ narzędzia JARVIS-a i jest widoczne dla dodatków; własne urządzenie ESP da si
 - **Given** osoba mówi do satelity „tu Adrian” i podaje swój PIN głosowy
 - **When** PIN jest poprawny
 - **Then** tura działa w imieniu tej osoby, jak przed zmianą
+- **gdy JARVIS domu jest wyłączony, satelita milczy także po PIN-ie**
 
 ### 2.2 Uprawnienia JARVIS-a domu i sufit dla JARVIS-a osoby ✅ (H-2)
 
@@ -294,7 +295,7 @@ narzędzia JARVIS-a i jest widoczne dla dodatków; własne urządzenie ESP da si
 ## 3. Przepływ użytkownika i oczekiwany UX
 
 1. Admin domu otwiera zakładkę „JARVIS”: lewa kolumna to JARVIS domu, na górze „Dodaj urządzenie”, w środku urządzenia
-   wg celu (JARVIS, smart home, komputery domowników do podglądu). Na telefonie lewa kolumna zjeżdża nad listę.
+   wg celu (JARVIS, smart home, Moje Komputery). Na telefonie lewa kolumna zjeżdża nad listę.
 2. „Dodaj urządzenie”: nazwa, potem kod parowania do wpisania w urządzeniu. Po sparowaniu urządzenie pojawia się od
    razu, z celem, kontrolkami i czujnikami z opisu.
 3. Karta urządzenia: online / offline / zaginione, bateria i sygnał, ostatni stan, kontrolki rysowane z typu, ostatnie
@@ -325,4 +326,4 @@ ani domu. Samodzielne odzywanie się na zdarzenie („ktoś dzwoni do drzwi”) 
 - Uprawnienia per narzędzie (są poziom, źródła i per urządzenie, D2).
 - Capabilities per dom i publiczny indeks capabilities (D14, później).
 - W tej wersji odłożone: kolejka poleceń dla uśpionych urządzeń, akcje urządzeń przez `devices.control` w dodatkach,
-  powiadomienia domowników o zdarzeniach z `notify`, natychmiastowe działanie przełącznika „Pytaj” (dziś do 5 minut).
+  powiadomienia domowników o zdarzeniach z `notify`.
