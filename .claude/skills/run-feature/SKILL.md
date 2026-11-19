@@ -78,6 +78,11 @@ did.
 
 ## 4. Commits, push, pull request
 
+0. **Mark the stage done in the spec** (the only edit to `specs/` allowed in a run, and only by you, after `APPROVED`
+   and the docs step): in `specs/<name>.md` section 0, set the stage's row to `✅ <YYYY-MM-DD>` (add the row if the
+   stage was born in the ADR, e.g. H-4c) and remove or update section 0 lines this stage settled (an open decision the
+   ADR closed, a deferred item it delivered). Nothing outside section 0. Commit `Specs: <stage> done`. After the PR
+   exists (step 4), put `PR #<n>` in the row's merge column in one more commit and push it.
 1. `git log --oneline origin/<base>..HEAD`: commits must be topical and readable (spec, domain, API, front end,
    tests, fixes). Never rewrite history that was already pushed; locally, squash only "fix review" noise when it
    makes the story clearer (`git reset --soft` + new commits is fine before the first push). Never commit
@@ -133,4 +138,5 @@ choices the ADR didn't settle, and the token table's model shares. Then stop: th
 
 - Anything that needs the owner (spec gap, 3 rounds used, Docker missing for a feature that is mostly API) → stop and ask.
 - Nothing irreversible: no merge, no force push, no deploy, no branch deletion, no changes to `master`.
-- Never let an agent skip, disable or delete tests, or edit `specs/` (the reviewer treats it as a BLOCKER).
+- Never let an agent skip, disable or delete tests, or edit `specs/` (the reviewer treats it as a BLOCKER). The one
+  exception is your own section 0 status update in step 4.0.

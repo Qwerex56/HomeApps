@@ -37,6 +37,7 @@ The owner (team lead) designs; Claude writes the code, including all the repetit
 - Never touch `master` directly and never force-push. During a multi-stage plan the owner may name an integration
   branch (e.g. `smart-devices/main`); branch from it and open the PR against it.
 - Never skip, disable or delete tests to get green.
-- `specs/` is written by the owner and by `/spec-debate`; implementation agents only read it.
+- `specs/` is written by the owner and by `/spec-debate`; implementation agents only read it. Exception: the
+  `/run-feature` orchestrator marks the finished stage in the spec's section 0 (status table) before the PR.
 - Answer the owner in Polish. Code, comments, commits and docs stay in English.
 - Keep tokens low: grep and read line ranges, build/test only affected projects, pipe output through `tail`/`grep`.

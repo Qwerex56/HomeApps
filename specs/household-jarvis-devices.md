@@ -21,8 +21,9 @@ Gałąź integracyjna: **`smart-devices/main`** (do `master` całość wraca raz
 | H-3d „JARVIS może sterować” i „Pytaj” per urządzenie | 2.10 | ✅ 2026-11-19 | 32f78ae |
 | H-4a Urządzenia dla pluginów i dodatków HomeMix | 2.11 | ✅ 2026-11-19 | 6c50445 |
 | H-4b Wyzwalacze dodatków na serwerze | 2.12 | ✅ 2026-11-19 | 223f73c |
+| H-4c Utwardzenie serwera (z ADR) | 2.2, 2.6, 2.9, 2.10 | ✅ 2026-11-19 | PR #63 |
 | H-5 Mac jako urządzenie testowe | 2.13 | ○ następny (wymaga Maca) | |
-| H-6 Komponent ESP-IDF `homeapps-device` | 2.14 | ○ czeka na D10 | |
+| H-6 Komponent ESP-IDF `homeapps-device` | 2.14 | ○ | |
 | H-7 Narzędzia komputera | 2.15 | ○ | |
 | H-8 Ciągłe nasłuchiwanie | 2.16 | ○ | |
 | H-9 Zakładka „JARVIS” w aplikacji | 2.17 | ○ na koniec | |
@@ -32,10 +33,10 @@ były uruchamiane) oraz nowy sekret `HOMEMIX_CLIENT_SECRET` w `.env`.
 
 **Odłożone z H-0..H-4** (świadomie, patrz też sekcja 5): podgląd stanu na żywo i wybór urządzenia w widżecie (H-9),
 akcje urządzeń przez `devices.control` w dodatku, powiadomienia domowników o zdarzeniach z `notify`, kolejka poleceń
-dla uśpionych urządzeń, wyłączenie „pytaj” działa dopiero po odświeżeniu listy narzędzi (do 5 minut).
+dla uśpionych urządzeń.
 
-**Otwarte decyzje:** D10, jak urządzenie ESP dostaje Wi-Fi i kod parowania (propozycja: punkt dostępowy z prostą
-stroną przy pierwszym starcie, BLE jako opcja). Blokuje H-6.
+**Otwarte decyzje:** brak. D10 (Wi-Fi i kod parowania) zamknięte w ADR: punkt dostępowy ze stroną konfiguracji,
+BLE ewentualnie później.
 
 ## 1. Cel biznesowy (CO ma powstać)
 
