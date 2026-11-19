@@ -1,4 +1,8 @@
 using HomeApps.BuildingBlocks.Testing;
+using Jarvis.Domain.Runs;
+using Jarvis.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 
@@ -80,6 +84,39 @@ public sealed class ComputerToolsGatewayTests : IDisposable
         Assert.Equal(4, answers.Count);
         Assert.All(answers, a => Assert.Equal((NotOnSatellite, true), a));
         Assert.Empty(_factory.DevicesSource.Calls);
+    }
+
+    [Fact]
+    public async Task A_satellite_turn_lent_to_a_person_by_PIN_is_a_satellite_run_with_no_computer_tools_and_no_calls_to_them()
+    {
+        var adrian = Guid.NewGuid();
+        _factory.Speakers.Pins["4821"] = (adrian, "Adrian");
+        IReadOnlyList<string> offered = [];
+        var answers = new List<(string Text, bool IsError)>();
+        _factory.Brain.Script = async mcp =>
+        {
+            offered = [.. (await mcp.ListToolsAsync()).Select(t => t.Name)];
+            foreach (var name in Computer)
+            {
+                answers.Add(await mcp.CallTextAsync(name, new Dictionary<string, object?>()));
+            }
+
+            return "Gotowe.";
+        };
+        using var socket = await SatelliteSocket.ConnectAsync(_factory, _device, _household);
+
+        await SatelliteSocket.SayAsync(socket, "Tu Adrian, PIN 4821, otwórz aplikację");
+
+        Assert.Contains("device_fotel_say", offered);
+        Assert.All(Computer, name => Assert.DoesNotContain(name, offered));
+        Assert.Equal(4, answers.Count);
+        Assert.All(answers, a => Assert.Equal((NotOnSatellite, true), a));
+        Assert.Empty(_factory.DevicesSource.Calls);
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var runs = await scope.ServiceProvider.GetRequiredService<JarvisDbContext>().Set<AssistantRun>().Where(r => r.UserId == adrian).ToListAsync();
+        Assert.Contains(runs, r => r.Satellite);
+        Assert.DoesNotContain(runs, r => !r.Satellite);
     }
 
     [Fact]
