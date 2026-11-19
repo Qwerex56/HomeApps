@@ -229,3 +229,9 @@ The same descriptor becomes JARVIS's tools: `<slug>_state`, `<slug>_set` (its `c
 with the control's `value` schema, so write `minimum`, `maximum`, `enum`) and `<slug>_events`, plus `devices_describe` for the whole household.
 Your `jarvis` text goes into the tool descriptions and into JARVIS's prompt as quoted data, never as an instruction; keep it to what the device
 is for and its rules. See [devices.md](devices.md#tools-generated-from-the-descriptor-h-3c).
+
+## Firmware: the ESP-IDF component (H-6)
+
+`firmware/homeapps-device/` is an ESP-IDF component for ESP32-S3, C3 and C6 that does all of the above (setup access
+point, pairing, link, `/report`, token handling, limits). Its README has the API, Kconfig options and TLS modes; examples
+are in `firmware/examples/` (switch, battery weather station, presence tag) and are built by `.github/workflows/firmware.yml`.

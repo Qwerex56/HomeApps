@@ -1,0 +1,34 @@
+menu "HomeApps device"
+    config HOMEAPPS_SETUP_AP_PASSWORD
+        string "Setup access point password (empty = random on every first start)"
+        default ""
+        help
+            The setup AP is WPA2. Leave empty: a random password is made on the first start and printed on the
+            serial log (and handed to homeapps_config_t.on_setup_password, e.g. for a display). Min 8 characters.
+    config HOMEAPPS_SETUP_TIMEOUT_S
+        int "Close the setup portal after (seconds)"
+        default 600
+    config HOMEAPPS_RESET_BUTTON_GPIO
+        int "Button GPIO (-1 = none): hold 2 s reopens setup, hold 5 s factory resets"
+        default -1
+    config HOMEAPPS_INSECURE_HTTP
+        bool "Allow plain http (INSECURE)"
+        default n
+        help
+            The pairing answer carries the device secret. Use only on a trusted bench network.
+    choice HOMEAPPS_TLS_MODE
+        prompt "TLS trust"
+        default HOMEAPPS_TLS_BUNDLE
+        config HOMEAPPS_TLS_BUNDLE
+            bool "Mozilla certificate bundle (esp_crt_bundle)"
+        config HOMEAPPS_TLS_PINNED_CA
+            bool "Pinned CA from pinned_ca.pem"
+        config HOMEAPPS_TLS_TOFU
+            bool "Trust on first connection (fingerprint pinned from the first connection)"
+            select ESP_TLS_INSECURE
+            select ESP_TLS_SKIP_SERVER_CERT_VERIFY
+    endchoice
+    config HOMEAPPS_SNTP_SERVER
+        string "SNTP server"
+        default "pool.ntp.org"
+endmenu
