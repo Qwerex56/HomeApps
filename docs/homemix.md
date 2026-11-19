@@ -409,7 +409,7 @@ their consent (`devices.control` is checked by HomeMix before the call). See dev
 |---|---|
 | Time and memory | the tool script limits: 5 s, 10 MB, 1 M statements, 100 `ctx` calls |
 | Run limit | 30 runs a minute per installation (in memory); more are skipped and logged, they do not count as failures |
-| Order | Runs within a household are sequential (the consumers are partitioned by household); runs of different households may overlap |
+| Order | Runs of one household for the same kind of message (state change or event) are sequential (each consumer is partitioned by household); a state run and an event run of the same household, and runs of different households, may overlap |
 | Loop guard | Devices marks a state change caused by an add-on's set with `ChangedBy = homemix:{installationId}` for 5 s; that installation's triggers skip it. Other add-ons still react |
 | Failures | `TriggerStates` (installation, trigger id): `enabled`, consecutive failures, `lastRunAt`, `lastError`. 5 failures in a row turn the trigger off and send a `NotificationRequested` to the household's admins (source: the add-on id, category `trigger`); a success resets the count |
 
