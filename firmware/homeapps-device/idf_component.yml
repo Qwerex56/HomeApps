@@ -1,0 +1,7 @@
+version: "0.1.0"
+description: "Connects an ESP32 to HomeApps: Wi-Fi setup portal, pairing, descriptor, state, events, health report and commands."
+url: https://github.com/Qwerex56/HomeApps
+targets: [esp32s3, esp32c3, esp32c6]
+dependencies:
+  idf: ">=5.2,<6.0"
+  espressif/esp_websocket_client: "^1.2.0"

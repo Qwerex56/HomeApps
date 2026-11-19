@@ -45,7 +45,7 @@ widżety. Wszystkie zmiany kontraktów są addytywne.
    widzi IP Traefika): `ForwardedHeadersOptions` jak w Auth, `Devices:Proxy:ForwardLimit` (domyślnie 1),
    `Devices:Proxy:KnownNetworks`. Polityka `devices-pair`, okno przesuwne per `RemoteIpAddress`, 6 segmentów,
    `QueueLimit 0`, `Devices:RateLimits:PairPerMinute = 10`. Ogólny tekst `OnRejected` (dziś mówi o raportach).
-   Poprawka zdania „rate limited” w `docs/devices-protocol.md` i `docs/devices.md`.
+   Poprawka zdania „rate limited” w `docs/devices-protocol.md` i `docs/devices.md`. Gdy JARVIS domu jest wyłączony, satelita milczy także po PIN-ie.
 2. **Osobny limit na `/auth/devices/token`.** `RateLimits.DeviceToken = "auth-device-token"`,
    `Auth:RateLimits:DeviceTokenPerMinute = 600`, per IP klienta; kubełek przeglądarek (`auth-refresh`, 60/min)
    przestaje być współdzielony.

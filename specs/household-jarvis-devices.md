@@ -23,7 +23,7 @@ Gałąź integracyjna: **`smart-devices/main`** (do `master` całość wraca raz
 | H-4b Wyzwalacze dodatków na serwerze | 2.12 | ✅ 2026-11-19 | 223f73c |
 | H-4c Utwardzenie serwera (z ADR) | 2.2, 2.6, 2.9, 2.10 | ✅ 2026-11-19 | PR #63 |
 | H-5 Mac jako urządzenie testowe | 2.13 | ○ następny (wymaga Maca) | |
-| H-6 Komponent ESP-IDF `homeapps-device` | 2.14 | ○ | |
+| H-6 Komponent ESP-IDF `homeapps-device` | 2.14 | ✅ 2026-11-19 | PR #64 |
 | H-7 Narzędzia komputera | 2.15 | ○ | |
 | H-8 Ciągłe nasłuchiwanie | 2.16 | ○ | |
 | H-9 Zakładka „JARVIS” w aplikacji | 2.17 | ○ na koniec | |
@@ -71,6 +71,7 @@ narzędzia JARVIS-a i jest widoczne dla dodatków; własne urządzenie ESP da si
 - **Given** osoba mówi do satelity „tu Adrian” i podaje swój PIN głosowy
 - **When** PIN jest poprawny
 - **Then** tura działa w imieniu tej osoby, jak przed zmianą
+- **gdy JARVIS domu jest wyłączony, satelita milczy także po PIN-ie**
 
 ### 2.2 Uprawnienia JARVIS-a domu i sufit dla JARVIS-a osoby ✅ (H-2)
 
@@ -246,7 +247,7 @@ narzędzia JARVIS-a i jest widoczne dla dodatków; własne urządzenie ESP da si
 - **When** mija 2,5 okresu raportu
 - **Then** urządzenie jest zaginione (sprawdzenie 2.8 na żywo)
 
-### 2.14 Komponent ESP-IDF `homeapps-device` ○ (H-6, po D10)
+### 2.14 Komponent ESP-IDF `homeapps-device` ✅ (H-6)
 
 - **Given** autor urządzenia na ESP32-S3, C3 albo C6
 - **When** dodaje komponent z `firmware/homeapps-device/` i deklaruje w kodzie kontrolki, czujniki i zdarzenia
@@ -294,7 +295,7 @@ narzędzia JARVIS-a i jest widoczne dla dodatków; własne urządzenie ESP da si
 ## 3. Przepływ użytkownika i oczekiwany UX
 
 1. Admin domu otwiera zakładkę „JARVIS”: lewa kolumna to JARVIS domu, na górze „Dodaj urządzenie”, w środku urządzenia
-   wg celu (JARVIS, smart home, komputery domowników do podglądu). Na telefonie lewa kolumna zjeżdża nad listę.
+   wg celu (JARVIS, smart home, Moje Komputery). Na telefonie lewa kolumna zjeżdża nad listę.
 2. „Dodaj urządzenie”: nazwa, potem kod parowania do wpisania w urządzeniu. Po sparowaniu urządzenie pojawia się od
    razu, z celem, kontrolkami i czujnikami z opisu.
 3. Karta urządzenia: online / offline / zaginione, bateria i sygnał, ostatni stan, kontrolki rysowane z typu, ostatnie
@@ -325,4 +326,4 @@ ani domu. Samodzielne odzywanie się na zdarzenie („ktoś dzwoni do drzwi”) 
 - Uprawnienia per narzędzie (są poziom, źródła i per urządzenie, D2).
 - Capabilities per dom i publiczny indeks capabilities (D14, później).
 - W tej wersji odłożone: kolejka poleceń dla uśpionych urządzeń, akcje urządzeń przez `devices.control` w dodatkach,
-  powiadomienia domowników o zdarzeniach z `notify`, natychmiastowe działanie przełącznika „Pytaj” (dziś do 5 minut).
+  powiadomienia domowników o zdarzeniach z `notify`.
