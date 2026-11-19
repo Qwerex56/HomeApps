@@ -62,9 +62,16 @@ internal sealed class FakeTriggerScripts : ITriggerScripts
 
     public string? Fails { get; set; }
 
+    public Exception? Throws { get; set; }
+
     public Task<Result> RunAsync(TriggerRun run, CancellationToken cancellationToken)
     {
         Runs.Add(run);
+        if (Throws is not null)
+        {
+            throw Throws;
+        }
+
         return Task.FromResult(Fails is null ? Result.Ok() : Result.Fail(Fails));
     }
 }

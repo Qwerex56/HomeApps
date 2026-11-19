@@ -119,7 +119,7 @@ public sealed partial class TriggerDispatcher(
             var result = await scripts.RunAsync(run, cancellationToken);
             return result.IsSuccess ? null : result.Errors[0].Message;
         }
-        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or InvalidOperationException && !cancellationToken.IsCancellationRequested)
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
             return exception.Message;
         }

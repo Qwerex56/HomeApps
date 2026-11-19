@@ -246,6 +246,21 @@ public sealed class TriggerDispatcherTests
     }
 
     [Fact]
+    public async Task Any_exception_from_a_script_counts_as_a_failure_and_later_triggers_still_run()
+    {
+        _scripts.Throws = new System.Text.Json.JsonException("bad json");
+        var dispatcher = Dispatcher();
+
+        await dispatcher.DispatchAsync(Changed("""{"temperature":18}"""), CancellationToken.None);
+
+        var state = Assert.Single(_states.All);
+        Assert.Equal((1, "bad json"), (state.ConsecutiveFailures, state.LastError));
+        _scripts.Throws = null;
+        await dispatcher.DispatchAsync(Pressed(), CancellationToken.None);
+        Assert.Equal("bell", _scripts.Runs[^1].Trigger.Id);
+    }
+
+    [Fact]
     public async Task A_success_in_between_keeps_the_trigger_on()
     {
         var dispatcher = Dispatcher();
