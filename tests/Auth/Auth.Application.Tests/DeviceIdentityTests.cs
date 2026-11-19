@@ -59,6 +59,36 @@ public sealed class DeviceIdentityTests
     }
 
     [Fact]
+    public async Task H4c_an_unknown_device_and_a_wrong_secret_of_an_active_one_are_invalid_credentials()
+    {
+        Assert.Equal("devices.invalid_credentials", (await Token("whatever")).Code());
+
+        await Pair();
+        Assert.Equal("devices.invalid_credentials", (await Token("a-wrong-secret")).Code());
+    }
+
+    [Fact]
+    public async Task H4c_the_right_secret_of_an_unpaired_device_says_device_unpaired_and_a_wrong_one_does_not()
+    {
+        var secret = (await Pair()).Value.Secret;
+        await new UnpairDeviceHandler(_w.DeviceIdentities, _w.Time).Handle(new UnpairDeviceCommand(_device), default);
+
+        Assert.Equal("devices.device_unpaired", (await Token(secret)).Code());
+        Assert.Equal("devices.invalid_credentials", (await Token("a-wrong-secret")).Code());
+    }
+
+    [Fact]
+    public async Task H4c_the_old_secret_after_pairing_again_stays_invalid_credentials_even_while_unpaired()
+    {
+        var first = (await Pair()).Value.Secret;
+        await new UnpairDeviceHandler(_w.DeviceIdentities, _w.Time).Handle(new UnpairDeviceCommand(_device), default);
+        var second = (await Pair()).Value.Secret;
+
+        Assert.Equal("devices.invalid_credentials", (await Token(first)).Code());
+        Assert.True((await Token(second)).IsSuccess);
+    }
+
+    [Fact]
     public async Task JARVIS_answering_a_satellite_acts_for_the_satellite()
     {
         await Pair();
