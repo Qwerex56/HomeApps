@@ -190,7 +190,9 @@ A satellite belongs to its household but is **not a household member** (stage H-
 4. The satellite trades its secret for 15-minute tokens at `POST /auth/devices/token` `{deviceId, secret}`:
    `sub` = the device, `household_id`, `role` User, no email, `act` = `device`. Auth, Accounts and Households refuse
    its changes like any assistant's; Households answers `GET /households/{id}/members/me` for it with the household assistant's role (`Guest` or `Member` from its access level, `isAssistant: true`; 404 when the assistant is off), so plugins authorize it as before. With that token it connects to
-   `/devices/link` and keeps the name its household gave it (the `device` in `hello` is ignored).
+   `/devices/link` and keeps the name its household gave it (the `device` in `hello` is ignored). An unknown device or a wrong
+   secret (also the secret of an earlier pairing) gets `401 devices.invalid_credentials`; the right secret of a device that was
+   removed or got a new code gets `401 devices.device_unpaired`, which the firmware answers by going back to setup. Limit: `Auth:RateLimits:DeviceTokenPerMinute` (600 per IP).
 5. When JARVIS answers a satellite, Auth's delegation (`/internal/delegation`) gives him a token for the device
    instead of a person, so JARVIS acts for the satellite (not a member; its plugin access is the household assistant's level). The household's JARVIS settings also filter the tools of its session (see jarvis.md, H-2).
 
