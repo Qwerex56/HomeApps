@@ -52,7 +52,21 @@ public static class DependencyInjection
         services.AddHttpClient<IHouseholdDevices, DevicesHttp>((sp, http) =>
             http.BaseAddress = new Uri(sp.GetRequiredService<IOptions<HomeMixOptions>>().Value.DevicesUrl.TrimEnd('/') + "/"));
 
+        // Triggers run with nobody logged in: Devices and Households are asked as HomeMix itself.
+        services.AddHttpClient<IAddonDevices, DevicesServiceClient>((sp, http) => ConfigureServiceClient(sp, http, o => o.DevicesUrl));
+        services.AddHttpClient<IHouseholdAdmins, HouseholdsServiceAdmins>((sp, http) => ConfigureServiceClient(sp, http, o => o.HouseholdsUrl));
+        services.AddScoped<ITriggerStates, TriggerStateRepository>();
+
         return services;
+    }
+
+    private static void ConfigureServiceClient(IServiceProvider sp, HttpClient http, Func<HomeMixOptions, string> url)
+    {
+        var options = sp.GetRequiredService<IOptions<HomeMixOptions>>().Value;
+        http.BaseAddress = new Uri(url(options).TrimEnd('/') + "/");
+        http.Timeout = TimeSpan.FromSeconds(15);
+        http.DefaultRequestHeaders.Add("X-Client-Id", options.ClientId);
+        http.DefaultRequestHeaders.Add("X-Client-Secret", options.ClientSecret);
     }
 
     /// <summary>GitHub's REST API, with the optional token (<c>HomeMix:GitHubToken</c>).</summary>
