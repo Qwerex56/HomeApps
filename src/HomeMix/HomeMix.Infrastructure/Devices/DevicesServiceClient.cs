@@ -3,7 +3,10 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using FluentResults;
 using HomeMix.Application.Abstractions;
+using HomeMix.Application;
 using HomeMix.Domain.Installations;
+using HomeMix.Domain.Triggers;
+using Microsoft.Extensions.Options;
 
 namespace HomeMix.Infrastructure.Devices;
 
@@ -12,12 +15,17 @@ namespace HomeMix.Infrastructure.Devices;
 /// as Devices lists them under <c>Devices:Internal:HomeMix</c>), for the triggers of add-ons, which run when nobody is logged in.
 /// Devices sees the call as the add-on (installation, name, the installer) and checks the installer is an admin there.
 /// </summary>
-internal sealed class DevicesServiceClient(HttpClient http) : IAddonDevices
+internal sealed class DevicesServiceClient(HttpClient http, IOptions<HomeMixOptions> options) : IAddonDevices
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     public async Task<IReadOnlyList<HouseholdDevice>> ListAsync(Guid householdId, Guid asUser, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrEmpty(options.Value.ClientSecret))
+        {
+            throw new InvalidOperationException(TriggerErrors.NoServiceClient.Message);
+        }
+
         using var response = await http.GetAsync($"internal/households/{householdId}/devices?user={asUser}", cancellationToken);
         if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
         {
@@ -33,6 +41,11 @@ internal sealed class DevicesServiceClient(HttpClient http) : IAddonDevices
         Installation installation, string addonName, Guid deviceId, string control, JsonElement value, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(installation);
+        if (string.IsNullOrEmpty(options.Value.ClientSecret))
+        {
+            return Result.Fail(TriggerErrors.NoServiceClient);
+        }
+
         var body = new
         {
             householdId = installation.TargetId,
