@@ -147,7 +147,7 @@ export function checkManifest(json: unknown): string[] {
 }
 
 const capabilityName = /^([a-z][a-z0-9_]{0,29}|[a-z0-9][a-z0-9-]{0,29}\/[a-z][a-z0-9_-]{0,29})$/
-const roleName = /^[a-z][a-z0-9_]{0,40}$/
+const roleName = /^[a-z][a-z0-9_]{0,39}$/
 const modelName = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$/
 
 function checkDevices(widget: NonNullable<HomeMixManifest['widgets']>[number], m: Partial<HomeMixManifest>, problems: string[]) {
