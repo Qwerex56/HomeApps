@@ -90,6 +90,20 @@ public sealed class SatelliteVoiceTests(JarvisFactory factory)
     }
 
     [Fact]
+    public async Task A_PIN_turn_on_a_satellite_of_a_household_with_JARVIS_off_is_refused_too_without_the_model()
+    {
+        factory.Ceilings.Set[_household] = new HouseholdCeiling(false, true, true, true, true);
+        factory.Speakers.Pins["4821"] = (_adrian, "Adrian");
+        var runs = factory.Brain.Runs;
+        using var socket = await ConnectAsync();
+
+        var heard = await SayAsync(socket, "Tu Adrian, PIN 4821, włącz światło");
+
+        Assert.Equal("JARVIS jest wyłączony w tym domu.", heard.Single(m => Kind(m) == "reply").GetProperty("text").GetString());
+        Assert.Equal(runs, factory.Brain.Runs);
+    }
+
+    [Fact]
     public async Task A_satellite_of_a_household_whose_settings_did_not_load_hears_that_JARVIS_is_unavailable()
     {
         factory.Ceilings.Set[_household] = HouseholdCeiling.Unavailable;
