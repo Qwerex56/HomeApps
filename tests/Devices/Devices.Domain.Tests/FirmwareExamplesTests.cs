@@ -39,26 +39,26 @@ public sealed class FirmwareExamplesTests
     public void The_switch_example_state_frame_fits_its_descriptor()
     {
         var descriptor = DescriptorParser.Parse(Switch).Value;
-        using var values = JsonDocument.Parse("""{"on":true}""");
+        var values = JsonElement.Parse("""{"on":true}""");
 
-        Assert.True(FrameValidation.CheckState(descriptor, values.RootElement).IsSuccess);
+        Assert.True(FrameValidation.CheckState(descriptor, values).IsSuccess);
     }
 
     [Fact]
     public void The_weather_example_state_frame_fits_its_descriptor()
     {
         var descriptor = DescriptorParser.Parse(WeatherStation).Value;
-        using var values = JsonDocument.Parse("""{"temperature":21.5,"humidity":48,"battery":80}""");
+        var values = JsonElement.Parse("""{"temperature":21.5,"humidity":48,"battery":80}""");
 
-        Assert.True(FrameValidation.CheckState(descriptor, values.RootElement).IsSuccess);
+        Assert.True(FrameValidation.CheckState(descriptor, values).IsSuccess);
     }
 
     [Fact]
     public void The_presence_example_seen_event_fits_its_descriptor()
     {
         var descriptor = DescriptorParser.Parse(PresenceTag).Value;
-        using var data = JsonDocument.Parse("""{"where":"hall"}""");
+        var data = JsonElement.Parse("""{"where":"hall"}""");
 
-        Assert.True(FrameValidation.CheckEvent(descriptor, "seen", data.RootElement).IsSuccess);
+        Assert.True(FrameValidation.CheckEvent(descriptor, "seen", data).IsSuccess);
     }
 }
