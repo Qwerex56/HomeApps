@@ -38,6 +38,10 @@ internal sealed class TriggerSession(TriggerRun run, IAddonDevices devices, Canc
                 _ => Error("homemix.unknown_method", $"ctx has no {method} in a trigger."),
             };
         }
+        catch (JsonException e)
+        {
+            return Error("homemix.bad_request", e.Message);
+        }
         catch (ScriptArgumentException e)
         {
             return Error("homemix.bad_request", e.Message);

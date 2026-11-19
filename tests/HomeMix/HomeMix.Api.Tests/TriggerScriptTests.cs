@@ -156,6 +156,17 @@ public sealed class TriggerScriptTests
     }
 
     [Fact]
+    public async Task A_host_call_with_malformed_arguments_fails_the_run_instead_of_throwing()
+    {
+        var (runner, run) = Setup(
+            "export default async function () { const a = JSON.parse(__host('devices.set', 'x')); if (a.error) throw new Error(a.error.code) }", """{"temperature":1}""");
+
+        var result = await runner.RunAsync(run, CancellationToken.None);
+
+        Assert.Contains("homemix.bad_request", Problem(result), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_missing_script_fails_the_run()
     {
         var (runner, run) = Setup(Cold, """{"temperature":1}""");
