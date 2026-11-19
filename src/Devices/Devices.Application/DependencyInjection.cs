@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<Common.DescriptorIntake>();
         services.AddScoped<Common.AdminNotices>();
+        services.TryAddSingleton<Abstractions.IControlSources, Common.RecentControlSources>();
         return services;
     }
 }

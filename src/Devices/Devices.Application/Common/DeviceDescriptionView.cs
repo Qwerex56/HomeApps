@@ -26,7 +26,9 @@ public sealed record DeviceDescriptionView(
     string? Jarvis,
     string? AdminNotes,
     bool JarvisMayControl = true,
-    bool JarvisAsks = true)
+    bool JarvisAsks = true,
+    string? Model = null,
+    IReadOnlyList<string>? Roles = null)
 {
     internal static DeviceDescriptionView From(ReachableDevice reachable, DeviceState? state, bool online)
     {
@@ -43,7 +45,9 @@ public sealed record DeviceDescriptionView(
             descriptor?.Jarvis is { } jarvis ? DeviceText.Clean(jarvis, DeviceDescriptor.MaxJarvisLength) : null,
             device.AdminNotes is { } notes ? DeviceText.Clean(notes, Device.MaxNotesLength) : null,
             device.JarvisMayControl,
-            device.JarvisAsks);
+            device.JarvisAsks,
+            device.Model,
+            device.Roles);
     }
 
     private static string? Label(string? text) => text is null ? null : DeviceText.Clean(text, 200);

@@ -20,14 +20,16 @@ public sealed class ProcessFramesTests
     private readonly FakeDirectory _directory = new();
     private readonly FakeTime _time = new(Now);
     private readonly Device _device;
+    private readonly RecentControlSources _sources;
     private readonly ProcessFramesHandler _handler;
 
     public ProcessFramesTests()
     {
+        _sources = new RecentControlSources(_time);
         _device = PairedDevice.Create(Now);
         _devices.Add(_device);
         _directory.Admins.Add(Guid.NewGuid());
-        _handler = new ProcessFramesHandler(_devices, _telemetry, _stream, _bus, new AdminNotices(_directory, _bus, Microsoft.Extensions.Logging.Abstractions.NullLogger<AdminNotices>.Instance), _time);
+        _handler = new ProcessFramesHandler(_devices, _telemetry, _stream, _bus, new AdminNotices(_directory, _bus, Microsoft.Extensions.Logging.Abstractions.NullLogger<AdminNotices>.Instance), _sources, _time);
     }
 
     private static JsonElement Json(string json) => JsonDocument.Parse(json).RootElement.Clone();
@@ -200,5 +202,37 @@ public sealed class ProcessFramesTests
         var validator = new ProcessFramesValidator();
 
         Assert.False((await validator.ValidateAsync(new ProcessFramesCommand(_device.Id, [null!]))).IsValid);
+    }
+
+    [Fact]
+    public async Task State_changed_right_after_an_add_on_set_carries_its_source_and_the_device_info()
+    {
+        await SendAsync(new DeviceFrame("state", Values: Json("""{ "heating": 0, "temperature": 21.5 }""")));
+        _bus.Published.Clear();
+        _sources.Remember(_device.Id, "heating", "homemix:abc");
+
+        await SendAsync(new DeviceFrame("state", Values: Json("""{ "heating": 2, "temperature": 21.5 }""")));
+
+        var changed = Assert.IsType<DeviceStateChanged>(Assert.Single(_bus.Published));
+        Assert.Equal("homemix:abc", changed.ChangedBy);
+        Assert.Equal(_device.Name, changed.Device!.Name);
+        Assert.Equal(_device.Capabilities, changed.Device.Capabilities);
+    }
+
+    [Fact]
+    public async Task The_source_is_forgotten_after_five_seconds_and_for_other_controls()
+    {
+        await SendAsync(new DeviceFrame("state", Values: Json("""{ "heating": 0, "temperature": 21.5 }""")));
+        _sources.Remember(_device.Id, "heating", "homemix:abc");
+        _time.Now += TimeSpan.FromSeconds(6);
+        _bus.Published.Clear();
+
+        await SendAsync(new DeviceFrame("state", Values: Json("""{ "heating": 1, "temperature": 21.5 }""")));
+        Assert.Null(Assert.IsType<DeviceStateChanged>(Assert.Single(_bus.Published)).ChangedBy);
+
+        _sources.Remember(_device.Id, "heating", "homemix:abc");
+        _bus.Published.Clear();
+        await SendAsync(new DeviceFrame("state", Values: Json("""{ "heating": 1, "temperature": 19 }""")));
+        Assert.Null(Assert.IsType<DeviceStateChanged>(Assert.Single(_bus.Published)).ChangedBy);
     }
 }
