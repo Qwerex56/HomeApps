@@ -389,6 +389,38 @@ fails or hits a limit answers JARVIS `homemix.tool_script` with the reason; the 
 `ctx` over data in memory (`{ "household": { "<collection>": { "<key>": value } }, "user": { … } }`), real `fetch` to
 the `network` origins and the same limits. It mirrors the server's contract, not its isolation (`node:vm`).
 
+## Triggers (H-4b)
+
+An add-on's `triggers` (docs/homemix-authoring.md, "Triggers") react to household devices on the server. HomeMix listens to
+`DeviceStateChanged` and `DeviceEventOccurred` (RabbitMQ, from Devices). The contracts carry the device's name, model,
+roles and capabilities (`DeviceInfo`), so HomeMix matches without asking Devices again. For each active, unblocked
+**household** installation that was granted `devices`, every trigger that fits the device and the field or event name runs its script in
+Jint with the tool limits and `ctx.trigger`, `ctx.devices` (and no `data`, `members` or `fetch`).
+
+**In whose name.** As the installation, within its consents, with the rights of the person who installed it (Admin or Owner
+in the household). Nobody is logged in, so HomeMix calls Devices as itself (`X-Client-Id`/`X-Client-Secret`, `HomeMix:ClientId`/`ClientSecret`)
+and names the installation, the add-on and the installer; Devices checks the installer is *still* Admin or Owner of that household
+(`devices.forbidden` otherwise) and that the device belongs to it. JARVIS's per-device switch does not apply: add-ons are governed by
+their consent (`devices.control` is checked by HomeMix before the call). See devices.md, "Add-on triggers".
+
+**Safeguards** (household-jarvis-devices.md 2.6):
+
+| | |
+|---|---|
+| Time and memory | the tool script limits: 5 s, 10 MB, 1 M statements, 100 `ctx` calls |
+| Run limit | 30 runs a minute per installation (in memory); more are skipped and logged, they do not count as failures |
+| Loop guard | Devices marks a state change caused by an add-on's set with `ChangedBy = homemix:{installationId}` for 5 s; that installation's triggers skip it. Other add-ons still react |
+| Failures | `TriggerStates` (installation, trigger id): `enabled`, consecutive failures, `lastRunAt`, `lastError`. 5 failures in a row turn the trigger off and send a `NotificationRequested` to the household's admins (source: the add-on id, category `trigger`); a success resets the count |
+
+**Admins** (Admin and up; others get 403, a household they are not in 404):
+
+| | |
+|---|---|
+| `GET /homemix/api/households/{householdId}/triggers` | every trigger of the household's add-ons with `enabled`, `consecutiveFailures`, `lastRunAt`, `lastError`, `disabledByFailures` |
+| `PUT /homemix/api/installations/{id}/triggers/{triggerId}` `{ "enabled": true }` | turns it off or on (on clears the failures); 404 `homemix.trigger_not_found` |
+
+The JARVIS tab in the web app shows these in H-9. A trigger without a row is on. Rows of a removed installation stay (they are tiny).
+
 ## In the web app (A3)
 
 - A household's settings list its HomeMix add-ons under the server's plugins; Admins and up add one (GitHub link or
@@ -530,6 +562,7 @@ and `/homemix/run` (not `/mcp`). From Rider it runs on `http://localhost:5600`.
 | `HomeMix:PackagesPath` | `/data/packages` | the volume |
 | `HomeMix:HouseholdsUrl` | `http://households:8080` | |
 | `HomeMix:DevicesUrl` | `http://devices:8080` | the devices bridge; from an IDE: `http://localhost:5800` |
+| `HomeMix:ClientId`, `HomeMix:ClientSecret` | `homemix-service`, `HOMEMIX_CLIENT_SECRET` | HomeMix's service client for triggers: Devices (`Devices__Internal__HomeMix__ClientSecret`) and Households (`Households__Internal__HomeMix__ClientSecret`) list it; required in the prod compose, a development default in the dev one |
 | `HomeMix:GitHubToken` | empty | `HOMEMIX_GITHUB_TOKEN`, only to raise GitHub's limit of 60 anonymous requests an hour |
 | `HomeMix:StoreIndexUrl` | `homemix/store/addons.json` on GitHub | `HOMEMIX_STORE_INDEX`; empty: no official entries but the built-in ones |
 | `HomeMix:StoreRefreshMinutes` | 60 | how often each store entry is read again from GitHub |

@@ -148,6 +148,24 @@ dropped (logged) and the pruning waits for the next day.
 Removing, restoring and "Nie pytaj" work on a household device for the household's admins and owner. When an account
 is erased (`UserErased`), its own devices go with it; household devices it added stay with the household.
 
+### Add-on triggers (H-4b)
+
+`DeviceStateChanged` and `DeviceEventOccurred` carry `Device` (`DeviceInfo`: name, model, roles, capabilities) so a listener can match
+the device without calling back. `DeviceStateChanged.ChangedBy` is `homemix:{installationId}` when the change followed a set by an
+add-on in the last **5 seconds** (Devices remembers the source per device and control in memory), and `null` otherwise; HomeMix uses it as
+the loop guard. An add-on's set is written to the device's history as an event `set_by_addon` with `data` `{ control, value, by: "addon", addon, installationId, userId, text: "ustawione przez dodatek {name}" }`.
+
+HomeMix's triggers run with nobody logged in, so they use Devices' internal API with HomeMix's service client
+(`Devices:Internal:HomeMix:ClientId`/`ClientSecret`, default id `homemix-service`, compose `Devices__Internal__HomeMix__ClientSecret` =
+`HOMEMIX_CLIENT_SECRET`; sent as `X-Client-Id`/`X-Client-Secret`, constant-time compare, no secret configured means 401):
+
+- `GET /internal/households/{id}/devices?user={installerId}` is the JARVIS endpoint above (also open to this client); entries now also carry `model` and `roles`.
+- `POST /internal/devices/{id}/set` `{ householdId, control, value, installerUserId, installationId, addonName }` (this client only). The device must
+  be a usable device of `householdId` (404 `devices.not_found` otherwise), `installerUserId` must be Admin or Owner of it **now** by
+  Households' internal members (403 `devices.forbidden`; 409 `devices.members_unavailable` when Households cannot be asked), and the value is checked against
+  the descriptor like any set (`devices.control_not_found`, `devices.offline`, ...). The per-device "JARVIS may control" switch does not apply: add-ons are
+  governed by their consent, which HomeMix checks first.
+
 ## Household devices (S-1)
 
 A household admin adds a satellite by name and gets a one-time **pairing code**: 8 characters without look-alikes,
