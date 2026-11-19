@@ -13,6 +13,22 @@ export interface DeviceMatch {
   pick?: 'manual'
 }
 
+/** A server-side reaction to a household device (docs/homemix-authoring.md, "Triggers"). Needs the `devices` capability. */
+export interface AddonTrigger {
+  /** Names it in the household's list; defaults to the script's file name. */
+  id?: string
+  on: 'state' | 'event'
+  capability?: string
+  role?: string
+  model?: string
+  /** state: the value that changed (any change when left out). */
+  field?: string
+  /** event: the event's name (any event when left out). */
+  name?: string
+  /** A path under triggers/ in the package, run like a script tool with ctx.trigger and ctx.devices. */
+  script: string
+}
+
 export interface HomeMixManifest {
   homemixVersion: 1
   id: string
@@ -44,6 +60,8 @@ export interface HomeMixManifest {
   tools?: AddonTool[]
   /** A collection JARVIS reads as `{id}_summary`. */
   summary?: { collection: string; scope?: 'household' | 'user'; description?: string }
+  /** At most 10; they run on the server, so the add-on reacts when nobody has a page open. */
+  triggers?: AddonTrigger[]
 }
 
 export type ToolAction = 'add' | 'list' | 'get' | 'update' | 'delete' | 'script'
@@ -143,6 +161,7 @@ export function checkManifest(json: unknown): string[] {
   if (m.capabilities?.includes('devices.control') && !m.capabilities.includes('devices'))
     problems.push('capabilities: devices.control needs devices as well.')
   checkTools(m, problems)
+  checkTriggers(m, problems)
   return problems
 }
 
@@ -168,6 +187,44 @@ function checkDevices(widget: NonNullable<HomeMixManifest['widgets']>[number], m
     if (rule.capability === undefined && rule.role === undefined && rule.model === undefined)
       problems.push(`${at}: every entry needs a capability, a role or a model.`)
   }
+}
+
+const fieldName2 = /^[A-Za-z][A-Za-z0-9_.]{0,60}$/
+
+function checkTriggers(m: Partial<HomeMixManifest>, problems: string[]) {
+  if (m.triggers === undefined) return
+  if (!Array.isArray(m.triggers)) return void problems.push('triggers must be an array.')
+  if (m.triggers.length && !m.capabilities?.includes('devices'))
+    problems.push('triggers: reacting to devices needs the capability devices.')
+  if (m.triggers.length > 10) problems.push('triggers: at most 10.')
+  const ids = new Set<string>()
+  m.triggers.forEach((t, i) => {
+    const at = `triggers[${i}]`
+    if (!t || typeof t !== 'object') return void problems.push(`${at} must be an object.`)
+    if (t.on !== 'state' && t.on !== 'event') problems.push(`${at}.on must be "state" or "event".`)
+    const pattern = (value: unknown, name: string, re: RegExp, what: string) => {
+      if (value !== undefined && !(typeof value === 'string' && re.test(value))) problems.push(`${at}.${name} must be ${what}.`)
+    }
+    pattern(t.capability, 'capability', capabilityName, 'a capability name such as weather or qwerex56/akwarium')
+    pattern(t.role, 'role', roleName, 'a role such as weather_station')
+    pattern(t.model, 'model', modelName, 'a model such as qwerex56/fotel-v1')
+    if (t.capability === undefined && t.role === undefined && t.model === undefined)
+      problems.push(`${at}: needs a capability, a role or a model, like a widget's devices.`)
+    pattern(t.field, 'field', fieldName2, "a state value's name such as temperature")
+    pattern(t.name, 'name', fieldName2, "an event's name such as pressed")
+    if (t.on === 'event' && t.field !== undefined) problems.push(`${at}.field is for "state" triggers; an event trigger takes name.`)
+    if (t.on === 'state' && t.name !== undefined) problems.push(`${at}.name is for "event" triggers; a state trigger takes field.`)
+    const script = t.script
+    const scriptOk =
+      typeof script === 'string' && path.test(script) && !script.includes('..') &&
+      script.startsWith('triggers/') && script.endsWith('.js') && script.length > 12
+    if (!scriptOk) problems.push(`${at}.script must be a path to a .js file under triggers/ in the package, e.g. triggers/cold.js.`)
+    const id = t.id ?? (scriptOk ? script.slice(script.lastIndexOf('/') + 1, -3) : undefined)
+    if (id === undefined || !name.test(id))
+      problems.push(`${at}.id must be a name of lowercase letters, digits, '.', '_' and '-' (it defaults to the script's file name).`)
+    else if (ids.has(id)) problems.push(`${at}: the id '${id}' is used twice; give each trigger its own id or script.`)
+    else ids.add(id)
+  })
 }
 
 function checkTools(m: Partial<HomeMixManifest>, problems: string[]) {
@@ -227,7 +284,10 @@ export function checkFiles(files: { path: string; size: number }[], manifest: Ho
       problems.push(`'${f.path}' is not allowed: only ${ALLOWED_EXTENSIONS.join(', ')} files.`)
   }
   const paths = new Set(files.map((f) => f.path))
-  const scripts = (manifest.tools ?? []).filter((t) => t.action === 'script').map((t) => `tools/${t.name}.js`)
+  const scripts = [
+    ...(manifest.tools ?? []).filter((t) => t.action === 'script').map((t) => `tools/${t.name}.js`),
+    ...(manifest.triggers ?? []).map((t) => t.script),
+  ]
   for (const entry of new Set([manifest.entry, ...(manifest.widgets ?? []).map((w) => w.entry), ...scripts].filter(Boolean)))
     if (!paths.has(entry!)) problems.push(`'${entry}' is named in homemix.json but is not in the package.`)
   return problems

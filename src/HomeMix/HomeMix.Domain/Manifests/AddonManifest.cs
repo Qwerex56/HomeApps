@@ -23,4 +23,5 @@ public sealed record AddonManifest(
     IReadOnlyList<AddonPermission> Permissions,
     bool Jarvis,
     IReadOnlyList<AddonTool> Tools,
-    AddonSummary? Summary);
+    AddonSummary? Summary,
+    IReadOnlyList<AddonTrigger> Triggers);
