@@ -156,4 +156,21 @@ public sealed class DeviceCapabilityTests
 
         Assert.True(state.Value.GetProperty("values").GetProperty("on").GetBoolean());
     }
+
+    [Fact]
+    public async Task An_account_installation_may_neither_set_nor_read_a_state()
+    {
+        var (installation, package) = Install("""["devices", "devices.control"]""", InstallTarget.User(Adam));
+        var devices = new FakeDevices(Station);
+        var access = Access(installation, package, HouseholdRole.Member, devices);
+
+        var set = await new SetInstallationDeviceHandler(access, devices).Handle(
+            new SetInstallationDeviceCommand(installation.Id, Station.Id, "on", JsonDocument.Parse("true").RootElement), CancellationToken.None);
+        var state = await new GetInstallationDeviceStateHandler(access, devices).Handle(
+            new GetInstallationDeviceStateQuery(installation.Id, Station.Id), CancellationToken.None);
+
+        Assert.Equal("homemix.devices_household_only", Code(set));
+        Assert.Equal("homemix.devices_household_only", Code(state.ToResult()));
+        Assert.Empty(devices.Sets);
+    }
 }
