@@ -529,6 +529,7 @@ and `/homemix/run` (not `/mcp`). From Rider it runs on `http://localhost:5600`.
 | `HomeMix:MaxDocumentBytes`, `MaxInstallationBytes`, `MaxDocumentsPerCollection` | 1 MB, 10 MB, 1000 | data limits |
 | `HomeMix:PackagesPath` | `/data/packages` | the volume |
 | `HomeMix:HouseholdsUrl` | `http://households:8080` | |
+| `HomeMix:DevicesUrl` | `http://devices:8080` | the devices bridge; from an IDE: `http://localhost:5800` |
 | `HomeMix:GitHubToken` | empty | `HOMEMIX_GITHUB_TOKEN`, only to raise GitHub's limit of 60 anonymous requests an hour |
 | `HomeMix:StoreIndexUrl` | `homemix/store/addons.json` on GitHub | `HOMEMIX_STORE_INDEX`; empty: no official entries but the built-in ones |
 | `HomeMix:StoreRefreshMinutes` | 60 | how often each store entry is read again from GitHub |

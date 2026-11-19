@@ -124,4 +124,55 @@ public sealed class DeviceMatcherTests
 
         Assert.Equal(chosen.Id, result.Selected);
     }
+
+    [Fact]
+    public void A_stale_pick_on_a_manual_widget_asks_for_a_new_one()
+    {
+        var one = Device("a", capabilities: ["weather"]);
+        var two = Device("b", capabilities: ["weather"]);
+
+        var result = DeviceMatcher.Match([ByCapability("weather", pick: "manual")], [one, two], Guid.NewGuid());
+
+        Assert.Null(result.Selected);
+        Assert.True(result.NeedsPick);
+    }
+
+    [Fact]
+    public void An_offline_device_is_still_selected_when_it_is_the_only_match()
+    {
+        var offline = Device("a", online: false, capabilities: ["weather"]);
+
+        var result = DeviceMatcher.Match([ByCapability("weather")], [offline], null);
+
+        Assert.Equal(offline.Id, result.Selected);
+    }
+
+    [Fact]
+    public void Online_beats_offline_only_within_the_same_rank()
+    {
+        var offlineCapability = Device("a", online: false, capabilities: ["weather"]);
+        var onlineRole = Device("b", roles: ["weather_station"]);
+
+        var result = DeviceMatcher.Match([ByCapability("weather"), ByRole("weather_station")], [onlineRole, offlineCapability], null);
+
+        Assert.Equal(offlineCapability.Id, result.Selected);
+    }
+
+    [Fact]
+    public void An_entry_with_several_fields_ranks_by_its_best_field()
+    {
+        var both = Device("z", roles: ["weather_station"], capabilities: ["weather"]);
+        var roleOnly = Device("a", roles: ["weather_station"]);
+
+        var result = DeviceMatcher.Match([new DeviceMatch("weather", "weather_station", null, null), ByRole("weather_station")], [roleOnly, both], null);
+
+        Assert.Equal([both, roleOnly], result.Candidates);
+    }
+
+    [Fact]
+    public void Without_devices_or_rules_nothing_matches()
+    {
+        Assert.Empty(DeviceMatcher.Match([], [Device("a", capabilities: ["weather"])], null).Candidates);
+        Assert.Empty(DeviceMatcher.Match([ByCapability("weather")], [], null).Candidates);
+    }
 }
