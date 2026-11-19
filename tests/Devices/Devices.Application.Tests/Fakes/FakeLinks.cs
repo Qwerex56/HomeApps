@@ -32,7 +32,7 @@ internal sealed class FakeLinks : IDeviceLinks
         return Task.FromResult(Result.Ok());
     }
 
-    public void Drop(Guid deviceId)
-    {
-    }
+    public List<Guid> Dropped { get; } = [];
+
+    public void Drop(Guid deviceId) => Dropped.Add(deviceId);
 }
