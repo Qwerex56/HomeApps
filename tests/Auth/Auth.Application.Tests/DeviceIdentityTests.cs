@@ -52,7 +52,9 @@ public sealed class DeviceIdentityTests
 
         await new UnpairDeviceHandler(_w.DeviceIdentities, _w.Time).Handle(new UnpairDeviceCommand(_device), default);
 
-        Assert.Equal("devices.invalid_credentials", (await Token(second)).Code());
+        // Only the holder of the right secret learns the device was unpaired; the old and empty secrets stay invalid_credentials.
+        Assert.Equal("devices.device_unpaired", (await Token(second)).Code());
+        Assert.Equal("devices.invalid_credentials", (await Token(first)).Code());
         Assert.Equal("devices.invalid_credentials", (await Token("")).Code());
     }
 
