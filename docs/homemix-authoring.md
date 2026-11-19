@@ -255,6 +255,54 @@ Server side the calls are `GET /homemix/api/installations/{id}/devices`, `.../de
 device's actions and the live `onState` feed in the web host (Devices stream) come with H-9; until then `onState`
 only fires when the host emits `device.state`.
 
+## Triggers (H-4b)
+
+A page only runs while someone has it open. A **trigger** reacts to a household device on the server, so the add-on
+works when nobody is looking. It needs `devices` (and `devices.control` to set anything), a household installation, and
+matches devices like a widget does (capability, role, model; see above); at most 10 per add-on.
+
+```json
+"capabilities": ["devices", "devices.control"],
+"triggers": [
+  { "on": "state", "capability": "weather", "field": "temperature", "script": "triggers/cold.js" },
+  { "on": "event", "role": "doorbell", "name": "pressed", "script": "triggers/bell.js", "id": "dzwonek" }
+]
+```
+
+- `on: "state"` fires when the device reports a different value; `field` narrows it to one value (`temperature`; for a
+  capability instance `lampka.on`, the field `on` matches it too). Without `field` any change fires.
+- `on: "event"` fires when the device publishes an event; `name` narrows it. Without it any event fires.
+- `script` is a file under `triggers/` in the package (so `public/triggers/cold.js`). `id` names the trigger in the
+  household's list; it defaults to the file name and must be unique.
+
+The script is a module in the same Jint sandbox as a script tool, with the same limits (5 s, 10 MB, 100 `ctx` calls):
+
+```js
+// "When the temperature drops below 19, set the heating to level 2"
+export default async function (trigger, ctx) {
+  if (trigger.changed.temperature < 19) {
+    const [chair] = await ctx.devices.list({ capability: 'heating' })
+    await ctx.devices.set(chair.id, 'level', 2)
+  }
+}
+```
+
+`trigger` (also `ctx.trigger`) is `{ id, on, device: { id, name, slug, model, roles, capabilities }, changed, at }` for a
+state change (only the values that changed) or `{ id, on, device, event: { name, payload }, at }` for an event.
+`ctx.devices` offers `list({ capability?, role?, model?, state? })` (with `state: true` each device carries its last
+values), `state(id)` and `set(id, control, value)`, which fails with `homemix.capability_missing` without
+`devices.control` and otherwise with Devices' own error (`devices.offline`, `devices.control_not_found`, ...). `ctx.context()` and
+`ctx.can()` work as in a tool, with the person who installed the add-on as `user`. There is **no** `ctx.data`,
+`ctx.members` or `ctx.fetch` in a trigger: nobody is logged in, so the script acts as the add-on within its consent and
+the rights of its installer. `@home-apps/sdk` has the types (`TriggerScript`, `TriggerContext`), and `checkManifest`
+checks `triggers`.
+
+**Safeguards you design for.** A change your own add-on made does not fire it again for 5 s, so a trigger that sets
+the value it watches does not loop. An add-on runs at most 30 trigger runs a minute (more are skipped). A trigger
+that fails 5 runs in a row turns itself off and tells the household's admins; an admin switches it back on. A failure
+is a script error, a timeout, or an unhandled rejection from `ctx.devices.set`: catch what you can live with.
+Devices shows what a trigger set as "ustawione przez dodatek {name}" in the device's history.
+
 ## 6. The network, notifications and JARVIS
 
 **Fetching.** List each origin in `network`, then use `fetch` as usual. The installer sees "may send data to
