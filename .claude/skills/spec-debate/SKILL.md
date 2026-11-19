@@ -28,8 +28,8 @@ team with three teammates, using the agent definitions from `.claude/agents/`:
 
 | Teammate | Agent type | Model | Focus |
 |---|---|---|---|
-| `dotnet` | `dotnet-architect` | Sonnet | owner service, API contract, data, migration, messages, concurrency |
-| `vue` | `vue-architect` | Sonnet | screens, routes, states per role, forms, query keys, pl.json |
+| `dotnet` | `dotnet-architect` | Haiku | owner service, API contract, data, migration, messages, concurrency |
+| `vue` | `vue-architect` | Haiku | screens, routes, states per role, forms, query keys, pl.json |
 | `devil` | `devils-advocate` | Opus | ambiguity, edge cases, permissions/privacy, integration risks, scope creep |
 
 Spawn prompt for each (fill in the path):
@@ -65,7 +65,7 @@ the team.
 # ADR: <Nazwa funkcji>
 
 Specyfikacja: [specs/<name>.md](<name>.md) · Data: <YYYY-MM-DD> · Status: zaakceptowany
-Zespół: dotnet-architect (Sonnet), vue-architect (Sonnet), devils-advocate (Opus)
+Zespół: dotnet-architect (Haiku), vue-architect (Haiku), devils-advocate (Opus)
 
 ## 1. Rozstrzygnięte pytania i niejasności
 | # | Pytanie | Odpowiedź autora | Skutek dla implementacji |

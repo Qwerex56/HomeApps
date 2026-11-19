@@ -2,7 +2,7 @@
 name: tester
 description: Writes and runs HomeApps tests (.NET and Vue) from the spec's acceptance criteria and the ADR contract, then returns a PASS/FAIL report with logs. Used by /run-feature.
 tools: Read, Grep, Glob, Edit, Write, Bash
-model: sonnet
+model: haiku
 effort: medium
 skills:
   - testing-standards

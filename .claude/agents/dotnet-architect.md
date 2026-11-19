@@ -2,7 +2,7 @@
 name: dotnet-architect
 description: Backend architect for spec debates in HomeApps. Reads a spec and the existing .NET code and proposes the API contract, data model, messages and concurrency handling. Read-only; used by /spec-debate.
 tools: Read, Grep, Glob
-model: sonnet
+model: haiku
 skills:
   - dotnet-conventions
 ---

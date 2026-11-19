@@ -2,7 +2,7 @@
 name: vue-architect
 description: Front-end architect for spec debates in HomeApps. Reads a spec and the Vue 3 app and proposes screens, state, API usage, validation and UX states. Read-only; used by /spec-debate.
 tools: Read, Grep, Glob
-model: sonnet
+model: haiku
 skills:
   - vue-conventions
 ---

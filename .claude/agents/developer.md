@@ -2,7 +2,7 @@
 name: developer
 description: Implements an approved HomeApps spec and its ADR (.NET backend and Vue front end) on the feature branch, or applies a reviewer's/tester's fix list. Used by /run-feature.
 tools: Read, Grep, Glob, Edit, Write, Bash
-model: sonnet
+model: haiku
 effort: low
 skills:
   - dotnet-conventions

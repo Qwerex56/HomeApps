@@ -1,6 +1,6 @@
 ---
 name: run-feature
-description: Build an approved HomeApps spec end to end with subagents (developer Sonnet → tester Sonnet → reviewer Opus, max 3 review rounds) on feat/<name>, then push and open a GitHub PR for the owner. Run by hand as /run-feature @specs/<name>.md.
+description: Build an approved HomeApps spec end to end with subagents (developer Haiku → tester Haiku → reviewer Opus, max 3 review rounds, then docs-writer Haiku) on feat/<name>, then push and open a GitHub PR for the owner. Run by hand as /run-feature @specs/<name>.md.
 disable-model-invocation: true
 argument-hint: "@specs/<name>.md [--base <branch>]"
 ---
@@ -37,13 +37,13 @@ Working folder for this run: `.claude/runs/<name>/` (git-ignored).
 Start each subagent with the Agent tool and its agent type; give it **paths, not file contents**, so it reads only
 what it needs. Each subagent waits for the previous one.
 
-**Step A, developer** (`developer`, Sonnet):
+**Step A, developer** (`developer`, Haiku):
 > Implement `specs/<name>.md` following `specs/<name>-adr.md`. Base branch `<base>`, you are on `feat/<name>`.
 > [Round 2+: Fix only the items in `.claude/runs/<name>/review-feedback.md` | the failures in `.claude/runs/<name>/test-report.md`.]
 
 If it reports `BLOCKED` (spec/ADR gap), stop and ask the owner; don't guess around a spec gap.
 
-**Step B, tester** (`tester`, Sonnet):
+**Step B, tester** (`tester`, Haiku):
 > Test `specs/<name>.md` and `specs/<name>-adr.md` on `feat/<name>` against base `<base>`. Write missing tests, run
 > everything, return the report.
 
@@ -57,11 +57,18 @@ because Docker is off: ask the owner to start Docker once; if they can't, carry 
 > previous head `<sha>`.]
 
 Save its output to `.claude/runs/<name>/review-feedback.md` (overwrite; keep the round number at the top).
-- `APPROVED` → step 4.
+- `APPROVED` → Step D.
 - `CHANGES_REQUESTED` → Step A with the feedback, then B, then C again.
 - **At most 3 review rounds.** After the third `CHANGES_REQUESTED`, stop: leave the branch as it is (no push, no
   PR), and tell the owner which findings are still open and what you recommend (accept as MINOR, change the spec,
   or another round).
+
+**Step D, docs-writer** (`docs-writer`, Haiku, effort low), once, after `APPROVED`:
+> Bring `docs/` and `CHANGELOG.md` in line with `feat/<name>` against base `<base>` for `specs/<name>.md` and
+> `specs/<name>-adr.md`.
+
+Then check its commit touches only `docs/`, `README.md` or `CHANGELOG.md` (`git show --stat HEAD`); anything else →
+revert that commit and tell the owner. No new review round for a docs-only commit; mention it in the PR.
 
 Between steps, give the owner one short status line (e.g. "Runda 1: developer gotowy, tester: PASS 42/42,
 reviewer pracuje"). No replay of what the agents did.
@@ -103,6 +110,9 @@ Verdict: APPROVED after <n> round(s). Remaining minor points: <list or "none">.
 
 ## Please look closely at
 - <from the reviewer's "For the human reviewer" + any choice the ADR didn't settle>
+
+## Docs
+<docs-writer commit and the docs it changed, or "no change needed">
 
 ## Agent usage
 <the table from usage.md + output share per model>
