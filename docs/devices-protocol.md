@@ -234,4 +234,31 @@ is for and its rules. See [devices.md](devices.md#tools-generated-from-the-descr
 
 `firmware/homeapps-device/` is an ESP-IDF component for ESP32-S3, C3 and C6 that does all of the above (setup access
 point, pairing, link, `/report`, token handling, limits). Its README has the API, Kconfig options and TLS modes; examples
-are in `firmware/examples/` (switch, battery weather station, presence tag) and are built by `.github/workflows/firmware.yml`.
+are in `firmware/examples/` (switch, battery weather station, presence tag) and are built by `.github/workflows/firmware.yml`
+(CI: ESP-IDF v5.4, every example for ESP32-S3, C3 and C6). The component's README has the API and the Kconfig options.
+
+- **Setup.** On the first start, or when no Wi-Fi is stored or neither a secret nor a pairing code is, the device opens the WPA2 access point `HomeApps-XXXX`.
+  The password is random, made once and kept in NVS; it is printed on the serial log and handed to `on_setup_password`.
+  Kconfig `HOMEAPPS_SETUP_AP_PASSWORD` (at least 8 characters) replaces it. The page at `http://192.168.4.1` takes the Wi-Fi
+  (2.4 GHz), the password, the HomeApps address, the pairing code and an optional certificate fingerprint. The portal closes
+  on success or after `HOMEAPPS_SETUP_TIMEOUT_S` (600 s); a timeout restarts the device.
+- **Reset button** (`HOMEAPPS_RESET_BUTTON_GPIO`, off by default): hold 2 s and release reopens setup; hold 5 s factory resets
+  (erases the secret and the Wi-Fi password; the setup password stays).
+- **TLS.** `HOMEAPPS_TLS_BUNDLE` (default): the Mozilla bundle. `HOMEAPPS_TLS_PINNED_CA`: the CA in `pinned_ca.pem`, which is a
+  placeholder that must be replaced before use. `HOMEAPPS_TLS_TOFU`: the SHA-256 of the server certificate is pinned on the
+  first connection (or typed into setup); check it against the serial log. Plain `http`/`ws` only with
+  `HOMEAPPS_INSECURE_HTTP`, because the pairing answer carries the device secret.
+- **Secrets at rest.** The examples set `CONFIG_NVS_ENCRYPTION` with the key protected by HMAC from eFuse key block 0.
+  Burning that key block is irreversible: try it on a spare board first. Flash encryption and secure boot are not enabled
+  by the component; use them where a device can be taken apart.
+- **Reconnect.** A fresh token for every connection and every `/devices/report`. Retries back off from 2 s, doubling up to
+  2 min; `Retry-After` is honoured up to 5 min (30 s for a sleepy device). `devices.device_unpaired`, or 3
+  `invalid_credentials` in a row, send the device back to setup.
+- **Sleepy devices** (`"sleepy": true`): no WebSocket. `homeapps_start` waits 30 s for Wi-Fi and makes 4 pairing attempts,
+  then returns `ESP_ERR_TIMEOUT`, and the caller goes back to deep sleep. `homeapps_send_*` queue frames; `homeapps_flush()`
+  sends them in one `/devices/report`.
+- **Time.** Events carry `at` only after SNTP has set the clock; before that the server uses its receive time.
+- **Limits enforced by the component.** 50 items per list, 64 000 characters per descriptor, action names
+  `^[a-z][a-z0-9_]{0,19}$`; at most 120 frames per minute on the link, and 50 frames / 64 KB per report.
+- **Actions** are declared in the descriptor, but this version does not call a callback for them; only control `set`
+  frames reach `on_set`.

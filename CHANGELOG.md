@@ -32,6 +32,11 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 
 ### Added
 
+- **ESP-IDF firmware component (H-6):** `firmware/homeapps-device/` connects an ESP32-S3, C3 or C6 to HomeApps (setup
+  access point, pairing, link, `/devices/report`, token handling, the protocol limits) and ships three examples in
+  `firmware/examples/` (switch, battery weather station, presence tag), NVS encryption in their `sdkconfig.defaults`.
+  `.github/workflows/firmware.yml` builds every example for the three targets. See
+  docs/devices-protocol.md "Firmware: the ESP-IDF component (H-6)".
 - **JARVIS hears and speaks (V0a):** `/jarvis/voice`, a WebSocket for listeners such as the Mac bridge: speech to text,
   the usual agent (channel `voice`, answers in the person's conversation), text to speech sentence by sentence, and
   "tak" / "nie" to confirm waiting actions. Engines through the OpenAI audio API (`JARVIS_VOICE_URL`), for tests
