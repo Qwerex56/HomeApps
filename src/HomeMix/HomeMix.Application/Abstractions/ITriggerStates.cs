@@ -10,4 +10,7 @@ public interface ITriggerStates
     Task<IReadOnlyList<TriggerState>> ListAsync(IReadOnlyCollection<Guid> installationIds, CancellationToken cancellationToken);
 
     void Add(TriggerState state);
+
+    /// <summary>Forgets every trigger state of an installation that was removed.</summary>
+    Task RemoveForInstallationAsync(Guid installationId, CancellationToken cancellationToken);
 }
