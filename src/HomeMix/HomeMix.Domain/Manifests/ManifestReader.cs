@@ -17,19 +17,19 @@ internal sealed partial class ManifestReader(JsonElement root)
     internal static partial Regex IdPattern();
 
     [GeneratedRegex("^[a-z][a-z0-9._-]{0,63}$")]
-    private static partial Regex NamePattern();
+    internal static partial Regex NamePattern();
 
     [GeneratedRegex("^([a-z][a-z0-9_]{0,29}|[a-z0-9][a-z0-9-]{0,29}/[a-z][a-z0-9_-]{0,29})$")]
-    private static partial Regex CapabilityPattern();
+    internal static partial Regex CapabilityPattern();
 
     [GeneratedRegex("^[a-z][a-z0-9_]{0,39}$")]
-    private static partial Regex RolePattern();
+    internal static partial Regex RolePattern();
 
     [GeneratedRegex("^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$")]
-    private static partial Regex ModelPattern();
+    internal static partial Regex ModelPattern();
 
     [GeneratedRegex("^[A-Za-z0-9._/-]{0,200}$")]
-    private static partial Regex PathPattern();
+    internal static partial Regex PathPattern();
 
     private readonly List<string> _problems = [];
 
@@ -108,6 +108,12 @@ internal sealed partial class ManifestReader(JsonElement root)
             _problems.Add("tools and summary are for JARVIS: set jarvis to true.");
         }
 
+        var triggers = new TriggersReader(root, _problems).Triggers();
+        if (triggers.Count > 0 && !capabilities.Contains(AddonCapabilities.Devices))
+        {
+            _problems.Add($"triggers: reacting to devices needs the capability {AddonCapabilities.Devices}.");
+        }
+
         if (_problems.Count > 0)
         {
             return Result.Fail(_problems.Select(ManifestErrors.Invalid));
@@ -117,7 +123,7 @@ internal sealed partial class ManifestReader(JsonElement root)
             id, addonVersion, requires!, name!, description, icon, targets, entry, pages, widgets,
             capabilities.Distinct(StringComparer.Ordinal).ToList(),
             network.Select(o => o.TrimEnd('/')).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
-            permissions, jarvis, declared, summary);
+            permissions, jarvis, declared, summary, triggers);
     }
 
     private List<TargetKind> Targets()
