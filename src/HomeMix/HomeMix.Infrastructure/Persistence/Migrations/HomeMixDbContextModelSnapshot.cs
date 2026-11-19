@@ -390,6 +390,36 @@ namespace HomeMix.Infrastructure.Persistence.Migrations
                     b.ToTable("StoreListings", (string)null);
                 });
 
+            modelBuilder.Entity("HomeMix.Domain.Triggers.TriggerState", b =>
+                {
+                    b.Property<Guid>("InstallationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TriggerId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("ConsecutiveFailures")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("DisabledByFailures")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset?>("LastRunAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("InstallationId", "TriggerId");
+
+                    b.ToTable("TriggerStates", (string)null);
+                });
+
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.InboxState", b =>
                 {
                     b.Property<long>("Id")

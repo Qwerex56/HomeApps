@@ -100,7 +100,7 @@ internal sealed class DevicesHttp(HttpClient http, IHttpContextAccessor accessor
         return request;
     }
 
-    private static void EnsureSuccess(HttpResponseMessage response)
+    internal static void EnsureSuccess(HttpResponseMessage response)
     {
         if (!response.IsSuccessStatusCode)
         {
@@ -108,7 +108,7 @@ internal sealed class DevicesHttp(HttpClient http, IHttpContextAccessor accessor
         }
     }
 
-    private static async Task<Error> ErrorAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    internal static async Task<Error> ErrorAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         string? code = null;
         string? detail = null;

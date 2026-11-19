@@ -54,7 +54,8 @@ public static class PackageRules
 
         var named = new[] { manifest.Entry }
             .Concat(manifest.Widgets.Select(w => w.Entry))
-            .Concat(manifest.Tools.Where(t => t.Action == ToolAction.Script).Select(t => t.ScriptPath));
+            .Concat(manifest.Tools.Where(t => t.Action == ToolAction.Script).Select(t => t.ScriptPath))
+            .Concat(manifest.Triggers.Select(t => t.Script));
         foreach (var entry in named.OfType<string>().Distinct(StringComparer.Ordinal))
         {
             if (!paths.Contains(entry))
