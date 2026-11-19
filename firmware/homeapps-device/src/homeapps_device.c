@@ -452,6 +452,7 @@ static void ws_event(void *arg, esp_event_base_t base, int32_t id, void *data)
         inbox_push("{\"type\":\"@connected\"}");   /* no sends from inside the callback */
     } else if (id == WEBSOCKET_EVENT_DATA && (e->op_code == 0x1 || e->op_code == 0x0)) {
         if (e->payload_offset == 0) { free(rx); rx = malloc(e->payload_len + 1); rx_len = 0; }
+        if (rx && (size_t)e->payload_offset + (size_t)e->data_len > (size_t)e->payload_len) { free(rx); rx = NULL; }   /* overrun: drop */
         if (rx) {
             memcpy(rx + e->payload_offset, e->data_ptr, e->data_len);
             rx_len = e->payload_offset + e->data_len;

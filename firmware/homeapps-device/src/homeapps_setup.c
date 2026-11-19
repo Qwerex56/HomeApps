@@ -97,7 +97,9 @@ static esp_err_t post_save(httpd_req_t *r)
     char body[512];
     if (r->content_len >= sizeof(body)) { httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "Too large"); return ESP_FAIL; }
     int got = 0;
+    int64_t deadline = esp_timer_get_time() + 5000000;   /* 5 s overall */
     while (got < (int)r->content_len) {   /* the body can arrive in several pieces */
+        if (esp_timer_get_time() > deadline) return ESP_FAIL;
         int n = httpd_req_recv(r, body + got, r->content_len - got);
         if (n == HTTPD_SOCK_ERR_TIMEOUT) continue;
         if (n <= 0) return ESP_FAIL;
