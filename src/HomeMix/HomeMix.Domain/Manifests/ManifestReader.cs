@@ -19,10 +19,10 @@ internal sealed partial class ManifestReader(JsonElement root)
     [GeneratedRegex("^[a-z][a-z0-9._-]{0,63}$")]
     private static partial Regex NamePattern();
 
-    [GeneratedRegex("^[a-z][a-z0-9_]{0,40}(/[a-z0-9][a-z0-9._-]{0,63})?$")]
+    [GeneratedRegex("^([a-z][a-z0-9_]{0,29}|[a-z0-9][a-z0-9-]{0,29}/[a-z][a-z0-9_-]{0,29})$")]
     private static partial Regex CapabilityPattern();
 
-    [GeneratedRegex("^[a-z][a-z0-9_]{0,40}$")]
+    [GeneratedRegex("^[a-z][a-z0-9_]{0,39}$")]
     private static partial Regex RolePattern();
 
     [GeneratedRegex("^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$")]

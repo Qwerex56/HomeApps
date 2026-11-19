@@ -146,7 +146,7 @@ export function checkManifest(json: unknown): string[] {
   return problems
 }
 
-const capabilityName = /^[a-z][a-z0-9_]{0,40}(\/[a-z0-9][a-z0-9._-]{0,63})?$/
+const capabilityName = /^([a-z][a-z0-9_]{0,29}|[a-z0-9][a-z0-9-]{0,29}\/[a-z][a-z0-9_-]{0,29})$/
 const roleName = /^[a-z][a-z0-9_]{0,40}$/
 const modelName = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$/
 
