@@ -4,6 +4,7 @@ using System.Text.Json;
 using FluentResults;
 using HomeApps.BuildingBlocks.Domain.Errors;
 using HomeApps.Plugins.Devices;
+using HomeApps.Plugins.Hosting.Devices;
 using HomeApps.Plugins.Manifest;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
@@ -127,19 +128,5 @@ internal sealed class DevicesHttpClient(HttpClient http, IHttpContextAccessor ac
             _ => ErrorKind.Validation,
         };
         return new AppError(code ?? "devices.request_failed", title ?? $"Devices answered {(int)response.StatusCode}.", kind);
-    }
-
-    private sealed record DescriptorResponse(string? Model, string[]? Roles, string[]? Capabilities);
-
-    private sealed record StateResponse(Guid DeviceId, JsonElement Values, DateTimeOffset? ValuesAt, bool Online, bool Silent, bool LowBattery, double? Battery)
-    {
-        public PluginDeviceState ToState() => new(DeviceId, Values, ValuesAt, Online, Silent, LowBattery, Battery);
-    }
-
-    private sealed record DeviceResponse(
-        Guid Id, string Name, string Slug, string Purpose, bool Online, bool Removed, DescriptorResponse? Descriptor, StateResponse? State)
-    {
-        public PluginDevice ToDevice() =>
-            new(Id, Name, Slug, Purpose, Online, Descriptor?.Model, Descriptor?.Roles ?? [], Descriptor?.Capabilities ?? [], State?.ToState());
     }
 }
