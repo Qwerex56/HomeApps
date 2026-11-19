@@ -35,6 +35,8 @@ Default: the Mozilla bundle (`esp_crt_bundle`). Kconfig alternatives: a pinned C
 use (the SHA-256 of the server certificate is pinned on the first connection, or typed into the setup page; check it
 against the serial log). Plain http only with `HOMEAPPS_INSECURE_HTTP`: the pairing answer carries the device secret.
 
+TOFU pins the leaf certificate: when the server certificate is renewed, reopen setup (hold the button 2 s) and clear or replace the fingerprint.
+
 ## Behaviour
 
 - A fresh token for every connection and every `/report`; `devices.device_unpaired` or 3 `invalid_credentials` in a row

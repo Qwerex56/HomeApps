@@ -96,8 +96,13 @@ static esp_err_t post_save(httpd_req_t *r)
     portal_t *p = r->user_ctx;
     char body[512];
     if (r->content_len >= sizeof(body)) { httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "Too large"); return ESP_FAIL; }
-    int got = httpd_req_recv(r, body, r->content_len);
-    if (got <= 0) return ESP_FAIL;
+    int got = 0;
+    while (got < (int)r->content_len) {   /* the body can arrive in several pieces */
+        int n = httpd_req_recv(r, body + got, r->content_len - got);
+        if (n == HTTPD_SOCK_ERR_TIMEOUT) continue;
+        if (n <= 0) return ESP_FAIL;
+        got += n;
+    }
     body[got] = 0;
     homeapps_store_t draft = p->cfg;   /* a rejected form must not change the saved values */
     homeapps_store_t *c = &draft;   /* starts as the saved store: secret, device id and pin survive unless replaced */

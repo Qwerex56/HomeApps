@@ -405,8 +405,9 @@ static bool process_message(const char *text)
     const char *type = cJSON_GetStringValue(cJSON_GetObjectItem(m, "type"));
     if (type && !strcmp(type, "@connected")) {   /* first frame within 10 s */
         char *desc = homeapps_descriptor_to_json(S.cfg.descriptor);
-        size_t cap = strlen(desc) + 256;
-        char *hello = malloc(cap);
+        size_t cap = desc ? strlen(desc) + 256 : 0;
+        char *hello = desc ? malloc(cap) : NULL;
+        if (!hello) { free(desc); cJSON_Delete(m); return false; }
         snprintf(hello, cap, "{\"type\":\"hello\",\"device\":\"%s\",\"kind\":\"satellite\",\"descriptor\":%s}", S.cfg.descriptor->model, desc);
         ws_send(hello);
         free(desc); free(hello);
@@ -438,7 +439,10 @@ static bool process_message(const char *text)
 static void inbox_push(const char *text)
 {
     char *copy = strdup(text);
-    if (copy && xQueueSend(S.inbox, &copy, 0) != pdTRUE) free(copy);   /* full: the server will resend nothing, but stay alive */
+    /* A short wait instead of dropping "ready" or "set" when link_task is busy (a set handler can take a moment). */
+    if (copy && xQueueSend(S.inbox, &copy, pdMS_TO_TICKS(100)) == pdTRUE) return;
+    ESP_LOGW(TAG, "Inbox full or out of memory: message dropped");
+    free(copy);
 }
 
 static void ws_event(void *arg, esp_event_base_t base, int32_t id, void *data)
@@ -453,7 +457,10 @@ static void ws_event(void *arg, esp_event_base_t base, int32_t id, void *data)
             rx_len = e->payload_offset + e->data_len;
             if (rx_len >= (size_t)e->payload_len) { rx[rx_len] = 0; inbox_push(rx); free(rx); rx = NULL; }
         }
-    } else if (id == WEBSOCKET_EVENT_DISCONNECTED || id == WEBSOCKET_EVENT_ERROR) {
+    } else if (id == WEBSOCKET_EVENT_DISCONNECTED || id == WEBSOCKET_EVENT_ERROR || id == WEBSOCKET_EVENT_CLOSED ||
+               (id == WEBSOCKET_EVENT_DATA && e->op_code == 0x08)) {
+        /* A clean server close (e.g. a refused hello) arrives as CLOSED or a close frame, not as DISCONNECTED. */
+        free(rx); rx = NULL;
         xEventGroupClearBits(S.events, READY_BIT);
         xEventGroupSetBits(S.events, LINK_DOWN_BIT);
     }
@@ -590,7 +597,8 @@ esp_err_t homeapps_start(const homeapps_config_t *config)
     S.lock = xSemaphoreCreateMutex();
     S.ws_lock = xSemaphoreCreateMutex();
     S.rate_lock = xSemaphoreCreateMutex();
-    S.inbox = xQueueCreate(8, sizeof(char *));
+    S.inbox = xQueueCreate(16, sizeof(char *));
+    if (!S.events || !S.lock || !S.ws_lock || !S.rate_lock || !S.inbox) return ESP_ERR_NO_MEM;
     esp_err_t e = nvs_flash_init();
     if (e == ESP_ERR_NVS_NO_FREE_PAGES || e == ESP_ERR_NVS_NEW_VERSION_FOUND) { nvs_flash_erase(); nvs_flash_init(); }
     esp_netif_init();
