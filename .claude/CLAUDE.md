@@ -8,7 +8,7 @@ The owner (team lead) designs; Claude writes the code, including all the repetit
 
 1. **Spec** (`specs/<name>.md`): written in the Claude Desktop project (Chat), WHAT and acceptance criteria only.
 2. **Debate** (`/spec-debate @specs/<name>.md`): architects + devil's advocate produce `specs/<name>-adr.md`.
-3. **Build** (`/run-feature @specs/<name>.md`): developer (Haiku) → tester (Haiku) → reviewer (Opus), at most
+3. **Build** (`/run-feature @specs/<name>.md`): developer (Sonnet) → tester (Haiku) → reviewer (Opus), at most
    3 review rounds, then docs-writer (Haiku) and a GitHub PR for the owner. Never merge into the base branch yourself.
 
 ## Where to look first

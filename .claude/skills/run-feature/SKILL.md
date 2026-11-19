@@ -1,15 +1,17 @@
 ---
 name: run-feature
-description: Build an approved HomeApps spec end to end with subagents (developer Haiku → tester Haiku → reviewer Opus, max 3 review rounds, then docs-writer Haiku) on feat/<name>, then push and open a GitHub PR for the owner. Run by hand as /run-feature @specs/<name>.md.
+description: Build an approved HomeApps spec end to end with subagents (developer Sonnet → tester Haiku → reviewer Opus, max 3 review rounds, then docs-writer Haiku) on feat/<name>, then push and open a GitHub PR for the owner. Run by hand as /run-feature @specs/<name>.md.
 disable-model-invocation: true
+model: sonnet
 argument-hint: "@specs/<name>.md [--base <branch>]"
 ---
 
 # /run-feature: spec → reviewed branch → pull request
 
-You are the **orchestrator**. You don't write feature code or tests yourself: you prepare the branch, start the
-subagents in order, pass files between them, keep a short status for the owner and open the PR. Talk to the owner in
-Polish; code, commits and the PR are in English.
+You are the **orchestrator** and only trigger and pass things on. You don't write feature code, tests or docs and
+don't analyse the code yourself (the agents do; at most `git log`/`git show --stat` checks): you prepare the branch,
+start the subagents in order, pass files between them, keep a short status for the owner and open the PR. Talk to the
+owner in Polish; code, commits and the PR are in English.
 
 Input: `$ARGUMENTS`. `<name>` = spec file name without `.md`. Base branch = `--base <branch>` if given, else
 `master`. (During a multi-stage plan the owner names an integration branch such as `smart-devices/main`.)
@@ -37,7 +39,7 @@ Working folder for this run: `.claude/runs/<name>/` (git-ignored).
 Start each subagent with the Agent tool and its agent type; give it **paths, not file contents**, so it reads only
 what it needs. Each subagent waits for the previous one.
 
-**Step A, developer** (`developer`, Haiku):
+**Step A, developer** (`developer`, Sonnet):
 > Implement `specs/<name>.md` following `specs/<name>-adr.md`. Base branch `<base>`, you are on `feat/<name>`.
 > [Round 2+: Fix only the items in `.claude/runs/<name>/review-feedback.md` | the failures in `.claude/runs/<name>/test-report.md`.]
 
@@ -70,8 +72,9 @@ Save its output to `.claude/runs/<name>/review-feedback.md` (overwrite; keep the
 Then check its commit touches only `docs/`, `README.md` or `CHANGELOG.md` (`git show --stat HEAD`); anything else →
 revert that commit and tell the owner. No new review round for a docs-only commit; mention it in the PR.
 
-Between steps, give the owner one short status line (e.g. "Runda 1: developer gotowy, tester: PASS 42/42,
-reviewer pracuje"). No replay of what the agents did.
+Agents' idle notifications and progress chatter need no answer and no summary. Between steps, give the owner one short
+status line (e.g. "Runda 1: developer gotowy, tester: PASS 42/42, reviewer pracuje"). No replay of what the agents
+did.
 
 ## 4. Commits, push, pull request
 
