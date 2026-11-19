@@ -23,7 +23,7 @@ Gałąź integracyjna: **`smart-devices/main`** (do `master` całość wraca raz
 | H-4b Wyzwalacze dodatków na serwerze | 2.12 | ✅ 2026-11-19 | 223f73c |
 | H-4c Utwardzenie serwera (z ADR) | 2.2, 2.6, 2.9, 2.10 | ✅ 2026-11-19 | PR #63 |
 | H-5 Mac jako urządzenie testowe | 2.13 | ○ następny (wymaga Maca) | |
-| H-6 Komponent ESP-IDF `homeapps-device` | 2.14 | ✅ 2026-11-19 | |
+| H-6 Komponent ESP-IDF `homeapps-device` | 2.14 | ✅ 2026-11-19 | PR #64 |
 | H-7 Narzędzia komputera | 2.15 | ○ | |
 | H-8 Ciągłe nasłuchiwanie | 2.16 | ○ | |
 | H-9 Zakładka „JARVIS” w aplikacji | 2.17 | ○ na koniec | |
