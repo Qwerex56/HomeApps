@@ -409,6 +409,7 @@ their consent (`devices.control` is checked by HomeMix before the call). See dev
 |---|---|
 | Time and memory | the tool script limits: 5 s, 10 MB, 1 M statements, 100 `ctx` calls |
 | Run limit | 30 runs a minute per installation (in memory); more are skipped and logged, they do not count as failures |
+| Order | Runs within a household are sequential (the consumers are partitioned by household); runs of different households may overlap |
 | Loop guard | Devices marks a state change caused by an add-on's set with `ChangedBy = homemix:{installationId}` for 5 s; that installation's triggers skip it. Other add-ons still react |
 | Failures | `TriggerStates` (installation, trigger id): `enabled`, consecutive failures, `lastRunAt`, `lastError`. 5 failures in a row turn the trigger off and send a `NotificationRequested` to the household's admins (source: the add-on id, category `trigger`); a success resets the count |
 
@@ -419,7 +420,7 @@ their consent (`devices.control` is checked by HomeMix before the call). See dev
 | `GET /homemix/api/households/{householdId}/triggers` | every trigger of the household's add-ons with `enabled`, `consecutiveFailures`, `lastRunAt`, `lastError`, `disabledByFailures` |
 | `PUT /homemix/api/installations/{id}/triggers/{triggerId}` `{ "enabled": true }` | turns it off or on (on clears the failures); 404 `homemix.trigger_not_found` |
 
-The JARVIS tab in the web app shows these in H-9. A trigger without a row is on. Rows of a removed installation stay (they are tiny).
+The JARVIS tab in the web app shows these in H-9. A trigger without a row is on. Removing an installation deletes its rows.
 
 ## In the web app (A3)
 
