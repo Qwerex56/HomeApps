@@ -11,6 +11,7 @@ namespace HomeApps.Contracts.Devices;
 /// <param name="Payload">The event's data as a JSON document, or <c>null</c> when it has none.</param>
 /// <param name="OccurredAt">When it happened, as the device said (never in the future).</param>
 /// <param name="IsLocation">The event says where something is (a geo device, or declared as location): kept for a shorter time and shown to members only.</param>
+/// <param name="Device">The device's name, model, roles and capabilities, so a listener can match it; <c>null</c> from a sender that predates it.</param>
 public sealed record DeviceEventOccurred(
     Guid HouseholdId,
     Guid DeviceId,
@@ -18,4 +19,5 @@ public sealed record DeviceEventOccurred(
     string Name,
     string? Payload,
     DateTimeOffset OccurredAt,
-    bool IsLocation) : IIntegrationEvent;
+    bool IsLocation,
+    DeviceInfo? Device = null) : IIntegrationEvent;

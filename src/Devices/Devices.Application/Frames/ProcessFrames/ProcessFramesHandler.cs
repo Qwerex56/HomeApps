@@ -17,7 +17,7 @@ namespace Devices.Application.Frames.ProcessFrames;
 /// battery). A refused frame is reported in its place in the answer and changes nothing; the others still count.
 /// </summary>
 internal sealed class ProcessFramesHandler(
-    IDeviceRepository devices, IDeviceTelemetry telemetry, IDeviceStream stream, IEventBus bus, AdminNotices notices, TimeProvider time)
+    IDeviceRepository devices, IDeviceTelemetry telemetry, IDeviceStream stream, IEventBus bus, AdminNotices notices, IControlSources sources, TimeProvider time)
     : ICommandHandler<ProcessFramesCommand, IReadOnlyList<FrameResult>>
 {
     public async Task<Result<IReadOnlyList<FrameResult>>> Handle(ProcessFramesCommand command, CancellationToken cancellationToken)
@@ -71,7 +71,10 @@ internal sealed class ProcessFramesHandler(
         stream.Publish(new DeviceStreamMessage(device.HouseholdId!.Value, "state", new { deviceId = device.Id, values = frame.Values.Value, at = now }));
         if (changed is not null)
         {
-            await bus.PublishAsync(new DeviceStateChanged(device.HouseholdId.Value, device.Id, device.Slug, changed, now), cancellationToken);
+            using var keys = System.Text.Json.JsonDocument.Parse(changed);
+            var changedBy = sources.Find(device.Id, keys.RootElement.EnumerateObject().Select(p => p.Name));
+            await bus.PublishAsync(
+                new DeviceStateChanged(device.HouseholdId.Value, device.Id, device.Slug, changed, now, changedBy, Info(device)), cancellationToken);
         }
 
         return Result.Ok();
@@ -92,7 +95,7 @@ internal sealed class ProcessFramesHandler(
         var isLocation = descriptor.IsLocation(declared.Value);
 
         telemetry.Add(DeviceEvent.Record(device.Id, householdId, declared.Value.Name, data, at, isLocation));
-        await bus.PublishAsync(new DeviceEventOccurred(householdId, device.Id, device.Slug, declared.Value.Name, data, at, isLocation), cancellationToken);
+        await bus.PublishAsync(new DeviceEventOccurred(householdId, device.Id, device.Slug, declared.Value.Name, data, at, isLocation, Info(device)), cancellationToken);
         stream.Publish(new DeviceStreamMessage(
             householdId, "event", new { deviceId = device.Id, name = declared.Value.Name, data = frame.Data, at, isLocation }, MembersOnly: true));
         return Result.Ok();
@@ -123,6 +126,8 @@ internal sealed class ProcessFramesHandler(
 
         return Result.Ok();
     }
+
+    private static DeviceInfo Info(Device device) => new(device.Name, device.Model, device.Roles, device.Capabilities);
 
     private static FrameResult Refused(IError error) =>
         error is AppError app ? new FrameResult(false, app.Code, app.Message) : new FrameResult(false, "devices.invalid_frame", error.Message);
