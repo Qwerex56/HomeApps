@@ -156,7 +156,7 @@ within `Devices:ActionTimeout` (20 s) with `{ "type": "set_result", "id": "7f3c.
 ```
 
 `name` must be declared in the descriptor's `events`; `data` (optional) must fit the event's `data` schema and be at most
-4000 characters. `at` is when it happened (ISO 8601); a missing, unreadable or future time becomes the time the server
+4000 characters. `at` is when it happened (ISO 8601); a missing, unreadable, future or older than 366 days (the longest retention) time becomes the time the server
 received it. Devices stores it in the event history, publishes the contract `DeviceEventOccurred` on RabbitMQ and sends it
 to the household's open streams (members only). An event declared with `"location": true`, or any event of a device with
 the `geo` capability, is a **location event**: kept shorter (see below) and never shown to guests.

@@ -88,8 +88,8 @@ internal sealed class ProcessFramesHandler(
             return declared.ToResult();
         }
 
-        // The device's clock may be wrong or unset: a time that is missing, unreadable or in the future becomes now.
-        var at = DateTimeOffset.TryParse(frame.At, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsedAt) && parsedAt <= now ? parsedAt : now;
+        // The device's clock may be wrong or unset: a time that is missing, unreadable, in the future or older than 366 days becomes now.
+        var at = DateTimeOffset.TryParse(frame.At, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsedAt) && parsedAt <= now && parsedAt >= now - EventRetention.MaxEventAge ? parsedAt : now;
         var data = frame.Data is { ValueKind: not System.Text.Json.JsonValueKind.Null } payload ? payload.GetRawText() : null;
         var householdId = device.HouseholdId!.Value;
         var isLocation = descriptor.IsLocation(declared.Value);
