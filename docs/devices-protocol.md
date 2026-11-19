@@ -14,7 +14,7 @@ it, with its descriptor, to `POST /devices/pair` (anonymous; at most `Devices:Ra
 ```
 
 The answer has `deviceId`, `householdId`, `name`, `slug`, `purpose` and a `secret`. The secret buys short-lived tokens at
-`/auth/devices/token`; the device keeps it. That endpoint answers `401 devices.invalid_credentials` for an unknown device or a wrong (or replaced) secret and `401 devices.device_unpaired` when the secret is right but the device was removed or paired again: the device goes back to setup at once. A descriptor that is invalid fails the pairing (`devices.invalid_descriptor`,
+`/auth/devices/token`; the device keeps it. That endpoint answers `401 devices.invalid_credentials` for an unknown device or a wrong (or replaced) secret and `401 devices.device_unpaired` when the secret is right but the device was removed or got a new pairing code: the device goes back to setup at once. A descriptor that is invalid fails the pairing (`devices.invalid_descriptor`,
 with every problem listed) and the code stays usable. A satellite that sends no descriptor still pairs (a legacy device:
 purpose `assistant`).
 
