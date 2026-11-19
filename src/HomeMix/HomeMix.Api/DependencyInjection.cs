@@ -2,6 +2,8 @@ using System.Text.Json.Serialization;
 using HomeMix.Api.Http;
 using HomeMix.Api.Mcp;
 using HomeMix.Api.Realtime;
+using HomeMix.Api.Triggers;
+using HomeMix.Application.Abstractions;
 
 namespace HomeMix.Api;
 
@@ -15,6 +17,7 @@ internal static class DependencyInjection
         // The add-ons' declared tools, per person (A6): handlers instead of tool classes.
         services.AddHomeMixMcpTools();
         services.AddAuthorizationBuilder().AddPolicy(Policies.Owner, policy => policy.RequireRole("Owner"));
+        services.AddScoped<ITriggerScripts, TriggerScriptRunner>();
         services.AddNotifyLimit();
         services.AddHomeMixRealtime();
         return services;

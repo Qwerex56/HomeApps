@@ -103,7 +103,7 @@ internal sealed partial class ScriptRunner(IPackageStore store, ScriptBridge bri
     }
 
     /// <summary>What went wrong, for JARVIS and the add-on's author; null for anything that is not the script's fault.</summary>
-    private static string? Problem(Exception e) => e switch
+    internal static string? Problem(Exception e) => e switch
     {
         PromiseRejectedException rejected => Message(rejected.RejectedValue),
         JavaScriptException js => js.Message,
@@ -121,7 +121,7 @@ internal sealed partial class ScriptRunner(IPackageStore store, ScriptBridge bri
             ? (error.Get("code") is { } code && code.IsString() ? $"{code.AsString()}: {message.AsString()}" : message.AsString())
             : value.ToString();
 
-    private async Task<string?> ReadAsync(string sha256, string path, CancellationToken cancellationToken)
+    internal async Task<string?> ReadAsync(string sha256, string path, CancellationToken cancellationToken)
     {
         await using var file = await store.OpenFileAsync(sha256, path, cancellationToken);
         if (file is null)
