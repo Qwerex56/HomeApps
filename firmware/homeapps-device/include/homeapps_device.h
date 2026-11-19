@@ -67,7 +67,7 @@ esp_err_t homeapps_send_state(const char *values_json);                      /* 
 esp_err_t homeapps_send_event(const char *name, const char *data_json);      /* data_json may be NULL; "at" only after SNTP */
 esp_err_t homeapps_send_status(int battery_percent, float voltage, const char *error); /* battery < 0 = omit */
 
-/* Sleepy devices: fresh token, one POST /devices/report with the queued frames. Fills ok per frame count. */
+/* Sleepy devices: fresh token, one POST /devices/report with the queued frames (ESP_OK when the server took them). */
 esp_err_t homeapps_flush(void);
 
 /* Re-opens setup / factory resets (also on the button, see Kconfig). */

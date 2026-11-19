@@ -24,7 +24,7 @@ static const char PAGE[] =
     "<label>Wi-Fi password</label><input name=pass type=password maxlength=64>"
     "<label>HomeApps address</label><input name=url placeholder='https://home.example.com' required maxlength=127>"
     "<label>Pairing code</label><input name=code required maxlength=8 autocapitalize=characters>"
-    "<label>Server certificate fingerprint (only for trust on first use, optional)</label><input name=fp maxlength=71>"
+    "<label>Server certificate fingerprint (only for trust on first use, optional)</label><input name=fp maxlength=95>"
     "<button type=submit>Save</button></form></body></html>";
 
 typedef struct { SemaphoreHandle_t done; homeapps_store_t cfg; bool saved; } portal_t;

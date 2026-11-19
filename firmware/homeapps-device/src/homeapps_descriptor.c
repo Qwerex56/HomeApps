@@ -4,17 +4,78 @@
 #include <stdlib.h>
 #include "homeapps_internal.h"
 
+static size_t chars(const char *s)
+{
+    size_t n = 0;
+    for (; *s; s++) if (((unsigned char)*s & 0xC0) != 0x80) n++;   /* characters, not bytes (the server counts characters) */
+    return n;
+}
+
+/* [a-z][a-z0-9_]{0,max-1} over [s, s+len) */
+static bool ident(const char *s, size_t len, size_t max)
+{
+    if (len < 1 || len > max || !(s[0] >= 'a' && s[0] <= 'z')) return false;
+    for (size_t i = 1; i < len; i++) if (!(islower((unsigned char)s[i]) || isdigit((unsigned char)s[i]) || s[i] == '_')) return false;
+    return true;
+}
+
+/* Field names: ^[a-z][a-z0-9_]{0,29}(\.[a-z][a-z0-9_]{0,29})?$ ; actions: ^[a-z][a-z0-9_]{0,19}$ */
 static bool name_ok(const char *n, bool action)
 {
-    if (!n || !islower((unsigned char)n[0])) return false;
-    size_t len = strlen(n);
-    if (action && len > 20) return false;           /* ^[a-z][a-z0-9_]{0,19}$ */
-    if (len > 64) return false;
-    for (size_t i = 1; i < len; i++) {
-        char c = n[i];
-        if (!(islower((unsigned char)c) || isdigit((unsigned char)c) || c == '_' || (!action && c == '.'))) return false;
-    }
+    if (!n) return false;
+    if (action) return ident(n, strlen(n), 20);
+    const char *dot = strchr(n, '.');
+    if (!dot) return ident(n, strlen(n), 30);
+    return ident(n, (size_t)(dot - n), 30) && ident(dot + 1, strlen(dot + 1), 30);
+}
+
+static bool seg_ok(const char *s, size_t len)   /* [a-z0-9][a-z0-9._-]* */
+{
+    if (!len || !(islower((unsigned char)s[0]) || isdigit((unsigned char)s[0]))) return false;
+    for (size_t i = 1; i < len; i++) if (!(islower((unsigned char)s[i]) || isdigit((unsigned char)s[i]) || s[i] == '.' || s[i] == '_' || s[i] == '-')) return false;
     return true;
+}
+
+static bool model_ok(const char *m)
+{
+    size_t n = strlen(m);
+    if (n > 100) return false;
+    const char *slash = strchr(m, '/');
+    if (!slash) return seg_ok(m, n);
+    return seg_ok(m, (size_t)(slash - m)) && !strchr(slash + 1, '/') && seg_ok(slash + 1, strlen(slash + 1));
+}
+
+/* ^\d{1,4}(\.\d{1,4}){0,2}([-+][0-9A-Za-z.-]{1,30})?$ */
+static bool version_ok(const char *v)
+{
+    for (int part = 0; part < 3; part++) {
+        int d = 0;
+        while (isdigit((unsigned char)*v) && d < 5) { v++; d++; }
+        if (d < 1 || d > 4) return false;
+        if (*v != '.') break;
+        v++;
+        if (part == 2) return false;
+    }
+    if (!*v) return true;
+    if (*v != '-' && *v != '+') return false;
+    v++;
+    size_t n = strlen(v);
+    if (n < 1 || n > 30) return false;
+    for (; *v; v++) if (!(isalnum((unsigned char)*v) || *v == '.' || *v == '-')) return false;
+    return true;
+}
+
+static bool value_schema_ok(const cJSON *sc)
+{
+    if (!cJSON_IsObject(sc)) return false;
+    const cJSON *type = cJSON_GetObjectItem(sc, "type");
+    if (type) {
+        if (!cJSON_IsString(type)) return false;
+        static const char *const types[] = { "boolean", "integer", "number", "string", "object", "array", "null" };
+        for (size_t i = 0; i < sizeof(types) / sizeof(*types); i++) if (!strcmp(type->valuestring, types[i])) return true;
+        return false;
+    }
+    return cJSON_GetObjectItem(sc, "enum") || cJSON_GetObjectItem(sc, "const");
 }
 
 static void add_items(cJSON *root, const char *key, const homeapps_item_t *items, size_t len, int kind)
@@ -66,35 +127,52 @@ char *homeapps_descriptor_to_json(const homeapps_descriptor_t *d)
 
 #define FAIL(...) do { if (err) snprintf(err, err_len, __VA_ARGS__); return ESP_ERR_INVALID_ARG; } while (0)
 
-static esp_err_t check_list(const homeapps_item_t *items, size_t len, const char *what, bool action, char *err, size_t err_len)
+/* kind: 0 control, 1 sensor, 2 event, 3 action (same as add_items) */
+static esp_err_t check_list(const homeapps_item_t *items, size_t len, const char *what, int kind, char *err, size_t err_len)
 {
     if (len > HOMEAPPS_MAX_ITEMS) FAIL("%s: more than %d items", what, HOMEAPPS_MAX_ITEMS);
     for (size_t i = 0; i < len; i++) {
-        if (!name_ok(items[i].name, action)) FAIL("%s: bad name '%s'", what, items[i].name ? items[i].name : "(null)");
-        if (items[i].schema_json) {
-            cJSON *p = cJSON_Parse(items[i].schema_json);
-            if (!p) FAIL("%s '%s': schema is not valid JSON", what, items[i].name);
-            cJSON_Delete(p);
-            if (strlen(items[i].schema_json) > 4000) FAIL("%s '%s': schema over 4000 characters", what, items[i].name);
+        const homeapps_item_t *it = &items[i];
+        if (!name_ok(it->name, kind == 3)) FAIL("%s: bad name '%s'", what, it->name ? it->name : "(null)");
+        if (it->label && chars(it->label) > 60) FAIL("%s '%s': label over 60 characters", what, it->name);
+        if (it->description && chars(it->description) > 300) FAIL("%s '%s': description over 300 characters", what, it->name);
+        if (it->unit && chars(it->unit) > 20) FAIL("%s '%s': unit over 20 characters", what, it->name);
+        if (kind == 0 && it->widget && strcmp(it->widget, "switch") && strcmp(it->widget, "slider") && strcmp(it->widget, "select") && strcmp(it->widget, "button"))
+            FAIL("%s '%s': widget must be switch, slider, select or button", what, it->name);
+        bool needs_schema = kind == 0 || kind == 1 || kind == 3;
+        if (!it->schema_json) {
+            if (needs_schema) FAIL("%s '%s': schema is required", what, it->name);
+            continue;
         }
+        if (strlen(it->schema_json) > 4000) FAIL("%s '%s': schema over 4000 characters", what, it->name);
+        cJSON *p = cJSON_Parse(it->schema_json);
+        if (!p) FAIL("%s '%s': schema is not valid JSON", what, it->name);
+        bool ok = kind == 3 ? (value_schema_ok(p) && cJSON_IsString(cJSON_GetObjectItem(p, "type")) && !strcmp(cJSON_GetObjectItem(p, "type")->valuestring, "object")) : value_schema_ok(p);
+        cJSON_Delete(p);
+        if (!ok) FAIL("%s '%s': schema needs a valid type (an action: type object) or an enum/const", what, it->name);
     }
     return ESP_OK;
 }
 
 esp_err_t homeapps_validate(const homeapps_descriptor_t *d, char *err, size_t err_len)
 {
-    if (!d || !d->model || !strchr(d->model, '/')) FAIL("model must be author/name");
-    if (!d->version) FAIL("version is required");
+    if (!d || !d->model || !model_ok(d->model)) FAIL("model must be lowercase author/name, at most 100 characters");
+    if (!d->version || !version_ok(d->version)) FAIL("version must look like 1.2.0");
     if (!d->purpose || (strcmp(d->purpose, "smart_home") && strcmp(d->purpose, "assistant"))) FAIL("purpose must be smart_home or assistant");
-    if (d->jarvis && strlen(d->jarvis) > 500) FAIL("jarvis text over 500 characters");
+    if (d->jarvis && chars(d->jarvis) > 500) FAIL("jarvis text over 500 characters");
     if (d->heartbeat_s && (d->heartbeat_s < 5 || d->heartbeat_s > 86400)) FAIL("heartbeat must be 5..86400");
+    size_t roles = 0;
+    for (; d->roles && d->roles[roles]; roles++) {
+        if (roles >= 10) FAIL("more than 10 roles");
+        if (!ident(d->roles[roles], strlen(d->roles[roles]), 40)) FAIL("bad role '%s'", d->roles[roles]);
+    }
     esp_err_t e;
-    if ((e = check_list(d->controls, d->controls_len, "control", false, err, err_len)) != ESP_OK) return e;
-    if ((e = check_list(d->sensors, d->sensors_len, "sensor", false, err, err_len)) != ESP_OK) return e;
-    if ((e = check_list(d->events, d->events_len, "event", false, err, err_len)) != ESP_OK) return e;
-    if ((e = check_list(d->actions, d->actions_len, "action", true, err, err_len)) != ESP_OK) return e;
+    if ((e = check_list(d->controls, d->controls_len, "control", 0, err, err_len)) != ESP_OK) return e;
+    if ((e = check_list(d->sensors, d->sensors_len, "sensor", 1, err, err_len)) != ESP_OK) return e;
+    if ((e = check_list(d->events, d->events_len, "event", 2, err, err_len)) != ESP_OK) return e;
+    if ((e = check_list(d->actions, d->actions_len, "action", 3, err, err_len)) != ESP_OK) return e;
     char *json = homeapps_descriptor_to_json(d);
-    size_t n = json ? strlen(json) : 0;
+    size_t n = json ? chars(json) : 0;
     free(json);
     if (n > HOMEAPPS_MAX_DESCRIPTOR_CHARS) FAIL("descriptor over %d characters", HOMEAPPS_MAX_DESCRIPTOR_CHARS);
     return ESP_OK;

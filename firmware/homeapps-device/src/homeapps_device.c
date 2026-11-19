@@ -197,7 +197,13 @@ static esp_err_t pair(void)
         }
         int wait = backoff_ms(attempt, out.retry_after);
         free(out.body);
-        if (status >= 400 && status < 500 && status != 429) { free(body); to_setup_and_restart("pairing refused (code used, expired or descriptor invalid)"); }
+        if (status >= 400 && status < 500 && status != 429) {
+            free(body);
+            ESP_LOGW(TAG, "Pairing refused (%d): code used, expired or descriptor invalid", status);
+            S.store.code[0] = 0;               /* Wi-Fi and address stay; setup opens for a new code */
+            homeapps_store_save(&S.store);
+            esp_restart();
+        }
         ESP_LOGW(TAG, "Pairing failed (%d), retry in %d ms", status, wait);
         vTaskDelay(pdMS_TO_TICKS(wait));
     }
@@ -336,7 +342,13 @@ esp_err_t homeapps_flush(void)
         int wait = backoff_ms(attempt, out.retry_after); /* 429 / 5xx: wait Retry-After */
         free(out.body);
         if (status == 401) continue;
-        if (status >= 400 && status < 500 && status != 429) { ESP_LOGE(TAG, "Report refused (%d), dropping frames", status); S.queued = 0; break; }
+        if (status >= 400 && status < 500 && status != 429) { ESP_LOGE(TAG, "Report refused (%d), dropping frames", status);
+            xSemaphoreTake(S.lock, portMAX_DELAY);
+            for (int i = 0; i < S.queued; i++) free(S.queue[i]);
+            S.queued = 0;
+            xSemaphoreGive(S.lock);
+            break;
+        }
         vTaskDelay(pdMS_TO_TICKS(wait));
     }
     free(body);
@@ -344,6 +356,18 @@ esp_err_t homeapps_flush(void)
 }
 
 /* ---------- link (WebSocket) ---------- */
+
+/* Frames queued while offline go out under the 120/min limit; the rest waits for the next second. */
+static void drain_queue(void)
+{
+    xSemaphoreTake(S.lock, portMAX_DELAY);
+    while (S.queued > 0 && S.ws && rate_ok()) {
+        esp_websocket_client_send_text(S.ws, S.queue[0], (int)strlen(S.queue[0]), pdMS_TO_TICKS(5000));
+        free(S.queue[0]);
+        memmove(S.queue, S.queue + 1, sizeof(S.queue[0]) * (--S.queued));
+    }
+    xSemaphoreGive(S.lock);
+}
 
 static char *rx; static size_t rx_len;
 
@@ -355,14 +379,11 @@ static void handle_message(const char *text)
     if (type && !strcmp(type, "ready")) {
         xEventGroupSetBits(S.events, READY_BIT);
         homeapps_send_status(-1, 0, NULL);
-        xSemaphoreTake(S.lock, portMAX_DELAY); /* frames queued while offline */
-        for (int i = 0; i < S.queued; i++) esp_websocket_client_send_text(S.ws, S.queue[i], (int)strlen(S.queue[i]), pdMS_TO_TICKS(5000)), free(S.queue[i]);
-        S.queued = 0;
-        xSemaphoreGive(S.lock);
-    } else if (type && !strcmp(type, "set") && S.cfg.on_set) {
+        drain_queue();
+    } else if (type && !strcmp(type, "set")) {
         const cJSON *id = cJSON_GetObjectItem(m, "id"), *name = cJSON_GetObjectItem(m, "name"), *value = cJSON_GetObjectItem(m, "value");
         char *vjson = cJSON_PrintUnformatted(value);
-        esp_err_t e = S.cfg.on_set(cJSON_GetStringValue((cJSON *)name), vjson, S.cfg.user);
+        esp_err_t e = S.cfg.on_set ? S.cfg.on_set(cJSON_GetStringValue((cJSON *)name), vjson, S.cfg.user) : ESP_ERR_NOT_SUPPORTED;
         free(vjson);
         cJSON *r = cJSON_CreateObject();
         cJSON_AddStringToObject(r, "type", "set_result");
@@ -388,7 +409,7 @@ static void ws_event(void *arg, esp_event_base_t base, int32_t id, void *data)
         snprintf(hello, cap, "{\"type\":\"hello\",\"device\":\"%s\",\"kind\":\"satellite\",\"descriptor\":%s}", S.cfg.descriptor->model, desc);
         esp_websocket_client_send_text(S.ws, hello, (int)strlen(hello), pdMS_TO_TICKS(5000)); /* first frame within 10 s */
         free(desc); free(hello);
-    } else if (id == WEBSOCKET_EVENT_DATA && e->op_code == 0x1) {
+    } else if (id == WEBSOCKET_EVENT_DATA && (e->op_code == 0x1 || e->op_code == 0x0)) {
         if (e->payload_offset == 0) { free(rx); rx = malloc(e->payload_len + 1); rx_len = 0; }
         if (rx) {
             memcpy(rx + e->payload_offset, e->data_ptr, e->data_len);
@@ -424,6 +445,11 @@ static void link_task(void *arg)
         c.skip_cert_common_name_check = true;
 #endif
         xEventGroupClearBits(S.events, LINK_DOWN_BIT);
+        if (strncmp(url, "wss", 3) && !CONFIG_HOMEAPPS_INSECURE_HTTP) {
+            ESP_LOGE(TAG, "Plain ws is off (Kconfig HOMEAPPS_INSECURE_HTTP)");
+            vTaskDelay(pdMS_TO_TICKS(backoff_ms(attempt++, 0)));
+            continue;
+        }
 #ifdef CONFIG_HOMEAPPS_TLS_TOFU
         if (!strncmp(url, "wss", 3) && !tofu_ok()) { vTaskDelay(pdMS_TO_TICKS(backoff_ms(attempt++, 0))); continue; }
 #endif
@@ -433,6 +459,7 @@ static void link_task(void *arg)
         int64_t last_status = esp_timer_get_time();
         while (!(xEventGroupGetBits(S.events) & LINK_DOWN_BIT)) {
             vTaskDelay(pdMS_TO_TICKS(1000));
+            if (xEventGroupGetBits(S.events) & READY_BIT) drain_queue();
             if ((xEventGroupGetBits(S.events) & READY_BIT) && esp_timer_get_time() - last_status > heartbeat * 1000000LL) {
                 homeapps_send_status(S.battery, S.voltage, NULL);
                 last_status = esp_timer_get_time();

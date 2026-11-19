@@ -9,7 +9,7 @@ menu "HomeApps device"
         int "Close the setup portal after (seconds)"
         default 600
     config HOMEAPPS_RESET_BUTTON_GPIO
-        int "Button GPIO (-1 = none): hold 2 s reopens setup, hold 5 s factory resets"
+        int "Button GPIO (-1 = none): hold 2 s and release reopens setup, hold 5 s factory resets"
         default -1
     config HOMEAPPS_INSECURE_HTTP
         bool "Allow plain http (INSECURE)"

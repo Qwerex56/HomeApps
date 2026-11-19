@@ -9,7 +9,7 @@ typedef struct {
     char code[16];        /* pairing code, cleared after pairing */
     char device_id[40];
     char secret[128];
-    char fingerprint[72]; /* TOFU: pinned SHA-256 of the server certificate (hex) */
+    char fingerprint[96]; /* TOFU: pinned SHA-256 of the server certificate (hex) */
 } homeapps_store_t;
 
 /* store (NVS) */
