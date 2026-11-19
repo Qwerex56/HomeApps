@@ -28,3 +28,7 @@ services:
     environment:
       # X-Forwarded-For arrives as "caller, cloudflared": Cloudflare names the caller, Traefik adds cloudflared.
       Auth__Proxy__ForwardLimit: "2"
+
+  devices:
+    environment:
+      Devices__Proxy__ForwardLimit: "2"

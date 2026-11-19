@@ -216,6 +216,8 @@ services:
       ConnectionStrings__Database: "Host=postgres;Database=homeapps_devices;Username=${POSTGRES_USER:-homeapps};Password=${POSTGRES_PASSWORD}"
       # Bridges and satellites sign in with a token for the gateway (docs/devices.md); Devices accepts it too.
       Devices__Resource: "https://${HOMEAPPS_DOMAIN}/jarvis/mcp"
+      # Devices is reachable only through Traefik, so its X-Forwarded-For is the real caller (the /devices/pair limit is per IP).
+      Devices__Proxy__KnownNetworks__0: "0.0.0.0/0"
       # Household satellites get their identity from Auth with this service client (S13).
       Devices__ClientSecret: ${DEVICES_CLIENT_SECRET:?set DEVICES_CLIENT_SECRET in .env}
       # JARVIS reads the household's devices for its prompt on /internal (H-3c), with its own service secret.

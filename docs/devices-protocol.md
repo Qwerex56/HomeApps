@@ -7,7 +7,7 @@ devices that sleep and the heartbeat rules. Plan: household-jarvis-devices.md, s
 ## Pairing
 
 A household admin adds a device and gets a one-time code (8 characters, valid 10 minutes, works once). The device sends
-it, with its descriptor, to `POST /devices/pair` (anonymous, rate limited):
+it, with its descriptor, to `POST /devices/pair` (anonymous; at most `Devices:RateLimits:PairPerMinute`, 10, per client IP and minute, then `429` with `Retry-After`):
 
 ```json
 { "code": "ABCD2345", "descriptor": { "format": "homeapps.device/1", "...": "..." } }

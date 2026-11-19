@@ -211,7 +211,7 @@ browser ──HTTPS──▶ Cloudflare ──tunnel (outgoing from home)──�
 
 `compose.tunnel.yaml` changes the production stack in three ways: Traefik publishes no ports, has no Let's Encrypt and
 listens on plain HTTP at `traefik:8080` inside the Docker network (TLS ends at Cloudflare); the `cloudflared` service
-runs the tunnel; Auth counts two proxies in `X-Forwarded-For` (`Auth__Proxy__ForwardLimit: 2`), so rate limits see
+runs the tunnel; Auth and Devices count two proxies in `X-Forwarded-For` (`Auth__Proxy__ForwardLimit: 2`, `Devices__Proxy__ForwardLimit: 2`), so rate limits see
 the caller's address that Cloudflare reports and not cloudflared's. Traefik keeps the `X-Forwarded-Proto: https` it gets
 from the tunnel, so Auth still builds `https://` addresses (the token issuer, Google's redirect, the emails).
 

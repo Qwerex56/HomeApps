@@ -93,7 +93,7 @@ A unique-index conflict from two requests at once (the same slug computed twice,
 | GET | `/devices/households/{householdId}?capability=&role=&model=&state=` | the household's devices (guest and above); see "Finding devices" |
 | POST | `/devices/households/{householdId}` | `{"name": "salon"}`: add a satellite (admin), answers `{deviceId, name, code, expiresAt}` |
 | POST | `/devices/{id}/pairing-code` | a new code for a household device (admin); the old pairing ends |
-| POST | `/devices/pair` | anonymous, `{"code": "ABCD-EFGH"}`: the satellite pairs, answers `{deviceId, householdId, name, secret}` |
+| POST | `/devices/pair` | anonymous, limited per client IP (`Devices:RateLimits:PairPerMinute`, 10 per minute; `429` with `Retry-After`; behind Traefik `Devices:Proxy:ForwardLimit` / `KnownNetworks` make that the caller, not the proxy), `{"code": "ABCD-EFGH"}`: the satellite pairs, answers `{deviceId, householdId, name, secret}` |
 
 In the app (S-1d): **Konto → Komputery** (`/account/devices`) lists my computers; the household's satellites are
 the **Urządzenia** tab of each household (`/homes/<id>/devices`), where admins add one (the code is shown once, as
