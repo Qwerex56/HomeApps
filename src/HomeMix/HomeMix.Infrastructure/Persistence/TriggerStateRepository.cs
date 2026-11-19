@@ -13,4 +13,7 @@ internal sealed class TriggerStateRepository(HomeMixDbContext db) : ITriggerStat
         await db.TriggerStates.Where(s => installationIds.Contains(s.InstallationId)).AsNoTracking().ToListAsync(cancellationToken);
 
     public void Add(TriggerState state) => db.TriggerStates.Add(state);
+
+    public async Task RemoveForInstallationAsync(Guid installationId, CancellationToken cancellationToken) =>
+        db.TriggerStates.RemoveRange(await db.TriggerStates.Where(s => s.InstallationId == installationId).ToListAsync(cancellationToken));
 }

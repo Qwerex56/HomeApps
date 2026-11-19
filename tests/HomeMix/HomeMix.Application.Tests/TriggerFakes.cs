@@ -48,6 +48,12 @@ internal sealed class FakeTriggerStates : ITriggerStates
         Task.FromResult<IReadOnlyList<TriggerState>>([.. All.Where(s => installationIds.Contains(s.InstallationId))]);
 
     public void Add(TriggerState state) => All.Add(state);
+
+    public Task RemoveForInstallationAsync(Guid installationId, CancellationToken cancellationToken)
+    {
+        All.RemoveAll(s => s.InstallationId == installationId);
+        return Task.CompletedTask;
+    }
 }
 
 internal sealed class FakeTriggerScripts : ITriggerScripts

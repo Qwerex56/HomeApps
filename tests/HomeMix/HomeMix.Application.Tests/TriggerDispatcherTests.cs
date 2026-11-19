@@ -164,6 +164,62 @@ public sealed class TriggerDispatcherTests
     }
 
     [Fact]
+    public void The_limiter_window_resets_with_time()
+    {
+        var limiter = new TriggerRunLimiter(_time);
+        var id = Guid.NewGuid();
+        for (var i = 0; i < TriggerRunLimiter.PerMinute; i++)
+        {
+            Assert.True(limiter.TryAcquire(id));
+        }
+
+        _time.Now += TimeSpan.FromSeconds(59);
+        Assert.False(limiter.TryAcquire(id));
+        _time.Now += TimeSpan.FromSeconds(1);
+        Assert.True(limiter.TryAcquire(id));
+    }
+
+    [Fact]
+    public async Task A_success_resets_the_failure_count()
+    {
+        var dispatcher = Dispatcher();
+        _scripts.Fails = "boom";
+        for (var i = 0; i < 3; i++)
+        {
+            await dispatcher.DispatchAsync(Changed("""{"temperature":18}"""), CancellationToken.None);
+        }
+
+        Assert.Equal(3, Assert.Single(_states.All).ConsecutiveFailures);
+        _scripts.Fails = null;
+        await dispatcher.DispatchAsync(Changed("""{"temperature":18}"""), CancellationToken.None);
+
+        var state = Assert.Single(_states.All);
+        Assert.Equal(0, state.ConsecutiveFailures);
+        Assert.Null(state.LastError);
+    }
+
+    [Fact]
+    public async Task Removing_an_installation_forgets_its_trigger_states()
+    {
+        _scripts.Fails = "boom";
+        var other = Install(_package);
+        await Dispatcher(null, _installation, other).DispatchAsync(Changed("""{"temperature":18}"""), CancellationToken.None);
+        Assert.Contains(_states.All, s => s.InstallationId == _installation.Id);
+        Assert.Contains(_states.All, s => s.InstallationId == other.Id);
+
+        var access = new InstallationAccess(new FakeRoles(HouseholdRole.Admin), new FakeUser(Adam));
+        var handler = new HomeMix.Application.Installations.RemoveInstallation.RemoveInstallationHandler(
+            new TriggerInstallations(_installation), new TriggerPackages(), access, new FakeUser(Adam), _time, new HomeMix.Application.Realtime.RealtimeOutbox(),
+            NSubstitute.Substitute.For<HomeMix.Application.Abstractions.IStoreStatsRepository>(), _states);
+        var result = await handler.Handle(new HomeMix.Application.Installations.RemoveInstallation.RemoveInstallationCommand(_installation.Id), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.False(_installation.IsActive);
+        Assert.DoesNotContain(_states.All, s => s.InstallationId == _installation.Id);
+        Assert.Contains(_states.All, s => s.InstallationId == other.Id);
+    }
+
+    [Fact]
     public async Task Five_failures_in_a_row_turn_the_trigger_off_and_tell_the_admins_once()
     {
         _scripts.Fails = "boom";

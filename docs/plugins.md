@@ -268,9 +268,9 @@ IDE `http://localhost:5800`) is the address.
 (`Events = new PluginEvents([], [typeof(DeviceStateChanged), typeof(DeviceEventOccurred)])` in the manifest, then a
 MassTransit consumer in the plugin's assembly):
 
-- `DeviceStateChanged(HouseholdId, DeviceId, Slug, Changed, At)`: a state frame changed stored values; `Changed` is a
-  JSON object with only the values that differ. A frame that repeats the stored values publishes nothing.
-- `DeviceEventOccurred(HouseholdId, DeviceId, Slug, Name, Payload, OccurredAt, IsLocation)`: an event the descriptor
+- `DeviceStateChanged(HouseholdId, DeviceId, Slug, Changed, At, ChangedBy?, Device?)`: a state frame changed stored values; `Changed` is a
+  JSON object with only the values that differ; `ChangedBy` is `homemix:{installationId}` for a change an add-on asked for a moment ago, `Device` the name, model, roles and capabilities. A frame that repeats the stored values publishes nothing.
+- `DeviceEventOccurred(HouseholdId, DeviceId, Slug, Name, Payload, OccurredAt, IsLocation, Device?)`: an event the descriptor
   declares (`button`, `motion`). Location events (`IsLocation`) are for members only; do not show them to guests.
 
 ```csharp

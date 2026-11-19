@@ -15,7 +15,8 @@ internal sealed class RemoveInstallationHandler(
     ICurrentUser currentUser,
     TimeProvider time,
     RealtimeOutbox realtime,
-    IStoreStatsRepository stats)
+    IStoreStatsRepository stats,
+    ITriggerStates triggerStates)
     : ICommandHandler<RemoveInstallationCommand>
 {
     public async Task<Result> Handle(RemoveInstallationCommand command, CancellationToken cancellationToken)
@@ -37,6 +38,7 @@ internal sealed class RemoveInstallationHandler(
             stats.Add(StoreEvent.Of(installation, package, StoreEventKind.Removed, time.GetUtcNow()));
         }
 
+        await triggerStates.RemoveForInstallationAsync(installation.Id, cancellationToken);
         return installation.Remove(currentUser.RequiredUserId, time.GetUtcNow());
     }
 }
