@@ -117,11 +117,11 @@ export const homemixApi = {
   },
   devices: {
     list: (installationId: string, filter: Record<string, unknown> = {}) =>
-      http.get(`${base}/installations/${installationId}/devices`, { params: filter }).then((r) => r.data),
+      http.get(`${base}/installations/${encodeURIComponent(installationId)}/devices`, { params: filter }).then((r) => r.data),
     state: (installationId: string, deviceId: string) =>
-      http.get(`${base}/installations/${installationId}/devices/${deviceId}/state`).then((r) => r.data),
+      http.get(`${base}/installations/${encodeURIComponent(installationId)}/devices/${encodeURIComponent(deviceId)}/state`).then((r) => r.data),
     set: (installationId: string, deviceId: string, control: string, value: unknown) =>
-      http.post(`${base}/installations/${installationId}/devices/${deviceId}/set`, { control, value }),
+      http.post(`${base}/installations/${encodeURIComponent(installationId)}/devices/${encodeURIComponent(deviceId)}/set`, { control, value }),
   },
   async notify(installationId: string, notification: Push) {
     return (await http.post<{ recipients: number }>(`${base}/installations/${installationId}/notify`, notification)).data
