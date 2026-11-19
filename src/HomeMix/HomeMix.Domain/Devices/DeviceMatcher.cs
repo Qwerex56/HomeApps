@@ -24,6 +24,7 @@ public static class DeviceMatcher
             .OrderBy(x => x.Rank)
             .ThenBy(x => x.Device.Online ? 0 : 1)
             .ThenBy(x => x.Device.Name, StringComparer.Ordinal)
+            .ThenBy(x => x.Device.Id)
             .ToList();
         var candidates = ranked.Select(x => x.Device).ToList();
 
