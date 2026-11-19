@@ -231,6 +231,7 @@ services:
       HomeMix__Plugins: ${HOMEAPPS_PLUGINS:-}
       HomeMix__PackagesPath: /data/packages
       HomeMix__HouseholdsUrl: "http://households:8080"
+      HomeMix__DevicesUrl: "http://devices:8080"
       # The official add-ons the image built (appsettings.Development.json points at the Rider folder instead).
       HomeMix__OfficialPath: /app/official
     volumes:

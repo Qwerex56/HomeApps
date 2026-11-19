@@ -217,6 +217,44 @@ two households sees two separate sets.
   defaults, never rename a collection without moving its documents.
 - Uninstalling keeps the data for 30 days; installing the same add-on again in the same place brings it back.
 
+## Devices (H-4a)
+
+An add-on finds household devices by what they can do, not by name (household-jarvis-devices.md 2.5). Declare
+`"capabilities": ["devices"]` to list and read them, add `"devices.control"` to set controls (it needs `devices` too);
+the installer accepts both on the consent screen. Both only work in a **household** installation, with the person's
+own rights: a guest reads, a member controls, and only devices of that household are reachable.
+
+A widget says which devices it is for in `homemix.json`; every field of an entry must match, entries rank
+**capability > role > model**, and `pick: "manual"` is the last resort: its matching devices are only a list for a
+household admin to choose from (widget settings), so a weather widget never offers a relay:
+
+```json
+"capabilities": ["devices", "devices.control"],
+"widgets": [{ "id": "stacja", "title": { "pl": "Stacja" }, "devices": [
+  { "capability": "weather" },
+  { "role": "weather_station" },
+  { "model": "qwerex56/stacja-v1" },
+  { "capability": "qwerex56/akwarium", "pick": "manual" }
+] }]
+```
+
+Among equal matches the first online device wins (then by name); an admin's saved pick wins when it still matches. At most 8 entries per widget.
+
+```ts
+const hm = connect()
+const { devices, selected, needsPick } = await hm.devices.list({ widget: 'stacja', state: true })
+const shown = devices.find((d) => d.id === selected)      // needsPick: ask an admin to choose
+const state = await hm.devices.state(shown!.id)           // { values: { temperature: 21.5 }, online, silent, ... }
+await hm.devices.set(lampId, 'on', true)                  // devices.control; rejects with devices.offline, devices.read_only ...
+const off = hm.devices.onState(({ deviceId, values }) => update(deviceId, values))
+```
+
+Without `widget`, `list({ capability?, role?, model? })` returns the household's devices narrowed by those filters.
+Server side the calls are `GET /homemix/api/installations/{id}/devices`, `.../devices/{deviceId}/state`,
+`POST .../devices/{deviceId}/set` and, for admins, `PUT|DELETE .../widget-devices/{widgetId}` (the pick). Running a
+device's actions and the live `onState` feed in the web host (Devices stream) come with H-9; until then `onState`
+only fires when the host emits `device.state`.
+
 ## 6. The network, notifications and JARVIS
 
 **Fetching.** List each origin in `network`, then use `fetch` as usual. The installer sees "may send data to

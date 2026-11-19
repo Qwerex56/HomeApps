@@ -47,17 +47,28 @@ public sealed class DeviceState
 
     public static DeviceState For(Guid deviceId) => new() { DeviceId = deviceId };
 
-    /// <summary>The device reported values; they replace the same names and keep the others.</summary>
-    public void ApplyValues(JsonElement values, DateTimeOffset now)
+    /// <summary>
+    /// The device reported values; they replace the same names and keep the others. Returns the values that differ
+    /// from the stored ones as a JSON object, or <c>null</c> when nothing changed (the time is still refreshed).
+    /// </summary>
+    public string? ApplyValues(JsonElement values, DateTimeOffset now)
     {
         var current = JsonNode.Parse(Values)!.AsObject();
+        var changed = new JsonObject();
         foreach (var value in values.EnumerateObject())
         {
-            current[value.Name] = JsonNode.Parse(value.Value.GetRawText());
+            var next = JsonNode.Parse(value.Value.GetRawText());
+            if (!current.TryGetPropertyValue(value.Name, out var before) || !JsonNode.DeepEquals(before, next))
+            {
+                changed[value.Name] = next?.DeepClone();
+            }
+
+            current[value.Name] = next;
         }
 
         Values = current.ToJsonString();
         ValuesAt = now;
+        return changed.Count == 0 ? null : changed.ToJsonString();
     }
 
     private const int LowBatteryHysteresis = 5;

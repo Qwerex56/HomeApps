@@ -779,7 +779,9 @@
       "storage.household": "zapisywać wspólne dane w tym miejscu",
       "storage.user": "zapisywać prywatne dane każdej osoby",
       "household.members": "widzieć imiona i zdjęcia domowników",
-      "notify": "pokazywać powiadomienia w aplikacji"
+      "notify": "pokazywać powiadomienia w aplikacji",
+      "devices": "widzieć urządzenia domu i ich stan",
+      "devices.control": "sterować urządzeniami domu (Twoimi uprawnieniami)"
     },
     "store": {
       "title": "Sklep",

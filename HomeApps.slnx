@@ -107,6 +107,7 @@
 	</Folder>
 	<Folder Name="/HomeMix/tests/">
 		<Project Path="tests/HomeMix/HomeMix.Api.Tests/HomeMix.Api.Tests.csproj" />
+		<Project Path="tests/HomeMix/HomeMix.Application.Tests/HomeMix.Application.Tests.csproj" />
 		<Project Path="tests/HomeMix/HomeMix.Domain.Tests/HomeMix.Domain.Tests.csproj" />
 	</Folder>
 

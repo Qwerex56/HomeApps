@@ -48,6 +48,11 @@ public sealed class HomeMixOptions
     [Url]
     public string HouseholdsUrl { get; set; } = "http://households:8080";
 
+    /// <summary>Devices inside the Docker network, for the <c>devices</c> capabilities; from Rider during development <c>http://localhost:5800</c>.</summary>
+    [Required]
+    [Url]
+    public string DevicesUrl { get; set; } = "http://devices:8080";
+
     /// <summary>
     /// The official store entries (homemix-2.md S6): a public <c>addons.json</c> with the team's repository links. Empty:
     /// only the official add-ons of the image and what people submit.

@@ -12,6 +12,11 @@ public sealed class PluginHostingOptions
     [Url]
     public string HouseholdsUrl { get; set; } = "http://households:8080";
 
+    /// <summary>Devices inside the Docker network, for <c>IDevicesClient</c>; from an IDE <c>http://localhost:5800</c>.</summary>
+    [Required]
+    [Url]
+    public string DevicesUrl { get; set; } = "http://devices:8080";
+
     /// <summary>How long a member's role is trusted without asking Households again (K2: 30-60 s).</summary>
     [Range(1, 600)]
     public int AccessCacheSeconds { get; set; } = 60;
