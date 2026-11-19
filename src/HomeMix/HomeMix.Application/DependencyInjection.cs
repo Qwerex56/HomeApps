@@ -22,6 +22,8 @@ public static class DependencyInjection
         services.AddScoped<DataAccess>();
         services.AddScoped<Devices.DevicesAccess>();
         services.AddScoped<Blocks.Blocklist>();
+        services.AddScoped<Triggers.TriggerDispatcher>();
+        services.TryAddSingleton<Triggers.TriggerRunLimiter>();
         services.AddScoped<Store.StoreCatalog>();
         services.AddScoped<Store.StoreNumbers>();
         return services;
