@@ -19,6 +19,12 @@ internal sealed class RateLimitOptions
     /// </summary>
     public int RefreshPerMinute { get; set; } = 60;
 
+    /// <summary>
+    /// Device token requests per IP and minute. Every device of a household fetches a fresh token on each connect and
+    /// report, and they share one address, so this is far above the browsers' <see cref="RefreshPerMinute"/>.
+    /// </summary>
+    public int DeviceTokenPerMinute { get; set; } = 600;
+
     /// <summary>Requests that send an email, per IP and hour.</summary>
     public int MailPerHour { get; set; } = 10;
 
@@ -31,6 +37,7 @@ internal static class RateLimits
     public const string Anonymous = "auth-anon";
     public const string Mail = "auth-mail";
     public const string Refresh = "auth-refresh";
+    public const string DeviceToken = "auth-device-token";
 
     public static IServiceCollection AddAuthRateLimits(this IServiceCollection services)
     {
@@ -72,6 +79,15 @@ internal static class RateLimits
                 new SlidingWindowRateLimiterOptions
                 {
                     PermitLimit = Limits(http).RefreshPerMinute,
+                    Window = TimeSpan.FromMinutes(1),
+                    SegmentsPerWindow = 6,
+                    QueueLimit = 0,
+                }));
+
+            limiter.AddPolicy(DeviceToken, http => RateLimitPartition.GetSlidingWindowLimiter(ClientIp(http), _ =>
+                new SlidingWindowRateLimiterOptions
+                {
+                    PermitLimit = Limits(http).DeviceTokenPerMinute,
                     Window = TimeSpan.FromMinutes(1),
                     SegmentsPerWindow = 6,
                     QueueLimit = 0,

@@ -115,6 +115,11 @@ namespace Jarvis.Infrastructure.Persistence.Migrations
                     b.Property<string>("Response")
                         .HasColumnType("text");
 
+                    b.Property<bool>("Satellite")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<DateTimeOffset>("StartedAt")
                         .HasColumnType("timestamp with time zone");
 

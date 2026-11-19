@@ -7,14 +7,14 @@ devices that sleep and the heartbeat rules. Plan: household-jarvis-devices.md, s
 ## Pairing
 
 A household admin adds a device and gets a one-time code (8 characters, valid 10 minutes, works once). The device sends
-it, with its descriptor, to `POST /devices/pair` (anonymous, rate limited):
+it, with its descriptor, to `POST /devices/pair` (anonymous; at most `Devices:RateLimits:PairPerMinute`, 10, per client IP and minute, then `429` with `Retry-After`):
 
 ```json
 { "code": "ABCD2345", "descriptor": { "format": "homeapps.device/1", "...": "..." } }
 ```
 
 The answer has `deviceId`, `householdId`, `name`, `slug`, `purpose` and a `secret`. The secret buys short-lived tokens at
-`/auth/devices/token`; the device keeps it. A descriptor that is invalid fails the pairing (`devices.invalid_descriptor`,
+`/auth/devices/token`; the device keeps it. That endpoint answers `401 devices.invalid_credentials` for an unknown device or a wrong (or replaced) secret and `401 devices.device_unpaired` when the secret is right but the device was removed or got a new pairing code: the device goes back to setup at once. A descriptor that is invalid fails the pairing (`devices.invalid_descriptor`,
 with every problem listed) and the code stays usable. A satellite that sends no descriptor still pairs (a legacy device:
 purpose `assistant`).
 
@@ -156,10 +156,10 @@ within `Devices:ActionTimeout` (20 s) with `{ "type": "set_result", "id": "7f3c.
 ```
 
 `name` must be declared in the descriptor's `events`; `data` (optional) must fit the event's `data` schema and be at most
-4000 characters. `at` is when it happened (ISO 8601); a missing, unreadable or future time becomes the time the server
+4000 characters. `at` is when it happened (ISO 8601); a missing, unreadable, future or older than 366 days (the longest retention) time becomes the time the server
 received it. Devices stores it in the event history, publishes the contract `DeviceEventOccurred` on RabbitMQ and sends it
 to the household's open streams (members only). An event declared with `"location": true`, or any event of a device with
-the `geo` capability, is a **location event**: kept shorter (see below) and never shown to guests.
+the `geo` capability, is a **location event**: kept shorter (see below) and never shown to guests. The same goes for the *state* of a `geo` device: a guest gets `values: {}` and `valuesAt: null` (REST, the list with `?state=true`, JARVIS's description), and its `state` messages on the stream reach members only; online, silent, battery and rssi stay visible.
 
 Retention (D9) is the household's setting in the JARVIS tab: events are kept `eventDays` (default 30), location events
 `locationEventDays` (default 7). Devices reads it from Households and a daily job deletes what is older.

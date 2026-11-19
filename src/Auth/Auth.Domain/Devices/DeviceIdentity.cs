@@ -86,9 +86,11 @@ public sealed class DeviceIdentity
 
     public void Unpair(DateTimeOffset now) => UnpairedAt ??= now;
 
-    public bool Accepts(string secret) =>
-        IsActive
-        && !string.IsNullOrEmpty(secret)
+    public bool Accepts(string secret) => IsActive && Knows(secret);
+
+    /// <summary>The secret is the one issued at the last pairing, whether or not the device is still paired (<see cref="Unpair"/> keeps the hash). Constant time.</summary>
+    public bool Knows(string secret) =>
+        !string.IsNullOrEmpty(secret)
         && CryptographicOperations.FixedTimeEquals(
             Encoding.ASCII.GetBytes(OpaqueToken.HashOf(secret)), Encoding.ASCII.GetBytes(SecretHash));
 }

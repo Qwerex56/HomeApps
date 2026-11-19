@@ -37,7 +37,7 @@ internal sealed class DeviceEndpoints : IEndpoint
         app.MapPost("/auth/devices/token", async (DeviceTokenRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(new IssueDeviceTokenCommand(body.DeviceId, body.Secret), ct)).ToHttpResult())
             .AllowAnonymous()
-            .RequireRateLimiting(RateLimits.Refresh)
+            .RequireRateLimiting(RateLimits.DeviceToken)
             .WithTags("Devices")
             .Produces<DeviceTokenView>();
     }

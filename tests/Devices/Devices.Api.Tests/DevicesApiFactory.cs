@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 namespace Devices.Api.Tests;
 
 /// <summary>The real Devices Api on Postgres; app tokens of JARVIS's <see cref="Resource"/> are accepted like in production.</summary>
-public sealed class DevicesApiFactory : HomeAppsApiFactory<Program, DevicesDbContext>
+public class DevicesApiFactory : HomeAppsApiFactory<Program, DevicesDbContext>
 {
     public const string Resource = "https://homeapps.test/jarvis/mcp";
 

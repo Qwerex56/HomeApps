@@ -15,6 +15,20 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
   Rider's ports, and vite reading `HOMEAPPS_PLUGINS` from `.env`.
 - **The voice bridge moved out (S-2a):** `src/Jarvis/Jarvis.VoiceBridge` and its tests now live in their own
   repository, HomeApps.Desktop, with their history; HomeApps keeps only the server side (`/jarvis/voice`, Devices).
+- **Server hardening for household devices (H-4c):**
+  - `POST /devices/pair` is limited per client IP (`Devices:RateLimits:PairPerMinute`, 10; `429` with `Retry-After`).
+    Devices now reads `X-Forwarded-For` like Auth (`Devices:Proxy:ForwardLimit`, `KnownNetworks`; the compose files set
+    them, `compose.tunnel.yaml` counts two proxies).
+  - `/auth/devices/token` has its own budget (`Auth:RateLimits:DeviceTokenPerMinute`, 600 per IP) instead of sharing the
+    browsers' refresh limit, and answers `401 devices.device_unpaired` to the right secret of a removed or re-paired
+    device (a wrong or old secret stays `devices.invalid_credentials`).
+  - A device event's `at` older than 366 days counts as received now.
+  - Guests get no values of a `geo` device (`values: {}`, `valuesAt: null`) over REST, the stream and JARVIS;
+    health stays.
+  - Satellite runs (also a turn lent by PIN) never list or call a person's computer tools; an external MCP client gets a
+    refusal for a computer action that asks for confirmation (until H-7). Computer action descriptions are quoted as
+    data like household devices'. A device's "Pytaj" switch now works at once (no 5-minute cache).
+  - Updating: JARVIS migrates its database on start (`AssistantRun.Satellite`).
 
 ### Added
 

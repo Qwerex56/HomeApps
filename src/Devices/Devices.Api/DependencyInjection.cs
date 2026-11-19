@@ -8,6 +8,7 @@ using Devices.Application.Abstractions;
 using HomeApps.BuildingBlocks.Api.Auth;
 using HomeApps.BuildingBlocks.Api.Results;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using ModelContextProtocol.Protocol;
 
@@ -17,6 +18,9 @@ internal static class DependencyInjection
 {
     /// <summary>60 reports per minute per device token (its subject).</summary>
     public const string ReportRateLimit = "devices-report";
+
+    /// <summary>Pairing attempts per IP and minute: the code is the only secret of an anonymous caller.</summary>
+    public const string PairRateLimit = "devices-pair";
 
     /// <summary>
     /// What only the Devices Api needs: the links (connected devices, in memory), the stream (SSE) of a household's changes, the MCP server whose tools are the
@@ -32,6 +36,23 @@ internal static class DependencyInjection
         services.AddSingleton<IDeviceStream>(provider => provider.GetRequiredService<DeviceStream>());
         services.AddScoped<DeviceToolsServer>();
         services.ConfigureHttpJsonOptions(json => json.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+        services.Configure<ForwardedHeadersOptions>(forwarded =>
+        {
+            forwarded.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            // One proxy (Traefik) by default; two behind a Cloudflare Tunnel (cloudflared, then Traefik).
+            forwarded.ForwardLimit = builder.Configuration.GetValue("Devices:Proxy:ForwardLimit", 1);
+            var networks = builder.Configuration.GetSection("Devices:Proxy:KnownNetworks").Get<string[]>() ?? [];
+            if (networks.Length > 0)
+            {
+                forwarded.KnownIPNetworks.Clear();
+                forwarded.KnownProxies.Clear();
+                foreach (var network in networks)
+                {
+                    forwarded.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(network));
+                }
+            }
+        });
 
         services.AddRateLimiter(limiter =>
         {
@@ -49,7 +70,7 @@ internal static class DependencyInjection
                     {
                         Status = StatusCodes.Status429TooManyRequests,
                         Title = "Too many requests",
-                        Detail = "Too many reports in a short time. Wait a moment and try again.",
+                        Detail = "Too many requests in a short time. Wait a moment and try again.",
                         Extensions = { [ResultHttpMapper.CodeExtension] = "rate_limited" },
                     },
                 });
@@ -58,6 +79,16 @@ internal static class DependencyInjection
             limiter.AddPolicy(ReportRateLimit, http => RateLimitPartition.GetSlidingWindowLimiter(
                 http.User.FindFirst(ClaimNames.Subject)?.Value ?? http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                 _ => new SlidingWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(1), SegmentsPerWindow = 6, QueueLimit = 0 }));
+
+            limiter.AddPolicy(PairRateLimit, http => RateLimitPartition.GetSlidingWindowLimiter(
+                http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new SlidingWindowRateLimiterOptions
+                {
+                    PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Devices:RateLimits:PairPerMinute", 10),
+                    Window = TimeSpan.FromMinutes(1),
+                    SegmentsPerWindow = 6,
+                    QueueLimit = 0,
+                }));
         });
 
         services.AddMcpServer(options => options.ServerInfo = new Implementation

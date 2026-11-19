@@ -11,9 +11,14 @@ internal sealed class IssueDeviceTokenHandler(IDeviceIdentityRepository devices,
     public async Task<Result<DeviceTokenView>> Handle(IssueDeviceTokenCommand command, CancellationToken cancellationToken)
     {
         var identity = await devices.GetByIdAsync(command.DeviceId, cancellationToken);
-        if (identity is null || !identity.Accepts(command.Secret ?? string.Empty))
+        if (identity is null || !identity.Knows(command.Secret ?? string.Empty))
         {
             return Result.Fail(DeviceIdentityErrors.InvalidCredentials);
+        }
+
+        if (!identity.IsActive)
+        {
+            return Result.Fail(DeviceIdentityErrors.DeviceUnpaired);
         }
 
         var token = tokens.IssueDeviceToken(identity, null);

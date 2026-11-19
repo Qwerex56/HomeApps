@@ -2,6 +2,7 @@
 name: spec-debate
 description: Run the HomeApps spec debate (dotnet-architect, vue-architect, devils-advocate as an agent team) over a spec in specs/ and write the agreed contract to specs/<name>-adr.md. Run by hand as /spec-debate @specs/<name>.md.
 disable-model-invocation: true
+model: opus
 argument-hint: "@specs/<name>.md"
 ---
 
@@ -28,8 +29,8 @@ team with three teammates, using the agent definitions from `.claude/agents/`:
 
 | Teammate | Agent type | Model | Focus |
 |---|---|---|---|
-| `dotnet` | `dotnet-architect` | Sonnet | owner service, API contract, data, migration, messages, concurrency |
-| `vue` | `vue-architect` | Sonnet | screens, routes, states per role, forms, query keys, pl.json |
+| `dotnet` | `dotnet-architect` | Haiku | owner service, API contract, data, migration, messages, concurrency |
+| `vue` | `vue-architect` | Haiku | screens, routes, states per role, forms, query keys, pl.json |
 | `devil` | `devils-advocate` | Opus | ambiguity, edge cases, permissions/privacy, integration risks, scope creep |
 
 Spawn prompt for each (fill in the path):
@@ -41,6 +42,8 @@ Spawn prompt for each (fill in the path):
 > format from your agent definition.
 
 Rules for the lead during the debate:
+- Stay quiet while the team works: no answer to idle notifications or partial positions, no summaries of what
+  teammates told each other. Speak to the owner only at section 2 (the report) and section 4 (finish).
 - Don't relay messages that teammates can send each other; step in only to unblock or cut a loop.
 - Each topic gets at most 3 back-and-forth exchanges; then it becomes an open question or a recorded disagreement.
 - Wait for all three final positions before writing anything.
@@ -65,7 +68,7 @@ the team.
 # ADR: <Nazwa funkcji>
 
 Specyfikacja: [specs/<name>.md](<name>.md) · Data: <YYYY-MM-DD> · Status: zaakceptowany
-Zespół: dotnet-architect (Sonnet), vue-architect (Sonnet), devils-advocate (Opus)
+Zespół: dotnet-architect (Haiku), vue-architect (Haiku), devils-advocate (Opus)
 
 ## 1. Rozstrzygnięte pytania i niejasności
 | # | Pytanie | Odpowiedź autora | Skutek dla implementacji |

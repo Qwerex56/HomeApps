@@ -31,17 +31,17 @@ internal sealed class GetHouseholdDevicesHandler(IDeviceRepository devices, IHou
             ? await telemetry.StatesAsync([.. ordered.Select(d => d.Id)], cancellationToken)
             : new Dictionary<Guid, DeviceState>();
         return Result.Ok<IReadOnlyList<DeviceView>>(
-            [.. ordered.Select(d => d.ToView(links, role >= HouseholdRole.Admin, query.WithState ? StateOf(d, states, links) : null))]);
+            [.. ordered.Select(d => d.ToView(links, role >= HouseholdRole.Admin, query.WithState ? StateOf(d, states, links, role) : null))]);
     }
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    private static DeviceStateView StateOf(Device device, IReadOnlyDictionary<Guid, DeviceState> states, IDeviceLinks links)
+    private static DeviceStateView StateOf(Device device, IReadOnlyDictionary<Guid, DeviceState> states, IDeviceLinks links, HouseholdRole? role)
     {
         states.TryGetValue(device.Id, out var state);
-        using var values = JsonDocument.Parse(state?.Values ?? "{}");
+        var (values, valuesAt) = StateValues.Of(device, state, role);
         return new DeviceStateView(
-            device.Id, values.RootElement.Clone(), state?.ValuesAt, !device.IsDisabled && links.IsOnline(device.Id), state?.Silent ?? false, state?.LowBattery ?? false,
+            device.Id, values, valuesAt, !device.IsDisabled && links.IsOnline(device.Id), state?.Silent ?? false, state?.LowBattery ?? false,
             state?.LastStatusAt, state?.Battery, state?.Voltage, state?.Rssi, state?.Uptime, state?.Firmware, state?.Error);
     }
 }

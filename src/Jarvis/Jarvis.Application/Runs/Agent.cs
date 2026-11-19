@@ -35,12 +35,12 @@ internal sealed partial class Agent(
         ArgumentNullException.ThrowIfNull(command);
         if (await RefusalAsync(command, cancellationToken) is { } refusal)
         {
-            var refused = AssistantRun.Refuse(command.UserId, command.Channel, command.Reference, command.HouseholdId, command.Text, refusal, time);
+            var refused = AssistantRun.Refuse(command.UserId, command.Channel, command.Reference, command.HouseholdId, command.Text, refusal, time, command.Satellite);
             runs.Add(refused);
             return new AnswerView(refused.Id, refusal, []);
         }
 
-        var run = AssistantRun.Start(command.UserId, command.Channel, command.Reference, command.HouseholdId, command.Text, time);
+        var run = AssistantRun.Start(command.UserId, command.Channel, command.Reference, command.HouseholdId, command.Text, time, command.Satellite);
         runs.Add(run);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         if (streamId is { } stream)

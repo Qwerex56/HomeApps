@@ -273,6 +273,8 @@ services:
       Jwt__RequireHttpsMetadata: "false"
       # Bridges sign in through "Połączone aplikacje" with a token for the gateway; Devices accepts it too.
       Devices__Resource: "https://app.localhost/jarvis/mcp"
+      # Traefik is the only proxy in front of Devices; trust its X-Forwarded-For (the /devices/pair limit is per IP).
+      Devices__Proxy__KnownNetworks__0: "0.0.0.0/0"
       Devices__AuthUrl: "http://auth:8080"
       Devices__ClientSecret: ${DEVICES_CLIENT_SECRET:-development-only-devices-secret-0123456789}
       Devices__Internal__ClientSecret: ${JARVIS_CLIENT_SECRET:-development-only-jarvis-secret-0123456789}

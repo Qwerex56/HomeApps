@@ -117,7 +117,7 @@ internal sealed class VoiceTurnHandler(
         }
 
         var answer = await agent.RunAsync(
-            new AskCommand(speaker, request, household, Prompts.VoiceChannel, $"device/{command.UserId}", []), null, cancellationToken);
+            new AskCommand(speaker, request, household, Prompts.VoiceChannel, $"device/{command.UserId}", [], Satellite: true), null, cancellationToken);
         return Said(command, transcript, answer.Text, answer.Actions, speaker);
     }
 
