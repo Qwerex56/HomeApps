@@ -2,6 +2,13 @@
 #include "homeapps_device.h"
 #include "cJSON.h"
 
+/* A bool Kconfig option is undefined (not 0) when off: always go through this. */
+#ifdef CONFIG_HOMEAPPS_INSECURE_HTTP
+#define HOMEAPPS_INSECURE 1
+#else
+#define HOMEAPPS_INSECURE 0
+#endif
+
 typedef struct {
     char ssid[33];
     char wifi_password[65];

@@ -65,6 +65,18 @@ static bool version_ok(const char *v)
     return true;
 }
 
+/* ^[a-z][a-z0-9_]{0,29}$ or ^[a-z0-9][a-z0-9-]{0,29}/[a-z][a-z0-9_-]{0,29}$ */
+static bool type_ok(const char *t)
+{
+    const char *slash = strchr(t, '/');
+    if (!slash) return ident(t, strlen(t), 30);
+    size_t al = (size_t)(slash - t), nl = strlen(slash + 1);
+    if (al < 1 || al > 30 || nl < 1 || nl > 30 || !(islower((unsigned char)t[0]) || isdigit((unsigned char)t[0])) || !islower((unsigned char)slash[1])) return false;
+    for (size_t i = 1; i < al; i++) if (!(islower((unsigned char)t[i]) || isdigit((unsigned char)t[i]) || t[i] == '-')) return false;
+    for (size_t i = 1; i < nl; i++) { char c = slash[1 + i]; if (!(islower((unsigned char)c) || isdigit((unsigned char)c) || c == '_' || c == '-')) return false; }
+    return true;
+}
+
 static bool value_schema_ok(const cJSON *sc)
 {
     if (!cJSON_IsObject(sc)) return false;
@@ -139,7 +151,7 @@ static esp_err_t check_list(const homeapps_item_t *items, size_t len, const char
         if (it->unit && chars(it->unit) > 20) FAIL("%s '%s': unit over 20 characters", what, it->name);
         if (kind == 0 && it->widget && strcmp(it->widget, "switch") && strcmp(it->widget, "slider") && strcmp(it->widget, "select") && strcmp(it->widget, "button"))
             FAIL("%s '%s': widget must be switch, slider, select or button", what, it->name);
-        bool needs_schema = kind == 0 || kind == 1 || kind == 3;
+        bool needs_schema = kind == 0 || kind == 1;   /* an action without input is valid */
         if (!it->schema_json) {
             if (needs_schema) FAIL("%s '%s': schema is required", what, it->name);
             continue;
@@ -154,11 +166,43 @@ static esp_err_t check_list(const homeapps_item_t *items, size_t len, const char
     return ESP_OK;
 }
 
+static bool dup_in(const homeapps_item_t *a, size_t an, const homeapps_item_t *b, size_t bn, const char **name)
+{
+    for (size_t i = 0; i < an; i++) {
+        for (size_t j = (a == b ? i + 1 : 0); j < bn; j++)
+            if (a[i].name && b[j].name && !strcmp(a[i].name, b[j].name)) { *name = a[i].name; return true; }
+    }
+    return false;
+}
+
+/* [{"type":"weather"},{"type":"switch","id":"lamp"},{"type":"author/name","definition":{...}}] */
+static esp_err_t check_capabilities(const char *json, char *err, size_t err_len)
+{
+    if (!json) return ESP_OK;
+    cJSON *arr = cJSON_Parse(json);
+    if (!arr || !cJSON_IsArray(arr) || cJSON_GetArraySize(arr) > HOMEAPPS_MAX_ITEMS) { cJSON_Delete(arr); FAIL("capabilities must be a JSON array of at most %d items", HOMEAPPS_MAX_ITEMS); }
+    int n = cJSON_GetArraySize(arr);
+    for (int i = 0; i < n; i++) {
+        const cJSON *c = cJSON_GetArrayItem(arr, i);
+        const cJSON *type = cJSON_GetObjectItem(c, "type"), *id = cJSON_GetObjectItem(c, "id"), *def = cJSON_GetObjectItem(c, "definition");
+        bool ok = cJSON_IsObject(c) && cJSON_IsString(type) && type_ok(type->valuestring);
+        if (ok && id) ok = cJSON_IsString(id) && ident(id->valuestring, strlen(id->valuestring), 30);
+        if (ok && def) ok = cJSON_IsObject(def);
+        if (!ok) { cJSON_Delete(arr); FAIL("capability %d needs a type (weather or author/name), an optional id and an object definition", i); }
+        for (int j = 0; j < i; j++) {
+            const cJSON *o = cJSON_GetArrayItem(arr, j), *ot = cJSON_GetObjectItem(o, "type"), *oi = cJSON_GetObjectItem(o, "id");
+            if (!strcmp(ot->valuestring, type->valuestring) && !strcmp(oi ? oi->valuestring : "", id ? id->valuestring : "")) { cJSON_Delete(arr); FAIL("capability '%s' is declared twice", type->valuestring); }
+        }
+    }
+    cJSON_Delete(arr);
+    return ESP_OK;
+}
+
 esp_err_t homeapps_validate(const homeapps_descriptor_t *d, char *err, size_t err_len)
 {
     if (!d || !d->model || !model_ok(d->model)) FAIL("model must be lowercase author/name, at most 100 characters");
     if (!d->version || !version_ok(d->version)) FAIL("version must look like 1.2.0");
-    if (!d->purpose || (strcmp(d->purpose, "smart_home") && strcmp(d->purpose, "assistant"))) FAIL("purpose must be smart_home or assistant");
+    if (!d->purpose || (strcmp(d->purpose, "smart_home") && strcmp(d->purpose, "assistant") && strcmp(d->purpose, "computer"))) FAIL("purpose must be assistant, smart_home or computer");
     if (d->jarvis && chars(d->jarvis) > 500) FAIL("jarvis text over 500 characters");
     if (d->heartbeat_s && (d->heartbeat_s < 5 || d->heartbeat_s > 86400)) FAIL("heartbeat must be 5..86400");
     size_t roles = 0;
@@ -171,6 +215,12 @@ esp_err_t homeapps_validate(const homeapps_descriptor_t *d, char *err, size_t er
     if ((e = check_list(d->sensors, d->sensors_len, "sensor", 1, err, err_len)) != ESP_OK) return e;
     if ((e = check_list(d->events, d->events_len, "event", 2, err, err_len)) != ESP_OK) return e;
     if ((e = check_list(d->actions, d->actions_len, "action", 3, err, err_len)) != ESP_OK) return e;
+    if ((e = check_capabilities(d->capabilities_json, err, err_len)) != ESP_OK) return e;
+    const char *dup;
+    if (dup_in(d->controls, d->controls_len, d->controls, d->controls_len, &dup) || dup_in(d->sensors, d->sensors_len, d->sensors, d->sensors_len, &dup) ||
+        dup_in(d->controls, d->controls_len, d->sensors, d->sensors_len, &dup)) FAIL("control or sensor '%s' is declared twice", dup);
+    if (dup_in(d->events, d->events_len, d->events, d->events_len, &dup)) FAIL("event '%s' is declared twice", dup);
+    if (dup_in(d->actions, d->actions_len, d->actions, d->actions_len, &dup)) FAIL("action '%s' is declared twice", dup);
     char *json = homeapps_descriptor_to_json(d);
     size_t n = json ? chars(json) : 0;
     free(json);

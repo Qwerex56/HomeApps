@@ -138,7 +138,7 @@ static int http_json(const char *path, const char *bearer, const char *body, htt
     char url[256];
     snprintf(url, sizeof(url), "%s%s", S.store.base_url, path);
     bool https = !strncmp(url, "https://", 8);
-    if (!https && !CONFIG_HOMEAPPS_INSECURE_HTTP) { ESP_LOGE(TAG, "Plain http is off (Kconfig HOMEAPPS_INSECURE_HTTP)"); return -1; }
+    if (!https && !HOMEAPPS_INSECURE) { ESP_LOGE(TAG, "Plain http is off (Kconfig HOMEAPPS_INSECURE_HTTP)"); return -1; }
 #ifdef CONFIG_HOMEAPPS_TLS_TOFU
     if (https && !tofu_ok()) return -1;
 #endif
@@ -445,7 +445,7 @@ static void link_task(void *arg)
         c.skip_cert_common_name_check = true;
 #endif
         xEventGroupClearBits(S.events, LINK_DOWN_BIT);
-        if (strncmp(url, "wss", 3) && !CONFIG_HOMEAPPS_INSECURE_HTTP) {
+        if (strncmp(url, "wss", 3) && !HOMEAPPS_INSECURE) {
             ESP_LOGE(TAG, "Plain ws is off (Kconfig HOMEAPPS_INSECURE_HTTP)");
             vTaskDelay(pdMS_TO_TICKS(backoff_ms(attempt++, 0)));
             continue;
