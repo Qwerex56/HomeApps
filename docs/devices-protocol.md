@@ -159,7 +159,7 @@ within `Devices:ActionTimeout` (20 s) with `{ "type": "set_result", "id": "7f3c.
 4000 characters. `at` is when it happened (ISO 8601); a missing, unreadable, future or older than 366 days (the longest retention) time becomes the time the server
 received it. Devices stores it in the event history, publishes the contract `DeviceEventOccurred` on RabbitMQ and sends it
 to the household's open streams (members only). An event declared with `"location": true`, or any event of a device with
-the `geo` capability, is a **location event**: kept shorter (see below) and never shown to guests.
+the `geo` capability, is a **location event**: kept shorter (see below) and never shown to guests. The same goes for the *state* of a `geo` device: a guest gets `values: {}` and `valuesAt: null` (REST, the list with `?state=true`, JARVIS's description), and its `state` messages on the stream reach members only; online, silent, battery and rssi stay visible.
 
 Retention (D9) is the household's setting in the JARVIS tab: events are kept `eventDays` (default 30), location events
 `locationEventDays` (default 7). Devices reads it from Households and a daily job deletes what is older.

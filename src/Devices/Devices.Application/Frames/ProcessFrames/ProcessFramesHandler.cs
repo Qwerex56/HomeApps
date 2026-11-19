@@ -68,7 +68,7 @@ internal sealed class ProcessFramesHandler(
         }
 
         var changed = state.ApplyValues(frame.Values!.Value, now);
-        stream.Publish(new DeviceStreamMessage(device.HouseholdId!.Value, "state", new { deviceId = device.Id, values = frame.Values.Value, at = now }));
+        stream.Publish(new DeviceStreamMessage(device.HouseholdId!.Value, "state", new { deviceId = device.Id, values = frame.Values.Value, at = now }, MembersOnly: device.IsLocationDevice));
         if (changed is not null)
         {
             using var keys = System.Text.Json.JsonDocument.Parse(changed);

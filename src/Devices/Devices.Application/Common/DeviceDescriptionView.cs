@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Devices.Domain.Descriptors;
 using Devices.Domain.Devices;
+using HomeApps.Contracts.Households;
 
 namespace Devices.Application.Common;
 
@@ -30,18 +31,18 @@ public sealed record DeviceDescriptionView(
     string? Model = null,
     IReadOnlyList<string>? Roles = null)
 {
-    internal static DeviceDescriptionView From(ReachableDevice reachable, DeviceState? state, bool online)
+    internal static DeviceDescriptionView From(ReachableDevice reachable, DeviceState? state, bool online, HouseholdRole? role)
     {
         var device = reachable.Device;
         var descriptor = device.Descriptor is null ? null : DescriptorParser.Parse(device.Descriptor) is { IsSuccess: true } parsed ? parsed.Value : null;
-        using var values = JsonDocument.Parse(state?.Values ?? "{}");
+        var (values, _) = StateValues.Of(device, state, role);
         return new DeviceDescriptionView(
             device.Id, device.HouseholdId, DeviceText.Clean(device.Name, 60), reachable.Slug, device.Purpose.ToWire(), online, state?.Silent ?? false,
             state?.LowBattery ?? false, state?.Battery, device.Capabilities,
             [.. (descriptor?.Controls ?? []).Select(c => new DescribedValue(c.Name, Label(c.Label), Label(c.Description), Schema(c.Value), null))],
             [.. (descriptor?.Sensors ?? []).Select(s => new DescribedValue(s.Name, Label(s.Label), Label(s.Description), Schema(s.Value), Label(s.Unit)))],
             [.. (descriptor?.Events ?? []).Select(e => e.Name)],
-            values.RootElement.Clone(),
+            values,
             descriptor?.Jarvis is { } jarvis ? DeviceText.Clean(jarvis, DeviceDescriptor.MaxJarvisLength) : null,
             device.AdminNotes is { } notes ? DeviceText.Clean(notes, Device.MaxNotesLength) : null,
             device.JarvisMayControl,

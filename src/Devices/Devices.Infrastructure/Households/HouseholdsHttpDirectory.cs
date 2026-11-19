@@ -24,6 +24,9 @@ internal sealed class HouseholdsHttpDirectory(HttpClient http, IConfiguration co
     public async Task<IReadOnlyList<Guid>> GetMemberIdsAsync(Guid householdId, CancellationToken cancellationToken) =>
         [.. (await PeopleAsync(householdId, cancellationToken)).Select(p => p.UserId)];
 
+    public async Task<HouseholdRole?> GetRoleAsync(Guid householdId, Guid userId, CancellationToken cancellationToken) =>
+        (await PeopleAsync(householdId, cancellationToken)).FirstOrDefault(p => p.UserId == userId)?.Role;
+
     private async Task<List<PersonResponse>> PeopleAsync(Guid householdId, CancellationToken cancellationToken)
     {
         using var response = await SendAsync($"internal/households/{householdId}/members", cancellationToken);
