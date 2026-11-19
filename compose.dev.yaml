@@ -161,6 +161,7 @@ services:
       Households__MaxMembers: ${HOUSEHOLDS_MAX_MEMBERS:-100}
       Households__Internal__ClientSecret: ${JARVIS_CLIENT_SECRET:-development-only-jarvis-secret-0123456789}
       Households__Internal__Devices__ClientSecret: ${DEVICES_CLIENT_SECRET:-development-only-devices-secret-0123456789}
+      Households__Internal__HomeMix__ClientSecret: ${HOMEMIX_CLIENT_SECRET:-development-only-homemix-secret-0123456789}
     depends_on:
       postgres:
         condition: service_healthy
@@ -232,6 +233,8 @@ services:
       HomeMix__PackagesPath: /data/packages
       HomeMix__HouseholdsUrl: "http://households:8080"
       HomeMix__DevicesUrl: "http://devices:8080"
+      # Its service client: Devices (triggers set controls) and Households (who the admins are) list it as Internal:HomeMix.
+      HomeMix__ClientSecret: ${HOMEMIX_CLIENT_SECRET:-development-only-homemix-secret-0123456789}
       # The official add-ons the image built (appsettings.Development.json points at the Rider folder instead).
       HomeMix__OfficialPath: /app/official
     volumes:
@@ -273,6 +276,7 @@ services:
       Devices__AuthUrl: "http://auth:8080"
       Devices__ClientSecret: ${DEVICES_CLIENT_SECRET:-development-only-devices-secret-0123456789}
       Devices__Internal__ClientSecret: ${JARVIS_CLIENT_SECRET:-development-only-jarvis-secret-0123456789}
+      Devices__Internal__HomeMix__ClientSecret: ${HOMEMIX_CLIENT_SECRET:-development-only-homemix-secret-0123456789}
     depends_on:
       postgres:
         condition: service_healthy

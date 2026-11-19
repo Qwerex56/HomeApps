@@ -154,6 +154,7 @@ services:
       Households__MaxMembers: ${HOUSEHOLDS_MAX_MEMBERS:-100}
       Households__Internal__ClientSecret: ${JARVIS_CLIENT_SECRET:?set JARVIS_CLIENT_SECRET in .env}
       Households__Internal__Devices__ClientSecret: ${DEVICES_CLIENT_SECRET:?set DEVICES_CLIENT_SECRET in .env}
+      Households__Internal__HomeMix__ClientSecret: ${HOMEMIX_CLIENT_SECRET:?set HOMEMIX_CLIENT_SECRET in .env}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.households.rule=Host(`${HOMEAPPS_DOMAIN}`) && (PathPrefix(`/households`) || PathPrefix(`/invites`) || PathPrefix(`/admin/households`))"
@@ -190,6 +191,8 @@ services:
       # Add-ons may not take the ids of the instance's plugins (docs/homemix.md).
       HomeMix__Plugins: ${HOMEAPPS_PLUGINS:-}
       HomeMix__DevicesUrl: "http://devices:8080"
+      # Its service client: Devices (triggers set controls) and Households (who the admins are) list it as Internal:HomeMix.
+      HomeMix__ClientSecret: ${HOMEMIX_CLIENT_SECRET:?set HOMEMIX_CLIENT_SECRET in .env}
       HomeMix__UploadsEnabled: ${HOMEMIX_UPLOADS_ENABLED:-true}
       HomeMix__GitHubToken: ${HOMEMIX_GITHUB_TOKEN:-}
       HomeMix__StoreIndexUrl: ${HOMEMIX_STORE_INDEX-https://raw.githubusercontent.com/Qwerex56/HomeApps/master/homemix/store/addons.json}
@@ -217,6 +220,7 @@ services:
       Devices__ClientSecret: ${DEVICES_CLIENT_SECRET:?set DEVICES_CLIENT_SECRET in .env}
       # JARVIS reads the household's devices for its prompt on /internal (H-3c), with its own service secret.
       Devices__Internal__ClientSecret: ${JARVIS_CLIENT_SECRET:?set JARVIS_CLIENT_SECRET in .env}
+      Devices__Internal__HomeMix__ClientSecret: ${HOMEMIX_CLIENT_SECRET:?set HOMEMIX_CLIENT_SECRET in .env}
     labels:
       - "traefik.enable=true"
       # Not /mcp: the MCP server is reached only inside the Docker network (through the JARVIS gateway).

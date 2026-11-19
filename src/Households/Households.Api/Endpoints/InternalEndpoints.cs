@@ -38,9 +38,10 @@ internal sealed class InternalEndpoints : IEndpoint
             .Produces<AssistantView>();
     }
 
-    /// <summary>The JARVIS client (<c>Households:Internal</c>) or the Devices client (<c>Households:Internal:Devices</c>), each with its own secret.</summary>
+    /// <summary>The JARVIS client (<c>Households:Internal</c>), the Devices client (<c>Households:Internal:Devices</c>) or HomeMix's (<c>Households:Internal:HomeMix</c>, who the admins are for its triggers), each with its own secret.</summary>
     private static bool Authorized(HttpRequest request, IConfiguration configuration) =>
-        Matches(request, configuration.GetSection("Households:Internal")) || Matches(request, configuration.GetSection("Households:Internal:Devices"));
+        Matches(request, configuration.GetSection("Households:Internal")) || Matches(request, configuration.GetSection("Households:Internal:Devices"))
+        || Matches(request, configuration.GetSection("Households:Internal:HomeMix"));
 
     private static bool Matches(HttpRequest request, IConfigurationSection client)
     {
