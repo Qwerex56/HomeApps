@@ -45,6 +45,14 @@ Settings (`Jarvis`):
 - **Actions:** in a run the gateway logs every call. `readOnlyHint` = a read (not on the card); `destructiveHint: false`
   = done and shown; anything else (MCP's default counts as destructive) is not called but waits 10 minutes for
   `POST /jarvis/api/confirmations/{id}` `{approve}` or `AssistantConfirmed`, only from the person who asked.
+  The gateway keeps a tool's annotations 5 minutes per person, except a device's: those are read from Devices on every
+  call, so a device's "Pytaj" / "Nie pytaj" switch works at once (H-4c).
+- **Computer tools (H-4c):** Devices marks the tools of a person's own computer with `_meta` `"homeapps/purpose": "computer"`
+  (trusted only from the Devices source). A satellite run (`AssistantRun.Satellite`, also a turn lent to a person by PIN)
+  does not list them and a call fails with "This tool is on a person's own computer and cannot be used from a satellite."
+  without reaching the computer. An external MCP client (no run, so nobody can confirm) gets "This action needs the
+  person's confirmation. Use JARVIS in the HomeApps app." for a computer action that is not read-only and asks; read-only
+  ones and "Nie pytaj" ones run, household devices are unchanged. The full confirmation for external clients comes in H-7.
 - **Data:** runs and calls in `homeapps_jarvis`; content erased after 7 days, rows after 30; everything on `UserErased`.
 
 ### Devices in the prompt (H-3c)
