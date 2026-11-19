@@ -25,11 +25,11 @@ public sealed class DeviceManifestTests
     {
         var manifest = Parse("""
             [ { "capability": "weather" }, { "role": "weather_station" }, { "model": "qwerex56/stacja-v1" },
-              { "capability": "qwerex56/akwarium", "pick": "manual" } ]
+              { "capability": "qwerex56/akwarium", "pick": "manual" }, { "capability": "qwe-rex/akwarium" } ]
             """).Value;
 
         var devices = Assert.Single(manifest.Widgets).Devices;
-        Assert.Equal(4, devices.Count);
+        Assert.Equal(5, devices.Count);
         Assert.Equal("weather", devices[0].Capability);
         Assert.Equal("weather_station", devices[1].Role);
         Assert.Equal("qwerex56/stacja-v1", devices[2].Model);
@@ -50,6 +50,8 @@ public sealed class DeviceManifestTests
     [InlineData("""[ { "pick": "manual" } ]""")]
     [InlineData("""[ {} ]""")]
     [InlineData("""[ { "capability": "Weather" } ]""")]
+    [InlineData("""[ { "capability": "qwe-rex/Akwarium" } ]""")]
+    [InlineData("""[ { "capability": "-qwe/akwarium" } ]""")]
     [InlineData("""[ { "capability": "weather", "pick": "auto" } ]""")]
     [InlineData("""[ { "role": 5 } ]""")]
     [InlineData("""[ { "model": "has space" } ]""")]
