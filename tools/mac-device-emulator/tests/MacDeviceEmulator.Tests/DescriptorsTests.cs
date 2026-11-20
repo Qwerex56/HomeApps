@@ -6,26 +6,67 @@ namespace MacDeviceEmulator.Tests;
 
 public sealed class DescriptorsTests
 {
-    [Fact]
-    public void All_descriptors_are_valid_json_and_conform_to_homeapps_device_1()
+    [Theory]
+    [InlineData("satellite")]
+    [InlineData("powered")]
+    [InlineData("battery")]
+    [InlineData("computer")]
+    public void All_descriptors_have_valid_schema_properties_and_model_syntax(string kind)
     {
-        var descriptors = new[]
+        var desc = kind switch
         {
-            Descriptors.SatelliteDescriptor,
-            Descriptors.PoweredDescriptor,
-            Descriptors.BatteryDescriptor,
-            Descriptors.ComputerDescriptor
+            "satellite" => Descriptors.SatelliteDescriptor,
+            "powered" => Descriptors.PoweredDescriptor,
+            "battery" => Descriptors.BatteryDescriptor,
+            "computer" => Descriptors.ComputerDescriptor,
+            _ => throw new ArgumentException()
         };
 
-        foreach (var desc in descriptors)
-        {
-            using var doc = JsonDocument.Parse(desc);
-            var root = doc.RootElement;
+        using var doc = JsonDocument.Parse(desc);
+        var root = doc.RootElement;
 
-            Assert.Equal("homeapps.device/1", root.GetProperty("format").GetString());
-            Assert.False(string.IsNullOrWhiteSpace(root.GetProperty("model").GetString()));
-            Assert.False(string.IsNullOrWhiteSpace(root.GetProperty("version").GetString()));
-            Assert.False(string.IsNullOrWhiteSpace(root.GetProperty("purpose").GetString()));
+        Assert.Equal("homeapps.device/1", root.GetProperty("format").GetString());
+
+        var model = root.GetProperty("model").GetString();
+        Assert.NotNull(model);
+        Assert.Matches(@"^[a-z0-9][a-z0-9._-]*(/[a-z0-9][a-z0-9._-]*)?$", model);
+
+        var version = root.GetProperty("version").GetString();
+        Assert.NotNull(version);
+        Assert.Matches(@"^\d{1,4}(\.\d{1,4}){0,2}([-+][0-9A-Za-z.-]{1,30})?$", version);
+
+        var purpose = root.GetProperty("purpose").GetString();
+        Assert.Contains(purpose, new[] { "assistant", "smart_home", "computer" });
+
+        var jarvis = root.GetProperty("jarvis").GetString();
+        Assert.NotNull(jarvis);
+        Assert.True(jarvis.Length <= 500);
+
+        if (root.TryGetProperty("heartbeat", out var hb))
+        {
+            Assert.InRange(hb.GetInt32(), 5, 86400);
+        }
+
+        if (root.TryGetProperty("controls", out var controls))
+        {
+            foreach (var c in controls.EnumerateArray())
+            {
+                var name = c.GetProperty("name").GetString();
+                Assert.NotNull(name);
+                Assert.Matches(@"^[a-z][a-z0-9_]{0,29}(\.[a-z][a-z0-9_]{0,29})?$", name);
+                Assert.True(c.GetProperty("value").TryGetProperty("type", out _));
+            }
+        }
+
+        if (root.TryGetProperty("sensors", out var sensors))
+        {
+            foreach (var s in sensors.EnumerateArray())
+            {
+                var name = s.GetProperty("name").GetString();
+                Assert.NotNull(name);
+                Assert.Matches(@"^[a-z][a-z0-9_]{0,29}(\.[a-z][a-z0-9_]{0,29})?$", name);
+                Assert.True(s.GetProperty("value").TryGetProperty("type", out _));
+            }
         }
     }
 
