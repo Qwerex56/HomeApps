@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MacDeviceEmulator/MacDeviceEmulator.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MacDeviceEmulator.Tests/MacDeviceEmulator.Tests.csproj" />
+  </Folder>
+</Solution>
