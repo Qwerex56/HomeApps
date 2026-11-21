@@ -30,6 +30,7 @@ most important first. Don't restyle working code and don't ask for abstractions 
 - [ ] No raw SQL with string concatenation; `ILIKE` patterns escape `%`/`_`.
 - [ ] Cross-service data only through `HomeApps.Contracts` messages or a port; no reading another service's database.
 - [ ] JARVIS/MCP tools: only what the caller could do through the API; no account/household admin through JARVIS.
+- [ ] First-party vs connected-app JWTs: distinguished by `aud == JwtOptions.Audience`, never by absence of `client_id` (`TokenIssuer.IssueAccessToken` always emits `client_id` on first-party tokens); covered with `TestJwt.CreateTokenWithClient`.
 
 ## 2. .NET correctness and data
 

@@ -187,6 +187,7 @@ public Task<Device?> FindInHouseholdAsync(Guid householdId, string name, Cancell
 - **Household role** (Guest < Member < Admin < Owner) lives in Households; other services ask for it through a port
   (`IHouseholdRoles`). Outside a household → 404; inside without the role → 403.
 - Deleting people = disable/soft delete; hard erase only via the `UserErased` flow.
+- **First-party vs connected-app JWTs**: `TokenIssuer.IssueAccessToken` always emits `client_id` on first-party tokens; distinguish first-party vs connected-app tokens by `aud == JwtOptions.Audience` (never by absence of `client_id`), and cover both with `TestJwt.CreateTokenWithClient`.
 
 ## Before you finish
 

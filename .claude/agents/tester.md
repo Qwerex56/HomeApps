@@ -31,6 +31,7 @@ See what was built with `git diff --stat <base>...HEAD` and read only the files 
 
 ## Rules
 
+- Consult `.agents/project-map.md` first and query `@mapper` (when active in a swarm) for `path:line` pointers before scanning files.
 - You may only add or change files under `tests/` and `src/Web/**/__tests__/` (plus test helpers there).
   **Never change production code** to make a test pass, and never change `specs/`. A failing test that shows a
   real bug stays failing: report it, the developer fixes it.

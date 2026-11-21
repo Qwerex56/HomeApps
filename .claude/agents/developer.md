@@ -31,7 +31,7 @@ existing code. If the skills aren't in your context, read `.claude/skills/dotnet
 - Backend first (domain → application → infrastructure + migration → API), then front end (api.ts → pages/components
   → pl.json). New migration via `dotnet tool restore && dotnet ef migrations add <Name> -p … -s … -o Persistence/Migrations`.
 - Write the obvious unit tests next to what you build (domain rules); the tester adds the rest.
-- Keep tokens low: grep, read line ranges, don't re-read files you just edited, pipe build output through `tail`.
+- Keep tokens low: read `.agents/project-map.md` first and query `@mapper` (when active in a swarm) for `path:line` pointers before grepping/reading multiple files; read line ranges, don't re-read files you just edited, pipe build output through `tail`.
 - Commit in small topical steps as you go (`git add <paths>` + `git commit`), English messages in the style of
   `git log` (`Devices: household satellites with pairing codes`), with the session's commit footer if one is configured.
   Never commit `.claude/runs/`, `.env`, `bin/`, `obj/`, `node_modules/`, `.idea/`.

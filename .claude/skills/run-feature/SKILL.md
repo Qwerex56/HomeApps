@@ -26,6 +26,7 @@ Working folder for this run: `.claude/runs/<name>/` (git-ignored).
    the last run: `git log --oneline -15 origin/<base>`; open diffs only for files this feature will touch, and
    mention anything relevant (kit, contracts, compose, docs) to the owner in one sentence.
 4. Note the start time (`date +%Y-%m-%dT%H:%M`) for the usage report.
+5. Read `.agents/project-map.md` (if missing or stale, run `mapper` Mode 1 first) and pass `.agents/project-map.md` to all subagents.
 
 ## 2. Branch
 
@@ -49,8 +50,7 @@ the limits below stay exactly as written. Local mode changes only this:
 - Time is not a limit: the local model is slow, so never stop a run or ask the owner because a step takes long.
 - Say the mode in the first status line and in the PR's Review section ("after <n> round(s), local mode").
 
-Start each subagent with the Agent tool and its agent type; give it **paths, not file contents**, so it reads only
-what it needs. Each subagent waits for the previous one.
+Start each subagent with the Agent tool and its agent type; give it **paths, not file contents** (including `.agents/project-map.md` and `@mapper` when running in a swarm so agents query `path:line` pointers instead of scanning the repo). Each subagent waits for the previous one.
 
 **Step A, developer** (`developer`, Sonnet):
 > Implement `specs/<name>.md` following `specs/<name>-adr.md`. Base branch `<base>`, you are on `feat/<name>`.
@@ -72,13 +72,18 @@ because Docker is off: ask the owner to start Docker once; if they can't, carry 
 > previous head `<sha>`.]
 
 Save its output to `.claude/runs/<name>/review-feedback.md` (overwrite; keep the round number at the top).
-- `APPROVED` → Step D.
+- `APPROVED` → Step E (Devil's Advocate Gate).
 - `CHANGES_REQUESTED` → Step A with the feedback, then B, then C again.
 - **At most 3 review rounds** (5 in local mode). After the last allowed `CHANGES_REQUESTED`, stop: leave the branch as it is (no push, no
   PR), and tell the owner which findings are still open and what you recommend (accept as MINOR, change the spec,
   or another round).
 
-**Step D, docs-writer** (`docs-writer`, Haiku, effort low), once, after `APPROVED`:
+**Step E, Devil's Advocate Gate** (`devils-advocate`, Opus high), once after `reviewer` `APPROVED`:
+> Verify `<base>...HEAD` against `specs/<name>.md`, `specs/<name>-adr.md`, `.claude/runs/<name>/test-report.md`, and `.claude/runs/<name>/review-feedback.md`.
+- `CHANGES_REQUESTED` → send exact blockers to `developer` → quick `tester` re-verify → re-check with `devils-advocate` (use `gemini-4-hydrogen-medium` on re-checks in `agy` swarm to preserve Opus quota).
+- `APPROVED` → Step D.
+
+**Step D, docs-writer** (`docs-writer`, Haiku, effort low), once, after Devil's Advocate `APPROVED`:
 > Bring `docs/` and `CHANGELOG.md` in line with `feat/<name>` against base `<base>` for `specs/<name>.md` and
 > `specs/<name>-adr.md`.
 
@@ -101,7 +106,7 @@ did.
    makes the story clearer (`git reset --soft` + new commits is fine before the first push). Never commit
    `.claude/runs/`.
 2. `git push -u origin feat/<name>`. **Never merge into the base branch, never push to `master`, never force-push.**
-3. Usage report: `python3 .claude/scripts/token-usage.py --since <start time> --markdown > .claude/runs/<name>/usage.md`.
+3. Usage report (Claude Code only; skip/optional when running in `agy` swarm): `python3 .claude/scripts/token-usage.py --since <start time> --markdown > .claude/runs/<name>/usage.md`.
 4. Pull request with `gh pr create --base <base> --head feat/<name> --title "<Feature name>" --body-file .claude/runs/<name>/pr.md`,
    body in English:
 
@@ -141,6 +146,7 @@ Verdict: APPROVED after <n> round(s) (<mode> mode). Remaining minor points: <lis
 
 5. Without `gh` (or not signed in: `gh auth status`): print the PR body, the push command and the compare URL
    `https://github.com/Qwerex56/HomeApps/compare/<base>...feat/<name>?expand=1` for the owner.
+6. **Lean Retro (`/lean-retro`)**: Run `lean-analyst` after PR creation. If `ACTION_NEEDED: YES`, run `lean-integrator`, append `## Lean` summary (`ACTION_NEEDED` + concrete changes) to `.claude/runs/<name>/pr.md`, and update the PR via `gh pr edit <n> --body-file .claude/runs/<name>/pr.md`.
 
 ## 5. Final message to the owner (Polish, under 15 lines)
 
