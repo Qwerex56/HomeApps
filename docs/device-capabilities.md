@@ -30,6 +30,15 @@ declare for the capability to count; otherwise it is ignored with a warning.
 The declared value type must match (`integer` is accepted where the catalog says `number`). With several of one kind
 the device gives an instance id: `{ "type": "switch", "id": "lampka" }` and its field is then `lampka.on`.
 
+### Computer tools and Desktop contract (H-7)
+
+Devices with `purpose: computer` (a person's own computer running HomeApps.Desktop or the voice bridge) connect over `/devices/link` and expose actions as MCP tools:
+- **Built-in actions:** may declare `readOnly` (boolean) and `confirm` (boolean, whether confirmation is requested).
+- **Local MCP servers proxy:** tools forwarded from local MCP servers running on the computer always enforce `readOnly = false` and `confirm = true`.
+- **Action aliases:** names exposed to HomeApps must be ≤ 20 characters matching `^[a-z][a-z0-9_]{0,19}$`.
+- Built-in capabilities on computers typically include `audio` (controls `volume`, `muted`) and actions like `say` or app control.
+
+
 ## Roles
 
 `weather_station`, `seat_heater`, `tracker`, `doorbell`, `light`, `blind`, `thermostat`, `satellite`. A role is meaning

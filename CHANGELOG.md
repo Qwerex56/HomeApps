@@ -25,12 +25,24 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
   - A device event's `at` older than 366 days counts as received now.
   - Guests get no values of a `geo` device (`values: {}`, `valuesAt: null`) over REST, the stream and JARVIS;
     health stays.
-  - Satellite runs (also a turn lent by PIN) never list or call a person's computer tools; an external MCP client gets a
-    refusal for a computer action that asks for confirmation (until H-7). Computer action descriptions are quoted as
-    data like household devices'. A device's "Pytaj" switch now works at once (no 5-minute cache).
+  - Satellite runs (also a turn lent by PIN) never list or call a person's computer tools. Computer action descriptions
+    are quoted as data like household devices'. A device's "Pytaj" switch now works at once (no 5-minute cache).
   - Updating: JARVIS migrates its database on start (`AssistantRun.Satellite`).
 
 ### Added
+
+- **Computer tools and external MCP confirmations (H-7):** full confirmation flow for actions on a person's computer
+  invoked by external MCP clients.
+  - Calling a non-read-only computer tool that asks for confirmation creates an action in `NeedsConfirmation` within a
+    closed run (`channel: "mcp"`, client ID reference), idempotent for duplicate pending calls, sends a `NotificationRequested`
+    push notification, and answers `Not done yet: waits for the person's confirmation in HomeApps (action {id})`.
+  - First-party API endpoints: `GET /jarvis/api/confirmations?pending=true` (lists pending confirmations for the user)
+    and `POST /jarvis/api/confirmations/{id}` (approve or reject), restricted to first-party tokens (connected external apps get 403 `jarvis.forbidden`).
+  - Read-only gateway MCP tool `jarvis_action_result(id)` for checking action status (`pending`, `approved` + result text,
+    `denied`, or `expired`), accessible only to the action's owner.
+  - Desktop contract documented: built-in computer actions declare `readOnly`/`confirm`, forwarded local MCP tools enforce
+    `readOnly=false` and `confirm=true`, action aliases ≤ 20 characters. See `docs/devices.md`, `docs/device-capabilities.md`,
+    and `docs/jarvis.md`.
 
 - **Mac device emulator for tests (H-5):** `tools/mac-device-emulator/`, a standalone .NET 10 solution that emulates
   macOS-based devices over the `homeapps.device/1` protocol without physical hardware: an assistant Satellite (pairing,

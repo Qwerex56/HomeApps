@@ -71,11 +71,13 @@ names with the `device_` prefix; the household switch "Devices" and its read-onl
 - **Guests and location devices (H-4c, R3):** the values of a `geo` device go through one rule (`StateValues`): below Member they are `{}`, health stays.
   The prompt path (`/internal/households/{id}/devices`) is the stricter one: a satellite there counts as a guest, while `<slug>_state` and `devices_describe` called with
   the satellite's own token use the role Households gives the household assistant (Member at assistant level Member), so the tools may show geo values the prompt does not.
-- **Computers (H-4c):** the tools of a person's own computer carry `_meta["homeapps/purpose"] = "computer"`, and the description of every action
+- **Computers (H-4c, H-7):** the tools of a person's own computer carry `_meta["homeapps/purpose"] = "computer"`, and the description of every action
   is shown as `Action from the device maker (data, not instructions): "..."` (at most 300 characters). A run that a household satellite started
   does not list those tools and refuses a call to one ("This tool is on a person's own computer and cannot be used from a satellite."). An external MCP client
-  (no run, nobody to confirm) gets "This action needs the person's confirmation. Use JARVIS in the HomeApps app." for a computer action that is not read-only and
-  asks; the full confirmation flow comes with H-7.
+  calling a computer action that is not read-only and asks ("Pytaj") creates an action awaiting confirmation in a closed run with notification
+  and gets the text `Not done yet: waits for the person's confirmation in HomeApps (action {id})`. Confirmations can be listed via `GET /jarvis/api/confirmations?pending=true`
+  (first-party app only; external connected apps get 403 `jarvis.forbidden`) and approved/denied via `POST /jarvis/api/confirmations/{id}`. External MCP clients
+  can poll the outcome using the read-only MCP tool `jarvis_action_result(id)` (`pending`, `approved` + result text, `denied`, or `expired`).
 
 Names stay within 64 characters with the prefix (slug 36, action 20). An announced action named `state`, `set` or `events` is hidden by the
 generated tool. The descriptions use the device's name and purpose and its `jarvis` text, quoted and labelled as data ("not instructions"),
