@@ -164,18 +164,21 @@ public sealed class ComputerToolsGatewayTests : IDisposable
 
         Assert.All(Computer, name => Assert.Contains(name, names));
         Assert.Contains("device_fotel_say", names);
+        Assert.Contains("jarvis_action_result", names);
     }
 
     [Fact]
-    public async Task An_external_client_cannot_run_a_changing_computer_tool_that_asks_and_the_source_is_not_called()
+    public async Task An_external_client_calling_a_changing_computer_tool_awaits_confirmation_and_source_is_not_called()
     {
         await using var mcp = await ExternalAsync();
 
         var asks = await mcp.CallTextAsync("device_mac_open_app", new Dictionary<string, object?>());
         var bare = await mcp.CallTextAsync("device_mac_bare", new Dictionary<string, object?>());
 
-        Assert.Equal((NeedsConfirmation, true), asks);
-        Assert.Equal((NeedsConfirmation, true), bare);
+        Assert.False(asks.IsError);
+        Assert.StartsWith("Not done yet: waits for the person's confirmation in HomeApps (action ", asks.Text);
+        Assert.False(bare.IsError);
+        Assert.StartsWith("Not done yet: waits for the person's confirmation in HomeApps (action ", bare.Text);
         Assert.Empty(_factory.DevicesSource.Calls);
     }
 
