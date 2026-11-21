@@ -136,7 +136,10 @@
       "not_guest": "Czas dostępu dotyczy tylko gości.",
       "access_until_invalid": "Data końca dostępu musi być w przyszłości.",
       "no_owner": "Dom nie ma właściciela.",
-      "not_archived": "Ten dom nie jest zarchiwizowany."
+      "not_archived": "Ten dom nie jest zarchiwizowany.",
+      "assistant_name_invalid": "Nazwa asystenta musi mieć od 1 do 32 znaków.",
+      "assistant_retention_invalid": "Czas przechowywania zdarzeń jest nieprawidłowy (1–365 dni, z położeniem do 90 dni i nie dłużej niż pozostałe).",
+      "assistant_settings_invalid": "Ustawienia uprawnień albo źródeł asystenta są nieprawidłowe."
     },
     "invite": {
       "not_found": "Nie ma takiego zaproszenia.",
@@ -189,7 +192,11 @@
       "not_author": "Ten wpis zmienia tylko osoba, która go zgłosiła, albo właściciel serwera.",
       "listing_official": "Oficjalne dodatki zmienia się w addons.json.",
       "listing_not_found": "Nie ma takiego dodatku w sklepie.",
-      "id_in_use": "W tym miejscu stoi już inny dodatek o tym samym identyfikatorze."
+      "id_in_use": "W tym miejscu stoi już inny dodatek o tym samym identyfikatorze.",
+      "device_not_found": "W tym domu nie ma takiego urządzenia.",
+      "device_not_a_match": "To urządzenie nie pasuje do wymagań tego widżetu.",
+      "devices_household_only": "Urządzenia należą do domu: zainstaluj ten dodatek w domu, żeby z nich korzystać.",
+      "widget_without_devices": "Ten widżet nie korzysta z urządzeń."
     },
     "jarvis": {
       "conversation_not_found": "Nie ma takiej rozmowy.",
@@ -199,10 +206,22 @@
     },
     "devices": {
       "name_taken": "W tym domu jest już urządzenie o tej nazwie.",
-      "invalid_name": "Nazwa urządzenia jest nieprawidłowa.",
-      "not_found": "Nie ma takiego urządzenia.",
+      "invalid_name": "Nazwa urządzenia jest nieprawidłowa (1–60 znaków).",
+      "invalid_notes": "Uwagi dla JARVIS-a mogą mieć najwyżej 500 znaków.",
+      "not_found": "Urządzenie zostało usunięte.",
       "forbidden": "Tylko administrator domu może to zmienić.",
+      "read_only": "Gość może tylko przeglądać urządzenia domu.",
+      "members_only": "Historia zdarzeń urządzenia jest dostępna tylko dla domowników.",
+      "members_unavailable": "Nie udało się sprawdzić uprawnień w domu. Spróbuj za chwilę.",
+      "offline": "Urządzenie nie jest teraz połączone.",
+      "no_answer": "Urządzenie nie odpowiedziało na czas.",
+      "action_failed": "Urządzenie nie wykonało polecenia.",
+      "control_not_found": "Urządzenie nie ma takiej kontrolki.",
+      "invalid_frame": "Wartość nie pasuje do opisu urządzenia.",
+      "disabled": "To urządzenie jest wyłączone. Przywróć je, żeby z niego korzystać.",
+      "jarvis_not_allowed": "Administrator domu nie pozwolił JARVIS-owi sterować tym urządzeniem.",
       "pairing_expired": "Kod parowania wygasł albo został już użyty.",
+      "not_paired": "To urządzenie nie zostało jeszcze sparowane.",
       "action_not_found": "To urządzenie nie ma już tej akcji."
     },
     "pin": {
@@ -580,7 +599,7 @@
       "members": "Domownicy",
       "invites": "Zaproszenia",
       "settings": "Ustawienia",
-      "devices": "Urządzenia"
+      "devices": "JARVIS"
     },
     "join": {
       "title": "Dołącz do domu",
@@ -780,8 +799,8 @@
       "storage.user": "zapisywać prywatne dane każdej osoby",
       "household.members": "widzieć imiona i zdjęcia domowników",
       "notify": "pokazywać powiadomienia w aplikacji",
-      "devices": "widzieć urządzenia domu i ich stan",
-      "devices.control": "sterować urządzeniami domu (Twoimi uprawnieniami)"
+      "devices": "widzieć pasujące urządzenia tego domu i ich stan",
+      "devices.control": "sterować pasującymi urządzeniami tego domu (w granicach Twoich uprawnień)"
     },
     "store": {
       "title": "Sklep",
@@ -879,6 +898,11 @@
       "default": "Wszystkie, jak w dodatku",
       "off": "Wyłączony",
       "sizeLabel": "Rozmiar",
+      "deviceLabel": "Urządzenie dla widżetu: {widget}",
+      "deviceAuto": "Automatycznie (najlepsze dopasowanie)",
+      "devicePick": "Wybierz urządzenie…",
+      "needsPick": "Ten widżet wymaga ręcznego wyboru urządzenia przez administratora domu.",
+      "noMatches": "Brak pasujących urządzeń w tym domu.",
       "size": {
         "Small": "Mały",
         "Medium": "Średni",
@@ -913,40 +937,118 @@
       "NeedsConfirmation": "Czeka na potwierdzenie",
       "Denied": "Anulowane",
       "Expired": "Wygasło"
+    },
+    "assistant": {
+      "title": "JARVIS domu",
+      "subtitle": "Wspólny asystent domu i sufit uprawnień dla rozmów w tym domu.",
+      "disabledBanner": "JARVIS domu jest wyłączony. Satelity milczą, a rozmowy nie korzystają z narzędzi tego domu.",
+      "enabled": "Włączony w tym domu",
+      "name": "Nazwa asystenta",
+      "levelLabel": "Poziom dostępu",
+      "level": {
+        "ReadOnly": "Tylko odczyt (jak gość)",
+        "Member": "Jak domownik"
+      },
+      "sourcesLabel": "Dozwolone źródła narzędzi",
+      "sources": {
+        "plugins": "Pluginy serwera",
+        "homemix": "Dodatki HomeMix",
+        "devices": "Urządzenia domu"
+      },
+      "eventDays": "Przechowywanie zdarzeń (dni)",
+      "locationEventDays": "Zdarzenia z położeniem (dni)",
+      "saved": "Ustawienia JARVIS-a zapisane.",
+      "confirmOffTitle": "Wyłączyć JARVIS-a domu?",
+      "confirmOff": "Satelity w tym domu przestaną odpowiadać (także po podaniu PIN-u), a JARVIS nie użyje narzędzi tego domu."
     }
   },
   "devices": {
     "mine": "Moje komputery",
-    "mineHint": "Most głosowy i aplikacja JARVIS-a dopisują się tu same po połączeniu. Satelity domu są w zakładce Urządzenia danego domu.",
+    "mineHint": "Most głosowy i aplikacja JARVIS-a dopisują się tu same po połączeniu. Urządzenia domu są w zakładce JARVIS danego domu.",
     "noComputers": "Żaden komputer jeszcze się nie połączył.",
+    "myComputersLink": "Moje komputery",
     "household": "Urządzenia domu",
-    "householdHint": "Satelity JARVIS-a w tym domu. Działają jak domownik (Member); rzeczy osobiste po przedstawieniu się z PIN-em.",
-    "noSatellites": "W tym domu nie ma jeszcze satelitów.",
-    "add": "Dodaj satelitę",
+    "householdHint": "Satelity JARVIS-a i urządzenia smart home w tym domu.",
+    "noSatellites": "W tym domu nie ma jeszcze urządzeń.",
+    "emptyCta": "Dodaj pierwsze urządzenie, aby sparować satelitę albo urządzenie smart home.",
+    "groups": {
+      "assistant": "Asystenci głosowi (JARVIS)",
+      "smartHome": "Urządzenia smart home"
+    },
+    "add": "Dodaj urządzenie",
     "name": "Nazwa",
-    "namePlaceholder": "np. salon",
+    "namePlaceholder": "np. Fotel taty w salonie",
     "addButton": "Dodaj i pokaż kod",
     "lastSeen": "Ostatnio: {when}",
+    "lastReading": "Ostatni odczyt: {when}",
+    "liveLost": "Podgląd na żywo przerwany. Odświeżamy stan co 30 s.",
+    "readOnlyHint": "Tylko podgląd — ustawienia zmienia administrator domu.",
+    "locked": {
+      "guest": "Gość może tylko przeglądać stan urządzeń.",
+      "offline": "Urządzenie jest rozłączone — sterowanie niedostępne.",
+      "silent": "Urządzenie zaginęło — sterowanie niedostępne.",
+      "removed": "Urządzenie jest wyłączone — sterowanie niedostępne.",
+      "unpaired": "Urządzenie czeka na sparowanie kodem."
+    },
+    "sleepyLocked": "Urządzenie na baterii, sterowanie niedostępne.",
     "state": {
       "online": "Połączone",
       "offline": "Rozłączone",
+      "silent": "Urządzenie zaginęło",
+      "lowBattery": "Niska bateria ({battery}%)",
+      "lowBatteryShort": "Niska bateria",
+      "pairing": "Czeka na kod",
       "unpaired": "Czeka na kod",
       "removed": "Wyłączone"
     },
+    "health": {
+      "battery": "Bateria: {battery}%",
+      "rssi": "Sygnał: {rssi} dBm",
+      "firmware": "Firmware: {firmware}"
+    },
+    "controls": {
+      "title": "Sterowanie",
+      "run": "Uruchom",
+      "pending": "Wysyłanie…"
+    },
+    "sensors": {
+      "title": "Czujniki",
+      "noValue": "—"
+    },
+    "events": {
+      "title": "Zdarzenia",
+      "show": "Pokaż zdarzenia",
+      "hide": "Ukryj zdarzenia",
+      "empty": "Brak zapisanych zdarzeń.",
+      "older": "Starsze",
+      "location": "położenie"
+    },
+    "jarvis": {
+      "title": "Ustawienia dla JARVIS-a",
+      "mayControl": "JARVIS może sterować",
+      "asks": "Pytaj przed zmianą",
+      "notes": "Uwagi dla JARVIS-a",
+      "notesPlaceholder": "np. to fotel taty, pytaj go przed włączeniem grzania",
+      "makerText": "Wskazówki autora urządzenia",
+      "saved": "Zapisano ustawienia urządzenia."
+    },
+    "warnings": "Ostrzeżenia opisu",
+    "pairedToast": "Urządzenie „{name}” zostało sparowane.",
+    "removedToast": "Urządzenie zostało usunięte.",
     "readOnly": "tylko odczyt",
     "dontAsk": "Nie pytaj",
     "remove": "Wyłącz",
     "restore": "Przywróć",
     "removeTitle": "Wyłączyć „{name}”?",
     "removeComputer": "Komputer zostanie rozłączony i nie połączy się, dopóki go nie przywrócisz.",
-    "removeSatellite": "Satelita zostanie rozłączona i wypisana z domu. JARVIS zapomni jej rozmowę. Żeby ją przywrócić, potrzebny będzie nowy kod.",
+    "removeSatellite": "Urządzenie zostanie rozłączone i rozparowane. Żeby połączyło się ponownie, potrzebny będzie nowy kod.",
     "newCode": "Nowy kod",
     "showCode": "Pokaż kod",
     "newCodeTitle": "Nowy kod parowania?",
-    "newCodeText": "„{name}” zostanie rozłączona do czasu sparowania nowym kodem.",
+    "newCodeText": "„{name}” zostanie rozłączone do czasu sparowania nowym kodem.",
     "codeTitle": "Kod parowania: {name}",
     "codeExpires": "Ważny jednorazowo, do {when}.",
-    "codeHow": "Wpisz go na satelicie. Dla mostu na Macu:",
+    "codeHow": "Wpisz go w urządzeniu podczas konfiguracji. Dla mostu albo emulatora na Macu:",
     "done": "Gotowe"
   }
 }
