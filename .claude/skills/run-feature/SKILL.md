@@ -26,7 +26,10 @@ Working folder for this run: `.claude/runs/<name>/` (git-ignored).
    the last run: `git log --oneline -15 origin/<base>`; open diffs only for files this feature will touch, and
    mention anything relevant (kit, contracts, compose, docs) to the owner in one sentence.
 4. Note the start time (`date +%Y-%m-%dT%H:%M`) for the usage report.
-5. Read `.agents/project-map.md` (if missing or stale, run `mapper` Mode 1 first) and pass `.agents/project-map.md` to all subagents.
+5. **Sequential Mapper -> Developer startup**:
+   - In Antigravity (`agy`) swarm or Claude Code: spawn `@mapper` in Mode 1 and **wait for `@mapper [mapper ready]`** before spawning `@developer`, ensuring `.agents/project-map.md` reflects current `HEAD`.
+   - **Swarm-only rule in `agy`**: Forbid mixing `invoke_subagent` with `swarm` during `/run-feature`. Use `swarm{action:"add"}` exclusively from the start.
+   - Pass `.agents/project-map.md` path to all subsequent agents.
 
 ## 2. Branch
 

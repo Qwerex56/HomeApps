@@ -36,6 +36,9 @@ See what was built with `git diff --stat <base>...HEAD` and read only the files 
   **Never change production code** to make a test pass, and never change `specs/`. A failing test that shows a
   real bug stays failing: report it, the developer fixes it.
 - Never skip, disable, delete or weaken a test. No `Thread.Sleep` or real time; use `TimeProvider` fakes.
+- **macOS Sandbox & Async Task Discipline (`agy`)**:
+  - Run `dotnet build`, `dotnet test`, and `git commit` directly with `BypassSandbox: true` (avoids `vstest` sandbox hangs, socket/network blocks, and `.git/index.lock` failures).
+  - Never poll `manage_task{Action:"status"}` in a loop — end your turn and rely on reactive wakeup.
 - One fake/fixture/builder per file. Commit your tests (`Tests: <feature> acceptance criteria`) with the session's
   commit footer if one is configured.
 

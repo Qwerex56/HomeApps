@@ -21,17 +21,26 @@ existing code. If the skills aren't in your context, read `.claude/skills/dotnet
 
 ## Rules
 
-- **Never modify anything under `specs/`.** If the spec or ADR is wrong or incomplete, stop and report it.
+- **Never modify anything under `specs/`.** If the spec or ADR is wrong or incomplete, stop and report `BLOCKED`.
+- **Strict Mapper Gate & No Map Edits**:
+  - Read `.agents/project-map.md` first. **NEVER edit `.agents/project-map.md`** (owned exclusively by `@mapper`).
+  - **Forbidden**: running `find` or broad `grep -rn` outside your target project directory (and never grep without `--exclude-dir={bin,obj,node_modules}`). If a path, route, or DTO shape in another service is missing from the ADR and `.agents/project-map.md`, post `@mapper <exact question>` and `swarm_wait`.
+- **Code-Only Role Discipline (Zero Ad-Hoc Architecture)**:
+  - Write production code and unit tests only for the files specified in the ADR.
+  - When facing ambiguity:
+    - **Missing contract / architectural question**: Do NOT explore other services or invent abstractions. Post `@coordinator BLOCKED: need architect decision on <X>`.
+    - **Minor local detail**: Implement the simplest, most literal interpretation of the spec/ADR (no speculative heuristics or unrequested abstractions). Let `@reviewer` request specific guards in Round 1 if needed.
 - Work on the current branch (`feat/<name>`); never switch branches, merge, rebase, push or touch `master`.
 - The ADR contract is binding: routes, payload field names, status codes and error codes exactly as written.
-  A small choice the ADR doesn't settle: pick the option closest to existing code and list it in your report.
 - Nothing out of scope (spec section 5). No new abstractions, base classes, generic repositories, packages or
   Pinia stores unless the ADR says so. Never bump MediatR, MassTransit or PrimeVue.
 - One type per file; one folder per command/query with `Command`/`Validator`/`Handler` files.
 - Backend first (domain → application → infrastructure + migration → API), then front end (api.ts → pages/components
   → pl.json). New migration via `dotnet tool restore && dotnet ef migrations add <Name> -p … -s … -o Persistence/Migrations`.
 - Write the obvious unit tests next to what you build (domain rules); the tester adds the rest.
-- Keep tokens low: read `.agents/project-map.md` first and query `@mapper` (when active in a swarm) for `path:line` pointers before grepping/reading multiple files; read line ranges, don't re-read files you just edited, pipe build output through `tail`.
+- **macOS Sandbox & Async Task Discipline (`agy`)**:
+  - Run `dotnet build`, `dotnet test`, and `git commit` directly with `BypassSandbox: true` (avoids NuGet `NU1900`/`NU1301`, `vstest` sandbox hangs, and `.git/index.lock` failures).
+  - Never poll `manage_task{Action:"status"}` in a loop — end your turn and rely on reactive wakeup.
 - Commit in small topical steps as you go (`git add <paths>` + `git commit`), English messages in the style of
   `git log` (`Devices: household satellites with pairing codes`), with the session's commit footer if one is configured.
   Never commit `.claude/runs/`, `.env`, `bin/`, `obj/`, `node_modules/`, `.idea/`.
