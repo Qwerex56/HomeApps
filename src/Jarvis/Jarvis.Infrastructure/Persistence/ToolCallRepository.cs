@@ -19,7 +19,7 @@ internal sealed class ToolCallRepository(JarvisDbContext db) : IToolCallReposito
 
     public async Task<IReadOnlyList<ToolCall>> ListPendingForUserAsync(Guid userId, CancellationToken cancellationToken) =>
         await db.ToolCalls
-            .Where(c => c.UserId == userId && c.Status == ToolCallStatus.NeedsConfirmation)
+            .Where(c => c.UserId == userId && c.Status == ToolCallStatus.NeedsConfirmation && c.ConfirmBy > DateTimeOffset.UtcNow)
             .OrderByDescending(c => c.CalledAt)
             .ToListAsync(cancellationToken);
 

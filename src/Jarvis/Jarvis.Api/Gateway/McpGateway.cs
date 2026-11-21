@@ -404,8 +404,8 @@ internal sealed partial class McpGateway(
             ? toolFullName["device_".Length..]
             : toolFullName;
 
-        var parts = name.Split('_', StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length > 0 ? parts[0] : null;
+        var lastUnderscore = name.LastIndexOf('_');
+        return lastUnderscore > 0 ? name[..lastUnderscore] : name;
     }
 
     private static bool Unreachable(Exception exception) =>

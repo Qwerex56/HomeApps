@@ -21,16 +21,22 @@ internal sealed class AwaitExternalConfirmationHandler(
     {
         var now = time.GetUtcNow();
 
-        // Idempotency: if an identical action (same user, tool, arguments) is already pending, return it.
+        // Idempotency: if an identical action (same user, tool, arguments) is already pending for this client/channel, return it.
         var pending = await calls.ListPendingForUserAsync(command.UserId, cancellationToken);
-        var existing = pending.FirstOrDefault(c =>
-            c.Tool == command.Tool
-            && c.Arguments == command.Arguments
-            && c.StatusAt(now) == ToolCallStatus.NeedsConfirmation);
-
-        if (existing is not null)
+        foreach (var p in pending)
         {
-            return existing.Id;
+            if (p.Tool == command.Tool
+                && p.Arguments == command.Arguments
+                && p.StatusAt(now) == ToolCallStatus.NeedsConfirmation)
+            {
+                var associatedRun = await runs.FindAsync(p.RunId, cancellationToken);
+                if (associatedRun is not null
+                    && associatedRun.Channel == McpChannel
+                    && associatedRun.Reference == command.ClientId)
+                {
+                    return p.Id;
+                }
+            }
         }
 
         // Closed run for an external MCP client
@@ -51,14 +57,14 @@ internal sealed class AwaitExternalConfirmationHandler(
 
         var clientName = string.IsNullOrWhiteSpace(command.ClientId) ? "Aplikacja zewnętrzna" : command.ClientId;
         var toolName = command.Tool;
-        var deviceName = string.IsNullOrWhiteSpace(command.DeviceName) ? "komputerze" : command.DeviceName;
+        var onDevice = string.IsNullOrWhiteSpace(command.DeviceName) ? "komputerze" : $"komputerze {command.DeviceName}";
 
         var notification = new NotificationRequested(
             [command.UserId],
             "jarvis",
             "confirmation",
             "Wymagane potwierdzenie",
-            $"Aplikacja {clientName} chce wykonać {toolName} na komputerze {deviceName}",
+            $"Aplikacja {clientName} chce wykonać {toolName} na {onDevice}",
             "/jarvis",
             Tag: $"confirmation-{call.Id}");
 
