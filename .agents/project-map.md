@@ -1,12 +1,14 @@
 # HomeApps Project Map
 
-- **HEAD**: `d5e7117`
+- **HEAD**: `13ceb17`
 - **Stack**: .NET 10 (`HomeApps.slnx`), Vue 3 + TypeScript (`src/Web`), PostgreSQL, RabbitMQ (MassTransit), SignalR, MCP (`ModelContextProtocol.AspNetCore`).
+- **Tools**: Mac Device Emulator (`tools/mac-device-emulator/MacDeviceEmulator.slnx`).
 
 ## Build & Test
 - Build all (.NET, warnings = errors): `dotnet build HomeApps.slnx`
 - Unit tests (no Docker): `dotnet test tests/<Svc>/<Svc>.Domain.Tests --blame-hang-timeout 30s` (also `*.Application.Tests`, `HomeApps.BuildingBlocks.Tests`, `HomeApps.Plugins.Tests`, `ExternalConfirmationUnitTests` in `Jarvis.Api.Tests`)
 - Integration/API tests (requires Docker): `dotnet test HomeApps.slnx --blame-hang-timeout 120s`
+- Mac Emulator: `dotnet build tools/mac-device-emulator/MacDeviceEmulator.slnx` & `dotnet test tools/mac-device-emulator/tests/MacDeviceEmulator.Tests/MacDeviceEmulator.Tests.csproj`
 - Web: `cd src/Web && npm run type-check && npx eslint . && npm run test:run`
 - OpenAPI types: `cd src/Web && npm run api:types`
 
@@ -29,10 +31,20 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
 - **`src/Jarvis/`** (`/jarvis`): AI assistant runs, conversations, external MCP gateway, tool confirmations, voice bridge.
   - Endpoints: `src/Jarvis/Jarvis.Api/Endpoints/` (`AssistantEndpoints.cs`, `ConversationEndpoints.cs`)
   - MCP Gateway: `src/Jarvis/Jarvis.Api/Gateway/McpGateway.cs`
-  - Voice: `src/Jarvis/Jarvis.Api/Voice/`
+  - Voice WebSocket & Session: `src/Jarvis/Jarvis.Api/Voice/` (`VoiceEndpoint.cs` at `/jarvis/voice`, `VoiceSession.cs`)
 - **`src/Contracts/`**: `HomeApps.Contracts` (`IIntegrationEvent` records).
 - **`src/BuildingBlocks/`**: `HomeApps.BuildingBlocks.{Domain,Application,Infrastructure,Api,Mcp}`, `HomeApps.Plugins`, `HomeApps.Plugins.Hosting`.
 - **`src/Web/`**: Vue 3 SPA (`src/features/{account,admin,auth,devices,home,homemix,households,jarvis,notifications,plugins,wall,widgets}`, `src/api/types/`).
+
+## Tools & Emulators (`tools/`)
+- **`tools/mac-device-emulator/`**: macOS satellite & computer emulator (`MacDeviceEmulator.slnx`).
+  - Core app: `tools/mac-device-emulator/src/MacDeviceEmulator/`
+    - Devices: `Devices/` (`ComputerEmulatorDevice.cs`, `SatelliteEmulatorDevice.cs`, `BatteryEmulatorDevice.cs`, `PoweredEmulatorDevice.cs`)
+    - Voice & Utterance: `Services/ContinuousListeningService.cs`, `Services/LocalUtteranceGate.cs`, `Services/VoiceConsentDetector.cs`, `Services/SpeechEchoSuppressor.cs`, `Services/PendingConfirmationStore.cs`
+    - Networking/WS: `Services/VoiceWebSocket.cs`, `Services/DeviceWebSocket.cs`, `Services/HomeAppsClient.cs`
+    - Abstractions: `Abstractions/` (`IUtteranceGate.cs`, `ISpeechInput.cs`, `ISessionLockMonitor.cs`, `IVoiceWebSocket.cs`, `IListeningIndicator.cs`)
+    - Protocol & Config: `Protocol/` (`Descriptors.cs`, `ProtocolMessages.cs`, `VoiceMessage.cs`), `Configuration/` (`EmulatorOptions.cs`, `EmulatorStorage.cs`)
+  - Tests: `tools/mac-device-emulator/tests/MacDeviceEmulator.Tests/` (`MacDeviceEmulator.Tests.csproj`, `ContinuousListeningServiceTests.cs`, `LocalUtteranceGateTests.cs`, `VoiceConsentDetectorTests.cs`, `SpeechEchoSuppressorTests.cs`, `MacSessionLockMonitorTests.cs`, `PendingConfirmationStoreTests.cs`, `ConsoleCommandHandlerTests.cs`, `ChannelSpeechInputTests.cs`, `ConsoleListeningIndicatorTests.cs`, `DevicesTests.cs`, `DescriptorsTests.cs`, `MacSystemTests.cs`, `StorageTests.cs`, `EmulatorOptionsTests.cs`)
 
 ## Tests (`tests/`)
 - Per-service: `tests/{Accounts,Auth,Devices,HomeMix,Households,Jarvis,Notifications}/*.Tests`

@@ -20,6 +20,11 @@ You only read and discuss. You never edit files. If the `dotnet-conventions` ski
 2. Decide, with file references:
    - **Which service owns it** (Auth, Accounts, Households, Notifications, HomeMix, Devices, Jarvis, a plugin) and
      whether a new service is really needed (usually not).
+   - **Developer Implementation Blueprint (MANDATORY)**:
+     - Exact target project and file paths to create or modify (e.g. `tools/mac-device-emulator/src/MacDeviceEmulator/...`, never vague labels like "Desktop").
+     - Exact public contracts & wire protocols with `path:line` server source references, gateway-prefixed routes, and exact JSON request/response or WebSocket frames sequence (`hello` -> `ready` -> `say` -> `reply` -> `done`).
+     - Concurrency, timeout & failure-mode invariants (turn lock, fail-closed vs fail-open, session reset on pending confirmation, reconnect behavior).
+     - The developer must NOT be forced to scan untouched services to discover routes or DTO shapes.
    - **Aggregates and rules**: new or changed aggregates, invariants, which rules sit in the domain.
    - **API contract**: method, route under the service's Traefik prefix, request and response records, status codes
      and `AppError` codes (`<service>.<snake_case>` + `ErrorKind`), who may call it (server role vs household role).

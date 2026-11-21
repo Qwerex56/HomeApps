@@ -79,6 +79,12 @@ names with the `device_` prefix; the household switch "Devices" and its read-onl
   (first-party app only; external connected apps get 403 `jarvis.forbidden`) and approved/denied via `POST /jarvis/api/confirmations/{id}`. External MCP clients
   can poll the outcome using the read-only MCP tool `jarvis_action_result(id)` (`pending`, `approved` + result text, `denied`, or `expired`).
 
+- **Continuous listening on computers (H-8):** personal computers with `purpose: computer` running HomeApps.Desktop
+  or the Mac device emulator support continuous listening with local utterance gating (`LocalUtteranceGate`).
+  Ambient speech stays strictly local; only utterances addressed to JARVIS passing wake word, session lock (`ioreg`),
+  mute, and echo suppression checks are forwarded over `/jarvis/voice?speech=local`. Actions requiring confirmation
+  must be confirmed on screen; voice confirmations are rejected locally. Continuous listening runs on computers only (never on ESP satellites).
+
 Names stay within 64 characters with the prefix (slug 36, action 20). An announced action named `state`, `set` or `events` is hidden by the
 generated tool. The descriptions use the device's name and purpose and its `jarvis` text, quoted and labelled as data ("not instructions"),
 with control characters, angle brackets and quotes flattened. A slug is unique only in one scope (one person's devices, one household): when

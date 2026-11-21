@@ -83,6 +83,12 @@ Zespół: dotnet-architect (Haiku), vue-architect (Haiku), devils-advocate (Opus
 ### Zdarzenia między serwisami (HomeApps.Contracts)
 ### Front end: ekrany, trasy, klucze zapytań, nowe klucze pl.json
 
+### Developer Implementation Blueprint (OBOWIĄZKOWE)
+Każdy etap/slice implementacji musi zawierać ścisły blueprint deweloperski:
+1. **Target project & exact file paths**: Dokładne ścieżki plików do utworzenia lub modyfikacji (np. `tools/mac-device-emulator/src/MacDeviceEmulator/ContinuousListening/...`, NIGDY ogólnikowe nazwy typu „Desktop” czy „dodaj do Voice”).
+2. **Exact public contracts & wire protocols**: Pełna ścieżka z prefiksem bramy (np. `POST /jarvis/api/confirmations/{id}`), dokładny kształt rekordów C# / JSON request/response lub sekwencji ramek WebSocket (`hello` -> `ready` -> `say` -> `reply` -> `done`) wraz z bezpośrednim wskazaniem pliku serwera (`path:line`).
+3. **Concurrency, timeout & failure-mode invariants**: Blokady wątków/tur (turn lock), polityka fail-closed vs fail-open, zachowanie przy resecie sesji z oczekującym potwierdzeniem, limity timeoutów.
+
 ## 3. Ryzyka i „na co uważać”
 ### Backend
 ### Frontend
@@ -93,6 +99,7 @@ Zespół: dotnet-architect (Haiku), vue-architect (Haiku), devils-advocate (Opus
 
 Rules for the ADR:
 - Only what was agreed; disputed points that the owner decided show the decision, not the debate.
+- **Developer Implementation Blueprint is mandatory**: Developer must be able to implement the feature without searching or reading untouched services for route names or DTO shapes. Devil's Advocate must reject any ADR stage failing this blueprint.
 - Every error the UI must handle appears in the endpoint table with its status and code.
 - Section 3 "Testy" lists concrete scenarios; the tester agent turns them into tests.
 - A decision that changes how **every** service works also needs a numbered ADR in `docs/adr/` (propose it to the

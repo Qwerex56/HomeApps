@@ -31,6 +31,18 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 
 ### Added
 
+- **Continuous listening for personal computers (H-8):** client-side continuous listening pipeline for personal
+  computers running HomeApps.Desktop or the test Mac device emulator (`tools/mac-device-emulator/`).
+  - Evaluates utterances locally using an "is this for me?" gate (`LocalUtteranceGate`) before any audio or text leaves
+    the machine: wake words ("jarvis", "hej jarvis", etc.), microphone mute state, macOS screen lock state (`ioreg`),
+    and self-voice echo suppression (`SpeechEchoSuppressor`).
+  - Transcribed speech is sent over `/jarvis/voice?speech=local` as `say` frames only when accepted by the local gate.
+  - Changes and dangerous actions requiring confirmation are confirmed **on screen only** (via web UI or CLI `/approve` / `/deny` calling
+    `POST /jarvis/api/confirmations/{id}`); voice confirmations ("tak"/"nie") are strictly blocked on continuous listening to prevent unauthorized actions by bystanders.
+  - Visible listening indicator (`[MIC: LISTENING]`, `[MIC: MUTED]`, `[MIC: PAUSED - SESSION LOCKED]`, `[MIC: PAUSED - JARVIS SPEAKING]`)
+    and mute toggle (`/mute`, `/unmute`, `/toggle-mute`, or `--muted`). Fully emulated in `tools/mac-device-emulator/`.
+    See `docs/jarvis.md` and `tools/mac-device-emulator/README.md`.
+
 - **Computer tools and external MCP confirmations (H-7):** full confirmation flow for actions on a person's computer
   invoked by external MCP clients.
   - Calling a non-read-only computer tool that asks for confirmation creates an action in `NeedsConfirmation` within a
