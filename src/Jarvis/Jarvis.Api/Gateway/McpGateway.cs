@@ -1,8 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using HomeApps.BuildingBlocks.Mcp;
+using Jarvis.Application.Actions.GetActionResult;
 using Jarvis.Application.Gateway;
 using Jarvis.Application.ToolCalls.AwaitConfirmation;
+using Jarvis.Application.ToolCalls.AwaitExternalConfirmation;
 using Jarvis.Application.ToolCalls.CheckRun;
 using Jarvis.Application.ToolCalls.RecordCall;
 using Jarvis.Infrastructure.Tools;
@@ -29,6 +31,9 @@ namespace Jarvis.Api.Gateway;
 internal sealed partial class McpGateway(
     IToolSources sources, IHouseholdCeilings ceilings, SourceConnector connector, Caller caller, ISender sender, IMemoryCache cache, ILogger<McpGateway> logger)
 {
+    public const string ActionResultTool = "jarvis_action_result";
+    private static readonly JsonElement ActionResultSchema = JsonDocument.Parse("""{"type":"object","properties":{"id":{"type":"string","description":"The action id."}},"required":["id"]}""").RootElement.Clone();
+
     public async ValueTask<ListToolsResult> ListToolsAsync(CancellationToken cancellationToken)
     {
         var all = await sources.ListAsync(cancellationToken);
@@ -100,12 +105,32 @@ internal sealed partial class McpGateway(
             });
         }
 
+        // H-7: jarvis_action_result tool for checking outcomes of actions
+        tools.Add(new Tool
+        {
+            Name = ActionResultTool,
+            Description = "Checks the outcome of a confirmed action (pending, approved with text, denied, or expired). Only own actions.",
+            InputSchema = ActionResultSchema,
+            Annotations = new ToolAnnotations
+            {
+                ReadOnlyHint = true,
+                DestructiveHint = false,
+                OpenWorldHint = false,
+            },
+        });
+
         return new ListToolsResult { Tools = tools };
     }
 
     public async ValueTask<CallToolResult> CallToolAsync(CallToolRequestParams request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        if (request.Name == ActionResultTool)
+        {
+            return await CallActionResultAsync(request, cancellationToken);
+        }
+
         foreach (var source in await sources.ListAsync(cancellationToken))
         {
             if (source.Own(request.Name) is not { } own)
@@ -167,10 +192,18 @@ internal sealed partial class McpGateway(
                     return await CallInRunAsync(run.Id, source, own, request, token, tool?.Annotations, cancellationToken);
                 }
 
-                // H-4c, until H-7: an external MCP client has no run, so nobody can confirm; an action on a person's computer that asks ("Pytaj") is not done.
+                // H-7: external MCP client calling a computer action that asks: await confirmation in a closed run with notification
                 if (onComputer && tool?.Annotations is not { ReadOnlyHint: true } && tool?.Annotations?.DestructiveHint != false)
                 {
-                    return Failed("This action needs the person's confirmation. Use JARVIS in the HomeApps app.");
+                    var arguments = request.Arguments is null ? null : JsonSerializer.Serialize(request.Arguments);
+                    var deviceName = DeviceNameOf(request.Name);
+                    var awaiting = await sender.Send(
+                        new AwaitExternalConfirmationCommand(caller.UserId, caller.ClientId, request.Name, arguments, deviceName),
+                        cancellationToken);
+
+                    return awaiting.IsFailed
+                        ? Failed(ToolResult.Describe(awaiting.Errors))
+                        : ToolResult.Text($"Not done yet: waits for the person's confirmation in HomeApps (action {awaiting.Value})");
                 }
 
                 await using var client = await connector.ConnectAsync(source, token, cancellationToken);
@@ -344,6 +377,35 @@ internal sealed partial class McpGateway(
         }
 
         return null;
+    }
+
+    private async Task<CallToolResult> CallActionResultAsync(CallToolRequestParams request, CancellationToken cancellationToken)
+    {
+        if (request.Arguments is null || !request.Arguments.TryGetValue("id", out var idElem) || !Guid.TryParse(idElem.GetString(), out var actionId))
+        {
+            return Failed("Pass the action id.");
+        }
+
+        var result = await sender.Send(new GetActionResultQuery(caller.UserId, actionId), cancellationToken);
+        if (result.IsFailed)
+        {
+            return Failed(ToolResult.Describe(result.Errors));
+        }
+
+        var view = result.Value;
+        var text = string.IsNullOrWhiteSpace(view.Text) ? view.Status : $"{view.Status}: {view.Text}";
+        return ToolResult.Text(text);
+    }
+
+    private static string? DeviceNameOf(string toolFullName)
+    {
+        // Tools from Devices source are exposed as device_<slug>_<action> or <slug>_<action>
+        var name = toolFullName.StartsWith("device_", StringComparison.Ordinal)
+            ? toolFullName["device_".Length..]
+            : toolFullName;
+
+        var parts = name.Split('_', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length > 0 ? parts[0] : null;
     }
 
     private static bool Unreachable(Exception exception) =>
