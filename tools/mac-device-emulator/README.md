@@ -35,6 +35,12 @@ It allows testing HomeApps without physical hardware, running 4 distinct devices
    - Controls: Mac volume & mute.
    - Actions: `say`.
    - User token note: Bearer tokens expire. Obtain a token by logging into HomeApps Web UI (`localStorage.getItem('token')`) or via `POST /auth/login`. When the token expires, update `--user-token` or `HOMEAPPS_USER_TOKEN`.
+   - **Continuous listening (H-8)**:
+     - Runs locally on the computer (never on ESP satellites) when `RunComputer` is enabled (disable with `--no-listen`).
+     - Local "is this for me?" gate evaluates wake words, mute state, macOS session lock (`ioreg`), and self-voice echo suppression before anything leaves the machine.
+     - Only accepted utterances are sent to `/jarvis/voice?speech=local` (`hello` -> `say` -> `transcript`/`reply`/`done`).
+     - Changes/actions requiring confirmation are confirmed **on screen only** (`/approve`, `/deny` via `POST /jarvis/api/confirmations/{id}`), never by voice.
+     - Visible listening indicator (`[MIC: LISTENING]`, `[MIC: MUTED]`, `[MIC: PAUSED - SESSION LOCKED]`, `[MIC: PAUSED - JARVIS SPEAKING]`) and mute toggle (`/mute`, `/unmute`, `/toggle-mute`, or `--muted`).
 
 ## Credentials & Persistence
 
@@ -72,3 +78,7 @@ Options:
 - `--only-battery`: Run only the Battery device.
 - `--only-computer`: Run only the Computer device.
 - `--without-battery`: Run all devices except Battery (useful to simulate battery device going offline / silent).
+- `--no-listen`: Disable H-8 continuous listening when running the Computer device.
+- `--muted`: Start continuous listening muted.
+- `--stt-command <exe>` / `--stt-arg <arg>`: Optional local speech-to-text command whose stdout lines feed the local gate.
+- `--wake-words <w1,w2,...>`: Override default wake words (`jarvis`, `hej jarvis`, `hey jarvis`, etc.).

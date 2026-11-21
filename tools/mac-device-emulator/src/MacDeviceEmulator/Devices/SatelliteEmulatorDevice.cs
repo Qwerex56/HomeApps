@@ -15,7 +15,8 @@ public sealed class SatelliteEmulatorDevice(
     IHomeAppsClient client,
     Func<IDeviceWebSocket> webSocketFactory,
     IMacSystem macSystem,
-    TimeProvider timeProvider) : IEmulatorDevice
+    TimeProvider timeProvider,
+    ISpeechEchoSuppressor? echoSuppressor = null) : IEmulatorDevice
 {
     public string DeviceKey => "satellite";
     public string Name => "Mac Satellite (test)";
@@ -179,7 +180,17 @@ public sealed class SatelliteEmulatorDevice(
                 {
                     try
                     {
-                        await macSystem.SayAsync(text, CancellationToken.None);
+                        if (echoSuppressor is not null)
+                        {
+                            await echoSuppressor.TrackSpeakingAsync(
+                                text,
+                                ct => macSystem.SayAsync(text, ct),
+                                CancellationToken.None);
+                        }
+                        else
+                        {
+                            await macSystem.SayAsync(text, CancellationToken.None);
+                        }
                     }
                     catch (Exception ex)
                     {

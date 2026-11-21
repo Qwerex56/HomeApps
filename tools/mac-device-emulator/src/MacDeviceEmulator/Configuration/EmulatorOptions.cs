@@ -12,4 +12,9 @@ public sealed record EmulatorOptions
     public bool RunPowered { get; init; } = true;
     public bool RunBattery { get; init; } = true;
     public bool RunComputer { get; init; } = true;
+    public bool EnableContinuousListening { get; init; } = true;
+    public bool StartMuted { get; init; }
+    public string? SttCommand { get; init; }
+    public IReadOnlyList<string> SttArguments { get; init; } = [];
+    public IReadOnlyList<string>? WakeWords { get; init; }
 }

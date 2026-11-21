@@ -10,7 +10,8 @@ public sealed class ComputerEmulatorDevice(
     string serverUrl,
     string? userToken,
     Func<IDeviceWebSocket> webSocketFactory,
-    IMacSystem macSystem) : IEmulatorDevice
+    IMacSystem macSystem,
+    ISpeechEchoSuppressor? echoSuppressor = null) : IEmulatorDevice
 {
     public string DeviceKey => "computer";
     public string Name => "Mac Computer (test)";
@@ -91,7 +92,17 @@ public sealed class ComputerEmulatorDevice(
                 {
                     try
                     {
-                        await macSystem.SayAsync(text, CancellationToken.None);
+                        if (echoSuppressor is not null)
+                        {
+                            await echoSuppressor.TrackSpeakingAsync(
+                                text,
+                                ct => macSystem.SayAsync(text, ct),
+                                CancellationToken.None);
+                        }
+                        else
+                        {
+                            await macSystem.SayAsync(text, CancellationToken.None);
+                        }
                     }
                     catch (Exception ex)
                     {
