@@ -64,6 +64,11 @@ internal sealed class ConnectDeviceHandler(
 
         if (device.HouseholdId is { } householdId)
         {
+            if (command.Descriptor is not null)
+            {
+                stream.Publish(new DeviceStreamMessage(householdId, "changed", new { deviceId = device.Id, reason = "descriptor" }));
+            }
+
             stream.Publish(new DeviceStreamMessage(householdId, "online", new { deviceId = device.Id, online = true }));
         }
 

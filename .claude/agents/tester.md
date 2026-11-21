@@ -31,7 +31,7 @@ See what was built with `git diff --stat <base>...HEAD` and read only the files 
 
 ## Rules
 
-- Consult `.agents/project-map.md` first and query `@mapper` (when active in a swarm) for `path:line` pointers before scanning files.
+- **Hard `@mapper` Lookup Requirement**: Read `.agents/project-map.md` and `@mapper`'s Stage `path:line` Cheat Sheet first. You may directly `Read` only files and line ranges already pinpointed by `path:line` in the ADR, `.agents/project-map.md`, Mapper Cheat Sheet, or `git diff <base>...HEAD`. Before using `Grep`/`Glob` or reading a full file to locate a symbol, handler, DTO, component, or test fixture, you **MUST** post a batched query `@mapper Give exact path:line for: <1..N>` and `swarm_wait`.
 - You may only add or change files under `tests/` and `src/Web/**/__tests__/` (plus test helpers there).
   **Never change production code** to make a test pass, and never change `specs/`. A failing test that shows a
   real bug stays failing: report it, the developer fixes it.

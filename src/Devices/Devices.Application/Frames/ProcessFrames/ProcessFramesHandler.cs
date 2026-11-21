@@ -113,7 +113,7 @@ internal sealed class ProcessFramesHandler(
         var outcome = state.ApplyStatus(report, now);
         stream.Publish(new DeviceStreamMessage(
             device.HouseholdId!.Value, "status",
-            new { deviceId = device.Id, silent = false, battery = state.Battery, voltage = state.Voltage, rssi = state.Rssi, uptime = state.Uptime, firmware = state.Firmware, error = state.Error, at = now }));
+            new { deviceId = device.Id, silent = false, lowBattery = state.LowBattery, battery = state.Battery, voltage = state.Voltage, rssi = state.Rssi, uptime = state.Uptime, firmware = state.Firmware, error = state.Error, at = now }));
         if (outcome.Returned)
         {
             await notices.SendAsync(device, "silent", "Urządzenie znów zgłasza stan.", cancellationToken);

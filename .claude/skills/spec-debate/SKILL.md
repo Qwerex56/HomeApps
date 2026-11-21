@@ -36,10 +36,14 @@ team with three teammates, using the agent definitions from `.claude/agents/`:
 Spawn prompt for each (fill in the path):
 
 > Read `specs/<name>.md` in full. If your skill file isn't loaded, read it from `.claude/skills/<skill>/SKILL.md`.
-> Study the code the spec touches. Then debate peer to peer with the other two teammates (`dotnet`, `vue`, `devil`):
-> send your objections and contract proposals directly to the teammate concerned, answer theirs, converge.
-> Read-only: don't edit any file. When you agree or after 3 exchanges per topic, send me your final position in the
-> format from your agent definition.
+> **Token-budget rule**: `/spec-debate` is intentionally allowed to spend more tokens on deep codebase inspection so
+> that the resulting ADR contains exact `path:line` modification anchors, full call-site inventories and step-by-step
+> implementation approaches — eliminating exploratory `cache_read` during `/run-feature`.
+> Study the code the spec touches deeply (find every handler, endpoint, aggregate, DTO, Vue component, composable and
+> `pl.json` block with exact `path:line` pointers). Then debate peer to peer with the other two teammates (`dotnet`,
+> `vue`, `devil`): send your objections and contract proposals directly to the teammate concerned, answer theirs,
+> converge. Read-only: don't edit any file. When you agree or after 3 exchanges per topic, send me your final position
+> in the format from your agent definition.
 
 Rules for the lead during the debate:
 - Stay quiet while the team works: no answer to idle notifications or partial positions, no summaries of what
@@ -84,10 +88,11 @@ Zespół: dotnet-architect (Haiku), vue-architect (Haiku), devils-advocate (Opus
 ### Front end: ekrany, trasy, klucze zapytań, nowe klucze pl.json
 
 ### Developer Implementation Blueprint (OBOWIĄZKOWE)
-Każdy etap/slice implementacji musi zawierać ścisły blueprint deweloperski:
-1. **Target project & exact file paths**: Dokładne ścieżki plików do utworzenia lub modyfikacji (np. `tools/mac-device-emulator/src/MacDeviceEmulator/ContinuousListening/...`, NIGDY ogólnikowe nazwy typu „Desktop” czy „dodaj do Voice”).
-2. **Exact public contracts & wire protocols**: Pełna ścieżka z prefiksem bramy (np. `POST /jarvis/api/confirmations/{id}`), dokładny kształt rekordów C# / JSON request/response lub sekwencji ramek WebSocket (`hello` -> `ready` -> `say` -> `reply` -> `done`) wraz z bezpośrednim wskazaniem pliku serwera (`path:line`).
-3. **Concurrency, timeout & failure-mode invariants**: Blokady wątków/tur (turn lock), polityka fail-closed vs fail-open, zachowanie przy resecie sesji z oczekującym potwierdzeniem, limity timeoutów.
+**Reguła budżetu tokenów**: `/spec-debate` celowo poświęca więcej tokenów na głęboką inspekcję kodu, aby ADR wyeliminował eksploracyjny `cache_read` podczas `/run-feature`. Każdy etap/slice implementacji musi zawierać ścisły, 4-punktowy blueprint deweloperski:
+1. **Exact file paths & `path:line` anchors**: Wszystkie pliki do utworzenia lub modyfikacji wraz z dokładnymi wskaźnikami `path:line` do istniejących klas, metod, handlerów, endpointów, komponentów Vue, composables i bloków `pl.json`, w które wpina się zmiana (np. `src/Devices/Devices.Application/Common/DeviceViews.cs:145`, NIGDY ogólnikowe nazwy).
+2. **Deep implementation approach & call-site inventory**: Konkretny opis podejścia implementacyjnego dla każdego pliku/warstwy — które istniejące helpery/wzorce (`path:line`) należy wykorzystać lub rozszerzyć, pełna lista wszystkich handlerów/wywołań wymagających wpięcia (np. kompletna lista 8 handlerów publikujących zdarzenie SSE `changed`) oraz przepływ stanu w komponentach i composables.
+3. **Complete public contracts & UI-backing DTO fields**: Pełne ścieżki z prefiksem bramy, dokładny kształt rekordów C# / typów TypeScript / schematów JSON (z weryfikacją, że każdy stan UI i powód blokady ma swoje pole w DTO, np. `sleepy`) oraz sekwencje ramek WebSocket/SSE ze wskazaniem `path:line` w kodzie serwera i klienta.
+4. **Concurrency, lifecycle & failure-mode invariants**: Blokady wątków/tur, cykl życia i wyścigi połączeń SSE/WebSocket (widoczność karty `visibilitychange`, abort przy zmianie domu, odświeżenie tokenu przy 401, zatrzymanie przy 403/404, fallback na polling), polityki fail-closed vs fail-open oraz limity timeoutów.
 
 ## 3. Ryzyka i „na co uważać”
 ### Backend
@@ -99,7 +104,7 @@ Każdy etap/slice implementacji musi zawierać ścisły blueprint deweloperski:
 
 Rules for the ADR:
 - Only what was agreed; disputed points that the owner decided show the decision, not the debate.
-- **Developer Implementation Blueprint is mandatory**: Developer must be able to implement the feature without searching or reading untouched services for route names or DTO shapes. Devil's Advocate must reject any ADR stage failing this blueprint.
+- **Developer Implementation Blueprint is mandatory**: `/spec-debate` is intentionally allowed to spend more tokens on deep codebase inspection so that the developer can implement the feature directly from `path:line` pointers, call-site inventories, and implementation approaches without scanning the repository during `/run-feature`. Devil's Advocate must reject any ADR stage or architect proposal failing this 4-item blueprint.
 - Every error the UI must handle appears in the endpoint table with its status and code.
 - Section 3 "Testy" lists concrete scenarios; the tester agent turns them into tests.
 - A decision that changes how **every** service works also needs a numbered ADR in `docs/adr/` (propose it to the

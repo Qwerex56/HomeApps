@@ -7,4 +7,11 @@ public sealed record DeviceDescriptorView(
     string? Version,
     IReadOnlyList<string> Roles,
     IReadOnlyList<string> Capabilities,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings,
+    IReadOnlyList<DescriptorControlView> Controls,
+    IReadOnlyList<DescriptorSensorView> Sensors,
+    IReadOnlyList<DescriptorEventView> Events,
+    string? Jarvis = null,
+    bool Sleepy = false);
+
+

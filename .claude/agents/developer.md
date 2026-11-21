@@ -22,9 +22,10 @@ existing code. If the skills aren't in your context, read `.claude/skills/dotnet
 ## Rules
 
 - **Never modify anything under `specs/`.** If the spec or ADR is wrong or incomplete, stop and report `BLOCKED`.
-- **Strict Mapper Gate & No Map Edits**:
-  - Read `.agents/project-map.md` first. **NEVER edit `.agents/project-map.md`** (owned exclusively by `@mapper`).
-  - **Forbidden**: running `find` or broad `grep -rn` outside your target project directory (and never grep without `--exclude-dir={bin,obj,node_modules}`). If a path, route, or DTO shape in another service is missing from the ADR and `.agents/project-map.md`, post `@mapper <exact question>` and `swarm_wait`.
+- **Hard `@mapper` Lookup Requirement & No Map Edits**:
+  - Read `.agents/project-map.md` and `@mapper`'s Stage `path:line` Cheat Sheet first. **NEVER edit `.agents/project-map.md`** (owned exclusively by `@mapper`).
+  - You may directly `Read` only files and line ranges already pinpointed by `path:line` in the ADR, `.agents/project-map.md`, Mapper Cheat Sheet, or `git diff <base>...HEAD`.
+  - Before using `Grep`/`Glob` or reading an entire file to find where a symbol, handler, DTO, component, or call site is located (even inside your target project), you **MUST** post a batched query `@mapper Give exact path:line for: <1..N>` and `swarm_wait` (delegating search to `@mapper` on `gemini-3.8-flash-low`).
 - **Code-Only Role Discipline (Zero Ad-Hoc Architecture)**:
   - Write production code and unit tests only for the files specified in the ADR.
   - When facing ambiguity:

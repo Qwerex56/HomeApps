@@ -15,6 +15,7 @@ public sealed class LinkDropTests
     private readonly Guid _household = Guid.NewGuid();
     private readonly FakeDevices _devices = new();
     private readonly FakeLinks _links = new();
+    private readonly FakeStream _stream = new();
     private readonly FakeBus _bus = new();
     private readonly FakeTime _time = new(Now);
     private readonly Device _device;
@@ -28,7 +29,7 @@ public sealed class LinkDropTests
     [Fact]
     public async Task Removing_a_device_drops_its_link()
     {
-        var result = await new RemoveDeviceHandler(_devices, new FakeRoles(HouseholdRole.Admin, _household), _links, _bus, new FakeUser(_admin), _time)
+        var result = await new RemoveDeviceHandler(_devices, new FakeRoles(HouseholdRole.Admin, _household), _links, _stream, _bus, new FakeUser(_admin), _time)
             .Handle(new RemoveDeviceCommand(_device.Id), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
@@ -49,7 +50,7 @@ public sealed class LinkDropTests
     [Fact]
     public async Task A_member_who_may_not_manage_the_device_does_not_drop_its_link()
     {
-        var result = await new RemoveDeviceHandler(_devices, new FakeRoles(HouseholdRole.Member, _household), _links, _bus, new FakeUser(_admin), _time)
+        var result = await new RemoveDeviceHandler(_devices, new FakeRoles(HouseholdRole.Member, _household), _links, _stream, _bus, new FakeUser(_admin), _time)
             .Handle(new RemoveDeviceCommand(_device.Id), CancellationToken.None);
 
         Assert.True(result.IsFailed);

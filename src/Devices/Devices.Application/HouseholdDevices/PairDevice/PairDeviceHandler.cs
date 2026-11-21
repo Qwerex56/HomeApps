@@ -7,7 +7,7 @@ using HomeApps.BuildingBlocks.Application.Messaging;
 namespace Devices.Application.HouseholdDevices.PairDevice;
 
 internal sealed class PairDeviceHandler(
-    IDeviceRepository devices, ISatelliteIdentities identities, DescriptorIntake intake, TimeProvider time)
+    IDeviceRepository devices, ISatelliteIdentities identities, DescriptorIntake intake, IDeviceStream stream, TimeProvider time)
     : ICommandHandler<PairDeviceCommand, PairedDeviceView>
 {
     public async Task<Result<PairedDeviceView>> Handle(PairDeviceCommand command, CancellationToken cancellationToken)
@@ -35,8 +35,12 @@ internal sealed class PairDeviceHandler(
 
         // Nothing is saved unless Auth answered, so a failed call leaves the code usable.
         var secret = await identities.PairAsync(device.Id, device.HouseholdId!.Value, device.Name, cancellationToken);
-        return secret.IsFailed
-            ? secret.ToResult()
-            : new PairedDeviceView(device.Id, device.HouseholdId.Value, device.Name, secret.Value, device.Slug, device.Purpose.ToWire());
+        if (secret.IsFailed)
+        {
+            return secret.ToResult();
+        }
+
+        stream.Publish(new DeviceStreamMessage(device.HouseholdId.Value, "changed", new { deviceId = device.Id, reason = "paired" }));
+        return new PairedDeviceView(device.Id, device.HouseholdId.Value, device.Name, secret.Value, device.Slug, device.Purpose.ToWire());
     }
 }

@@ -462,7 +462,9 @@ in `Account`.
   Errors: `homemix.widget_place` (the installation cannot stand there), `homemix.widget_unknown` (no such widget for
   that place), `homemix.widget_size` (not one of its `sizes`), `homemix.forbidden` (not a manager). Both answer the
   installation with `widgetChoices`. An update keeps the choices: a widget that is gone is dropped, a size that is gone
-  falls back to the widget's default.
+  falls back to the widget's default. When a widget matches household devices (`devices` capability), the same ⚙ dialog
+  lets admins pick which matching device the widget uses (`GET /homemix/api/installations/{id}/devices?widget=&state=true`,
+  `PUT/DELETE /homemix/api/installations/{id}/widget-devices/{widgetId}` `{ "device": "<deviceId>" }`, or automatic selection).
 - **Grid (UI 2.4.1).** A household's widgets stand on a grid of 8 columns, one layout per place (`Household`,
   `Wall`); narrower screens flow it into 5 or 3 columns. A widget is as wide as its size (1, 2 or 3 columns) and as
   high as the editor says. "Główna" and the wall tablet show only the first rows (3×2, 5×3, 8×5); the household's

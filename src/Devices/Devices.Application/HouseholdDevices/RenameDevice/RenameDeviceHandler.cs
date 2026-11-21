@@ -7,7 +7,7 @@ using HomeApps.BuildingBlocks.Application.Messaging;
 
 namespace Devices.Application.HouseholdDevices.RenameDevice;
 
-internal sealed class RenameDeviceHandler(IDeviceRepository devices, IHouseholdRoles households, ICurrentUser currentUser)
+internal sealed class RenameDeviceHandler(IDeviceRepository devices, IHouseholdRoles households, IDeviceStream stream, ICurrentUser currentUser)
     : ICommandHandler<RenameDeviceCommand>
 {
     public async Task<Result> Handle(RenameDeviceCommand command, CancellationToken cancellationToken)
@@ -28,6 +28,17 @@ internal sealed class RenameDeviceHandler(IDeviceRepository devices, IHouseholdR
         var sameName = device.HouseholdId is { } householdId
             ? await devices.FindInHouseholdAsync(householdId, name.Value, cancellationToken)
             : await devices.FindByNameAsync(device.OwnerId, name.Value, cancellationToken);
-        return sameName is not null && sameName.Id != device.Id ? Result.Fail(DeviceErrors.NameTaken) : device.Rename(name.Value);
+        if (sameName is not null && sameName.Id != device.Id)
+        {
+            return Result.Fail(DeviceErrors.NameTaken);
+        }
+
+        var renamed = device.Rename(name.Value);
+        if (renamed.IsSuccess && device.HouseholdId is { } hid)
+        {
+            stream.Publish(new DeviceStreamMessage(hid, "changed", new { deviceId = device.Id, reason = "renamed" }));
+        }
+
+        return renamed;
     }
 }

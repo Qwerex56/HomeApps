@@ -26,14 +26,13 @@ Gałąź integracyjna: **`smart-devices/main`** (do `master` całość wraca raz
 | H-6 Komponent ESP-IDF `homeapps-device` | 2.14 | ✅ 2026-11-19 | PR #64 |
 | H-7 Narzędzia komputera | 2.15 | ✅ 2026-11-21 | PR #66 |
 | H-8 Ciągłe nasłuchiwanie | 2.16 | ✅ 2026-11-21 | PR #67 |
-| H-9 Zakładka „JARVIS” w aplikacji | 2.17 | ○ na koniec | |
+| H-9 Zakładka „JARVIS” w aplikacji | 2.17 | ✅ 2026-11-21 | PR #68 |
 
 **Do sprawdzenia lokalnie przed H-5:** testy Api, Infrastructure i Integration (wymagają Dockera, w chmurze nie
 były uruchamiane) oraz nowy sekret `HOMEMIX_CLIENT_SECRET` w `.env`.
 
-**Odłożone z H-0..H-4** (świadomie, patrz też sekcja 5): podgląd stanu na żywo i wybór urządzenia w widżecie (H-9),
-akcje urządzeń przez `devices.control` w dodatku, powiadomienia domowników o zdarzeniach z `notify`, kolejka poleceń
-dla uśpionych urządzeń.
+**Odłożone z H-0..H-4** (świadomie, patrz też sekcja 5): akcje urządzeń przez `devices.control` w dodatku,
+powiadomienia domowników o zdarzeniach z `notify`, kolejka poleceń dla uśpionych urządzeń.
 
 **Otwarte decyzje:** brak. D10 (Wi-Fi i kod parowania) zamknięte w ADR: punkt dostępowy ze stroną konfiguracji,
 BLE ewentualnie później.

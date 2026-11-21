@@ -5,6 +5,7 @@ import { emit, serveFrame, type Handlers } from '@home-apps/sdk/host'
 import type { Document, HomeMixContext, HouseholdRole, Scope, WidgetPlace, WidgetSize } from '@home-apps/sdk'
 import { toProblem } from '@/api/problem'
 import { errorMessage } from '@/api/errorMessage'
+import { useDeviceStream } from '@/features/devices/useDeviceStream'
 import { householdsApi } from '@/features/households/api'
 import { homemixApi, type Installation } from './api'
 import { currentTheme } from './theme'
@@ -86,6 +87,19 @@ export function useMixHost(frame: Ref<HTMLIFrameElement | undefined>, options: (
         if (at && Date.now() - at < ECHO_MS) return
       }
       emit(window_(), routed.name, routed.data)
+    },
+  )
+
+  // Live `device.state` events from the household's Devices SSE stream (H-9), opened only when the installation has the `devices` capability.
+  useDeviceStream(
+    () => options().household?.id,
+    {
+      enabled: () => Boolean(options().household?.id && options().installation.capabilities.includes('devices')),
+      onEvent(event) {
+        if (event.type === 'state' && options().installation.capabilities.includes('devices')) {
+          emit(window_(), 'device.state', event.data)
+        }
+      },
     },
   )
 
@@ -175,7 +189,6 @@ export function useMixHost(frame: Ref<HTMLIFrameElement | undefined>, options: (
       await homemixApi.devices.set(options().installation.id, checkDeviceId(id), control, value)
       return null
     },
-    // TODO(H-9): 'device.state' events (Devices SSE, GET /devices/households/{id}/stream), opened only when `devices` is granted.
     'notify.push': (notification) => homemixApi.notify(options().installation.id, notification),
   }
 

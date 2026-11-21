@@ -6,7 +6,7 @@ using HomeApps.BuildingBlocks.Application.Messaging;
 
 namespace Devices.Application.MyDevices.RestoreDevice;
 
-internal sealed class RestoreDeviceHandler(IDeviceRepository devices, IHouseholdRoles households, ICurrentUser currentUser) : ICommandHandler<RestoreDeviceCommand>
+internal sealed class RestoreDeviceHandler(IDeviceRepository devices, IHouseholdRoles households, IDeviceStream stream, ICurrentUser currentUser) : ICommandHandler<RestoreDeviceCommand>
 {
     public async Task<Result> Handle(RestoreDeviceCommand command, CancellationToken cancellationToken)
     {
@@ -17,6 +17,11 @@ internal sealed class RestoreDeviceHandler(IDeviceRepository devices, IHousehold
         }
 
         device.Value.Enable();
+        if (device.Value.HouseholdId is { } householdId)
+        {
+            stream.Publish(new DeviceStreamMessage(householdId, "changed", new { deviceId = device.Value.Id, reason = "restored" }));
+        }
+
         return Result.Ok();
     }
 }

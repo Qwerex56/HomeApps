@@ -8,7 +8,12 @@ export function errorMessage(problem: Problem): string {
     return t('errors.rate_limited', { seconds: problem.retryAfter ?? 60 })
   }
   if (problem.code && te(`errors.${problem.code}`)) {
-    return t(`errors.${problem.code}`)
+    const translated = t(`errors.${problem.code}`)
+    if (problem.code === 'devices.invalid_frame' && problem.detail) {
+      return `${translated} (${problem.detail})`
+    }
+    return translated
   }
   return problem.detail ?? t('errors.unknown')
 }
+

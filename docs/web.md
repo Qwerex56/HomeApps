@@ -172,7 +172,8 @@ on the next refresh. Erasing asks for the account's email, which goes in the DEL
 | `/homes` | My households, creating one, joining by a typed code or a pasted link. |
 | `/homes/:id/members` | Members (Member and up): roles, nicknames, a guest's access end, removing, handing over. Inactive accounts greyed out (D6). |
 | `/homes/:id/invites` | Personal invites (Member or Guest, 30 minutes to 7 days) with copy and share, and the guest link (Owner, Admin). |
-| `/homes/:id/settings` | My membership (nickname, leaving), name and description (Owner, Admin), archiving (Owner). A guest sees only this tab. |
+| `/homes/:id/devices` | **JARVIS** tab (`features/devices`): left column with the household JARVIS card (`AssistantCard`), devices grouped by purpose (`assistant`, `smart_home`) and a link to "Moje komputery" (`/account/devices`). Live SSE stream (`/devices/households/{id}/stream` over `fetch` + `ReadableStream` with Bearer token, 15 min reconnect, 30 s polling fallback when disconnected), schema-driven controls (`ControlWidget`: switch, slider committing on release, select, button, number, text; 20 s confirmation timeout), sensors (`SensorList`), lazy event history (`DeviceEvents`), and admin settings (`DeviceAdminPanel`). Role matrix: Guest reads state (without `geo` values), health and read-only JARVIS switches; Member also sets controls and reads events; Admin/Owner manages assistant settings, pairing, names, notes and JARVIS switches. |
+| `/homes/:id/settings` | My membership (nickname, leaving), name and description (Owner, Admin), archiving (Owner). A guest sees only this tab and the read-only views. |
 | `/join/:code` | Personal invites and the guest link: what the code leads to, then joining. |
 | `/admin/homes` | Every household for the server Admin and Owner, archiving and restoring. |
 
