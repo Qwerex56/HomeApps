@@ -201,4 +201,121 @@ public sealed class ContinuousListeningServiceTests
         Assert.True(decision.Accepted);
         await _mac.DidNotReceiveWithAnyArgs().SayAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task ProcessUtteranceAsync_overlapping_utterance_blocks_voice_confirmation_when_first_reply_needs_confirmation()
+    {
+        var realGate = new LocalUtteranceGate();
+        var ws = Substitute.For<IVoiceWebSocket>();
+        ws.State.Returns(WebSocketState.None, WebSocketState.Open);
+
+        var service = new ContinuousListeningService(
+            "https://app.example.com",
+            "token",
+            () => ws,
+            _mac,
+            _lockMonitor,
+            _echo,
+            realGate,
+            _indicator,
+            _homeAppsClient,
+            _time,
+            startMuted: false,
+            output: TextWriter.Null);
+
+        var actionId = Guid.NewGuid();
+        var action = new VoiceActionView(actionId, "computer.reboot", "Zrestartuj system", "NeedsConfirmation", _time.GetUtcNow().AddMinutes(5));
+
+        var turn1Started = new TaskCompletionSource<bool>();
+        var allowTurn1ToFinish = new TaskCompletionSource<bool>();
+
+        var messages = new Queue<VoiceMessage?>([
+            new VoiceMessage("ready"),
+            new VoiceMessage("reply", Text: "Potwierdź restart", Actions: [action], Awaiting: true),
+            new VoiceMessage("done")
+        ]);
+
+        ws.ReceiveMessageAsync(Arg.Any<CancellationToken>())
+            .Returns(async _ =>
+            {
+                turn1Started.TrySetResult(true);
+                await allowTurn1ToFinish.Task;
+                return messages.Count > 0 ? messages.Dequeue() : null;
+            });
+
+        // Launch Utterance 1
+        var turn1Task = Task.Run(() => service.ProcessUtteranceAsync("Jarvis, zrestartuj system"));
+
+        // Wait until turn 1 is actively inside turn lock
+        await turn1Started.Task;
+
+        // Launch concurrent Utterance 2: voice confirmation "Jarvis, tak"
+        var turn2Task = Task.Run(() => service.ProcessUtteranceAsync("Jarvis, tak"));
+
+        // Release turn 1 to complete and register the pending confirmation
+        allowTurn1ToFinish.SetResult(true);
+
+        var decision1 = await turn1Task;
+        var decision2 = await turn2Task;
+
+        // Turn 1 was accepted
+        Assert.True(decision1.Accepted);
+        Assert.Equal("zrestartuj system", decision1.CommandText);
+
+        // Turn 2 was evaluated under turn lock AFTER turn 1 stored the pending action, so voice consent is blocked!
+        Assert.False(decision2.Accepted);
+        Assert.Equal(GateRejectionReason.VoiceConfirmationBlocked, decision2.Reason);
+
+        // "tak" was never sent to the WebSocket
+        await ws.DidNotReceive().SendMessageAsync(
+            Arg.Is<VoiceMessage>(m => m.Type == "say" && m.Text == "tak"),
+            Arg.Any<CancellationToken>());
+
+        // Socket was reset after NeedsConfirmation reply as defense-in-depth
+        await ws.Received().DisposeAsync();
+    }
+
+    [Fact]
+    public async Task ProcessUtteranceAsync_times_out_and_resets_socket_when_turn_exceeds_timeout()
+    {
+        var ws = Substitute.For<IVoiceWebSocket>();
+        ws.State.Returns(WebSocketState.None, WebSocketState.Open);
+
+        var service = new ContinuousListeningService(
+            "https://app.example.com",
+            "token",
+            () => ws,
+            _mac,
+            _lockMonitor,
+            _echo,
+            _gate,
+            _indicator,
+            _homeAppsClient,
+            _time,
+            startMuted: false,
+            output: TextWriter.Null,
+            turnTimeout: TimeSpan.FromMilliseconds(50));
+
+        _gate.Evaluate("Jarvis, powolne polecenie", Arg.Any<GateContext>())
+            .Returns(new GateDecision(true, "powolne polecenie", GateRejectionReason.None));
+
+        var calls = 0;
+        ws.ReceiveMessageAsync(Arg.Any<CancellationToken>())
+            .Returns(async _ =>
+            {
+                if (Interlocked.Increment(ref calls) == 1)
+                {
+                    return new VoiceMessage("ready");
+                }
+
+                await Task.Delay(500);
+                return (VoiceMessage?)null;
+            });
+
+        var decision = await service.ProcessUtteranceAsync("Jarvis, powolne polecenie");
+
+        Assert.True(decision.Accepted);
+        // Socket should be reset upon timeout
+        await ws.Received().DisposeAsync();
+    }
 }

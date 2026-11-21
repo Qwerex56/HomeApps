@@ -97,4 +97,26 @@ public sealed class ConsoleCommandHandlerTests
 
         Assert.False(_listeningService.PendingConfirmations.HasPending(DateTimeOffset.UtcNow));
     }
+
+    [Fact]
+    public async Task HandleLineAsync_approve_without_args_when_multiple_pending_does_not_decide()
+    {
+        var actionId1 = Guid.NewGuid();
+        var actionId2 = Guid.NewGuid();
+        _listeningService.PendingConfirmations.AddFromReply(
+            [
+                new VoiceActionView(actionId1, "tool1", "desc1", "NeedsConfirmation", DateTimeOffset.UtcNow.AddMinutes(5)),
+                new VoiceActionView(actionId2, "tool2", "desc2", "NeedsConfirmation", DateTimeOffset.UtcNow.AddMinutes(5))
+            ],
+            DateTimeOffset.UtcNow);
+
+        await _handler.HandleLineAsync("/approve");
+
+        await _homeAppsClient.DidNotReceiveWithAnyArgs().DecideConfirmationAsync(
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<Guid>(),
+            Arg.Any<bool>(),
+            Arg.Any<CancellationToken>());
+    }
 }

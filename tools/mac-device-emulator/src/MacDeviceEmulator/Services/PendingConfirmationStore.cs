@@ -79,7 +79,7 @@ public sealed class PendingConfirmationStore
             var list = _pending.Values.ToList();
             if (string.IsNullOrWhiteSpace(token))
             {
-                return list.Count == 1 ? list[0] : list[^1];
+                return list.Count == 1 ? list[0] : null;
             }
 
             var trimmed = token.Trim();

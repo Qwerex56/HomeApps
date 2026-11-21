@@ -107,6 +107,19 @@ public sealed class ConsoleCommandHandler(
         var target = listeningService.PendingConfirmations.ResolveTarget(targetToken, now);
         if (target is null)
         {
+            var active = listeningService.PendingConfirmations.GetActive(now);
+            if (string.IsNullOrWhiteSpace(targetToken) && active.Count > 1)
+            {
+                _output.WriteLine("[Confirmation] Multiple actions are pending. Specify which action to decide with '/approve <#|id>' or '/deny <#|id>':");
+                for (var i = 0; i < active.Count; i++)
+                {
+                    var a = active[i];
+                    _output.WriteLine($"  #{i + 1} {a.Id}: {a.Description} [tool: {a.Tool}]");
+                }
+
+                return;
+            }
+
             _output.WriteLine("[Confirmation] No matching pending action to decide.");
             return;
         }

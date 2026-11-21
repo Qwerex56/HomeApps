@@ -24,6 +24,7 @@ public sealed class ContinuousListeningService : IAsyncDisposable
     private readonly TimeProvider _timeProvider;
     private readonly TextWriter _output;
     private readonly TimeSpan _lockPollInterval;
+    private readonly TimeSpan _turnTimeout;
     private readonly SemaphoreSlim _turnLock = new(1, 1);
     private readonly Lock _stateGate = new();
 
@@ -45,7 +46,8 @@ public sealed class ContinuousListeningService : IAsyncDisposable
         TimeProvider? timeProvider = null,
         bool startMuted = false,
         TextWriter? output = null,
-        TimeSpan? lockPollInterval = null)
+        TimeSpan? lockPollInterval = null,
+        TimeSpan? turnTimeout = null)
     {
         _serverUrl = serverUrl;
         _userToken = userToken;
@@ -60,6 +62,7 @@ public sealed class ContinuousListeningService : IAsyncDisposable
         _isMuted = startMuted;
         _output = output ?? Console.Out;
         _lockPollInterval = lockPollInterval ?? TimeSpan.FromSeconds(2);
+        _turnTimeout = turnTimeout ?? TimeSpan.FromSeconds(60);
     }
 
     public Guid? ConversationId { get; private set; }
@@ -179,25 +182,33 @@ public sealed class ContinuousListeningService : IAsyncDisposable
 
     public async Task<GateDecision> ProcessUtteranceAsync(string? transcript, CancellationToken cancellationToken = default)
     {
-        var locked = await IsEffectivelyLockedAsync(cancellationToken);
-        var muted = IsMuted;
-        var isEcho = !string.IsNullOrWhiteSpace(transcript) && _echoSuppressor.IsEcho(transcript);
-        var hasPending = PendingConfirmations.HasPending(_timeProvider.GetUtcNow());
-
-        _indicator.SetStatus(ComputeStatus(locked, muted, _echoSuppressor.IsSuppressing));
-
-        var decision = _utteranceGate.Evaluate(
-            transcript,
-            new GateContext(muted, locked, isEcho, hasPending));
-
-        if (!decision.Accepted)
+        await _turnLock.WaitAsync(cancellationToken);
+        try
         {
-            LogRejection(transcript, decision.Reason);
+            var locked = await IsEffectivelyLockedAsync(cancellationToken);
+            var muted = IsMuted;
+            var isEcho = !string.IsNullOrWhiteSpace(transcript) && _echoSuppressor.IsEcho(transcript);
+            var hasPending = PendingConfirmations.HasPending(_timeProvider.GetUtcNow());
+
+            _indicator.SetStatus(ComputeStatus(locked, muted, _echoSuppressor.IsSuppressing));
+
+            var decision = _utteranceGate.Evaluate(
+                transcript,
+                new GateContext(muted, locked, isEcho, hasPending));
+
+            if (!decision.Accepted)
+            {
+                LogRejection(transcript, decision.Reason);
+                return decision;
+            }
+
+            await SendToJarvisLockedAsync(decision.CommandText!, cancellationToken);
             return decision;
         }
-
-        await SendToJarvisAsync(decision.CommandText!, cancellationToken);
-        return decision;
+        finally
+        {
+            _turnLock.Release();
+        }
     }
 
     public async Task<Result<VoiceActionView>> DecideConfirmationOnScreenAsync(
@@ -322,7 +333,7 @@ public sealed class ContinuousListeningService : IAsyncDisposable
         }
     }
 
-    private async Task SendToJarvisAsync(string commandText, CancellationToken cancellationToken)
+    private async Task SendToJarvisLockedAsync(string commandText, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(_userToken))
         {
@@ -330,21 +341,24 @@ public sealed class ContinuousListeningService : IAsyncDisposable
             return;
         }
 
-        await _turnLock.WaitAsync(cancellationToken);
+        using var turnCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        turnCts.CancelAfter(_turnTimeout);
+
         try
         {
-            var socket = await EnsureConnectedAsync(cancellationToken);
+            var socket = await EnsureConnectedAsync(turnCts.Token);
             if (socket is null)
             {
                 return;
             }
 
             _output.WriteLine($"[Listening -> JARVIS] Sending: \"{commandText}\"");
-            await socket.SendMessageAsync(new VoiceMessage("say", Text: commandText), cancellationToken);
+            await socket.SendMessageAsync(new VoiceMessage("say", Text: commandText), turnCts.Token);
 
-            while (!cancellationToken.IsCancellationRequested)
+            var hasNeedsConfirmation = false;
+            while (!turnCts.Token.IsCancellationRequested)
             {
-                var message = await socket.ReceiveMessageAsync(cancellationToken);
+                var message = await socket.ReceiveMessageAsync(turnCts.Token);
                 if (message is null)
                 {
                     _output.WriteLine("[Listening] Voice connection closed by server.");
@@ -368,7 +382,10 @@ public sealed class ContinuousListeningService : IAsyncDisposable
                         _output.WriteLine($"[JARVIS] {message.Text}");
                     }
 
-                    HandleReplyActions(message);
+                    if (HandleReplyActions(message))
+                    {
+                        hasNeedsConfirmation = true;
+                    }
 
                     if (!string.IsNullOrWhiteSpace(message.Text))
                     {
@@ -385,15 +402,23 @@ public sealed class ContinuousListeningService : IAsyncDisposable
                     break;
                 }
             }
+
+            // Defense in depth: server session's _pending lives per socket. Reset socket after reply with NeedsConfirmation actions
+            // so subsequent turns cannot count as voice consent on the server socket.
+            if (hasNeedsConfirmation)
+            {
+                await ResetSocketAsync();
+            }
+        }
+        catch (OperationCanceledException) when (turnCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            _output.WriteLine($"[Listening] Voice turn timed out after {_turnTimeout.TotalSeconds:F0}s. Resetting voice connection.");
+            await ResetSocketAsync();
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _output.WriteLine($"[Listening] Voice turn failed: {ex.Message}");
             await ResetSocketAsync();
-        }
-        finally
-        {
-            _turnLock.Release();
         }
     }
 
@@ -407,25 +432,41 @@ public sealed class ContinuousListeningService : IAsyncDisposable
         await ResetSocketAsync();
 
         var socket = _voiceWebSocketFactory();
-        var uri = BuildVoiceUri(_serverUrl);
-        await socket.ConnectAsync(uri, _userToken, cancellationToken);
-        await socket.SendMessageAsync(new VoiceMessage("hello", ConversationId: ConversationId), cancellationToken);
-
-        var ready = await socket.ReceiveMessageAsync(cancellationToken);
-        if (ready?.Type != "ready")
+        try
         {
-            _output.WriteLine($"[Listening] Expected 'ready' on {uri}, got '{ready?.Type}' ({ready?.Code}).");
-            await socket.DisposeAsync();
-            return null;
-        }
+            var uri = BuildVoiceUri(_serverUrl);
+            await socket.ConnectAsync(uri, _userToken, cancellationToken);
+            await socket.SendMessageAsync(new VoiceMessage("hello", ConversationId: ConversationId), cancellationToken);
 
-        if (ready.ConversationId is { } convId)
+            var ready = await socket.ReceiveMessageAsync(cancellationToken);
+            if (ready?.Type != "ready")
+            {
+                _output.WriteLine($"[Listening] Expected 'ready' on {uri}, got '{ready?.Type}' ({ready?.Code}).");
+                await socket.DisposeAsync();
+                return null;
+            }
+
+            if (ready.ConversationId is { } convId)
+            {
+                ConversationId = convId;
+            }
+
+            _voiceSocket = socket;
+            return socket;
+        }
+        catch
         {
-            ConversationId = convId;
-        }
+            try
+            {
+                await socket.DisposeAsync();
+            }
+            catch
+            {
+                // Best effort cleanup on failure
+            }
 
-        _voiceSocket = socket;
-        return socket;
+            throw;
+        }
     }
 
     private async Task ResetSocketAsync()
@@ -445,7 +486,7 @@ public sealed class ContinuousListeningService : IAsyncDisposable
         }
     }
 
-    private void HandleReplyActions(VoiceMessage reply)
+    private bool HandleReplyActions(VoiceMessage reply)
     {
         var now = _timeProvider.GetUtcNow();
         var added = PendingConfirmations.AddFromReply(reply.Actions, now);
@@ -462,11 +503,15 @@ public sealed class ContinuousListeningService : IAsyncDisposable
             }
 
             _output.WriteLine("[CONFIRMATION REQUIRED] Voice confirmations are disabled. Confirm on screen with '/approve <#|id>' or '/deny <#|id>'.");
+            return true;
         }
         else if (reply.Awaiting == true && PendingConfirmations.HasPending(now))
         {
             _output.WriteLine("[CONFIRMATION REQUIRED] Pending actions still await screen confirmation ('/pending', '/approve', '/deny').");
+            return true;
         }
+
+        return false;
     }
 
     private void StartTrackedSpeech(string text, CancellationToken cancellationToken)

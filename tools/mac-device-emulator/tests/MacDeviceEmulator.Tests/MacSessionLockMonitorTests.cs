@@ -73,13 +73,13 @@ public sealed class MacSessionLockMonitorTests
     }
 
     [Fact]
-    public async Task Returns_false_when_ioreg_fails_or_empty()
+    public async Task Returns_true_when_ioreg_fails_or_empty()
     {
         _runner.RunAsync("ioreg", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
             .Returns(new ProcessResult(1, "", "ioreg error"));
 
         var locked = await _monitor.IsLockedAsync();
 
-        Assert.False(locked);
+        Assert.True(locked);
     }
 }

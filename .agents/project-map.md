@@ -31,7 +31,7 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
 - **`src/Jarvis/`** (`/jarvis`): AI assistant runs, conversations, external MCP gateway, tool confirmations, voice bridge.
   - Endpoints: `src/Jarvis/Jarvis.Api/Endpoints/` (`AssistantEndpoints.cs`, `ConversationEndpoints.cs`)
   - MCP Gateway: `src/Jarvis/Jarvis.Api/Gateway/McpGateway.cs`
-  - Voice WebSocket & Session: `src/Jarvis/Jarvis.Api/Voice/` (`VoiceEndpoint.cs` at `/jarvis/voice/ws`, `VoiceSession.cs`)
+  - Voice WebSocket & Session: `src/Jarvis/Jarvis.Api/Voice/` (`VoiceEndpoint.cs` at `/jarvis/voice`, `VoiceSession.cs`)
 - **`src/Contracts/`**: `HomeApps.Contracts` (`IIntegrationEvent` records).
 - **`src/BuildingBlocks/`**: `HomeApps.BuildingBlocks.{Domain,Application,Infrastructure,Api,Mcp}`, `HomeApps.Plugins`, `HomeApps.Plugins.Hosting`.
 - **`src/Web/`**: Vue 3 SPA (`src/features/{account,admin,auth,devices,home,homemix,households,jarvis,notifications,plugins,wall,widgets}`, `src/api/types/`).
@@ -44,7 +44,7 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
     - Networking/WS: `Services/VoiceWebSocket.cs`, `Services/DeviceWebSocket.cs`, `Services/HomeAppsClient.cs`
     - Abstractions: `Abstractions/` (`IUtteranceGate.cs`, `ISpeechInput.cs`, `ISessionLockMonitor.cs`, `IVoiceWebSocket.cs`, `IListeningIndicator.cs`)
     - Protocol & Config: `Protocol/` (`Descriptors.cs`, `ProtocolMessages.cs`, `VoiceMessage.cs`), `Configuration/` (`EmulatorOptions.cs`, `EmulatorStorage.cs`)
-  - Tests: `tools/mac-device-emulator/tests/MacDeviceEmulator.Tests/` (`MacDeviceEmulator.Tests.csproj`, `DevicesTests.cs`, `DescriptorsTests.cs`, `MacSystemTests.cs`, `StorageTests.cs`)
+  - Tests: `tools/mac-device-emulator/tests/MacDeviceEmulator.Tests/` (`MacDeviceEmulator.Tests.csproj`, `ContinuousListeningServiceTests.cs`, `LocalUtteranceGateTests.cs`, `VoiceConsentDetectorTests.cs`, `SpeechEchoSuppressorTests.cs`, `MacSessionLockMonitorTests.cs`, `PendingConfirmationStoreTests.cs`, `ConsoleCommandHandlerTests.cs`, `ChannelSpeechInputTests.cs`, `ConsoleListeningIndicatorTests.cs`, `DevicesTests.cs`, `DescriptorsTests.cs`, `MacSystemTests.cs`, `StorageTests.cs`, `EmulatorOptionsTests.cs`)
 
 ## Tests (`tests/`)
 - Per-service: `tests/{Accounts,Auth,Devices,HomeMix,Households,Jarvis,Notifications}/*.Tests`

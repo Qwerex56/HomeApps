@@ -86,9 +86,14 @@ public sealed class PendingConfirmationStoreTests
         Assert.NotNull(targetPrefix);
         Assert.Equal(id2, targetPrefix.Id);
 
-        // Null token resolves to last or only
-        var targetDefault = _store.ResolveTarget(null, _now);
-        Assert.NotNull(targetDefault);
-        Assert.Equal(id2, targetDefault.Id);
+        // Null token with multiple pending returns null (must specify target)
+        var targetDefaultMulti = _store.ResolveTarget(null, _now);
+        Assert.Null(targetDefaultMulti);
+
+        // Remove one so only 1 remains: null token resolves that single item
+        _store.Remove(id1);
+        var targetDefaultSingle = _store.ResolveTarget(null, _now);
+        Assert.NotNull(targetDefaultSingle);
+        Assert.Equal(id2, targetDefaultSingle.Id);
     }
 }

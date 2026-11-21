@@ -17,7 +17,7 @@ public sealed partial class MacSessionLockMonitor(IProcessRunner runner) : ISess
         var result = await runner.RunAsync("ioreg", ["-n", "Root", "-d1", "-w", "0"], cancellationToken);
         if (result.ExitCode != 0 || string.IsNullOrWhiteSpace(result.StandardOutput))
         {
-            return false;
+            return true;
         }
 
         return ScreenLockedRegex().IsMatch(result.StandardOutput)
