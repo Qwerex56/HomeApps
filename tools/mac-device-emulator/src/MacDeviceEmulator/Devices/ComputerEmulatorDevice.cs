@@ -83,7 +83,21 @@ public sealed class ComputerEmulatorDevice(
             Console.WriteLine($"[{Name}] Executing action 'say': \"{text}\"");
             if (!string.IsNullOrEmpty(text))
             {
-                await macSystem.SayAsync(text, cancellationToken);
+                if (text.Length > 200)
+                {
+                    text = text[..200];
+                }
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await macSystem.SayAsync(text, CancellationToken.None);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[{Name}] Speech failed: {ex.Message}");
+                    }
+                });
             }
 
             var answer = new LinkMessage("action_result", Id: actionId, Ok: true, Text: "Spoken by computer");

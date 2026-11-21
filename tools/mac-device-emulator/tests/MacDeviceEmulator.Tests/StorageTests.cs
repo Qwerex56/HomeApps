@@ -48,4 +48,63 @@ public sealed class StorageTests
             }
         }
     }
+
+    [Fact]
+    public async Task Storage_handles_concurrent_mutations_and_saves()
+    {
+        var tempFile = Path.Combine(Path.GetTempPath(), $"emulator-storage-conc-{Guid.NewGuid():N}.json");
+        try
+        {
+            var storage = new EmulatorStorage();
+            var tasks = new List<Task>();
+
+            for (var i = 0; i < 10; i++)
+            {
+                var key = $"dev_{i}";
+                tasks.Add(Task.Run(async () =>
+                {
+                    var state = new PairedDeviceState
+                    {
+                        DeviceId = Guid.NewGuid(),
+                        HouseholdId = Guid.NewGuid(),
+                        Name = $"Device {key}",
+                        Secret = $"sec_{key}",
+                        Slug = key,
+                        Purpose = "assistant"
+                    };
+                    await storage.SaveDeviceAsync(key, state, tempFile);
+                }));
+            }
+
+            await Task.WhenAll(tasks);
+
+            var loaded = await EmulatorStorage.LoadAsync(tempFile);
+            Assert.Equal(10, loaded.Devices.Count);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Storage_throws_when_file_is_corrupt()
+    {
+        var tempFile = Path.Combine(Path.GetTempPath(), $"emulator-storage-bad-{Guid.NewGuid():N}.json");
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, "{ broken json ... ");
+            await Assert.ThrowsAsync<InvalidOperationException>(() => EmulatorStorage.LoadAsync(tempFile));
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
 }

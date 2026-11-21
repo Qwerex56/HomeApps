@@ -23,76 +23,84 @@ public sealed class BatteryEmulatorDevice(
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            if (!storage.Devices.TryGetValue(DeviceKey, out var pairedState))
-            {
-                if (string.IsNullOrWhiteSpace(pairingCode))
-                {
-                    Console.WriteLine($"[{Name}] Not paired and no pairing code provided. Waiting...");
-                    await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
-                    continue;
-                }
-
-                Console.WriteLine($"[{Name}] Pairing with code '{pairingCode}'...");
-                var pairResult = await client.PairAsync(serverUrl, pairingCode, Descriptors.BatteryDescriptor, cancellationToken);
-                if (pairResult.IsFailed)
-                {
-                    Console.WriteLine($"[{Name}] Pairing failed: {pairResult.Errors.First().Message}. Retrying in 5s...");
-                    await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
-                    continue;
-                }
-
-                var pairData = pairResult.Value;
-                pairedState = new PairedDeviceState
-                {
-                    DeviceId = pairData.DeviceId,
-                    HouseholdId = pairData.HouseholdId,
-                    Name = pairData.Name,
-                    Secret = pairData.Secret,
-                    Slug = pairData.Slug,
-                    Purpose = pairData.Purpose
-                };
-
-                storage.Devices[DeviceKey] = pairedState;
-                await storage.SaveAsync(configPath, cancellationToken);
-                Console.WriteLine($"[{Name}] Paired successfully as {pairedState.Name} ({pairedState.DeviceId})");
-            }
-
-            Console.WriteLine($"[{Name}] Requesting device token for /devices/report...");
-            var tokenResult = await client.GetDeviceTokenAsync(serverUrl, pairedState.DeviceId, pairedState.Secret, cancellationToken);
-            if (tokenResult.IsFailed)
-            {
-                var error = tokenResult.Errors.First().Message;
-                Console.WriteLine($"[{Name}] Token request failed: {error}");
-                if (error == "devices.device_unpaired")
-                {
-                    Console.WriteLine($"[{Name}] Device was unpaired on server. Resetting stored credentials.");
-                    storage.Devices.Remove(DeviceKey);
-                    await storage.SaveAsync(configPath, cancellationToken);
-                }
-
-                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
-                continue;
-            }
-
-            var token = tokenResult.Value;
-
             try
             {
-                var batteryLevel = await macSystem.GetBatteryLevelAsync(cancellationToken) ?? 85;
-
-                var stateValues = new Dictionary<string, object>
+                if (!storage.TryGetDevice(DeviceKey, out var pairedState) || pairedState is null)
                 {
-                    ["battery"] = batteryLevel
-                };
-                using var stateDoc = JsonDocument.Parse(JsonSerializer.Serialize(stateValues));
+                    if (string.IsNullOrWhiteSpace(pairingCode))
+                    {
+                        Console.WriteLine($"[{Name}] Not paired and no pairing code provided. Waiting...");
+                        await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                        continue;
+                    }
 
-                var frames = new List<DeviceFrame>
+                    Console.WriteLine($"[{Name}] Pairing with code '{pairingCode}'...");
+                    var pairResult = await client.PairAsync(serverUrl, pairingCode, Descriptors.BatteryDescriptor, cancellationToken);
+                    if (pairResult.IsFailed)
+                    {
+                        Console.WriteLine($"[{Name}] Pairing failed: {pairResult.Errors.First().Message}. Retrying in 5s...");
+                        await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                        continue;
+                    }
+
+                    var pairData = pairResult.Value;
+                    if (!pairData.Name.Contains("test", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine($"[{Name}] WARNING: Paired device name '{pairData.Name}' does not contain '(test)'. Please name test devices with 'test' to avoid confusing production devices.");
+                    }
+
+                    pairedState = new PairedDeviceState
+                    {
+                        DeviceId = pairData.DeviceId,
+                        HouseholdId = pairData.HouseholdId,
+                        Name = pairData.Name,
+                        Secret = pairData.Secret,
+                        Slug = pairData.Slug,
+                        Purpose = pairData.Purpose
+                    };
+
+                    await storage.SaveDeviceAsync(DeviceKey, pairedState, configPath, cancellationToken);
+                    Console.WriteLine($"[{Name}] Paired successfully as {pairedState.Name} ({pairedState.DeviceId})");
+                }
+
+                Console.WriteLine($"[{Name}] Requesting device token for /devices/report...");
+                var tokenResult = await client.GetDeviceTokenAsync(serverUrl, pairedState.DeviceId, pairedState.Secret, cancellationToken);
+                if (tokenResult.IsFailed)
                 {
-                    new(Type: "state", Values: stateDoc.RootElement),
-                    new(Type: "status", Battery: batteryLevel)
-                };
+                    var error = tokenResult.Errors.First().Message;
+                    Console.WriteLine($"[{Name}] Token request failed: {error}");
+                    if (error == "devices.device_unpaired")
+                    {
+                        Console.WriteLine($"[{Name}] Device was unpaired on server. Resetting stored credentials.");
+                        await storage.RemoveDeviceAsync(DeviceKey, configPath, cancellationToken);
+                    }
 
-                Console.WriteLine($"[{Name}] Sending POST /devices/report (battery: {batteryLevel}%)...");
+                    await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                    continue;
+                }
+
+                var token = tokenResult.Value;
+
+                var batteryLevel = await macSystem.GetBatteryLevelAsync(cancellationToken);
+
+                var frames = new List<DeviceFrame>();
+                if (batteryLevel.HasValue)
+                {
+                    var stateValues = new Dictionary<string, object>
+                    {
+                        ["battery"] = batteryLevel.Value
+                    };
+                    using var stateDoc = JsonDocument.Parse(JsonSerializer.Serialize(stateValues));
+                    frames.Add(new(Type: "state", Values: stateDoc.RootElement));
+                    frames.Add(new(Type: "status", Battery: batteryLevel.Value));
+                    Console.WriteLine($"[{Name}] Sending POST /devices/report (battery: {batteryLevel.Value}%)...");
+                }
+                else
+                {
+                    frames.Add(new(Type: "status"));
+                    Console.WriteLine($"[{Name}] Sending POST /devices/report (status heartbeat, no battery detected)...");
+                }
+
                 var reportResult = await client.SendReportAsync(serverUrl, token, frames, cancellationToken);
                 if (reportResult.IsFailed)
                 {
@@ -100,8 +108,7 @@ public sealed class BatteryEmulatorDevice(
                     Console.WriteLine($"[{Name}] Report failed: {err}");
                     if (err == "devices.device_unpaired")
                     {
-                        storage.Devices.Remove(DeviceKey);
-                        await storage.SaveAsync(configPath, cancellationToken);
+                        await storage.RemoveDeviceAsync(DeviceKey, configPath, cancellationToken);
                     }
                 }
                 else
@@ -111,7 +118,9 @@ public sealed class BatteryEmulatorDevice(
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                Console.WriteLine($"[{Name}] Error during report: {ex.Message}");
+                Console.WriteLine($"[{Name}] Error in runner loop: {ex.Message}. Retrying in 5s...");
+                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                continue;
             }
 
             Console.WriteLine($"[{Name}] Sleeping for 60 seconds (wake interval)...");

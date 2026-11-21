@@ -111,12 +111,12 @@ public static class Program
 
     private static EmulatorOptions ParseArguments(string[] args)
     {
-        var server = "http://localhost:5000";
+        var server = "https://app.localhost";
         var config = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".homeapps", "mac-devices.json");
         string? pairSatellite = null;
         string? pairPowered = null;
         string? pairBattery = null;
-        string? userToken = null;
+        string? userToken = Environment.GetEnvironmentVariable("HOMEAPPS_USER_TOKEN");
 
         bool runSat = true;
         bool runPow = true;

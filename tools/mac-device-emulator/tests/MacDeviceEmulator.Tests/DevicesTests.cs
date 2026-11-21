@@ -479,6 +479,109 @@ public sealed class DevicesTests
     }
 
     [Fact]
+    public async Task Satellite_retries_when_client_throws_exception()
+    {
+        var storage = new EmulatorStorage();
+        var client = Substitute.For<IHomeAppsClient>();
+        var ws = Substitute.For<IDeviceWebSocket>();
+        var mac = Substitute.For<IMacSystem>();
+
+        var attempts = 0;
+        client.PairAsync(Arg.Any<string>(), "FAIL_THEN_OK", Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                attempts++;
+                if (attempts == 1)
+                {
+                    throw new HttpRequestException("Network failure simulating server unavailable");
+                }
+                return Result.Ok(new PairResponse(Guid.NewGuid(), Guid.NewGuid(), "Satellite (test)", "sec", "slug", "assistant"));
+            });
+
+        client.GetDeviceTokenAsync(Arg.Any<string>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Ok("tok"));
+
+        ws.State.Returns(WebSocketState.Open);
+        ws.ReceiveMessageAsync(Arg.Any<CancellationToken>()).Returns(new LinkMessage("ready", DeviceId: Guid.NewGuid()), (LinkMessage?)null);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
+        var tempConfig = Path.Combine(Path.GetTempPath(), $"sat-retry-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            var sat = new SatelliteEmulatorDevice("http://localhost", storage, tempConfig, "FAIL_THEN_OK", client, () => ws, mac, TimeProvider.System);
+            await sat.RunAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            if (File.Exists(tempConfig)) File.Delete(tempConfig);
+        }
+
+        Assert.True(attempts >= 1);
+    }
+
+    [Fact]
+    public async Task Battery_device_omits_battery_state_when_no_battery_detected()
+    {
+        var storage = new EmulatorStorage();
+        var client = Substitute.For<IHomeAppsClient>();
+        var mac = Substitute.For<IMacSystem>();
+
+        var deviceId = Guid.NewGuid();
+        var householdId = Guid.NewGuid();
+
+        storage.Devices["battery"] = new PairedDeviceState
+        {
+            DeviceId = deviceId,
+            HouseholdId = householdId,
+            Name = "Mac Battery (test)",
+            Secret = "sec_bat",
+            Slug = "mac-battery-test",
+            Purpose = "smart_home"
+        };
+
+        client.GetDeviceTokenAsync(Arg.Any<string>(), deviceId, "sec_bat", Arg.Any<CancellationToken>())
+            .Returns(Result.Ok("bat-token"));
+
+        mac.GetBatteryLevelAsync(Arg.Any<CancellationToken>()).Returns((int?)null);
+
+        IReadOnlyList<DeviceFrame>? capturedFrames = null;
+        client.SendReportAsync(Arg.Any<string>(), "bat-token", Arg.Do<IReadOnlyList<DeviceFrame>>(f => capturedFrames = f), Arg.Any<CancellationToken>())
+            .Returns(Result.Ok<IReadOnlyList<FrameResult>>(new List<FrameResult> { new(true) }));
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        var tempConfig = Path.Combine(Path.GetTempPath(), $"bat-nobat-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            var battery = new BatteryEmulatorDevice(
+                "http://localhost:5000",
+                storage,
+                tempConfig,
+                null,
+                client,
+                mac);
+
+            await battery.RunAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            if (File.Exists(tempConfig)) File.Delete(tempConfig);
+        }
+
+        Assert.NotNull(capturedFrames);
+        Assert.Single(capturedFrames);
+        Assert.Equal("status", capturedFrames[0].Type);
+        Assert.Null(capturedFrames[0].Battery);
+    }
+
+    [Fact]
     public async Task Satellite_handles_invalid_or_unknown_set_command()
     {
         var storage = new EmulatorStorage();

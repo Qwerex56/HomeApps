@@ -6,13 +6,14 @@ It allows testing HomeApps without physical hardware, running 4 distinct devices
 
 ## Emulated Devices
 
+> **Important**: When creating pairing codes in HomeApps (via Web UI or API), always ensure the device name includes `(test)` (e.g. `Mac Satellite (test)`, `Mac Lamp (test)`, `Mac Weather (test)`). The emulator checks this name upon pairing and logs a warning if `test` is missing.
+
 1. **Mac Satellite (`satellite`, `purpose: assistant`)**
    - Paired using one-time pairing code via `POST /devices/pair`.
    - Connects to WebSocket `/devices/link` with device token from `POST /auth/devices/token`.
-   - Capabilities: `voice`, `audio`.
+   - Capabilities: `voice`, `audio`. (Note: Declares `voice` capability in its descriptor for assistant discovery, but does not stream audio to `/jarvis/voice` as a software emulator; it implements the `say` action and volume/mute controls).
    - Controls: Mac volume and mute (via `osascript`).
-   - Actions: `say` (speaks text aloud on Mac using `say` CLI).
-   - Name includes `(test)`.
+   - Actions: `say` (speaks text aloud on Mac using `say` CLI; text is capped at 200 characters and executed without blocking WebSocket heartbeats).
 
 2. **Mac Smart Home Powered (`powered`, `purpose: smart_home`)**
    - Paired using one-time pairing code via `POST /devices/pair`.
@@ -21,24 +22,24 @@ It allows testing HomeApps without physical hardware, running 4 distinct devices
    - Controls: Mac volume & mute, simulated desk lamp (`lamp.on`).
    - Sensors: CPU load (`cpu_load` via `top` / `sysctl`).
    - Periodic state & heartbeat status report every 60 seconds.
-   - Name includes `(test)`.
 
 3. **Mac Smart Home Battery (`battery`, `purpose: smart_home`, `sleepy: true`)**
    - Paired using one-time pairing code via `POST /devices/pair`.
    - No persistent WebSocket link: wakes and sends batch frames via `POST /devices/report` every 60 seconds.
-   - Reports real Mac battery percentage in `status.battery` and `state.battery` via `pmset -g batt`.
+   - Reports real Mac battery percentage in `status.battery` and `state.battery` via `pmset -g batt`. If no battery is present (e.g. Mac mini / desktop Mac), it omits the `battery` sensor values and sends only status heartbeats.
    - Can be stopped independently (`--without-battery` or by exiting) to test the 2.5-period (150 s) silence/missing detection in HomeApps.
-   - Name includes `(test)`.
 
 4. **Mac Computer (`computer`, `purpose: computer`)**
    - Connects to `/devices/link` using user's personal Bearer token.
    - Name: `MacBook (test)` with purpose `computer`.
    - Controls: Mac volume & mute.
    - Actions: `say`.
+   - User token note: Bearer tokens expire. Obtain a token by logging into HomeApps Web UI (`localStorage.getItem('token')`) or via `POST /auth/login`. When the token expires, update `--user-token` or `HOMEAPPS_USER_TOKEN`.
 
 ## Credentials & Persistence
 
 Paired device secrets and metadata are persisted locally in `~/.homeapps/mac-devices.json` (or a custom path via `--config`).
+The file is created with owner-only permissions (`0600` on Unix/macOS) and updated atomically with concurrency locking across device runner tasks.
 When `devices.device_unpaired` is returned by the server, the stored secret is cleared and the device returns to pairing mode.
 
 ## Usage
@@ -60,12 +61,12 @@ dotnet run --project tools/mac-device-emulator/src/MacDeviceEmulator/MacDeviceEm
 ```
 
 Options:
-- `--server <url>`: HomeApps server URL (default: `http://localhost:5000`).
+- `--server <url>`: HomeApps server URL (default: `https://app.localhost`).
 - `--config <path>`: Path to local state JSON file (default: `~/.homeapps/mac-devices.json`).
 - `--pair-satellite <code>`: 8-character pairing code for the Satellite device.
 - `--pair-powered <code>`: 8-character pairing code for the Powered smart home device.
 - `--pair-battery <code>`: 8-character pairing code for the Battery device.
-- `--user-token <token>`: User Bearer token to connect the Computer device.
+- `--user-token <token>`: User Bearer token to connect the Computer device. Can also be set via the `HOMEAPPS_USER_TOKEN` environment variable to prevent leaking tokens in `ps` or shell history.
 - `--only-satellite`: Run only the Satellite device.
 - `--only-powered`: Run only the Powered device.
 - `--only-battery`: Run only the Battery device.

@@ -37,7 +37,7 @@ public static class Descriptors
           "input": {
             "type": "object",
             "properties": {
-              "text": { "type": "string" }
+              "text": { "type": "string", "maxLength": 200 }
             },
             "required": ["text"]
           }
@@ -147,7 +147,7 @@ public static class Descriptors
           "input": {
             "type": "object",
             "properties": {
-              "text": { "type": "string" }
+              "text": { "type": "string", "maxLength": 200 }
             },
             "required": ["text"]
           }
