@@ -1,4 +1,5 @@
 using FluentResults;
+using HomeApps.BuildingBlocks.Api.Auth;
 using HomeApps.BuildingBlocks.Api.Endpoints;
 using HomeApps.BuildingBlocks.Api.Results;
 using HomeApps.BuildingBlocks.Application.Abstractions;
@@ -10,6 +11,7 @@ using Jarvis.Application.Common;
 using Jarvis.Application.Runs.Ask;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using HttpResults = Microsoft.AspNetCore.Http.Results;
 
 namespace Jarvis.Api.Endpoints;
@@ -34,9 +36,9 @@ internal sealed class AssistantEndpoints : IEndpoint
             (await sender.Send(new AskCommand(user.RequiredUserId, body.Text, body.HouseholdId, "app", null, []), ct)).ToHttpResult())
             .Produces<AnswerView>();
 
-        api.MapGet("/confirmations", async (bool? pending, HttpContext http, ICurrentUser user, ISender sender, CancellationToken ct) =>
+        api.MapGet("/confirmations", async (bool? pending, HttpContext http, ICurrentUser user, ISender sender, IOptions<JwtOptions> jwt, CancellationToken ct) =>
         {
-            if (IsConnectedApp(http))
+            if (IsConnectedApp(http, jwt.Value))
             {
                 return Result.Fail(ConnectedAppForbidden).ToHttpResult();
             }
@@ -50,9 +52,9 @@ internal sealed class AssistantEndpoints : IEndpoint
         })
         .Produces<IReadOnlyList<ActionView>>();
 
-        api.MapPost("/confirmations/{id:guid}", async (Guid id, DecisionRequest body, HttpContext http, ICurrentUser user, ISender sender, CancellationToken ct) =>
+        api.MapPost("/confirmations/{id:guid}", async (Guid id, DecisionRequest body, HttpContext http, ICurrentUser user, ISender sender, IOptions<JwtOptions> jwt, CancellationToken ct) =>
         {
-            if (IsConnectedApp(http))
+            if (IsConnectedApp(http, jwt.Value))
             {
                 return Result.Fail(ConnectedAppForbidden).ToHttpResult();
             }
@@ -62,6 +64,8 @@ internal sealed class AssistantEndpoints : IEndpoint
         .Produces<ActionView>();
     }
 
-    private static bool IsConnectedApp(HttpContext context) =>
-        context.User.HasClaim(c => c.Type == HomeApps.BuildingBlocks.Api.Auth.ClaimNames.ClientId);
+    private static bool IsConnectedApp(HttpContext context, JwtOptions jwt) =>
+        !context.User.Claims.Any(c =>
+            (c.Type == ClaimNames.Audience || c.Type == "aud")
+            && string.Equals(c.Value, jwt.Audience, StringComparison.Ordinal));
 }

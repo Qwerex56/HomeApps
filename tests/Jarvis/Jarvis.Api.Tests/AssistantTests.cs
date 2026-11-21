@@ -105,6 +105,17 @@ public sealed class AssistantTests(JarvisFactory factory) : IDisposable
         Assert.Equal(HttpStatusCode.Forbidden, decide.StatusCode);
     }
 
+    [Fact]
+    public async Task A_first_party_user_with_client_id_can_list_confirmations()
+    {
+        var firstPartyToken = TestJwt.CreateTokenWithClient(_person, clientId: "homeapps-web");
+        var firstPartyClient = factory.CreateClient(firstPartyToken);
+
+        var list = await firstPartyClient.GetAsync("/jarvis/api/confirmations");
+
+        Assert.Equal(HttpStatusCode.OK, list.StatusCode);
+    }
+
     public void Dispose()
     {
         factory.Brain.IsReady = true;
