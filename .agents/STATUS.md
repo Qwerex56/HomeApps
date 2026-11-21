@@ -1,0 +1,20 @@
+# STATUS
+
+Written only by the Coordinator (agent teams). Read it first when a session starts.
+
+| Feature | Stage | State | Branch | ADR | Updated |
+|---|---|---|---|---|---|
+| household-jarvis-devices | H-0..H-4c | done | smart-devices/* | specs/household-jarvis-devices-adr.md | 2026-11-19 |
+| household-jarvis-devices | H-5 | done (PR #65) | | same | 2026-11-21 |
+| household-jarvis-devices | H-6 | done (PR #64) | | same | 2026-11-19 |
+| household-jarvis-devices | H-7 | done (PR #66) | | same | 2026-11-21 |
+| household-jarvis-devices | H-8 | done (PR #67) | | same | 2026-11-21 |
+| household-jarvis-devices | H-9 | done (PR #68) | feat/household-jarvis-devices-h9 | same | 2026-11-21 |
+| harness | lean-v2 (agent hub, cheaper teams) | doing | harness/lean-v2 | | 2026-11-22 |
+
+## Decisions
+- 2026-11-21 (owner): agy roles run directly from the Coordinator, never through a Claude subagent. Devil's Advocate on agy uses `gemini-4-argon-<effort>`.
+- 2026-11-21 (owner): retro once per feature; one documenter after all stages; reviewer round 1 exhaustive; Devil's Advocate reads `diff.stat` and opens the patch only for blockers.
+
+## Blockers
+- Argon quality as a gate, Haiku as developer and agy token measurement are not measured yet (pilots).
