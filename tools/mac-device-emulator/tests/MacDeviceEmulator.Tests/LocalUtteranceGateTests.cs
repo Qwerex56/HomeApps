@@ -138,6 +138,19 @@ public sealed class LocalUtteranceGateTests
         Assert.Null(decision.CommandText);
     }
 
+    [Theory]
+    [InlineData("Jarvis, włącz radio", "włącz radio")]
+    [InlineData("Hej Jarvis: która godzina?", "która godzina?")]
+    [InlineData("Jarvis, jaka jest pogoda?", "jaka jest pogoda?")]
+    public void Allows_unrelated_commands_when_confirmations_are_pending(string speech, string expectedCommand)
+    {
+        var decision = _gate.Evaluate(speech, new GateContext(false, false, false, HasPendingConfirmations: true));
+
+        Assert.True(decision.Accepted);
+        Assert.Equal(GateRejectionReason.None, decision.Reason);
+        Assert.Equal(expectedCommand, decision.CommandText);
+    }
+
     [Fact]
     public void Allows_custom_wake_words()
     {

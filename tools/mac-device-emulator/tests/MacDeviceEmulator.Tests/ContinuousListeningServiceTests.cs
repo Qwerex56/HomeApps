@@ -152,4 +152,53 @@ public sealed class ContinuousListeningServiceTests
         Assert.True(result.IsSuccess);
         Assert.False(_service.PendingConfirmations.HasPending(_time.GetUtcNow()));
     }
+
+    [Fact]
+    public async Task ProcessUtteranceAsync_when_no_user_token_does_not_open_websocket()
+    {
+        var serviceWithoutToken = new ContinuousListeningService(
+            "https://app.example.com",
+            userToken: null,
+            () => _ws,
+            _mac,
+            _lockMonitor,
+            _echo,
+            _gate,
+            _indicator,
+            _homeAppsClient,
+            _time,
+            startMuted: false,
+            output: TextWriter.Null);
+
+        _gate.Evaluate("Jarvis, test", Arg.Any<GateContext>())
+            .Returns(new GateDecision(true, "test", GateRejectionReason.None));
+
+        var decision = await serviceWithoutToken.ProcessUtteranceAsync("Jarvis, test");
+
+        Assert.True(decision.Accepted);
+        await _ws.DidNotReceiveWithAnyArgs().ConnectAsync(Arg.Any<Uri>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ProcessUtteranceAsync_when_server_returns_error_handles_cleanly()
+    {
+        _gate.Evaluate("Jarvis, błąd", Arg.Any<GateContext>())
+            .Returns(new GateDecision(true, "błąd", GateRejectionReason.None));
+
+        _ws.State.Returns(WebSocketState.None, WebSocketState.Open);
+
+        var incomingMessages = new Queue<VoiceMessage?>([
+            new VoiceMessage("ready"),
+            new VoiceMessage("error", Code: "internal_error", Detail: "Server failure"),
+            new VoiceMessage("done")
+        ]);
+
+        _ws.ReceiveMessageAsync(Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(incomingMessages.Count > 0 ? incomingMessages.Dequeue() : null));
+
+        var decision = await _service.ProcessUtteranceAsync("Jarvis, błąd");
+
+        Assert.True(decision.Accepted);
+        await _mac.DidNotReceiveWithAnyArgs().SayAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
 }
