@@ -3,6 +3,7 @@ using HomeApps.BuildingBlocks.Api.Results;
 using HomeApps.BuildingBlocks.Application.Abstractions;
 using Jarvis.Api.Requests;
 using Jarvis.Application.Actions.Decide;
+using Jarvis.Application.Actions.ListPendingConfirmations;
 using Jarvis.Application.Common;
 using Jarvis.Application.Runs.Ask;
 using MediatR;
@@ -22,6 +23,10 @@ internal sealed class AssistantEndpoints : IEndpoint
         api.MapPost("/ask", async (AskRequest body, ICurrentUser user, ISender sender, CancellationToken ct) =>
             (await sender.Send(new AskCommand(user.RequiredUserId, body.Text, body.HouseholdId, "app", null, []), ct)).ToHttpResult())
             .Produces<AnswerView>();
+
+        api.MapGet("/confirmations", async (bool? pending, ICurrentUser user, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new ListPendingConfirmationsQuery(user.RequiredUserId), ct)).ToHttpResult())
+            .Produces<IReadOnlyList<ActionView>>();
 
         api.MapPost("/confirmations/{id:guid}", async (Guid id, DecisionRequest body, ICurrentUser user, ISender sender, CancellationToken ct) =>
             (await sender.Send(new DecideCommand(user.RequiredUserId, id, body.Approve), ct)).ToHttpResult())
