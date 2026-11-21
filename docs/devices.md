@@ -205,7 +205,7 @@ A satellite belongs to its household but is **not a household member** (stage H-
    instead of a person, so JARVIS acts for the satellite (not a member; its plugin access is the household assistant's level). The household's JARVIS settings also filter the tools of its session (see jarvis.md, H-2).
 
 The Mac bridge is such a satellite after `--pair <code>` (S-1e, see [jarvis.md](jarvis.md) "The Mac bridge"): it
-does steps 1 and 4 itself and keeps the secret in the Keychain.
+does steps 1 and 4 itself and keeps the secret in the Keychain. For local testing without physical hardware, the standalone Mac device emulator (`tools/mac-device-emulator/`, stage H-5) can emulate 4 test device roles (satellite, powered smart home, battery sensor, and computer) using the `homeapps.device/1` protocol; see [tools/mac-device-emulator/README.md](../tools/mac-device-emulator/README.md).
 
 Removing the satellite or making a new code publishes `HouseholdDeviceUnpaired`: Auth stops its secret,
 JARVIS forgets the satellite's conversation. Restoring a removed satellite needs a
