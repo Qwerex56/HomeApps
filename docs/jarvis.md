@@ -126,6 +126,13 @@ agent and text to speech all happen on the server. Plan: `plans/features/jarvis-
   rozpoznaję tego PIN-u."; five in a row lock the satellite for 15 minutes; a PIN two people share asks for the name.
   `Jarvis:HouseholdsUrl` (default `http://households:8080`). Voice recognition has only its place in the flow
   (`IVoicePrints`, nobody recognised).
+- **Continuous listening (H-8):** for personal computers (`purpose: computer`, such as HomeApps.Desktop or the test
+  Mac device emulator). Evaluates "is this for me?" entirely locally before anything leaves the machine: wake words
+  ("jarvis", "hej jarvis", etc.), mute state, OS session lock state (`ioreg` on macOS), and self-voice echo suppression
+  during TTS output (`say`). Only accepted commands are forwarded to `/jarvis/voice?speech=local`. Furthermore,
+  actions requiring confirmation cannot be confirmed by voice ("tak"/"nie") in continuous listening mode; voice confirmations
+  are blocked locally and require explicit on-screen confirmation (`POST /jarvis/api/confirmations/{id}`).
+  Desktop/emulator provides a visible listening indicator and mute toggle. Runs only on personal computers, never on ESP satellites.
 - **Engines:** `Jarvis:Voice:SttUrl` and `TtsUrl` speak the OpenAI audio API (`/v1/audio/transcriptions`,
   `/v1/audio/speech`), so Speaches, a whisper server or a cloud service is only a URL (`ApiKey` for a cloud one).
   Defaults: `SttModel` `deepdml/faster-whisper-large-v3-turbo-ct2`, `TtsModel` `speaches-ai/piper-pl_PL-gosia-medium`,
