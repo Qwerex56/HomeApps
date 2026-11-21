@@ -31,6 +31,25 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 
 ### Added
 
+- **Household JARVIS tab and live device stream (H-9):** the household "Urządzenia" tab is now **JARVIS**
+  (`/homes/:id/devices`), combining household assistant settings, device pairing, live state/controls, event history,
+  and HomeMix widget device selection.
+  - Devices API & SSE stream: `DeviceDescriptorView` now includes `controls[]`, `sensors[]`, `events[]`, `sleepy`, and
+    (for Admin+) `jarvis` text, always as non-null arrays; `status` stream frames carry `lowBattery`; new `changed`
+    stream event (`paired`, `renamed`, `notes`, `jarvis`, `descriptor`, `removed`, `restored`) notifies open tabs of
+    device lifecycle and configuration changes.
+  - Web UI (`features/devices`): `AssistantCard` for household JARVIS settings (`enabled`, `name`, `accessLevel`,
+    `toolSources` via `assistantFlags.ts`, `eventDays`, `locationEventDays`), devices grouped by purpose (`assistant`,
+    `smart_home`) with a link to "Moje komputery", schema-driven `ControlWidget` (switch, slider committing on release,
+    select, button, number, text; 20 s confirmation timeout without optimistic state), `SensorList`, lazy `DeviceEvents`
+    with pagination, `DeviceAdminPanel`, and `useDeviceStream` (`fetch` + `ReadableStream` SSE with Bearer token, 15 min
+    reconnect, 30 s polling fallback, and auto-closing the pairing dialog on `changed: paired`). Enforces the
+    Guest / Member / Admin role matrix.
+  - HomeMix widgets: device picker in `WidgetSettingsDialog.vue` (`PUT/DELETE .../widget-devices/{widgetId}`) for
+    widgets matching household devices, and live `device.state` forwarding from the Devices SSE stream in `useMixHost.ts`
+    when the installation has the `devices` capability. See `docs/devices.md`, `docs/web.md`, and
+    `docs/homemix-authoring.md`.
+
 - **Continuous listening for personal computers (H-8):** client-side continuous listening pipeline for personal
   computers running HomeApps.Desktop or the test Mac device emulator (`tools/mac-device-emulator/`).
   - Evaluates utterances locally using an "is this for me?" gate (`LocalUtteranceGate`) before any audio or text leaves

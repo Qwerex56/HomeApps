@@ -111,9 +111,11 @@ A unique-index conflict from two requests at once (the same slug computed twice,
 | POST | `/devices/{id}/pairing-code` | a new code for a household device (admin); the old pairing ends |
 | POST | `/devices/pair` | anonymous, limited per client IP (`Devices:RateLimits:PairPerMinute`, 10 per minute; `429` with `Retry-After`; behind Traefik `Devices:Proxy:ForwardLimit` / `KnownNetworks` make that the caller, not the proxy), `{"code": "ABCD-EFGH"}`: the satellite pairs, answers `{deviceId, householdId, name, secret}` |
 
-In the app (S-1d): **Konto → Komputery** (`/account/devices`) lists my computers; the household's satellites are
-the **Urządzenia** tab of each household (`/homes/<id>/devices`), where admins add one (the code is shown once, as
-`ABCD-EFGH`), give a new code, turn it off or back on and switch "Nie pytaj" per action. The spoken PIN is set in
+In the app (S-1d, H-9): **Konto → Komputery** (`/account/devices`) lists my computers; the household's JARVIS and devices live in
+the **JARVIS** tab of each household (`/homes/<id>/devices`), where admins configure the household assistant (`GET/PUT /households/{id}/assistant`),
+add a device by name (the pairing code is shown as `ABCD-EFGH`), give a new code, rename, edit admin notes, toggle "JARVIS może sterować" and "Pytaj",
+and turn devices off or back on; members control devices (`POST /devices/{id}/set`) and browse lazy-loaded events (`GET /devices/{id}/events`);
+guests view state, health and read-only JARVIS settings (without events or `geo` values). The spoken PIN is set in
 **Konto → Bezpieczeństwo**. The SPA never uses `/devices` itself: that prefix belongs to this service.
 
 ### State, events and heartbeat (H-3b)
@@ -137,8 +139,8 @@ report and the `silent`/`lowBattery` flags) and the events (`DeviceEvents`). For
 
 Add-ons and plugins find devices by what they can do, not by name (household-jarvis-devices.md 2.5).
 `GET /devices/households/{householdId}` takes optional filters, all of which must match, and returns the same
-device list as without them (id, name, slug, purpose, `online`, `descriptor` with `model`, `roles` and
-`capabilities`):
+device list as without them (id, name, slug, purpose, `online`, `descriptor` with `model`, `version`, `roles`,
+`capabilities`, `warnings`, `controls[]`, `sensors[]`, `events[]`, `sleepy`, and for Admin+ `jarvis` and `adminNotes`; list fields in `descriptor` are always arrays, never `null`):
 
 - `capability=weather` matches a device that has it, with or without an instance id (`switch` matches `switch:lampka`);
 - `role=weather_station` matches a role from the descriptor, `model=qwerex56/fotel-v1` the exact model;
@@ -148,9 +150,10 @@ device list as without them (id, name, slug, purpose, `online`, `descriptor` wit
 Guests may read (D6); the household's own role rules apply as for every other call, with the caller's token.
 
 **The stream** is `text/event-stream` and needs the `Authorization` header (use `fetch`, not `EventSource`). Events
-(`event:` name, `data:` JSON): `state` `{deviceId, values, at}`, `status` `{deviceId, silent, battery, ..., at}` (a silent
+(`event:` name, `data:` JSON): `state` `{deviceId, values, at}`, `status` `{deviceId, silent, lowBattery, battery, ..., at}` (a silent
 device sends `silent: true`, the next report `silent: false`), `online` `{deviceId, online}` (the link opened or closed),
-and `event` `{deviceId, name, data, at, isLocation}`, which **members only** receive (guests get no events, D9). A `ping`
+`changed` `{deviceId, reason}` (`paired`, `renamed`, `notes`, `jarvis`, `descriptor`, `removed`, or `restored`),
+and `event` `{deviceId, name, data, at, isLocation}`, which **members only** receive (guests get no events, D9; `state` for `geo` devices also reaches members only, R3). A `ping`
 comes every 20 s. The stream lives in the memory of the one Devices instance. It ends after 15 minutes at most, so the client reconnects and its access is checked again.
 
 **Jobs.** Every 30 s the heartbeat scan marks devices that missed 2.5 periods as silent. Once a day the pruning job asks

@@ -251,9 +251,7 @@ const off = hm.devices.onState(({ deviceId, values }) => update(deviceId, values
 
 Without `widget`, `list({ capability?, role?, model? })` returns the household's devices narrowed by those filters.
 Server side the calls are `GET /homemix/api/installations/{id}/devices`, `.../devices/{deviceId}/state`,
-`POST .../devices/{deviceId}/set` and, for admins, `PUT|DELETE .../widget-devices/{widgetId}` (the pick). Running a
-device's actions and the live `onState` feed in the web host (Devices stream) come with H-9; until then `onState`
-only fires when the host emits `device.state`.
+`POST .../devices/{deviceId}/set` and, for admins, `PUT|DELETE .../widget-devices/{widgetId}` (the pick, also exposed in the widget's ⚙ settings dialog in the web app). The web host forwards live `device.state` events from the household's Devices SSE stream to `onState` whenever the installation has the `devices` capability.
 
 ## Triggers (H-4b)
 
