@@ -66,11 +66,11 @@ public sealed class ExternalConfirmationUnitTests
     }
 
     [Fact]
-    public async Task Repeated_call_with_same_user_tool_and_arguments_returns_the_same_pending_action()
+    public async Task Repeated_call_with_same_user_tool_client_and_arguments_returns_the_same_pending_action()
     {
         var handler = CreateAwaitHandler();
         var command1 = new AwaitExternalConfirmationCommand(_person, "claude-code", "device_mac_open_app", "{\"app\":\"Safari\"}", "mac");
-        var command2 = new AwaitExternalConfirmationCommand(_person, "other-client", "device_mac_open_app", "{\"app\":\"Safari\"}", "mac");
+        var command2 = new AwaitExternalConfirmationCommand(_person, "claude-code", "device_mac_open_app", "{\"app\":\"Safari\"}", "mac");
 
         var result1 = await handler.Handle(command1, CancellationToken.None);
         var result2 = await handler.Handle(command2, CancellationToken.None);
@@ -79,6 +79,22 @@ public sealed class ExternalConfirmationUnitTests
         Assert.Single(_calls.Calls);
         Assert.Single(_runs.Runs);
         Assert.Single(_bus.Published);
+    }
+
+    [Fact]
+    public async Task Calls_from_different_clients_for_same_tool_and_arguments_create_separate_pending_actions()
+    {
+        var handler = CreateAwaitHandler();
+        var command1 = new AwaitExternalConfirmationCommand(_person, "claude-code", "device_mac_open_app", "{\"app\":\"Safari\"}", "mac");
+        var command2 = new AwaitExternalConfirmationCommand(_person, "other-client", "device_mac_open_app", "{\"app\":\"Safari\"}", "mac");
+
+        var result1 = await handler.Handle(command1, CancellationToken.None);
+        var result2 = await handler.Handle(command2, CancellationToken.None);
+
+        Assert.NotEqual(result1.Value, result2.Value);
+        Assert.Equal(2, _calls.Calls.Count);
+        Assert.Equal(2, _runs.Runs.Count);
+        Assert.Equal(2, _bus.Published.Count);
     }
 
     [Fact]
@@ -124,7 +140,7 @@ public sealed class ExternalConfirmationUnitTests
     }
 
     [Fact]
-    public async Task List_pending_confirmations_returns_only_own_pending_newest_first()
+    public async Task List_pending_confirmations_returns_only_own_pending_newest_first_and_excludes_expired()
     {
         var awaitHandler = CreateAwaitHandler();
         var listHandler = CreateListPendingHandler();
@@ -141,6 +157,11 @@ public sealed class ExternalConfirmationUnitTests
         Assert.Equal(2, list.Count);
         Assert.Equal(id2, list[0].Id);
         Assert.Equal(id1, list[1].Id);
+
+        // Advance time past confirmation window for id1
+        _time.Now += ToolCall.ConfirmationWindow;
+        var listAfterExpiry = (await listHandler.Handle(new ListPendingConfirmationsQuery(_person), CancellationToken.None)).Value;
+        Assert.Empty(listAfterExpiry);
     }
 
     private sealed class Clock(DateTimeOffset now) : TimeProvider

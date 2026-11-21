@@ -168,7 +168,7 @@ public sealed class ComputerToolsGatewayTests : IDisposable
     }
 
     [Fact]
-    public async Task An_external_client_calling_a_changing_computer_tool_awaits_confirmation_and_source_is_not_called()
+    public async Task An_external_client_calling_a_changing_computer_tool_awaits_confirmation_and_can_check_action_result()
     {
         await using var mcp = await ExternalAsync();
 
@@ -180,6 +180,21 @@ public sealed class ComputerToolsGatewayTests : IDisposable
         Assert.False(bare.IsError);
         Assert.StartsWith("Not done yet: waits for the person's confirmation in HomeApps (action ", bare.Text);
         Assert.Empty(_factory.DevicesSource.Calls);
+
+        // Extract action id from the response: "Not done yet: waits for the person's confirmation in HomeApps (action {id})"
+        var prefix = "Not done yet: waits for the person's confirmation in HomeApps (action ";
+        var actionIdStr = asks.Text[prefix.Length..^1];
+        Assert.True(Guid.TryParse(actionIdStr, out var actionId));
+
+        // Check result tool while still pending
+        var pendingCheck = await mcp.CallTextAsync("jarvis_action_result", new Dictionary<string, object?> { ["id"] = actionId.ToString() });
+        Assert.False(pendingCheck.IsError);
+        Assert.Equal("pending", pendingCheck.Text);
+
+        // Check result tool with invalid or missing id
+        var missingCheck = await mcp.CallTextAsync("jarvis_action_result", new Dictionary<string, object?>());
+        Assert.True(missingCheck.IsError);
+        Assert.Contains("Pass the action id", missingCheck.Text);
     }
 
     [Fact]

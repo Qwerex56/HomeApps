@@ -93,6 +93,18 @@ public sealed class AssistantTests(JarvisFactory factory) : IDisposable
         Assert.Equal(HttpStatusCode.Forbidden, confirmed.StatusCode);
     }
 
+    [Fact]
+    public async Task A_connected_app_cannot_list_or_decide_confirmations()
+    {
+        var appClient = factory.CreateClient(TestJwt.CreateAppToken(_person, JarvisFactory.Resource, "app_claude"));
+
+        var list = await appClient.GetAsync("/jarvis/api/confirmations");
+        var decide = await appClient.PostAsJsonAsync($"/jarvis/api/confirmations/{Guid.NewGuid()}", new { approve = true });
+
+        Assert.Equal(HttpStatusCode.Forbidden, list.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, decide.StatusCode);
+    }
+
     public void Dispose()
     {
         factory.Brain.IsReady = true;

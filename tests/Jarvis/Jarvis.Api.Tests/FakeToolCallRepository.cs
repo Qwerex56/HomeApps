@@ -18,7 +18,7 @@ internal sealed class FakeToolCallRepository : IToolCallRepository
 
     public Task<IReadOnlyList<ToolCall>> ListPendingForUserAsync(Guid userId, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<ToolCall>>([.. Calls
-            .Where(c => c.UserId == userId && c.Status == ToolCallStatus.NeedsConfirmation)
+            .Where(c => c.UserId == userId && c.Status == ToolCallStatus.NeedsConfirmation && (c.ConfirmBy == null || c.ConfirmBy > DateTimeOffset.UtcNow))
             .OrderByDescending(c => c.CalledAt)]);
 
     public void Add(ToolCall toolCall) => Calls.Add(toolCall);
