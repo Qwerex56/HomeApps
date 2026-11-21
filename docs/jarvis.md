@@ -47,12 +47,16 @@ Settings (`Jarvis`):
   `POST /jarvis/api/confirmations/{id}` `{approve}` or `AssistantConfirmed`, only from the person who asked.
   The gateway keeps a tool's annotations 5 minutes per person, except a device's: those are read from Devices on every
   call, so a device's "Pytaj" / "Nie pytaj" switch works at once (H-4c).
-- **Computer tools (H-4c):** Devices marks the tools of a person's own computer with `_meta` `"homeapps/purpose": "computer"`
+- **Computer tools (H-4c, H-7):** Devices marks the tools of a person's own computer with `_meta` `"homeapps/purpose": "computer"`
   (trusted only from the Devices source). A satellite run (`AssistantRun.Satellite`, also a turn lent to a person by PIN)
   does not list them and a call fails with "This tool is on a person's own computer and cannot be used from a satellite."
-  without reaching the computer. An external MCP client (no run, so nobody can confirm) gets "This action needs the
-  person's confirmation. Use JARVIS in the HomeApps app." for a computer action that is not read-only and asks; read-only
-  ones and "Nie pytaj" ones run, household devices are unchanged. The full confirmation for external clients comes in H-7.
+  without reaching the computer. An external MCP client calling a computer action that is not read-only and asks ("Pytaj") creates an
+  action in `NeedsConfirmation` inside a closed run (`channel: "mcp"`, reference is client ID) and sends `NotificationRequested`
+  ("Wymagane potwierdzenie", category `confirmation`). The MCP gateway returns `Not done yet: waits for the person's confirmation in HomeApps (action {id})`.
+  The person reviews pending confirmations via `GET /jarvis/api/confirmations?pending=true` and approves or rejects via `POST /jarvis/api/confirmations/{id}`
+  (first-party app only; external connected apps receive 403 `jarvis.forbidden`). External MCP clients check status via the read-only MCP tool
+  `jarvis_action_result(id)` (`pending`, `approved` + result text, `denied`, or `expired`). Identical pending requests (same user, tool, and arguments)
+  are idempotent and return the existing action id.
 - **Data:** runs and calls in `homeapps_jarvis`; content erased after 7 days, rows after 30; everything on `UserErased`.
 
 ### Devices in the prompt (H-3c)

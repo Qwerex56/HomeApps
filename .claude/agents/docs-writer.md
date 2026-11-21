@@ -31,7 +31,7 @@ only to make the documentation tell the truth about it.
 
 - Edit only `docs/**`, `README.md` and `CHANGELOG.md`. Never code, tests, `specs/`, `.claude/` or compose files.
 - Don't describe anything the branch doesn't do (no plans, no later stages). English only.
-- Keep tokens low: grep and read line ranges, no full-file reads of large docs.
+- Keep tokens low: consult `.agents/project-map.md` (and `@mapper` in a swarm) for `path:line` lookups first, grep and read line ranges, no full-file reads of large docs.
 - One commit: `git add docs README.md CHANGELOG.md` + `git commit -m "Docs: <stage/feature>"` with the session's
   commit footer if one is configured. No commit if nothing needed changing. Never push.
 

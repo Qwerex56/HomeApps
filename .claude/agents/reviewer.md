@@ -21,7 +21,7 @@ later rounds the previous `.claude/runs/<name>/review-feedback.md`.
 
 ## How you review
 
-1. `git diff --stat <base>...HEAD`, then `git diff <base>...HEAD -- <path>` per area. Read surrounding code only
+1. Consult `.agents/project-map.md` (and `@mapper` in a swarm) for `path:line` lookups instead of scanning the repo. `git diff --stat <base>...HEAD`, then `git diff <base>...HEAD -- <path>` per area. Read surrounding code only
    where a finding needs it. `git log --oneline <base>..HEAD` for the commit story.
 2. Go through the checklist: conformance first (every criterion implemented and tested, contract exactly as the ADR),
    then security, correctness/data, performance, owner's quality rules, Vue states and leaks, tests.
