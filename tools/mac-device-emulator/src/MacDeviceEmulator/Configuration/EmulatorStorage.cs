@@ -45,5 +45,17 @@ public sealed class EmulatorStorage
 
         var json = JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
         await File.WriteAllTextAsync(path, json, cancellationToken);
+
+        if (!OperatingSystem.IsWindows())
+        {
+            try
+            {
+                File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+            }
+            catch
+            {
+                // Best effort on file systems that may not support unix permissions
+            }
+        }
     }
 }

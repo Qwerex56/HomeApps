@@ -34,7 +34,8 @@ public sealed record LinkMessage(
     [property: JsonPropertyName("deviceId")] Guid? DeviceId = null,
     [property: JsonPropertyName("code")] string? Code = null,
     [property: JsonPropertyName("descriptor")] JsonElement? Descriptor = null,
-    [property: JsonPropertyName("value")] JsonElement? Value = null);
+    [property: JsonPropertyName("value")] JsonElement? Value = null,
+    [property: JsonPropertyName("values")] JsonElement? Values = null);
 
 public sealed record LinkAction(
     [property: JsonPropertyName("name")] string Name,

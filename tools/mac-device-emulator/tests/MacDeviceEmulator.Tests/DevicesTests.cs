@@ -73,6 +73,156 @@ public sealed class DevicesTests
     }
 
     [Fact]
+    public async Task Satellite_sends_state_using_values_property_not_value()
+    {
+        var storage = new EmulatorStorage();
+        var client = Substitute.For<IHomeAppsClient>();
+        var ws = Substitute.For<IDeviceWebSocket>();
+        var mac = Substitute.For<IMacSystem>();
+
+        var deviceId = Guid.NewGuid();
+        storage.Devices["satellite"] = new PairedDeviceState
+        {
+            DeviceId = deviceId,
+            HouseholdId = Guid.NewGuid(),
+            Name = "Mac Satellite (test)",
+            Secret = "sec1",
+            Slug = "mac-satellite-test",
+            Purpose = "assistant"
+        };
+
+        client.GetDeviceTokenAsync(Arg.Any<string>(), deviceId, "sec1", Arg.Any<CancellationToken>())
+            .Returns(Result.Ok("token1"));
+
+        ws.State.Returns(WebSocketState.Open);
+        mac.GetVolumeAsync(Arg.Any<CancellationToken>()).Returns(40);
+        mac.IsMutedAsync(Arg.Any<CancellationToken>()).Returns(false);
+
+        var receiveSequence = new Queue<LinkMessage?>(new[]
+        {
+            new LinkMessage("ready", DeviceId: deviceId),
+            null
+        });
+
+        ws.ReceiveMessageAsync(Arg.Any<CancellationToken>()).Returns(_ => Task.FromResult(receiveSequence.Count > 0 ? receiveSequence.Dequeue() : null));
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        var tempConfig = Path.Combine(Path.GetTempPath(), $"sat-val-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            var satellite = new SatelliteEmulatorDevice(
+                "http://localhost:5000",
+                storage,
+                tempConfig,
+                null,
+                client,
+                () => ws,
+                mac,
+                TimeProvider.System);
+
+            await satellite.RunAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            if (File.Exists(tempConfig)) File.Delete(tempConfig);
+        }
+
+        await ws.Received().SendMessageAsync(Arg.Is<LinkMessage>(m => m.Type == "state" && m.Values != null && m.Value == null), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Satellite_does_not_issue_concurrent_receive_calls_while_waiting()
+    {
+        var storage = new EmulatorStorage();
+        var client = Substitute.For<IHomeAppsClient>();
+        var ws = Substitute.For<IDeviceWebSocket>();
+        var mac = Substitute.For<IMacSystem>();
+
+        var deviceId = Guid.NewGuid();
+        storage.Devices["satellite"] = new PairedDeviceState
+        {
+            DeviceId = deviceId,
+            HouseholdId = Guid.NewGuid(),
+            Name = "Mac Satellite (test)",
+            Secret = "sec1",
+            Slug = "mac-satellite-test",
+            Purpose = "assistant"
+        };
+
+        client.GetDeviceTokenAsync(Arg.Any<string>(), deviceId, "sec1", Arg.Any<CancellationToken>())
+            .Returns(Result.Ok("token1"));
+
+        ws.State.Returns(WebSocketState.Open);
+
+        var receiveCalls = 0;
+        var inFlightReceives = 0;
+        var maxConcurrentReceives = 0;
+        var tcs = new TaskCompletionSource<LinkMessage?>();
+
+        ws.ReceiveMessageAsync(Arg.Any<CancellationToken>()).Returns(async callInfo =>
+        {
+            var callIndex = Interlocked.Increment(ref receiveCalls);
+            // First call is waiting for "ready" message
+            if (callIndex == 1)
+            {
+                return new LinkMessage("ready", DeviceId: deviceId);
+            }
+
+            var current = Interlocked.Increment(ref inFlightReceives);
+            if (current > maxConcurrentReceives)
+            {
+                maxConcurrentReceives = current;
+            }
+            try
+            {
+                var ct = callInfo.Arg<CancellationToken>();
+                using var reg = ct.Register(() => tcs.TrySetCanceled(ct));
+                return await tcs.Task;
+            }
+            catch (OperationCanceledException)
+            {
+                return null;
+            }
+            finally
+            {
+                Interlocked.Decrement(ref inFlightReceives);
+            }
+        });
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(2500));
+        var tempConfig = Path.Combine(Path.GetTempPath(), $"sat-conc-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            var satellite = new SatelliteEmulatorDevice(
+                "http://localhost:5000",
+                storage,
+                tempConfig,
+                null,
+                client,
+                () => ws,
+                mac,
+                TimeProvider.System);
+
+            await satellite.RunAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            tcs.TrySetCanceled();
+            if (File.Exists(tempConfig)) File.Delete(tempConfig);
+        }
+
+        Assert.Equal(1, maxConcurrentReceives);
+    }
+
+    [Fact]
     public async Task Battery_device_sends_report_with_state_and_status()
     {
         var storage = new EmulatorStorage();
@@ -220,7 +370,6 @@ public sealed class DevicesTests
             Purpose = "assistant"
         };
 
-        // When token is requested with old secret, server returns devices.device_unpaired error
         client.GetDeviceTokenAsync(Arg.Any<string>(), deviceId, "sec-unpair", Arg.Any<CancellationToken>())
             .Returns(Result.Fail("devices.device_unpaired"));
 
@@ -251,7 +400,6 @@ public sealed class DevicesTests
             if (File.Exists(tempConfig)) File.Delete(tempConfig);
         }
 
-        // Storage for satellite must be cleared
         Assert.False(storage.Devices.ContainsKey("satellite"));
     }
 
@@ -308,7 +456,6 @@ public sealed class DevicesTests
             if (File.Exists(tempConfig)) File.Delete(tempConfig);
         }
 
-        // Storage for battery must be cleared
         Assert.False(storage.Devices.ContainsKey("battery"));
     }
 
@@ -395,7 +542,7 @@ public sealed class DevicesTests
     }
 
     [Fact]
-    public async Task Computer_device_connects_with_user_token_and_handles_mute_set()
+    public async Task Computer_device_connects_with_user_token_and_does_not_send_state()
     {
         var ws = Substitute.For<IDeviceWebSocket>();
         var mac = Substitute.For<IMacSystem>();
@@ -432,5 +579,8 @@ public sealed class DevicesTests
         await ws.Received().ConnectAsync(Arg.Any<Uri>(), "user-bearer-token-123", Arg.Any<CancellationToken>());
         await mac.Received(1).SetMutedAsync(true, Arg.Any<CancellationToken>());
         await ws.Received().SendMessageAsync(Arg.Is<LinkMessage>(m => m.Type == "set_result" && m.Id == "set10" && m.Ok == true), Arg.Any<CancellationToken>());
+
+        // Computer must never send state frame (unsupported on server for computer devices)
+        await ws.DidNotReceive().SendMessageAsync(Arg.Is<LinkMessage>(m => m.Type == "state"), Arg.Any<CancellationToken>());
     }
 }

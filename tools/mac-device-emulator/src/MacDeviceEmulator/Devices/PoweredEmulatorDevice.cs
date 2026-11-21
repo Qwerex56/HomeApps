@@ -110,16 +110,19 @@ public sealed class PoweredEmulatorDevice(
                 await SendCurrentStateAsync(ws, cancellationToken);
 
                 var lastPeriodicReport = timeProvider.GetUtcNow();
+                Task<LinkMessage?>? pendingReceiveTask = null;
 
                 while (ws.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
                 {
-                    var receiveTask = ws.ReceiveMessageAsync(cancellationToken);
+                    pendingReceiveTask ??= ws.ReceiveMessageAsync(cancellationToken);
                     var delayTask = Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
 
-                    var completed = await Task.WhenAny(receiveTask, delayTask);
-                    if (completed == receiveTask)
+                    var completed = await Task.WhenAny(pendingReceiveTask, delayTask);
+                    if (completed == pendingReceiveTask)
                     {
-                        var msg = await receiveTask;
+                        var msg = await pendingReceiveTask;
+                        pendingReceiveTask = null;
+
                         if (msg is null)
                         {
                             Console.WriteLine($"[{Name}] Link closed by server.");
@@ -162,8 +165,8 @@ public sealed class PoweredEmulatorDevice(
             ["cpu_load"] = cpu
         };
 
-        var doc = JsonDocument.Parse(JsonSerializer.Serialize(values));
-        var rawMessage = new LinkMessage("state", Value: doc.RootElement);
+        using var doc = JsonDocument.Parse(JsonSerializer.Serialize(values));
+        var rawMessage = new LinkMessage("state", Values: doc.RootElement);
         await ws.SendMessageAsync(rawMessage, cancellationToken);
     }
 

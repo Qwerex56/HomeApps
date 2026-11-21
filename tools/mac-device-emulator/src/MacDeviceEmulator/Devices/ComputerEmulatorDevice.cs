@@ -55,10 +55,6 @@ public sealed class ComputerEmulatorDevice(
 
                 Console.WriteLine($"[{Name}] Computer link ready! Connected as {readyMsg.DeviceId}");
 
-                var initialVolume = await macSystem.GetVolumeAsync(cancellationToken);
-                var initialMuted = await macSystem.IsMutedAsync(cancellationToken);
-                await SendStateAsync(ws, initialVolume, initialMuted, cancellationToken);
-
                 while (ws.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
                 {
                     var msg = await ws.ReceiveMessageAsync(cancellationToken);
@@ -77,18 +73,6 @@ public sealed class ComputerEmulatorDevice(
                 await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
             }
         }
-    }
-
-    private async Task SendStateAsync(IDeviceWebSocket ws, int volume, bool muted, CancellationToken cancellationToken)
-    {
-        var values = new Dictionary<string, object>
-        {
-            ["volume"] = volume,
-            ["muted"] = muted
-        };
-        var doc = JsonDocument.Parse(JsonSerializer.Serialize(values));
-        var rawMessage = new LinkMessage("state", Value: doc.RootElement);
-        await ws.SendMessageAsync(rawMessage, cancellationToken);
     }
 
     private async Task HandleMessageAsync(IDeviceWebSocket ws, LinkMessage msg, CancellationToken cancellationToken)
@@ -112,16 +96,12 @@ public sealed class ComputerEmulatorDevice(
             {
                 await macSystem.SetVolumeAsync(vol, cancellationToken);
                 await ws.SendMessageAsync(new LinkMessage("set_result", Id: setId, Ok: true), cancellationToken);
-                var muted = await macSystem.IsMutedAsync(cancellationToken);
-                await SendStateAsync(ws, vol, muted, cancellationToken);
             }
             else if (controlName == "muted" && msg.Value is { } muteElem)
             {
                 var isMuted = muteElem.GetBoolean();
                 await macSystem.SetMutedAsync(isMuted, cancellationToken);
                 await ws.SendMessageAsync(new LinkMessage("set_result", Id: setId, Ok: true), cancellationToken);
-                var currentVol = await macSystem.GetVolumeAsync(cancellationToken);
-                await SendStateAsync(ws, currentVol, isMuted, cancellationToken);
             }
             else
             {

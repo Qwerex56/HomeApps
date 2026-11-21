@@ -107,26 +107,22 @@ public sealed class SatelliteEmulatorDevice(
 
                 var initialVolume = await macSystem.GetVolumeAsync(cancellationToken);
                 var initialMuted = await macSystem.IsMutedAsync(cancellationToken);
-                var stateFrame = new LinkMessage(
-                    Type: "state",
-                    Value: null)
-                {
-                    Id = null
-                };
-
                 await SendStateAsync(ws, initialVolume, initialMuted, cancellationToken);
 
                 var lastHeartbeat = timeProvider.GetUtcNow();
+                Task<LinkMessage?>? pendingReceiveTask = null;
 
                 while (ws.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
                 {
-                    var receiveTask = ws.ReceiveMessageAsync(cancellationToken);
+                    pendingReceiveTask ??= ws.ReceiveMessageAsync(cancellationToken);
                     var delayTask = Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
 
-                    var completed = await Task.WhenAny(receiveTask, delayTask);
-                    if (completed == receiveTask)
+                    var completed = await Task.WhenAny(pendingReceiveTask, delayTask);
+                    if (completed == pendingReceiveTask)
                     {
-                        var msg = await receiveTask;
+                        var msg = await pendingReceiveTask;
+                        pendingReceiveTask = null;
+
                         if (msg is null)
                         {
                             Console.WriteLine($"[{Name}] Link closed by server.");
@@ -138,8 +134,7 @@ public sealed class SatelliteEmulatorDevice(
 
                     if (timeProvider.GetUtcNow() - lastHeartbeat >= TimeSpan.FromSeconds(60))
                     {
-                        var statusFrame = new LinkMessage(
-                            Type: "status");
+                        var statusFrame = new LinkMessage(Type: "status");
                         await ws.SendMessageAsync(statusFrame, cancellationToken);
                         lastHeartbeat = timeProvider.GetUtcNow();
                     }
@@ -153,22 +148,15 @@ public sealed class SatelliteEmulatorDevice(
         }
     }
 
-    private async Task SendStateAsync(IDeviceWebSocket ws, int volume, bool muted, CancellationToken cancellationToken)
+    private static async Task SendStateAsync(IDeviceWebSocket ws, int volume, bool muted, CancellationToken cancellationToken)
     {
         var values = new Dictionary<string, object>
         {
             ["volume"] = volume,
             ["muted"] = muted
         };
-        var doc = JsonDocument.Parse(JsonSerializer.Serialize(values));
-        var stateMessage = new LinkMessage(
-            Type: "state",
-            Value: null)
-        {
-            Id = null
-        };
-
-        var rawMessage = new LinkMessage("state", Value: doc.RootElement);
+        using var doc = JsonDocument.Parse(JsonSerializer.Serialize(values));
+        var rawMessage = new LinkMessage("state", Values: doc.RootElement);
         await ws.SendMessageAsync(rawMessage, cancellationToken);
     }
 

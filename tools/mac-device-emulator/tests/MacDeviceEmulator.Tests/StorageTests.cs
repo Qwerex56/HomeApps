@@ -30,6 +30,15 @@ public sealed class StorageTests
             Assert.Equal("Mac Satellite (test)", dev.Name);
             Assert.Equal("secret123", dev.Secret);
             Assert.Equal("assistant", dev.Purpose);
+
+            if (!OperatingSystem.IsWindows())
+            {
+                var mode = File.GetUnixFileMode(tempFile);
+                Assert.True(mode.HasFlag(UnixFileMode.UserRead));
+                Assert.True(mode.HasFlag(UnixFileMode.UserWrite));
+                Assert.False(mode.HasFlag(UnixFileMode.GroupRead));
+                Assert.False(mode.HasFlag(UnixFileMode.OtherRead));
+            }
         }
         finally
         {

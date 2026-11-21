@@ -84,7 +84,7 @@ public sealed class BatteryEmulatorDevice(
                 {
                     ["battery"] = batteryLevel
                 };
-                var stateDoc = JsonDocument.Parse(JsonSerializer.Serialize(stateValues));
+                using var stateDoc = JsonDocument.Parse(JsonSerializer.Serialize(stateValues));
 
                 var frames = new List<DeviceFrame>
                 {

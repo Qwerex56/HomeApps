@@ -23,13 +23,13 @@ public sealed partial class MacSystem(IProcessRunner runner) : IMacSystem
 
     public async Task<int> GetVolumeAsync(CancellationToken cancellationToken = default)
     {
-        var result = await runner.RunAsync("osascript", "-e \"output volume of (get volume settings)\"", cancellationToken);
+        var result = await runner.RunAsync("osascript", ["-e", "output volume of (get volume settings)"], cancellationToken);
         if (result.ExitCode == 0 && int.TryParse(result.StandardOutput.Trim(), CultureInfo.InvariantCulture, out var volume))
         {
             return volume;
         }
 
-        var fullResult = await runner.RunAsync("osascript", "-e \"get volume settings\"", cancellationToken);
+        var fullResult = await runner.RunAsync("osascript", ["-e", "get volume settings"], cancellationToken);
         if (fullResult.ExitCode == 0)
         {
             var match = VolumeRegex().Match(fullResult.StandardOutput);
@@ -45,18 +45,18 @@ public sealed partial class MacSystem(IProcessRunner runner) : IMacSystem
     public async Task SetVolumeAsync(int volume, CancellationToken cancellationToken = default)
     {
         var clamped = Math.Clamp(volume, 0, 100);
-        await runner.RunAsync("osascript", $"-e \"set volume output volume {clamped}\"", cancellationToken);
+        await runner.RunAsync("osascript", ["-e", $"set volume output volume {clamped}"], cancellationToken);
     }
 
     public async Task<bool> IsMutedAsync(CancellationToken cancellationToken = default)
     {
-        var result = await runner.RunAsync("osascript", "-e \"output muted of (get volume settings)\"", cancellationToken);
+        var result = await runner.RunAsync("osascript", ["-e", "output muted of (get volume settings)"], cancellationToken);
         if (result.ExitCode == 0 && bool.TryParse(result.StandardOutput.Trim(), out var muted))
         {
             return muted;
         }
 
-        var fullResult = await runner.RunAsync("osascript", "-e \"get volume settings\"", cancellationToken);
+        var fullResult = await runner.RunAsync("osascript", ["-e", "get volume settings"], cancellationToken);
         if (fullResult.ExitCode == 0)
         {
             var match = MutedRegex().Match(fullResult.StandardOutput);
@@ -72,12 +72,12 @@ public sealed partial class MacSystem(IProcessRunner runner) : IMacSystem
     public async Task SetMutedAsync(bool muted, CancellationToken cancellationToken = default)
     {
         var flag = muted ? "true" : "false";
-        await runner.RunAsync("osascript", $"-e \"set volume output muted {flag}\"", cancellationToken);
+        await runner.RunAsync("osascript", ["-e", $"set volume output muted {flag}"], cancellationToken);
     }
 
     public async Task<double> GetCpuLoadAsync(CancellationToken cancellationToken = default)
     {
-        var result = await runner.RunAsync("top", "-l 1 -n 0", cancellationToken);
+        var result = await runner.RunAsync("top", ["-l", "1", "-n", "0"], cancellationToken);
         if (result.ExitCode == 0)
         {
             var match = CpuRegex().Match(result.StandardOutput);
@@ -93,7 +93,7 @@ public sealed partial class MacSystem(IProcessRunner runner) : IMacSystem
             }
         }
 
-        var sysctl = await runner.RunAsync("sysctl", "-n vm.loadavg", cancellationToken);
+        var sysctl = await runner.RunAsync("sysctl", ["-n", "vm.loadavg"], cancellationToken);
         if (sysctl.ExitCode == 0)
         {
             var match = LoadAvgRegex().Match(sysctl.StandardOutput);
@@ -112,7 +112,7 @@ public sealed partial class MacSystem(IProcessRunner runner) : IMacSystem
 
     public async Task<int?> GetBatteryLevelAsync(CancellationToken cancellationToken = default)
     {
-        var result = await runner.RunAsync("pmset", "-g batt", cancellationToken);
+        var result = await runner.RunAsync("pmset", ["-g", "batt"], cancellationToken);
         if (result.ExitCode == 0)
         {
             var match = BatteryRegex().Match(result.StandardOutput);
@@ -127,7 +127,6 @@ public sealed partial class MacSystem(IProcessRunner runner) : IMacSystem
 
     public async Task SayAsync(string text, CancellationToken cancellationToken = default)
     {
-        var escaped = text.Replace("\"", "\\\"");
-        await runner.RunAsync("say", $"\"{escaped}\"", cancellationToken);
+        await runner.RunAsync("say", ["--", text], cancellationToken);
     }
 }
