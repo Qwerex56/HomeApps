@@ -31,7 +31,7 @@ only to make the documentation tell the truth about it.
 
 - Edit only `docs/**`, `README.md` and `CHANGELOG.md`. Never code, tests, `specs/`, `.claude/` or compose files.
 - Don't describe anything the branch doesn't do (no plans, no later stages). English only.
-- Keep tokens low: consult `.agents/project-map.md` (and `@mapper` in a swarm) for `path:line` lookups first, grep and read line ranges, no full-file reads of large docs.
+- **Hard `@mapper` Lookup Requirement**: Keep tokens low — read `.agents/project-map.md` and `@mapper`'s Stage `path:line` Cheat Sheet first. You may directly `Read` only line ranges already pinpointed by `path:line` in the ADR, `.agents/project-map.md`, Mapper Cheat Sheet, or `git diff <base>...HEAD`. Before using `Grep`/`Glob` or reading an entire doc/source file to locate a doc section, endpoint, or DTO, you **MUST** post a batched query `@mapper Give exact path:line for: <1..N>` and `swarm_wait`.
 - One commit: `git add docs README.md CHANGELOG.md` + `git commit -m "Docs: <stage/feature>"` with the session's
   commit footer if one is configured. No commit if nothing needed changing. Never push.
 

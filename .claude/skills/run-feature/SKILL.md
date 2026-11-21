@@ -28,8 +28,9 @@ Working folder for this run: `.claude/runs/<name>/` (git-ignored).
 4. Note the start time (`date +%Y-%m-%dT%H:%M`) for the usage report.
 5. **Sequential Mapper -> Developer startup**:
    - In Antigravity (`agy`) swarm or Claude Code: spawn `@mapper` in Mode 1 and **wait for `@mapper [mapper ready]`** before spawning `@developer`, ensuring `.agents/project-map.md` reflects current `HEAD`.
+   - **Mandatory Stage `path:line` Cheat Sheet & Active Mode 2**: Instruct `@mapper` in Mode 1 to both update `.agents/project-map.md` AND post a **Stage `path:line` Cheat Sheet** on the board containing exact `path:line` anchors for all existing files, handlers, DTOs, endpoints, Vue components, composables, test fixtures, and doc sections touched by the current stage's ADR, then remain active in **Mode 2 (On-Demand `path:line` Locator)** for the rest of the run.
    - **Swarm-only rule in `agy`**: Forbid mixing `invoke_subagent` with `swarm` during `/run-feature`. Use `swarm{action:"add"}` exclusively from the start.
-   - Pass `.agents/project-map.md` path to all subsequent agents.
+   - Pass `.agents/project-map.md` and the Mapper Cheat Sheet seq `#<n>` to all subsequent agents.
 
 ## 2. Branch
 
@@ -53,17 +54,17 @@ the limits below stay exactly as written. Local mode changes only this:
 - Time is not a limit: the local model is slow, so never stop a run or ask the owner because a step takes long.
 - Say the mode in the first status line and in the PR's Review section ("after <n> round(s), local mode").
 
-Start each subagent with the Agent tool and its agent type; give it **paths, not file contents** (including `.agents/project-map.md` and `@mapper` when running in a swarm so agents query `path:line` pointers instead of scanning the repo). Each subagent waits for the previous one.
+Start each subagent with the Agent tool and its agent type; give it **paths, not file contents** (including `.agents/project-map.md` and the `@mapper` Stage `path:line` Cheat Sheet seq `#<n>`).
+- **HARD `@mapper` REQUIREMENT in every agent brief** (`developer`, `tester`, `reviewer`, `devils-advocate`, `docs-writer`): Never frame `@mapper` as optional (forbidden phrasing: *"w razie potrzeby możesz pytać `@mapper`"*). Explicitly instruct every agent: if any `path:line`, call site, symbol, DTO, component, test fixture, or doc section is not already explicitly given with line numbers in the ADR, `.agents/project-map.md`, Mapper Cheat Sheet, or `git diff`, the agent **MUST** send a batched query `@mapper Give exact path:line for: <1..N>` + `swarm_wait` instead of scanning/grepping the repo or reading full files. Each subagent waits for the previous one.
 
 **Step A, developer** (`developer`, Sonnet):
-> Implement `specs/<name>.md` following `specs/<name>-adr.md`. Base branch `<base>`, you are on `feat/<name>`.
+> Implement `specs/<name>.md` following `specs/<name>-adr.md`. Base branch `<base>`, you are on `feat/<name>`. Read `.agents/project-map.md` and `@mapper`'s Stage `path:line` Cheat Sheet (`#<seq>`). HARD RULE: do not scan/grep the repo or read full files to locate symbols — for any missing `path:line` or call site, post a batched query to `@mapper` and `swarm_wait`.
 > [Round 2+: Fix only the items in `.claude/runs/<name>/review-feedback.md` | the failures in `.claude/runs/<name>/test-report.md`.]
 
 If it reports `BLOCKED` (spec/ADR gap), stop and ask the owner; don't guess around a spec gap.
 
 **Step B, tester** (`tester`, Haiku):
-> Test `specs/<name>.md` and `specs/<name>-adr.md` on `feat/<name>` against base `<base>`. Write missing tests, run
-> everything, return the report.
+> Test `specs/<name>.md` and `specs/<name>-adr.md` on `feat/<name>` against base `<base>`. Read `.agents/project-map.md` and `@mapper`'s Cheat Sheet (`#<seq>`). HARD RULE: query `@mapper` + `swarm_wait` for any `path:line` or test fixture location not in the ADR/Cheat Sheet/`git diff` instead of scanning the repo. Write missing tests, run everything, return the report.
 
 Save its report to `.claude/runs/<name>/test-report.md`. If `VERDICT: FAIL` → back to Step A with the test report
 (this "test loop" may repeat at most **3 times** per round, 5 in local mode; then stop and ask the owner). Tests that were NOT RUN
@@ -71,7 +72,7 @@ because Docker is off: ask the owner to start Docker once; if they can't, carry 
 
 **Step C, reviewer** (`reviewer`, Opus, effort high):
 > Review `feat/<name>` against `<base>` for `specs/<name>.md` and `specs/<name>-adr.md`. Test report:
-> `.claude/runs/<name>/test-report.md`. [Round 2+: previous findings in `.claude/runs/<name>/review-feedback.md`,
+> `.claude/runs/<name>/test-report.md`. Read `.agents/project-map.md` and `@mapper`'s Cheat Sheet (`#<seq>`). HARD RULE: for any symbol or `path:line` lookup outside `git diff <base>...HEAD`, query `@mapper` + `swarm_wait` instead of scanning the repo. [Round 2+: previous findings in `.claude/runs/<name>/review-feedback.md`,
 > previous head `<sha>`.]
 
 Save its output to `.claude/runs/<name>/review-feedback.md` (overwrite; keep the round number at the top).
@@ -82,13 +83,13 @@ Save its output to `.claude/runs/<name>/review-feedback.md` (overwrite; keep the
   or another round).
 
 **Step E, Devil's Advocate Gate** (`devils-advocate`, Opus high), once after `reviewer` `APPROVED`:
-> Verify `<base>...HEAD` against `specs/<name>.md`, `specs/<name>-adr.md`, `.claude/runs/<name>/test-report.md`, and `.claude/runs/<name>/review-feedback.md`.
+> Verify `<base>...HEAD` against `specs/<name>.md`, `specs/<name>-adr.md`, `.claude/runs/<name>/test-report.md`, and `.claude/runs/<name>/review-feedback.md` using `.agents/project-map.md` and `@mapper`'s Cheat Sheet (`#<seq>`). HARD RULE: query `@mapper` + `swarm_wait` for any `path:line` lookup outside `git diff <base>...HEAD`.
 - `CHANGES_REQUESTED` → send exact blockers to `developer` → quick `tester` re-verify → re-check with `devils-advocate` (use `gemini-4-hydrogen-medium` on re-checks in `agy` swarm to preserve Opus quota).
 - `APPROVED` → Step D.
 
 **Step D, docs-writer** (`docs-writer`, Haiku, effort low), once, after Devil's Advocate `APPROVED`:
 > Bring `docs/` and `CHANGELOG.md` in line with `feat/<name>` against base `<base>` for `specs/<name>.md` and
-> `specs/<name>-adr.md`.
+> `specs/<name>-adr.md`. Read `.agents/project-map.md` and `@mapper`'s Cheat Sheet (`#<seq>`). HARD RULE: query `@mapper` + `swarm_wait` for exact doc section `path:line` anchors before reading doc files.
 
 Then check its commit touches only `docs/`, `README.md` or `CHANGELOG.md` (`git show --stat HEAD`); anything else →
 revert that commit and tell the owner. No new review round for a docs-only commit; mention it in the PR.

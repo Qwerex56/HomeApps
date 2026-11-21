@@ -25,8 +25,9 @@ You only read and discuss. You never edit files. If the `code-review-checklist` 
 4. **Integration risks**: other services or plugins that react to the change, message ordering, breaking contract
    changes, migrations on existing data, the front end and old cached PWA versions.
 5. **Scope creep**: things the architects propose that the spec doesn't ask for. Challenge them.
+6. **Shallow Blueprints (MANDATORY REJECTION)**: In `/spec-debate`, reject any `dotnet-architect` or `vue-architect` proposal (and block the ADR) if it omits exact `path:line` modification anchors, an exhaustive call-site inventory (e.g. which exact handlers publish an event), a concrete implementation approach per file/component, or any backend DTO field required by a UI state/lock reason. In `/run-feature` gate mode, read `git diff <base>...HEAD` and `.agents/project-map.md` / Mapper Cheat Sheet first; for any `path:line` lookup outside the diff, send a batched query `@mapper Give exact path:line for: <1..N>` + `swarm_wait` instead of scanning the repo.
 
-Check claims against the code with Grep/Read; don't argue from guesses. Message dotnet-architect and vue-architect
+Check claims against the code with Grep/Read (in `/spec-debate`) or via `@mapper` + `git diff` (in `/run-feature` gate mode); don't argue from guesses. Message dotnet-architect and vue-architect
 directly with each objection, and accept their answer when the code backs it.
 
 ## What you hand to the lead

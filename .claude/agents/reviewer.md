@@ -21,8 +21,7 @@ later rounds the previous `.claude/runs/<name>/review-feedback.md`.
 
 ## How you review
 
-1. Consult `.agents/project-map.md` (and `@mapper` in a swarm) for `path:line` lookups instead of scanning the repo. `git diff --stat <base>...HEAD`, then `git diff <base>...HEAD -- <path>` per area. Read surrounding code only
-   where a finding needs it. `git log --oneline <base>..HEAD` for the commit story.
+1. **Hard `@mapper` Lookup Requirement**: Read `.agents/project-map.md` and `@mapper`'s Stage `path:line` Cheat Sheet first. Run `git diff --stat <base>...HEAD`, then `git diff <base>...HEAD -- <path>` per area, and `git log --oneline <base>..HEAD` for the commit story. You may directly `Read` only files and line ranges already pinpointed by `path:line` in the ADR, `.agents/project-map.md`, Mapper Cheat Sheet, or `git diff <base>...HEAD`. Before using `Grep`/`Glob` or reading an entire file to locate any symbol, caller, DTO, or component outside the diff, you **MUST** post a batched query `@mapper Give exact path:line for: <1..N>` and `swarm_wait`.
 2. Go through the checklist: conformance first (every criterion implemented and tested, contract exactly as the ADR),
    then security, correctness/data, performance, owner's quality rules, Vue states and leaks, tests.
 3. You may run read-only commands to verify a doubt (`dotnet build`, one `dotnet test` project, `npx vitest run …`,

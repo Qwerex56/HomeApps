@@ -1,6 +1,6 @@
 # HomeApps Project Map
 
-- **HEAD**: `13ceb17`
+- **HEAD**: `a605d29` (`feat/household-jarvis-devices-h9`, H-9)
 - **Stack**: .NET 10 (`HomeApps.slnx`), Vue 3 + TypeScript (`src/Web`), PostgreSQL, RabbitMQ (MassTransit), SignalR, MCP (`ModelContextProtocol.AspNetCore`).
 - **Tools**: Mac Device Emulator (`tools/mac-device-emulator/MacDeviceEmulator.slnx`).
 
@@ -27,14 +27,19 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
 - **`src/HomeMix/`** (`/homemix`): Plugin/mix items, shared lists, chat/todo plugins.
   - Endpoints: `src/HomeMix/HomeMix.Api/Endpoints/`
 - **`src/Devices/`** (`/devices`): Household satellites, pairing codes, device states, built-in computer capabilities.
-  - Endpoints: `src/Devices/Devices.Api/Endpoints/` (`CapabilitiesEndpoints.cs`, `DeviceStateEndpoints.cs`, `HouseholdDevicesEndpoints.cs`, `InternalEndpoints.cs`, `MyDevicesEndpoints.cs`)
+  - Endpoints: `src/Devices/Devices.Api/Endpoints/` (`CapabilitiesEndpoints.cs`, `DeviceStateEndpoints.cs` [incl. SSE stream `/devices/households/{householdId}/stream`], `HouseholdDevicesEndpoints.cs`, `InternalEndpoints.cs`, `MyDevicesEndpoints.cs`)
+  - Domain & State: `src/Devices/Devices.Domain/Devices/` (`Device.cs`, `DeviceState.cs` [status.lowBattery, hysteresis, ApplyValues / changed], `StatusOutcome.cs`, `StatusReport.cs`), `Descriptors/` (`DeviceDescriptor.cs`, `DescriptorParser.cs`)
+  - Application & Stream: `src/Devices/Devices.Application/Common/DeviceViews.cs` (`DeviceDescriptorView` at line 145), `Abstractions/IDeviceStream.cs`, `Abstractions/DeviceStreamMessage.cs`, `Frames/ProcessFrames/ProcessFramesHandler.cs`, `Heartbeat/CheckHeartbeats/CheckHeartbeatsHandler.cs`
+  - Realtime SSE: `src/Devices/Devices.Api/Stream/` (`DeviceStream.cs`, `StreamSubscription.cs`)
 - **`src/Jarvis/`** (`/jarvis`): AI assistant runs, conversations, external MCP gateway, tool confirmations, voice bridge.
   - Endpoints: `src/Jarvis/Jarvis.Api/Endpoints/` (`AssistantEndpoints.cs`, `ConversationEndpoints.cs`)
   - MCP Gateway: `src/Jarvis/Jarvis.Api/Gateway/McpGateway.cs`
   - Voice WebSocket & Session: `src/Jarvis/Jarvis.Api/Voice/` (`VoiceEndpoint.cs` at `/jarvis/voice`, `VoiceSession.cs`)
-- **`src/Contracts/`**: `HomeApps.Contracts` (`IIntegrationEvent` records).
+- **`src/Contracts/`**: `HomeApps.Contracts` (`IIntegrationEvent` records, e.g. `DeviceStateChanged`).
 - **`src/BuildingBlocks/`**: `HomeApps.BuildingBlocks.{Domain,Application,Infrastructure,Api,Mcp}`, `HomeApps.Plugins`, `HomeApps.Plugins.Hosting`.
-- **`src/Web/`**: Vue 3 SPA (`src/features/{account,admin,auth,devices,home,homemix,households,jarvis,notifications,plugins,wall,widgets}`, `src/api/types/`).
+- **`src/Web/`**: Vue 3 SPA (`src/features/{account,admin,auth,devices,home,homemix,households,jarvis,notifications,plugins,wall,widgets}`, `src/api/types/`, `src/api/errorMessage.ts`, `src/shared/i18n/pl.json`).
+  - Devices UI: `src/Web/src/features/devices/` (`api.ts`, `stream.ts`, `useDeviceStream.ts`, `assistantFlags.ts`, `pages/HouseholdDevicesTab.vue`, `pages/MyDevicesPage.vue`, `components/DeviceCard.vue`, `components/PairingCodeDialog.vue`, `components/AssistantCard.vue`, `components/ControlWidget.vue`, `components/SensorList.vue`, `components/DeviceEvents.vue`, `components/DeviceAdminPanel.vue`)
+  - HomeMix host & widgets: `src/Web/src/features/homemix/` (`useMixHost.ts`, `WidgetSettingsDialog.vue`, `realtime.ts`, `deviceId.ts`, `frameEvents.ts`, `widgets.ts`)
 
 ## Tools & Emulators (`tools/`)
 - **`tools/mac-device-emulator/`**: macOS satellite & computer emulator (`MacDeviceEmulator.slnx`).
@@ -47,7 +52,7 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
   - Tests: `tools/mac-device-emulator/tests/MacDeviceEmulator.Tests/` (`MacDeviceEmulator.Tests.csproj`, `ContinuousListeningServiceTests.cs`, `LocalUtteranceGateTests.cs`, `VoiceConsentDetectorTests.cs`, `SpeechEchoSuppressorTests.cs`, `MacSessionLockMonitorTests.cs`, `PendingConfirmationStoreTests.cs`, `ConsoleCommandHandlerTests.cs`, `ChannelSpeechInputTests.cs`, `ConsoleListeningIndicatorTests.cs`, `DevicesTests.cs`, `DescriptorsTests.cs`, `MacSystemTests.cs`, `StorageTests.cs`, `EmulatorOptionsTests.cs`)
 
 ## Tests (`tests/`)
-- Per-service: `tests/{Accounts,Auth,Devices,HomeMix,Households,Jarvis,Notifications}/*.Tests`
+- Per-service: `tests/{Accounts,Auth,Devices,HomeMix,Households,Jarvis,Notifications}/*.Tests` (incl. `tests/Devices/Devices.Application.Tests/Devices/JarvisTabBackendTests.cs`)
 - Shared: `tests/BuildingBlocks/HomeApps.BuildingBlocks.{Tests,Plugins.Tests}`, `tests/Integration/`
 - JWT test helper: `TestJwt.CreateToken` / `TestJwt.CreateTokenWithClient`
 
