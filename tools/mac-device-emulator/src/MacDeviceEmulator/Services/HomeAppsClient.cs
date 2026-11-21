@@ -28,6 +28,10 @@ public interface IHomeAppsClient
     Task<Result<string>> GetDeviceTokenAsync(string serverUrl, Guid deviceId, string secret, CancellationToken cancellationToken = default);
 
     Task<Result<IReadOnlyList<FrameResult>>> SendReportAsync(string serverUrl, string token, IReadOnlyList<DeviceFrame> frames, CancellationToken cancellationToken = default);
+
+    Task<Result<IReadOnlyList<VoiceActionView>>> GetPendingConfirmationsAsync(string serverUrl, string userToken, CancellationToken cancellationToken = default);
+
+    Task<Result<VoiceActionView>> DecideConfirmationAsync(string serverUrl, string userToken, Guid actionId, bool approve, CancellationToken cancellationToken = default);
 }
 
 public sealed class HomeAppsClient(HttpClient httpClient) : IHomeAppsClient
@@ -123,5 +127,40 @@ public sealed class HomeAppsClient(HttpClient httpClient) : IHomeAppsClient
 
         var result = await response.Content.ReadFromJsonAsync<List<FrameResult>>(JsonOptions, cancellationToken);
         return result is not null ? Result.Ok<IReadOnlyList<FrameResult>>(result) : Result.Fail("Empty report response");
+    }
+
+    public async Task<Result<IReadOnlyList<VoiceActionView>>> GetPendingConfirmationsAsync(string serverUrl, string userToken, CancellationToken cancellationToken = default)
+    {
+        var url = $"{serverUrl.TrimEnd('/')}/jarvis/api/confirmations?pending=true";
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userToken);
+
+        var response = await httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return Result.Fail($"Confirmations request failed with status {response.StatusCode}: {content}");
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<List<VoiceActionView>>(JsonOptions, cancellationToken);
+        return result is not null ? Result.Ok<IReadOnlyList<VoiceActionView>>(result) : Result.Ok<IReadOnlyList<VoiceActionView>>([]);
+    }
+
+    public async Task<Result<VoiceActionView>> DecideConfirmationAsync(string serverUrl, string userToken, Guid actionId, bool approve, CancellationToken cancellationToken = default)
+    {
+        var url = $"{serverUrl.TrimEnd('/')}/jarvis/api/confirmations/{actionId}";
+        using var request = new HttpRequestMessage(HttpMethod.Post, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userToken);
+        request.Content = JsonContent.Create(new { approve });
+
+        var response = await httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return Result.Fail($"Confirmation decision failed with status {response.StatusCode}: {content}");
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<VoiceActionView>(JsonOptions, cancellationToken);
+        return result is not null ? Result.Ok(result) : Result.Fail("Empty confirmation response");
     }
 }
