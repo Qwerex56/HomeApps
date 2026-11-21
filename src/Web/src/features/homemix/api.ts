@@ -2,10 +2,12 @@ import { useQuery } from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { http } from '@/api/http'
 import type { components } from '@/api/types/homemix'
-import type { Document, Push, Scope } from '@home-apps/sdk'
+import type { DeviceList, DeviceMatch, Document, Push, Scope } from '@home-apps/sdk'
 
 type Schemas = components['schemas']
-export type Installation = Schemas['InstallationView']
+export type Installation = Schemas['InstallationView'] & {
+  devicePicks?: { widgetId: string; deviceId: string }[]
+}
 export type Package = Schemas['PackageView']
 export type Consent = { capabilities: string[]; network: string[]; jarvis: boolean }
 export type MyAccess = Schemas['MyAccessView']
@@ -13,7 +15,9 @@ export type StoreEntry = Schemas['StoreEntryView']
 export type MyListing = Schemas['MyListingView']
 export type AdminInstallation = Schemas['AdminInstallationView']
 export type Block = Schemas['BlockView']
-export type AddonWidget = Schemas['AddonWidget']
+export type AddonWidget = Schemas['AddonWidget'] & {
+  devices?: DeviceMatch[]
+}
 export type WidgetChoice = Schemas['WidgetChoice']
 
 /** Where add-ons are installed: a household, or the signed-in person's account. */
@@ -117,11 +121,26 @@ export const homemixApi = {
   },
   devices: {
     list: (installationId: string, filter: Record<string, unknown> = {}) =>
-      http.get(`${base}/installations/${encodeURIComponent(installationId)}/devices`, { params: filter }).then((r) => r.data),
+      http
+        .get<DeviceList>(`${base}/installations/${encodeURIComponent(installationId)}/devices`, { params: filter })
+        .then((r) => r.data),
     state: (installationId: string, deviceId: string) =>
       http.get(`${base}/installations/${encodeURIComponent(installationId)}/devices/${encodeURIComponent(deviceId)}/state`).then((r) => r.data),
     set: (installationId: string, deviceId: string, control: string, value: unknown) =>
       http.post(`${base}/installations/${encodeURIComponent(installationId)}/devices/${encodeURIComponent(deviceId)}/set`, { control, value }),
+    chooseWidgetDevice: (installationId: string, widgetId: string, device: string | null) =>
+      device
+        ? http
+            .put<Installation>(
+              `${base}/installations/${encodeURIComponent(installationId)}/widget-devices/${encodeURIComponent(widgetId)}`,
+              { device },
+            )
+            .then((r) => r.data)
+        : http
+            .delete<Installation>(
+              `${base}/installations/${encodeURIComponent(installationId)}/widget-devices/${encodeURIComponent(widgetId)}`,
+            )
+            .then((r) => r.data),
   },
   async notify(installationId: string, notification: Push) {
     return (await http.post<{ recipients: number }>(`${base}/installations/${installationId}/notify`, notification)).data
