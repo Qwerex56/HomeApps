@@ -40,8 +40,9 @@ existing code. If the skills aren't in your context, read `.claude/skills/dotnet
 
 1. `dotnet build HomeApps.slnx 2>&1 | tail -20` passes (warnings are errors).
 2. If you touched `src/Web`: `cd src/Web && npm run type-check && npx eslint .` passes.
-3. Quick unit tests of the projects you touched (`dotnet test tests/<Svc>/<Svc>.Domain.Tests`, `npx vitest run src/features/<x>`).
+3. Quick unit tests of the projects you touched (`dotnet test tests/<Svc>/<Svc>.Domain.Tests --blame-hang-timeout 30s`, `npx vitest run src/features/<x>`).
 4. Check: no second top-level type in a new file, no duplicate type names, no changes under `specs/`.
+5. Never end your turn/wait in a swarm without posting `@coordinator [done]` or `@coordinator BLOCKED: <reason>` (including test hangs/timeouts).
 
 ## Report (your final message, under 40 lines)
 

@@ -25,7 +25,7 @@ See what was built with `git diff --stat <base>...HEAD` and read only the files 
    states of new screens.
 3. Run, in this order, and keep the output short (`| tail`, `| grep -E`):
    - `dotnet build HomeApps.slnx`
-   - the affected test projects (`dotnet test tests/<Svc>/<Project>`), then the whole `dotnet test HomeApps.slnx` once
+   - the affected test projects (`dotnet test tests/<Svc>/<Project> --blame-hang-timeout 30s` for unit test projects), then the whole `dotnet test HomeApps.slnx --blame-hang-timeout 120s` once
    - in `src/Web` if touched: `npm run type-check`, `npx eslint .`, `npm run test:run`
 4. If Docker isn't running, `*.Api.Tests` and `*.Infrastructure.Tests` can't run: report them as NOT RUN, never PASS.
 
