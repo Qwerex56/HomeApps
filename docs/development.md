@@ -133,7 +133,7 @@ reaches at `host.docker.internal:8000` (download the models once, commands in [j
 
 **Bridge and satellites** live in `../HomeApps.Desktop`:
 `dotnet run --project src/Jarvis.VoiceBridge -- --server https://app.localhost`. With the mkcert certificate it no
-longer needs `--insecure`. Pairing a satellite: [devices.md](devices.md).
+longer needs `--insecure`. Pairing a satellite: [devices.md](devices.md). For testing smart home devices and satellites without physical hardware, see the [Mac device emulator](../tools/mac-device-emulator/README.md) (`tools/mac-device-emulator/`).
 
 ## Tests
 

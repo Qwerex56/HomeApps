@@ -26,6 +26,7 @@ How to build, test and change HomeApps day to day. Running it locally (compose, 
 | `src/Web/` | The Vue app ([web.md](web.md)), with its production image (`Dockerfile`, `nginx.conf`). |
 | `compose.prod.yaml`, `.env.prod.example` | Production: everything behind Traefik with Let's Encrypt ([deployment.md](deployment.md)). |
 | `compose.smoke.yaml`, `scripts/` | The release check (`smoke.sh`), the signing key generator and `pack.sh`, which packs the kit for plugins. |
+| `tools/mac-device-emulator/` | Standalone .NET solution emulating Mac-based test devices (`homeapps.device/1`) for local testing ([Mac device emulator](../tools/mac-device-emulator/README.md)). |
 | `CHANGELOG.md` | What each version changed. |
 
 No C# project lives in the repository root: all code is in `src/` and `tests/`.

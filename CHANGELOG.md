@@ -32,6 +32,12 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 
 ### Added
 
+- **Mac device emulator for tests (H-5):** `tools/mac-device-emulator/`, a standalone .NET 10 solution that emulates
+  macOS-based devices over the `homeapps.device/1` protocol without physical hardware: an assistant Satellite (pairing,
+  WebSocket `/devices/link`, `say`, volume/mute), a Powered smart home device (switch `lamp`, CPU load sensor, status
+  heartbeats), a Battery sleepy sensor (periodic `/devices/report`, real Mac battery level via `pmset`), and a personal
+  Computer (`purpose: computer`, bearer token, `say`, volume/mute). Secrets stored locally in
+  `~/.homeapps/mac-devices.json` (`0600`). See `tools/mac-device-emulator/README.md` and `docs/devices-protocol.md`.
 - **ESP-IDF firmware component (H-6):** `firmware/homeapps-device/` connects an ESP32-S3, C3 or C6 to HomeApps (setup
   access point, pairing, link, `/devices/report`, token handling, the protocol limits) and ships three examples in
   `firmware/examples/` (switch, battery weather station, presence tag), NVS encryption in their `sdkconfig.defaults`.
