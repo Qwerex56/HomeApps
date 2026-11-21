@@ -47,7 +47,7 @@ internal sealed class CheckHeartbeatsHandler(
             var householdId = device.HouseholdId!.Value;
             await bus.PublishAsync(new DeviceWentSilent(householdId, device.Id, device.Name, state.LastStatusAt), cancellationToken);
             await notices.SendAsync(device, "silent", "Urządzenie przestało zgłaszać stan.", cancellationToken);
-            stream.Publish(new DeviceStreamMessage(householdId, "status", new { deviceId = device.Id, silent = true, at = now }));
+            stream.Publish(new DeviceStreamMessage(householdId, "status", new { deviceId = device.Id, silent = true, lowBattery = state.LowBattery, at = now }));
         }
 
         return silent;

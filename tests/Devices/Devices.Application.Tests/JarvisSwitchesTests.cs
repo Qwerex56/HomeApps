@@ -137,7 +137,9 @@ public sealed class JarvisSwitchesTests
         Assert.Empty(_sender.Sent);
     }
 
-    private SetJarvisAccessHandler Handler(HouseholdRole? role) => new(_devices, new FakeRoles(role, _household), new FakeUser(_user));
+    private readonly FakeStream _stream = new();
+
+    private SetJarvisAccessHandler Handler(HouseholdRole? role) => new(_devices, new FakeRoles(role, _household), _stream, new FakeUser(_user));
 
     [Fact]
     public async Task An_admin_sets_the_switches()
