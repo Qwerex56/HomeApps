@@ -1,7 +1,7 @@
 # HomeApps
 
 Serce inteligentnego domu: samodzielnie hostowany system dla rodziny albo grupy osób, z kontami, logowaniem i
-wspólnymi domami. Na nim powstają kolejne aplikacje (pluginy: pogoda, newsfeed, listy zakupów) i asystent głosowy
+wspólnymi domami. Na nim powstają kolejne aplikacje: najpierw dodatki HomeMix (pogoda, pomodoro, notatki, lista zakupów), a pluginy tylko tam, gdzie potrzebny jest własny serwer (Todo z planerem, czat) i asystent głosowy
 JARVIS, który korzysta z tych samych usług przez narzędzia MCP.
 
 Wersja 2.0.0 to rdzeń systemu, napisany od nowa ([CHANGELOG.md](CHANGELOG.md)).

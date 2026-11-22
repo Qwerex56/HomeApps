@@ -209,7 +209,7 @@ through the `@homeapps/plugin-sdk` alias, plugins its packed build. During devel
 `HOMEAPPS_PLUGINS` (the shell, else the repository's `.env`).
 
 `/wall` (`features/wall`) is the wall tablet (Q7, Q11): clock, date, the current household's active people and
-the widgets of the plugins that are on in that household (placeholders for weather and news until there are any), on a dark full-screen page without the app's menu. Open it from the
+the widgets of the plugins that are on and the HomeMix add-ons installed in that household (weather is the official Pogoda add-on), on a dark full-screen page without the app's menu. Open it from the
 user menu ("Tryb tabletu") or, on an installed app, from the icon's long-press shortcut. The tablet signs in as an
 ordinary user and stays signed in through the refresh token. The Screen Wake Lock API keeps the screen on; it needs
 HTTPS, and where it is missing the page says so. The members are read again every 5 minutes.

@@ -23,7 +23,18 @@ narrow bridge, keeps its data in the core service HomeMix and can give JARVIS to
 | Rights | the person's token | only what the bridge offers and the installer accepted |
 | JARVIS | its MCP server | the HomeMix service's MCP server, from `homemix.json` or scripts |
 
-Anything with its own backend, integration messages or instance-wide reach is a plugin.
+**HomeMix first** (owner, 2026-11-22). A new app for a household is a HomeMix add-on. It is a plugin only when its
+spec names at least one of these, and the spec says which:
+
+1. It works on a clock without a person: reminders at a given time, a morning digest, periodic fetching.
+2. It serves a public address, e.g. an ICS feed with a secret token in the URL.
+3. It fetches from the network on the server outside a JARVIS tool run (e.g. importing ICS every 30 minutes).
+4. It keeps binary files or a lot of data (photos and videos, ffmpeg, thousands of messages).
+5. It enforces domain rules on the server that "who may write this collection" cannot express.
+6. It reacts to core contracts other than devices and roles (e.g. `UserErased` with a 30-day retention).
+
+Todo with the planner (1, 2, 3, 6) and Chat (4, 5) are plugins for these reasons. Weather, Pomodoro and Notes are
+add-ons; Shopping is planned as one.
 
 ## The package
 

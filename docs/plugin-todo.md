@@ -47,7 +47,7 @@ ln -s ../HomeApps/.env .env
 docker compose -f compose.yaml up -d --build
 
 # 3. Tell the web app (in HomeApps): add the id to .env, then recreate the web container.
-#    HOMEAPPS_PLUGINS=todo        (comma-separated when there are more: todo,weather)
+#    HOMEAPPS_PLUGINS=todo        (comma-separated when there are more: todo,chat)
 docker compose -f compose.prod.yaml up -d web
 ```
 
