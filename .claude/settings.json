@@ -23,7 +23,8 @@
       "Bash(git branch:*)",
       "Bash(gh auth status)",
       "Bash(gh pr view:*)",
-      "Bash(python3 .claude/scripts/token-usage.py:*)"
+      "Bash(python3 .claude/scripts/token-usage.py:*)",
+      "Bash(agy:*)"
     ],
     "ask": [
       "Bash(git push:*)",
@@ -38,5 +39,6 @@
       "Edit(.env)",
       "Read(.env)"
     ]
-  }
+  },
+  "hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "python3 -I ~/.agent-hub/scripts/guard_bash.py"}]}]}
 }
