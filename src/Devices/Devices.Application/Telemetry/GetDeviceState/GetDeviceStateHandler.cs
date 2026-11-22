@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Devices.Application.Abstractions;
 using Devices.Application.Common;
 using Devices.Domain.Devices;
@@ -20,9 +19,9 @@ internal sealed class GetDeviceStateHandler(IDeviceRepository devices, IDeviceTe
         }
 
         var state = await telemetry.FindStateAsync(device.Value.Id, cancellationToken);
-        using var values = JsonDocument.Parse(state?.Values ?? "{}");
+        var (values, valuesAt) = StateValues.Of(device.Value, state, await households.GetRoleAsync(device.Value.HouseholdId!.Value, cancellationToken));
         return new DeviceStateView(
-            device.Value.Id, values.RootElement.Clone(), state?.ValuesAt, links.IsOnline(device.Value.Id), state?.Silent ?? false, state?.LowBattery ?? false,
+            device.Value.Id, values, valuesAt, links.IsOnline(device.Value.Id), state?.Silent ?? false, state?.LowBattery ?? false,
             state?.LastStatusAt, state?.Battery, state?.Voltage, state?.Rssi, state?.Uptime, state?.Firmware, state?.Error);
     }
 }

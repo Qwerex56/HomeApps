@@ -104,11 +104,11 @@ public sealed class HouseholdDevicesTests(DevicesApiFactory api) : IClassFixture
 
 ```bash
 dotnet build HomeApps.slnx                                           # warnings are errors
-dotnet test tests/Devices/Devices.Domain.Tests                       # one project, no Docker
-dotnet test tests/Devices/Devices.Api.Tests                          # needs Docker running
-dotnet test tests/Devices/Devices.Api.Tests --filter "FullyQualifiedName~HouseholdDevicesTests"
-dotnet test HomeApps.slnx                                            # everything, needs Docker (CI runs this in Release)
-dotnet test HomeApps.slnx 2>&1 | grep -E "error|Failed|Passed!|Failed!" | tail -40
+dotnet test tests/Devices/Devices.Domain.Tests --blame-hang-timeout 30s   # one project, no Docker
+dotnet test tests/Devices/Devices.Api.Tests --blame-hang-timeout 120s     # needs Docker running
+dotnet test tests/Devices/Devices.Api.Tests --blame-hang-timeout 120s --filter "FullyQualifiedName~HouseholdDevicesTests"
+dotnet test HomeApps.slnx --blame-hang-timeout 120s                       # everything, needs Docker (CI runs this in Release)
+dotnet test HomeApps.slnx --blame-hang-timeout 120s 2>&1 | grep -E "error|Failed|Passed!|Failed!" | tail -40
 ```
 
 There is no `Category` trait in use: to skip Docker, run only `*.Domain.Tests` and `*.Application.Tests` projects.

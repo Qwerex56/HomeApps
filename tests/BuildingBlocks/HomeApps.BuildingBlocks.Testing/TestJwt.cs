@@ -22,6 +22,9 @@ public static class TestJwt
     public static string CreateToken(Guid userId, string? email = null, params string[] roles) =>
         Create(userId, email, roles, actor: null);
 
+    public static string CreateTokenWithClient(Guid userId, string clientId, string? email = null, params string[] roles) =>
+        Create(userId, email, roles, actor: null, clientId: clientId);
+
     /// <summary>
     /// A token like the one Auth delegates to an assistant acting for <paramref name="userId"/>: the person's own
     /// claims plus <c>act</c> = <paramref name="actor"/> and <c>amr</c> = <c>delegated</c> (jarvis-v1.md, JV3).

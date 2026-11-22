@@ -13,6 +13,6 @@ internal sealed class GetMyDevicesHandler(IDeviceRepository devices, IDeviceLink
     {
         var mine = await devices.OfOwnerAsync(currentUser.RequiredUserId, cancellationToken);
         return Result.Ok<IReadOnlyList<DeviceView>>(
-            [.. mine.OrderBy(d => d.IsDisabled).ThenBy(d => d.Name, StringComparer.Ordinal).Select(d => d.ToView(links))]);
+            [.. mine.OrderBy(d => d.IsDisabled).ThenBy(d => d.Name, StringComparer.Ordinal).Select(d => d.ToView(links, includeNotes: true))]);
     }
 }

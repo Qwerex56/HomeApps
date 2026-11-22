@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Devices.Application.Common;
 using Devices.Application.Tools.CallTool;
 using Devices.Application.Tools.ListTools;
 using HomeApps.BuildingBlocks.Mcp;
@@ -16,6 +17,9 @@ internal sealed class DeviceToolsServer(ISender sender)
 {
     /// <summary>The <c>_meta</c> key naming the household of a household device's tool; JARVIS's gateway caps it by that household (H-2).</summary>
     public const string HouseholdMeta = "homeapps/household";
+
+    /// <summary>The <c>_meta</c> key of a tool on a person's own computer (value <c>computer</c>); JARVIS's gateway keeps it away from household satellites (R1).</summary>
+    public const string PurposeMeta = "homeapps/purpose";
 
     private static readonly JsonElement NoInput = JsonDocument.Parse("""{"type":"object","properties":{}}""").RootElement.Clone();
 
@@ -35,9 +39,30 @@ internal sealed class DeviceToolsServer(ISender sender)
                     DestructiveHint = t.NeedsConfirmation,
                     OpenWorldHint = false,
                 },
-                Meta = t.HouseholdId is { } household ? new JsonObject { [HouseholdMeta] = household.ToString() } : null,
+                Meta = MetaOf(t),
             })],
         };
+    }
+
+    private static JsonObject? MetaOf(DeviceTool tool)
+    {
+        if (tool.HouseholdId is null && !tool.OnComputer)
+        {
+            return null;
+        }
+
+        var meta = new JsonObject();
+        if (tool.HouseholdId is { } household)
+        {
+            meta[HouseholdMeta] = household.ToString();
+        }
+
+        if (tool.OnComputer)
+        {
+            meta[PurposeMeta] = "computer";
+        }
+
+        return meta;
     }
 
     public async ValueTask<CallToolResult> CallToolAsync(CallToolRequestParams request, CancellationToken cancellationToken)

@@ -34,6 +34,12 @@ public sealed class JarvisFactory : HomeAppsApiFactory<Program, JarvisDbContext>
 
     internal FakeBrain Brain { get; } = new();
 
+    /// <summary>The "devices" source (kind Devices): no tools until a test sets some.</summary>
+    internal FakeToolSet DevicesSource { get; } = new();
+
+    /// <summary>A second, ordinary (core) source named "extra": no tools until a test sets some.</summary>
+    internal FakeToolSet ExtraSource { get; } = new();
+
     internal FakeEars Ears { get; } = new();
 
     /// <summary>What JARVIS published, e.g. his answers to a channel.</summary>
@@ -44,6 +50,8 @@ public sealed class JarvisFactory : HomeAppsApiFactory<Program, JarvisDbContext>
         await AddAsync("households.test", await FakeSource.StartAsync("/mcp", m => m.WithTools<HouseholdsTools>()));
         await AddAsync("todo.test", await FakeSource.StartAsync("/plugins/todo/mcp", m => m.WithTools<TodoTools>(), pluginId: "todo"));
         await AddAsync("homemix.test", await FakeSource.StartAsync("/mcp", m => m.WithTools<HomeMixTools>().WithResources<HomeMixResources>()));
+        await AddAsync("devices.test", await FakeSource.StartAsync("/mcp", m => Serve(m, DevicesSource)));
+        await AddAsync("extra.test", await FakeSource.StartAsync("/mcp", m => Serve(m, ExtraSource)));
         await base.InitializeAsync();
         Brain.Gateway = token => CreateClient(token);
     }
@@ -79,6 +87,12 @@ public sealed class JarvisFactory : HomeAppsApiFactory<Program, JarvisDbContext>
         builder.UseSetting("Jarvis:Sources:2:Url", "http://homemix.test/mcp");
         builder.UseSetting("Jarvis:Sources:2:Prefix", string.Empty);
 
+        builder.UseSetting("Jarvis:Sources:3:Name", "devices");
+        builder.UseSetting("Jarvis:Sources:3:Url", "http://devices.test/mcp");
+        builder.UseSetting("Jarvis:Sources:3:Prefix", "device");
+        builder.UseSetting("Jarvis:Sources:4:Name", "extra");
+        builder.UseSetting("Jarvis:Sources:4:Url", "http://extra.test/mcp");
+
         builder.UseSetting("Jarvis:DailyBudgetUsd", "1");
         builder.UseSetting("Jarvis:Voice:Enabled", "true");
     }
@@ -96,6 +110,10 @@ public sealed class JarvisFactory : HomeAppsApiFactory<Program, JarvisDbContext>
         services.AddHttpClient(SourceConnector.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => new HostRouter(_hosts));
         services.AddHttpClient(nameof(IToolSources)).ConfigurePrimaryHttpMessageHandler(() => new HostRouter(_hosts));
     }
+
+    private static void Serve(IMcpServerBuilder server, FakeToolSet set) => server
+        .WithListToolsHandler((_, _) => ValueTask.FromResult(set.List()))
+        .WithCallToolHandler((context, _) => ValueTask.FromResult(set.Call(context.Params!.Name)));
 
     private Task AddAsync(string host, FakeSource source)
     {

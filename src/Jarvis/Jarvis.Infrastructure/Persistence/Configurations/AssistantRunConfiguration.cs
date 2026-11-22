@@ -15,6 +15,7 @@ internal sealed class AssistantRunConfiguration : IEntityTypeConfiguration<Assis
         builder.Property(r => r.Reference).HasMaxLength(200);
         builder.Property(r => r.Model).HasMaxLength(100);
         builder.Property(r => r.CostUsd).HasPrecision(12, 6);
+        builder.Property(r => r.Satellite).HasDefaultValue(false);
         builder.Property(r => r.Status).HasConversion<string>().HasMaxLength(16);
         builder.HasIndex(r => r.StartedAt);
         builder.HasIndex(r => r.UserId);

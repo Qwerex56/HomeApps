@@ -82,6 +82,9 @@ public sealed class Device
 
     public bool IsHouseholdDevice => HouseholdId is not null;
 
+    /// <summary>It says where someone is (capability <c>geo</c>, R3): guests never see its values, only its health.</summary>
+    public bool IsLocationDevice => Capabilities.Contains("geo");
+
     /// <summary>S13: a household satellite with its own identity in Auth and a Member row in Households.</summary>
     public bool IsPairedSatellite => IsHouseholdDevice && PairedAt is not null;
 

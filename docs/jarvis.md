@@ -45,6 +45,18 @@ Settings (`Jarvis`):
 - **Actions:** in a run the gateway logs every call. `readOnlyHint` = a read (not on the card); `destructiveHint: false`
   = done and shown; anything else (MCP's default counts as destructive) is not called but waits 10 minutes for
   `POST /jarvis/api/confirmations/{id}` `{approve}` or `AssistantConfirmed`, only from the person who asked.
+  The gateway keeps a tool's annotations 5 minutes per person, except a device's: those are read from Devices on every
+  call, so a device's "Pytaj" / "Nie pytaj" switch works at once (H-4c).
+- **Computer tools (H-4c, H-7):** Devices marks the tools of a person's own computer with `_meta` `"homeapps/purpose": "computer"`
+  (trusted only from the Devices source). A satellite run (`AssistantRun.Satellite`, also a turn lent to a person by PIN)
+  does not list them and a call fails with "This tool is on a person's own computer and cannot be used from a satellite."
+  without reaching the computer. An external MCP client calling a computer action that is not read-only and asks ("Pytaj") creates an
+  action in `NeedsConfirmation` inside a closed run (`channel: "mcp"`, reference is client ID) and sends `NotificationRequested`
+  ("Wymagane potwierdzenie", category `confirmation`). The MCP gateway returns `Not done yet: waits for the person's confirmation in HomeApps (action {id})`.
+  The person reviews pending confirmations via `GET /jarvis/api/confirmations?pending=true` and approves or rejects via `POST /jarvis/api/confirmations/{id}`
+  (first-party app only; external connected apps receive 403 `jarvis.forbidden`). External MCP clients check status via the read-only MCP tool
+  `jarvis_action_result(id)` (`pending`, `approved` + result text, `denied`, or `expired`). Identical pending requests (same user, tool, and arguments)
+  are idempotent and return the existing action id.
 - **Data:** runs and calls in `homeapps_jarvis`; content erased after 7 days, rows after 30; everything on `UserErased`.
 
 ### Devices in the prompt (H-3c)
@@ -104,7 +116,7 @@ agent and text to speech all happen on the server. Plan: `plans/features/jarvis-
 - **Household satellites (S-1c):** a satellite's token (`household_id`, see devices.md) fixes the session to its
   household (`householdId` in `hello` is ignored). Its own turns go to the satellite's conversation, which JARVIS keeps
   for 7 days (the retention job) and forgets when the satellite is unpaired; it is not a household member; plugins see it as the household assistant, with the role of its access level (H-1).
-- **Household JARVIS settings (H-2):** the household's JARVIS tab (`GET /internal/households/{id}/assistant`, JARVIS's service secret, cached 45 s) governs the satellite and caps every person's JARVIS acting in that household (D1). Off: the satellite says "JARVIS jest wyłączony w tym domu." and no model runs. Tool sources map to the switches: plugins -> Plugins, HomeMix -> HomeMix, `devices` -> Devices; JARVIS's own sources (Households, Accounts) always stay. A source that is not allowed is not listed and its calls are refused in that household (a run's household, or the call's `household`/`householdId` argument). Level `ReadOnly` also refuses every tool not marked read-only whenever the call has a household, for a person as well; never more than the person's own role (services enforce it). A household whose settings cannot be read (3 s timeout, kept 5 s) is treated as closed (core sources, read-only) and the satellite says "JARVIS jest chwilowo niedostępny, spróbuj za chwilę.". The household of a call: the satellite's own `household_id` claim (it may act only there), else the household of a household device's tool (`_meta` `homeapps/household`, set by Devices), else the `household`/`householdId` argument (an id; a household name is refused), else the run's. Resources and calls with no household are not capped.
+- **Household JARVIS settings (H-2):** the household's JARVIS tab (`GET /internal/households/{id}/assistant`, JARVIS's service secret, cached 45 s) governs the satellite and caps every person's JARVIS acting in that household (D1). Off: the satellite says "JARVIS jest wyłączony w tym domu." and no model runs, also for a turn lent to a person by PIN or a recognised voice (those runs are satellite runs too: `AssistantRun.Satellite`, which also keeps a person's computer tools out of them). Tool sources map to the switches: plugins -> Plugins, HomeMix -> HomeMix, `devices` -> Devices; JARVIS's own sources (Households, Accounts) always stay. A source that is not allowed is not listed and its calls are refused in that household (a run's household, or the call's `household`/`householdId` argument). Level `ReadOnly` also refuses every tool not marked read-only whenever the call has a household, for a person as well; never more than the person's own role (services enforce it). A household whose settings cannot be read (3 s timeout, kept 5 s) is treated as closed (core sources, read-only) and the satellite says "JARVIS jest chwilowo niedostępny, spróbuj za chwilę.". The household of a call: the satellite's own `household_id` claim (it may act only there), else the household of a household device's tool (`_meta` `homeapps/household`, set by Devices), else the `household`/`householdId` argument (an id; a household name is refused), else the run's. Resources and calls with no household are not capped.
 - **Spoken PIN (S4):** "tu Adrian, PIN 1234, …" (digits or Polish digit words, 4–8) on a satellite: JARVIS takes the
   household's people from Households' internal endpoint (`GET /internal/households/{id}/members`, JARVIS's service secret; the satellite is not a member and cannot read `/members`), narrows them by the spoken name and asks Auth
   `POST /internal/devices/speaker` whose PIN it is. The turn then runs as that person (their permissions, their runs,
@@ -114,6 +126,13 @@ agent and text to speech all happen on the server. Plan: `plans/features/jarvis-
   rozpoznaję tego PIN-u."; five in a row lock the satellite for 15 minutes; a PIN two people share asks for the name.
   `Jarvis:HouseholdsUrl` (default `http://households:8080`). Voice recognition has only its place in the flow
   (`IVoicePrints`, nobody recognised).
+- **Continuous listening (H-8):** for personal computers (`purpose: computer`, such as HomeApps.Desktop or the test
+  Mac device emulator). Evaluates "is this for me?" entirely locally before anything leaves the machine: wake words
+  ("jarvis", "hej jarvis", etc.), mute state, OS session lock state (`ioreg` on macOS), and self-voice echo suppression
+  during TTS output (`say`). Only accepted commands are forwarded to `/jarvis/voice?speech=local`. Furthermore,
+  actions requiring confirmation cannot be confirmed by voice ("tak"/"nie") in continuous listening mode; voice confirmations
+  are blocked locally and require explicit on-screen confirmation (`POST /jarvis/api/confirmations/{id}`).
+  Desktop/emulator provides a visible listening indicator and mute toggle. Runs only on personal computers, never on ESP satellites.
 - **Engines:** `Jarvis:Voice:SttUrl` and `TtsUrl` speak the OpenAI audio API (`/v1/audio/transcriptions`,
   `/v1/audio/speech`), so Speaches, a whisper server or a cloud service is only a URL (`ApiKey` for a cloud one).
   Defaults: `SttModel` `deepdml/faster-whisper-large-v3-turbo-ct2`, `TtsModel` `speaches-ai/piper-pl_PL-gosia-medium`,

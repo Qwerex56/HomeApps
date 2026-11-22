@@ -40,6 +40,8 @@ public class AuthApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     protected virtual int RefreshPerMinute => 1000;
 
+    protected virtual int DeviceTokenPerMinute => 1000;
+
     public async Task InitializeAsync()
     {
         _server = Environment.GetEnvironmentVariable("AUTH_TEST_DATABASE") ?? string.Empty;
@@ -92,6 +94,7 @@ public class AuthApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Auth:Google:ClientSecret", "google-secret");
         builder.UseSetting("Auth:RateLimits:PerMinute", PerMinute.ToString(System.Globalization.CultureInfo.InvariantCulture));
         builder.UseSetting("Auth:RateLimits:RefreshPerMinute", RefreshPerMinute.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        builder.UseSetting("Auth:RateLimits:DeviceTokenPerMinute", DeviceTokenPerMinute.ToString(System.Globalization.CultureInfo.InvariantCulture));
         builder.UseSetting("Auth:RateLimits:MailPerHour", "1000");
         builder.UseSetting("Auth:Email:Smtp:Host", string.Empty);
 

@@ -1,0 +1,27 @@
+# Builds the homeapps-device ESP-IDF component and its three examples for ESP32-S3, C3 and C6.
+name: Firmware
+on:
+  pull_request:
+    paths: ['firmware/**', '.github/workflows/firmware.yml']
+  push:
+    branches: [master, 'smart-devices/main']
+    paths: ['firmware/**', '.github/workflows/firmware.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [esp32s3, esp32c3, esp32c6]
+        example: [switch, weather-station, presence-tag]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build ${{ matrix.example }} for ${{ matrix.target }}
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v5.4
+          target: ${{ matrix.target }}
+          path: firmware/examples/${{ matrix.example }}

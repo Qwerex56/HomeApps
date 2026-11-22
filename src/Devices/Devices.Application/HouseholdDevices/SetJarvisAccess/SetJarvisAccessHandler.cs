@@ -7,7 +7,7 @@ using HomeApps.BuildingBlocks.Application.Messaging;
 
 namespace Devices.Application.HouseholdDevices.SetJarvisAccess;
 
-internal sealed class SetJarvisAccessHandler(IDeviceRepository devices, IHouseholdRoles households, ICurrentUser currentUser)
+internal sealed class SetJarvisAccessHandler(IDeviceRepository devices, IHouseholdRoles households, IDeviceStream stream, ICurrentUser currentUser)
     : ICommandHandler<SetJarvisAccessCommand>
 {
     public async Task<Result> Handle(SetJarvisAccessCommand command, CancellationToken cancellationToken)
@@ -19,12 +19,13 @@ internal sealed class SetJarvisAccessHandler(IDeviceRepository devices, IHouseho
         }
 
         // Only a household device has the switches: a person's own computer is not under a household's rules.
-        if (!device.Value.IsHouseholdDevice)
+        if (device.Value.HouseholdId is not { } householdId)
         {
             return Result.Fail(DeviceErrors.NotFound);
         }
 
         device.Value.SetJarvisAccess(command.MayControl, command.Asks);
+        stream.Publish(new DeviceStreamMessage(householdId, "changed", new { deviceId = device.Value.Id, reason = "jarvis" }));
         return Result.Ok();
     }
 }

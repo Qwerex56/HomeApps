@@ -7,14 +7,14 @@ devices that sleep and the heartbeat rules. Plan: household-jarvis-devices.md, s
 ## Pairing
 
 A household admin adds a device and gets a one-time code (8 characters, valid 10 minutes, works once). The device sends
-it, with its descriptor, to `POST /devices/pair` (anonymous, rate limited):
+it, with its descriptor, to `POST /devices/pair` (anonymous; at most `Devices:RateLimits:PairPerMinute`, 10, per client IP and minute, then `429` with `Retry-After`):
 
 ```json
 { "code": "ABCD2345", "descriptor": { "format": "homeapps.device/1", "...": "..." } }
 ```
 
 The answer has `deviceId`, `householdId`, `name`, `slug`, `purpose` and a `secret`. The secret buys short-lived tokens at
-`/auth/devices/token`; the device keeps it. A descriptor that is invalid fails the pairing (`devices.invalid_descriptor`,
+`/auth/devices/token`; the device keeps it. That endpoint answers `401 devices.invalid_credentials` for an unknown device or a wrong (or replaced) secret and `401 devices.device_unpaired` when the secret is right but the device was removed or got a new pairing code: the device goes back to setup at once. A descriptor that is invalid fails the pairing (`devices.invalid_descriptor`,
 with every problem listed) and the code stays usable. A satellite that sends no descriptor still pairs (a legacy device:
 purpose `assistant`).
 
@@ -156,10 +156,10 @@ within `Devices:ActionTimeout` (20 s) with `{ "type": "set_result", "id": "7f3c.
 ```
 
 `name` must be declared in the descriptor's `events`; `data` (optional) must fit the event's `data` schema and be at most
-4000 characters. `at` is when it happened (ISO 8601); a missing, unreadable or future time becomes the time the server
+4000 characters. `at` is when it happened (ISO 8601); a missing, unreadable, future or older than 366 days (the longest retention) time becomes the time the server
 received it. Devices stores it in the event history, publishes the contract `DeviceEventOccurred` on RabbitMQ and sends it
 to the household's open streams (members only). An event declared with `"location": true`, or any event of a device with
-the `geo` capability, is a **location event**: kept shorter (see below) and never shown to guests.
+the `geo` capability, is a **location event**: kept shorter (see below) and never shown to guests. The same goes for the *state* of a `geo` device: a guest gets `values: {}` and `valuesAt: null` (REST, the list with `?state=true`, JARVIS's description), and its `state` messages on the stream reach members only; online, silent, battery and rssi stay visible.
 
 Retention (D9) is the household's setting in the JARVIS tab: events are kept `eventDays` (default 30), location events
 `locationEventDays` (default 7). Devices reads it from Households and a daily job deletes what is older.
@@ -229,3 +229,36 @@ The same descriptor becomes JARVIS's tools: `<slug>_state`, `<slug>_set` (its `c
 with the control's `value` schema, so write `minimum`, `maximum`, `enum`) and `<slug>_events`, plus `devices_describe` for the whole household.
 Your `jarvis` text goes into the tool descriptions and into JARVIS's prompt as quoted data, never as an instruction; keep it to what the device
 is for and its rules. See [devices.md](devices.md#tools-generated-from-the-descriptor-h-3c).
+
+## Firmware: the ESP-IDF component (H-6)
+
+`firmware/homeapps-device/` is an ESP-IDF component for ESP32-S3, C3 and C6 that does all of the above (setup access
+point, pairing, link, `/report`, token handling, limits). Its README has the API, Kconfig options and TLS modes; examples
+are in `firmware/examples/` (switch, battery weather station, presence tag) and are built by `.github/workflows/firmware.yml`
+(CI: ESP-IDF v5.4, every example for ESP32-S3, C3 and C6). The component's README has the API and the Kconfig options.
+
+- **Setup.** On the first start, or when no Wi-Fi is stored or neither a secret nor a pairing code is, the device opens the WPA2 access point `HomeApps-XXXX`.
+  The password is random, made once and kept in NVS; it is printed on the serial log and handed to `on_setup_password`.
+  Kconfig `HOMEAPPS_SETUP_AP_PASSWORD` (at least 8 characters) replaces it. The page at `http://192.168.4.1` takes the Wi-Fi
+  (2.4 GHz), the password, the HomeApps address, the pairing code and an optional certificate fingerprint. The portal closes
+  on success or after `HOMEAPPS_SETUP_TIMEOUT_S` (600 s); a timeout restarts the device.
+- **Reset button** (`HOMEAPPS_RESET_BUTTON_GPIO`, off by default): hold 2 s and release reopens setup; hold 5 s factory resets
+  (erases the secret and the Wi-Fi password; the setup password stays).
+- **TLS.** `HOMEAPPS_TLS_BUNDLE` (default): the Mozilla bundle. `HOMEAPPS_TLS_PINNED_CA`: the CA in `pinned_ca.pem`, which is a
+  placeholder that must be replaced before use. `HOMEAPPS_TLS_TOFU`: the SHA-256 of the server certificate is pinned on the
+  first connection (or typed into setup); check it against the serial log. Plain `http`/`ws` only with
+  `HOMEAPPS_INSECURE_HTTP`, because the pairing answer carries the device secret.
+- **Secrets at rest.** The examples set `CONFIG_NVS_ENCRYPTION` with the key protected by HMAC from eFuse key block 0.
+  Burning that key block is irreversible: try it on a spare board first. Flash encryption and secure boot are not enabled
+  by the component; use them where a device can be taken apart.
+- **Reconnect.** A fresh token for every connection and every `/devices/report`. Retries back off from 2 s, doubling up to
+  2 min; `Retry-After` is honoured up to 5 min (30 s for a sleepy device). `devices.device_unpaired`, or 3
+  `invalid_credentials` in a row, send the device back to setup.
+- **Sleepy devices** (`"sleepy": true`): no WebSocket. `homeapps_start` waits 30 s for Wi-Fi and makes 4 pairing attempts,
+  then returns `ESP_ERR_TIMEOUT`, and the caller goes back to deep sleep. `homeapps_send_*` queue frames; `homeapps_flush()`
+  sends them in one `/devices/report`.
+- **Time.** Events carry `at` only after SNTP has set the clock; before that the server uses its receive time.
+- **Limits enforced by the component.** 50 items per list, 64 000 characters per descriptor, action names
+  `^[a-z][a-z0-9_]{0,19}$`; at most 120 frames per minute on the link, and 50 frames / 64 KB per report.
+- **Actions** are declared in the descriptor, but this version does not call a callback for them; only control `set`
+  frames reach `on_set`.

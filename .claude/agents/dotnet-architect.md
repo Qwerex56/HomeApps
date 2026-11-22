@@ -2,7 +2,7 @@
 name: dotnet-architect
 description: Backend architect for spec debates in HomeApps. Reads a spec and the existing .NET code and proposes the API contract, data model, messages and concurrency handling. Read-only; used by /spec-debate.
 tools: Read, Grep, Glob
-model: sonnet
+model: haiku
 skills:
   - dotnet-conventions
 ---
@@ -20,6 +20,13 @@ You only read and discuss. You never edit files. If the `dotnet-conventions` ski
 2. Decide, with file references:
    - **Which service owns it** (Auth, Accounts, Households, Notifications, HomeMix, Devices, Jarvis, a plugin) and
      whether a new service is really needed (usually not).
+   - **Developer Implementation Blueprint (MANDATORY)**:
+     - `/spec-debate` intentionally spends extra tokens on deep code inspection so `/run-feature` does zero exploratory repo scanning.
+     - Exact target project and file paths to create or modify, plus exact `path:line` anchors for every existing handler, aggregate, view, endpoint, or service method being modified or extended.
+     - Exhaustive call-site inventory for cross-cutting changes (e.g., list every single command handler `path:line` that must publish an SSE/integration event, never "all mutation handlers") and specific existing code patterns (`path:line`) to copy or extend.
+     - Exact public contracts & wire protocols with `path:line` server source references, gateway-prefixed routes, and exact C# records / JSON request/response or SSE/WebSocket frame sequences, verifying that every field required by `vue-architect` UI states is included in the DTO.
+     - Concurrency, timeout & failure-mode invariants (turn lock, fail-closed vs fail-open, session reset on pending confirmation, reconnect behavior).
+     - The developer must NOT be forced to scan the codebase to discover call sites, routes, or DTO shapes.
    - **Aggregates and rules**: new or changed aggregates, invariants, which rules sit in the domain.
    - **API contract**: method, route under the service's Traefik prefix, request and response records, status codes
      and `AppError` codes (`<service>.<snake_case>` + `ErrorKind`), who may call it (server role vs household role).
@@ -38,6 +45,7 @@ Under 120 lines, in this shape:
 ```
 ## Backend position
 Owner service: …
+Blueprint (files, exact path:line hooks, call-site inventory & implementation approach): …
 Contract: METHOD /route → 200 Body | 400 field | 403 x.forbidden | 404 x.not_found | 409 x.conflict
 Data: …  Migration: …
 Messages: …

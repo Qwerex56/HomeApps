@@ -21,6 +21,12 @@ public sealed class AssistantRun
 
     public Guid? HouseholdId { get; private set; }
 
+    /// <summary>
+    /// A household satellite asked (a speaker in a room, not a person at their own computer): the gateway keeps the
+    /// tools of a person's computer out of such a run (R1).
+    /// </summary>
+    public bool Satellite { get; private set; }
+
     public string? Prompt { get; private set; }
 
     public string? Response { get; private set; }
@@ -36,7 +42,7 @@ public sealed class AssistantRun
 
     public DateTimeOffset? FinishedAt { get; private set; }
 
-    public static AssistantRun Start(Guid userId, string channel, string? reference, Guid? householdId, string prompt, TimeProvider time)
+    public static AssistantRun Start(Guid userId, string channel, string? reference, Guid? householdId, string prompt, TimeProvider time, bool satellite = false)
     {
         ArgumentNullException.ThrowIfNull(time);
         ArgumentException.ThrowIfNullOrWhiteSpace(channel);
@@ -54,15 +60,16 @@ public sealed class AssistantRun
             Reference = reference,
             HouseholdId = householdId,
             Prompt = prompt,
+            Satellite = satellite,
             Status = RunStatus.Running,
             StartedAt = now,
         };
     }
 
     /// <summary>A run that never reached the model; <paramref name="answer"/> is what the person is told.</summary>
-    public static AssistantRun Refuse(Guid userId, string channel, string? reference, Guid? householdId, string prompt, string answer, TimeProvider time)
+    public static AssistantRun Refuse(Guid userId, string channel, string? reference, Guid? householdId, string prompt, string answer, TimeProvider time, bool satellite = false)
     {
-        var run = Start(userId, channel, reference, householdId, prompt, time);
+        var run = Start(userId, channel, reference, householdId, prompt, time, satellite);
         run.Status = RunStatus.Refused;
         run.Response = answer;
         run.FinishedAt = run.StartedAt;

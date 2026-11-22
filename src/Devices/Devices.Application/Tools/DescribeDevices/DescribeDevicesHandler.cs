@@ -27,8 +27,9 @@ internal sealed class DescribeDevicesHandler(IDeviceRepository devices, IDeviceT
             .Where(r => GeneratedTools.Applies(r.Device) && r.Device.HouseholdId == query.HouseholdId)
             .OrderBy(r => r.Device.Name, StringComparer.Ordinal)
             .ToList();
+        var role = await households.GetRoleAsync(query.HouseholdId, cancellationToken);
         var states = await telemetry.StatesAsync([.. chosen.Select(r => r.Device.Id)], cancellationToken);
         return Result.Ok<IReadOnlyList<DeviceDescriptionView>>(
-            [.. chosen.Select(r => DeviceDescriptionView.From(r, states.GetValueOrDefault(r.Device.Id), links.IsOnline(r.Device.Id)))]);
+            [.. chosen.Select(r => DeviceDescriptionView.From(r, states.GetValueOrDefault(r.Device.Id), links.IsOnline(r.Device.Id), role))]);
     }
 }

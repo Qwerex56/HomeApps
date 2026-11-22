@@ -1,8 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using HomeApps.BuildingBlocks.Mcp;
+using Jarvis.Application.Actions.GetActionResult;
 using Jarvis.Application.Gateway;
 using Jarvis.Application.ToolCalls.AwaitConfirmation;
+using Jarvis.Application.ToolCalls.AwaitExternalConfirmation;
 using Jarvis.Application.ToolCalls.CheckRun;
 using Jarvis.Application.ToolCalls.RecordCall;
 using Jarvis.Infrastructure.Tools;
@@ -29,14 +31,18 @@ namespace Jarvis.Api.Gateway;
 internal sealed partial class McpGateway(
     IToolSources sources, IHouseholdCeilings ceilings, SourceConnector connector, Caller caller, ISender sender, IMemoryCache cache, ILogger<McpGateway> logger)
 {
+    public const string ActionResultTool = "jarvis_action_result";
+    private static readonly JsonElement ActionResultSchema = JsonDocument.Parse("""{"type":"object","properties":{"id":{"type":"string","description":"The action id."}},"required":["id"]}""").RootElement.Clone();
+
     public async ValueTask<ListToolsResult> ListToolsAsync(CancellationToken cancellationToken)
     {
         var all = await sources.ListAsync(cancellationToken);
         var scope = caller.HouseholdClaim;
-        if (scope is null && caller.RunId is { } listing
-            && (await sender.Send(new CheckRunQuery(listing, caller.UserId), cancellationToken)) is { IsSuccess: true, Value.HouseholdId: { } runHousehold })
+        var satellite = false;
+        if (caller.RunId is { } listing && (await sender.Send(new CheckRunQuery(listing, caller.UserId), cancellationToken)) is { IsSuccess: true, Value: { } listed })
         {
-            scope = runHousehold;
+            scope ??= listed.HouseholdId;
+            satellite = listed.Satellite;
         }
 
         // H-2, D1: in a household the household's JARVIS settings are a ceiling, so a source it does not allow is not even offered.
@@ -73,6 +79,12 @@ internal sealed partial class McpGateway(
                 }
             }
 
+            // R1: a household satellite is not at anyone's computer, so what is on a person's computer is not offered to it.
+            if (satellite && OnComputer(source, tool))
+            {
+                continue;
+            }
+
             var name = source.Expose(tool.Name);
             if (!names.Add(name))
             {
@@ -93,12 +105,32 @@ internal sealed partial class McpGateway(
             });
         }
 
+        // H-7: jarvis_action_result tool for checking outcomes of actions
+        tools.Add(new Tool
+        {
+            Name = ActionResultTool,
+            Description = "Checks the outcome of a confirmed action (pending, approved with text, denied, or expired). Only own actions.",
+            InputSchema = ActionResultSchema,
+            Annotations = new ToolAnnotations
+            {
+                ReadOnlyHint = true,
+                DestructiveHint = false,
+                OpenWorldHint = false,
+            },
+        });
+
         return new ListToolsResult { Tools = tools };
     }
 
     public async ValueTask<CallToolResult> CallToolAsync(CallToolRequestParams request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        if (request.Name == ActionResultTool)
+        {
+            return await CallActionResultAsync(request, cancellationToken);
+        }
+
         foreach (var source in await sources.ListAsync(cancellationToken))
         {
             if (source.Own(request.Name) is not { } own)
@@ -122,6 +154,11 @@ internal sealed partial class McpGateway(
 
                 var token = await caller.SourceTokenAsync(cancellationToken);
                 var tool = await ToolAsync(source, own, token, caller.UserId, cancellationToken);
+                var onComputer = OnComputer(source, tool);
+                if (onComputer && run is { Satellite: true })
+                {
+                    return Failed("This tool is on a person's own computer and cannot be used from a satellite.");
+                }
 
                 // H-2, D1: the household of the call caps what may be called. A satellite's own household first, then the
                 // household of a household device's tool, the call's household argument, the run's household.
@@ -153,6 +190,20 @@ internal sealed partial class McpGateway(
                 if (run is not null)
                 {
                     return await CallInRunAsync(run.Id, source, own, request, token, tool?.Annotations, cancellationToken);
+                }
+
+                // H-7: external MCP client calling a computer action that asks: await confirmation in a closed run with notification
+                if (onComputer && tool?.Annotations is not { ReadOnlyHint: true } && tool?.Annotations?.DestructiveHint != false)
+                {
+                    var arguments = request.Arguments is null ? null : JsonSerializer.Serialize(request.Arguments);
+                    var deviceName = DeviceNameOf(request.Name);
+                    var awaiting = await sender.Send(
+                        new AwaitExternalConfirmationCommand(caller.UserId, caller.ClientId, request.Name, arguments, deviceName),
+                        cancellationToken);
+
+                    return awaiting.IsFailed
+                        ? Failed(ToolResult.Describe(awaiting.Errors))
+                        : ToolResult.Text($"Not done yet: waits for the person's confirmation in HomeApps (action {awaiting.Value})");
                 }
 
                 await using var client = await connector.ConnectAsync(source, token, cancellationToken);
@@ -197,18 +248,22 @@ internal sealed partial class McpGateway(
         return result;
     }
 
-    /// <summary>The tool as the source lists it for this person; kept a few minutes per person.</summary>
+    /// <summary>
+    /// The tool as the source lists it for this person; kept a few minutes per person, except a device's: its "Pytaj" switch
+    /// (<c>destructiveHint</c>) is read from Devices on every call, so turning it off works at once.
+    /// </summary>
     private async Task<Tool?> ToolAsync(ToolSource source, string own, string token, Guid userId, CancellationToken cancellationToken)
     {
+        var cached = source.Kind != ToolSourceKind.Devices;
         var key = (nameof(ToolAsync), userId, source.Name, own);
-        if (cache.TryGetValue(key, out Tool? known))
+        if (cached && cache.TryGetValue(key, out Tool? known))
         {
             return known;
         }
 
         var tools = await ToolsOfAsync(source, token, cancellationToken);
         var tool = tools.FirstOrDefault(t => t.Tool.Name == own).Tool;
-        if (tool is not null)
+        if (tool is not null && cached)
         {
             cache.Set(key, tool, TimeSpan.FromMinutes(5));
         }
@@ -219,6 +274,10 @@ internal sealed partial class McpGateway(
     /// <summary>The household a tool belongs to (<c>_meta</c> "homeapps/household"): only Devices sets it, so only its tools are trusted; never throws.</summary>
     internal static Guid? HouseholdOf(ToolSource source, Tool? tool) =>
         source.Kind == ToolSourceKind.Devices && tool?.Meta?["homeapps/household"] is JsonValue v && v.TryGetValue<string>(out var s) && Guid.TryParse(s, out var id) ? id : null;
+
+    /// <summary>A tool on a person's own computer (<c>_meta</c> "homeapps/purpose": "computer"): only Devices sets it, so only its tools are trusted; never throws.</summary>
+    internal static bool OnComputer(ToolSource source, Tool? tool) =>
+        source.Kind == ToolSourceKind.Devices && tool?.Meta?["homeapps/purpose"] is JsonValue v && v.TryGetValue<string>(out var s) && s == "computer";
 
     public async ValueTask<ListResourcesResult> ListResourcesAsync(CancellationToken cancellationToken)
     {
@@ -318,6 +377,35 @@ internal sealed partial class McpGateway(
         }
 
         return null;
+    }
+
+    private async Task<CallToolResult> CallActionResultAsync(CallToolRequestParams request, CancellationToken cancellationToken)
+    {
+        if (request.Arguments is null || !request.Arguments.TryGetValue("id", out var idElem) || !Guid.TryParse(idElem.GetString(), out var actionId))
+        {
+            return Failed("Pass the action id.");
+        }
+
+        var result = await sender.Send(new GetActionResultQuery(caller.UserId, actionId), cancellationToken);
+        if (result.IsFailed)
+        {
+            return Failed(ToolResult.Describe(result.Errors));
+        }
+
+        var view = result.Value;
+        var text = string.IsNullOrWhiteSpace(view.Text) ? view.Status : $"{view.Status}: {view.Text}";
+        return ToolResult.Text(text);
+    }
+
+    private static string? DeviceNameOf(string toolFullName)
+    {
+        // Tools from Devices source are exposed as device_<slug>_<action> or <slug>_<action>
+        var name = toolFullName.StartsWith("device_", StringComparison.Ordinal)
+            ? toolFullName["device_".Length..]
+            : toolFullName;
+
+        var lastUnderscore = name.LastIndexOf('_');
+        return lastUnderscore > 0 ? name[..lastUnderscore] : name;
     }
 
     private static bool Unreachable(Exception exception) =>

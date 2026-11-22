@@ -68,7 +68,7 @@ internal sealed class ProcessFramesHandler(
         }
 
         var changed = state.ApplyValues(frame.Values!.Value, now);
-        stream.Publish(new DeviceStreamMessage(device.HouseholdId!.Value, "state", new { deviceId = device.Id, values = frame.Values.Value, at = now }));
+        stream.Publish(new DeviceStreamMessage(device.HouseholdId!.Value, "state", new { deviceId = device.Id, values = frame.Values.Value, at = now }, MembersOnly: device.IsLocationDevice));
         if (changed is not null)
         {
             using var keys = System.Text.Json.JsonDocument.Parse(changed);
@@ -88,8 +88,8 @@ internal sealed class ProcessFramesHandler(
             return declared.ToResult();
         }
 
-        // The device's clock may be wrong or unset: a time that is missing, unreadable or in the future becomes now.
-        var at = DateTimeOffset.TryParse(frame.At, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsedAt) && parsedAt <= now ? parsedAt : now;
+        // The device's clock may be wrong or unset: a time that is missing, unreadable, in the future or older than 366 days becomes now.
+        var at = DateTimeOffset.TryParse(frame.At, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsedAt) && parsedAt <= now && parsedAt >= now - EventRetention.MaxEventAge ? parsedAt : now;
         var data = frame.Data is { ValueKind: not System.Text.Json.JsonValueKind.Null } payload ? payload.GetRawText() : null;
         var householdId = device.HouseholdId!.Value;
         var isLocation = descriptor.IsLocation(declared.Value);
@@ -113,7 +113,7 @@ internal sealed class ProcessFramesHandler(
         var outcome = state.ApplyStatus(report, now);
         stream.Publish(new DeviceStreamMessage(
             device.HouseholdId!.Value, "status",
-            new { deviceId = device.Id, silent = false, battery = state.Battery, voltage = state.Voltage, rssi = state.Rssi, uptime = state.Uptime, firmware = state.Firmware, error = state.Error, at = now }));
+            new { deviceId = device.Id, silent = false, lowBattery = state.LowBattery, battery = state.Battery, voltage = state.Voltage, rssi = state.Rssi, uptime = state.Uptime, firmware = state.Firmware, error = state.Error, at = now }));
         if (outcome.Returned)
         {
             await notices.SendAsync(device, "silent", "Urządzenie znów zgłasza stan.", cancellationToken);

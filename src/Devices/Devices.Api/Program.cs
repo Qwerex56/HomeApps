@@ -16,6 +16,7 @@ builder.AddDevicesApi();
 var app = builder.Build();
 
 // The devices' control sockets (/devices/link); pings keep Cloudflare and Traefik from closing a quiet one.
+app.UseForwardedHeaders();
 app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(20) });
 app.UseHomeAppsDefaults();
 app.UseRateLimiter();

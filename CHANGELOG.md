@@ -15,9 +15,77 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
   Rider's ports, and vite reading `HOMEAPPS_PLUGINS` from `.env`.
 - **The voice bridge moved out (S-2a):** `src/Jarvis/Jarvis.VoiceBridge` and its tests now live in their own
   repository, HomeApps.Desktop, with their history; HomeApps keeps only the server side (`/jarvis/voice`, Devices).
+- **Server hardening for household devices (H-4c):**
+  - `POST /devices/pair` is limited per client IP (`Devices:RateLimits:PairPerMinute`, 10; `429` with `Retry-After`).
+    Devices now reads `X-Forwarded-For` like Auth (`Devices:Proxy:ForwardLimit`, `KnownNetworks`; the compose files set
+    them, `compose.tunnel.yaml` counts two proxies).
+  - `/auth/devices/token` has its own budget (`Auth:RateLimits:DeviceTokenPerMinute`, 600 per IP) instead of sharing the
+    browsers' refresh limit, and answers `401 devices.device_unpaired` to the right secret of a removed or re-paired
+    device (a wrong or old secret stays `devices.invalid_credentials`).
+  - A device event's `at` older than 366 days counts as received now.
+  - Guests get no values of a `geo` device (`values: {}`, `valuesAt: null`) over REST, the stream and JARVIS;
+    health stays.
+  - Satellite runs (also a turn lent by PIN) never list or call a person's computer tools. Computer action descriptions
+    are quoted as data like household devices'. A device's "Pytaj" switch now works at once (no 5-minute cache).
+  - Updating: JARVIS migrates its database on start (`AssistantRun.Satellite`).
 
 ### Added
 
+- **Household JARVIS tab and live device stream (H-9):** the household "Urządzenia" tab is now **JARVIS**
+  (`/homes/:id/devices`), combining household assistant settings, device pairing, live state/controls, event history,
+  and HomeMix widget device selection.
+  - Devices API & SSE stream: `DeviceDescriptorView` now includes `controls[]`, `sensors[]`, `events[]`, `sleepy`, and
+    (for Admin+) `jarvis` text, always as non-null arrays; `status` stream frames carry `lowBattery`; new `changed`
+    stream event (`paired`, `renamed`, `notes`, `jarvis`, `descriptor`, `removed`, `restored`) notifies open tabs of
+    device lifecycle and configuration changes.
+  - Web UI (`features/devices`): `AssistantCard` for household JARVIS settings (`enabled`, `name`, `accessLevel`,
+    `toolSources` via `assistantFlags.ts`, `eventDays`, `locationEventDays`), devices grouped by purpose (`assistant`,
+    `smart_home`) with a link to "Moje komputery", schema-driven `ControlWidget` (switch, slider committing on release,
+    select, button, number, text; 20 s confirmation timeout without optimistic state), `SensorList`, lazy `DeviceEvents`
+    with pagination, `DeviceAdminPanel`, and `useDeviceStream` (`fetch` + `ReadableStream` SSE with Bearer token, 15 min
+    reconnect, 30 s polling fallback, and auto-closing the pairing dialog on `changed: paired`). Enforces the
+    Guest / Member / Admin role matrix.
+  - HomeMix widgets: device picker in `WidgetSettingsDialog.vue` (`PUT/DELETE .../widget-devices/{widgetId}`) for
+    widgets matching household devices, and live `device.state` forwarding from the Devices SSE stream in `useMixHost.ts`
+    when the installation has the `devices` capability. See `docs/devices.md`, `docs/web.md`, and
+    `docs/homemix-authoring.md`.
+
+- **Continuous listening for personal computers (H-8):** client-side continuous listening pipeline for personal
+  computers running HomeApps.Desktop or the test Mac device emulator (`tools/mac-device-emulator/`).
+  - Evaluates utterances locally using an "is this for me?" gate (`LocalUtteranceGate`) before any audio or text leaves
+    the machine: wake words ("jarvis", "hej jarvis", etc.), microphone mute state, macOS screen lock state (`ioreg`),
+    and self-voice echo suppression (`SpeechEchoSuppressor`).
+  - Transcribed speech is sent over `/jarvis/voice?speech=local` as `say` frames only when accepted by the local gate.
+  - Changes and dangerous actions requiring confirmation are confirmed **on screen only** (via web UI or CLI `/approve` / `/deny` calling
+    `POST /jarvis/api/confirmations/{id}`); voice confirmations ("tak"/"nie") are strictly blocked on continuous listening to prevent unauthorized actions by bystanders.
+  - Visible listening indicator (`[MIC: LISTENING]`, `[MIC: MUTED]`, `[MIC: PAUSED - SESSION LOCKED]`, `[MIC: PAUSED - JARVIS SPEAKING]`)
+    and mute toggle (`/mute`, `/unmute`, `/toggle-mute`, or `--muted`). Fully emulated in `tools/mac-device-emulator/`.
+    See `docs/jarvis.md` and `tools/mac-device-emulator/README.md`.
+
+- **Computer tools and external MCP confirmations (H-7):** full confirmation flow for actions on a person's computer
+  invoked by external MCP clients.
+  - Calling a non-read-only computer tool that asks for confirmation creates an action in `NeedsConfirmation` within a
+    closed run (`channel: "mcp"`, client ID reference), idempotent for duplicate pending calls, sends a `NotificationRequested`
+    push notification, and answers `Not done yet: waits for the person's confirmation in HomeApps (action {id})`.
+  - First-party API endpoints: `GET /jarvis/api/confirmations?pending=true` (lists pending confirmations for the user)
+    and `POST /jarvis/api/confirmations/{id}` (approve or reject), restricted to first-party tokens (connected external apps get 403 `jarvis.forbidden`).
+  - Read-only gateway MCP tool `jarvis_action_result(id)` for checking action status (`pending`, `approved` + result text,
+    `denied`, or `expired`), accessible only to the action's owner.
+  - Desktop contract documented: built-in computer actions declare `readOnly`/`confirm`, forwarded local MCP tools enforce
+    `readOnly=false` and `confirm=true`, action aliases ≤ 20 characters. See `docs/devices.md`, `docs/device-capabilities.md`,
+    and `docs/jarvis.md`.
+
+- **Mac device emulator for tests (H-5):** `tools/mac-device-emulator/`, a standalone .NET 10 solution that emulates
+  macOS-based devices over the `homeapps.device/1` protocol without physical hardware: an assistant Satellite (pairing,
+  WebSocket `/devices/link`, `say`, volume/mute), a Powered smart home device (switch `lamp`, CPU load sensor, status
+  heartbeats), a Battery sleepy sensor (periodic `/devices/report`, real Mac battery level via `pmset`), and a personal
+  Computer (`purpose: computer`, bearer token, `say`, volume/mute). Secrets stored locally in
+  `~/.homeapps/mac-devices.json` (`0600`). See `tools/mac-device-emulator/README.md` and `docs/devices-protocol.md`.
+- **ESP-IDF firmware component (H-6):** `firmware/homeapps-device/` connects an ESP32-S3, C3 or C6 to HomeApps (setup
+  access point, pairing, link, `/devices/report`, token handling, the protocol limits) and ships three examples in
+  `firmware/examples/` (switch, battery weather station, presence tag), NVS encryption in their `sdkconfig.defaults`.
+  `.github/workflows/firmware.yml` builds every example for the three targets. See
+  docs/devices-protocol.md "Firmware: the ESP-IDF component (H-6)".
 - **JARVIS hears and speaks (V0a):** `/jarvis/voice`, a WebSocket for listeners such as the Mac bridge: speech to text,
   the usual agent (channel `voice`, answers in the person's conversation), text to speech sentence by sentence, and
   "tak" / "nie" to confirm waiting actions. Engines through the OpenAI audio API (`JARVIS_VOICE_URL`), for tests
