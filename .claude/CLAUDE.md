@@ -53,3 +53,6 @@ Do not copy a hub role into the repo: a project-local file overrides the hub and
   Never commit `.claude/runs/`, `.agents/runs/`, `.env`, `bin/`, `obj/`, `node_modules/`, `.idea/`.
 - Answer the owner in Polish. Code, comments, commits and docs stay in English.
 - Keep tokens low: grep and read line ranges, build/test only affected projects, pipe output through `tail`/`grep`.
+
+
+Pluginy i dodatki HomeMix to osobne repo obok tego folderu: ../HomeApps.<Nazwa> (Todo, Chat, Notes). Rdzeń (Devices, JARVIS) zostaje tutaj. Nie szukaj kodu pluginów w tym repo.
