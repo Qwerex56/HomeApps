@@ -28,3 +28,7 @@ dynamic/plugin-*.yaml
 
 # Official HomeMix add-ons built by homemix/official/build.sh
 homemix/official/dist/
+
+# Per-run files of the agent teams and parallel developer worktrees
+.agents/runs/
+.worktrees/
