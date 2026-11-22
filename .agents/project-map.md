@@ -1,8 +1,9 @@
 # HomeApps Project Map
 
-- **HEAD**: `a605d29` (`feat/household-jarvis-devices-h9`, H-9)
+- **HEAD**: `b27aa7b` (master), last updated 2026-11-22
 - **Stack**: .NET 10 (`HomeApps.slnx`), Vue 3 + TypeScript (`src/Web`), PostgreSQL, RabbitMQ (MassTransit), SignalR, MCP (`ModelContextProtocol.AspNetCore`).
 - **Tools**: Mac Device Emulator (`tools/mac-device-emulator/MacDeviceEmulator.slnx`).
+- **Agent harness**: roles and skills live in `~/.agent-hub`; repo keeps only project-specific overrides (see Agent Overrides).
 
 ## Build & Test
 - Build all (.NET, warnings = errors): `dotnet build HomeApps.slnx`
@@ -24,7 +25,7 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
   - Endpoints: `src/Households/Households.Api/Endpoints/`
 - **`src/Notifications/`** (`/notifications`): In-app & push notifications, SignalR delivery.
   - Endpoints: `src/Notifications/Notifications.Api/Endpoints/`
-- **`src/HomeMix/`** (`/homemix`): Plugin/mix items, shared lists, chat/todo plugins.
+- **`src/HomeMix/`** (`/homemix`): Plugin/mix items, shared lists, chat/todo plugins (plugin code itself lives in sibling repos, see Plugins).
   - Endpoints: `src/HomeMix/HomeMix.Api/Endpoints/`
 - **`src/Devices/`** (`/devices`): Household satellites, pairing codes, device states, built-in computer capabilities.
   - Endpoints: `src/Devices/Devices.Api/Endpoints/` (`CapabilitiesEndpoints.cs`, `DeviceStateEndpoints.cs` [incl. SSE stream `/devices/households/{householdId}/stream`], `HouseholdDevicesEndpoints.cs`, `InternalEndpoints.cs`, `MyDevicesEndpoints.cs`)
@@ -41,6 +42,12 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
   - Devices UI: `src/Web/src/features/devices/` (`api.ts`, `stream.ts`, `useDeviceStream.ts`, `assistantFlags.ts`, `pages/HouseholdDevicesTab.vue`, `pages/MyDevicesPage.vue`, `components/DeviceCard.vue`, `components/PairingCodeDialog.vue`, `components/AssistantCard.vue`, `components/ControlWidget.vue`, `components/SensorList.vue`, `components/DeviceEvents.vue`, `components/DeviceAdminPanel.vue`)
   - HomeMix host & widgets: `src/Web/src/features/homemix/` (`useMixHost.ts`, `WidgetSettingsDialog.vue`, `realtime.ts`, `deviceId.ts`, `frameEvents.ts`, `widgets.ts`)
 
+## Plugins (sibling repos)
+- Plugins and HomeMix addons are NOT in this repo. Todo lives in `../HomeApps.Todo` (`src/Todo.{Api,Application,Contracts,Domain,Infrastructure,Web}`, `docs/plan.md`, `README.md`).
+- Chat and Notes: `../HomeApps.Chat`, `../HomeApps.Notes` (not checked here).
+- Plugin contract/hosting in this repo: `src/BuildingBlocks/HomeApps.Plugins`, `src/BuildingBlocks/HomeApps.Plugins.Hosting`, tests `tests/BuildingBlocks/HomeApps.BuildingBlocks.Plugins.Tests` (or `HomeApps.Plugins.Tests`; verify before use).
+- Docs: `docs/plugins.md`, `docs/plugin-todo.md`, `docs/plugin-chat.md`, `docs/homemix-authoring.md`, ADR `docs/adr/0009-homemix-addons-in-a-sandbox.md`.
+
 ## Tools & Emulators (`tools/`)
 - **`tools/mac-device-emulator/`**: macOS satellite & computer emulator (`MacDeviceEmulator.slnx`).
   - Core app: `tools/mac-device-emulator/src/MacDeviceEmulator/`
@@ -49,7 +56,7 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
     - Networking/WS: `Services/VoiceWebSocket.cs`, `Services/DeviceWebSocket.cs`, `Services/HomeAppsClient.cs`
     - Abstractions: `Abstractions/` (`IUtteranceGate.cs`, `ISpeechInput.cs`, `ISessionLockMonitor.cs`, `IVoiceWebSocket.cs`, `IListeningIndicator.cs`)
     - Protocol & Config: `Protocol/` (`Descriptors.cs`, `ProtocolMessages.cs`, `VoiceMessage.cs`), `Configuration/` (`EmulatorOptions.cs`, `EmulatorStorage.cs`)
-  - Tests: `tools/mac-device-emulator/tests/MacDeviceEmulator.Tests/` (`MacDeviceEmulator.Tests.csproj`, `ContinuousListeningServiceTests.cs`, `LocalUtteranceGateTests.cs`, `VoiceConsentDetectorTests.cs`, `SpeechEchoSuppressorTests.cs`, `MacSessionLockMonitorTests.cs`, `PendingConfirmationStoreTests.cs`, `ConsoleCommandHandlerTests.cs`, `ChannelSpeechInputTests.cs`, `ConsoleListeningIndicatorTests.cs`, `DevicesTests.cs`, `DescriptorsTests.cs`, `MacSystemTests.cs`, `StorageTests.cs`, `EmulatorOptionsTests.cs`)
+  - Tests: `tools/mac-device-emulator/tests/MacDeviceEmulator.Tests/`
 
 ## Tests (`tests/`)
 - Per-service: `tests/{Accounts,Auth,Devices,HomeMix,Households,Jarvis,Notifications}/*.Tests` (incl. `tests/Devices/Devices.Application.Tests/Devices/JarvisTabBackendTests.cs`)
@@ -57,7 +64,9 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
 - JWT test helper: `TestJwt.CreateToken` / `TestJwt.CreateTokenWithClient`
 
 ## Specs, Docs & Agent Overrides
-- **`specs/`**: `household-jarvis-devices.md`, `household-jarvis-devices-adr.md`, `_TEMPLATE.md`, `CLAUDE_PROJECT_INSTRUCTIONS.md`
-- **`docs/`**: `how-a-service-is-built.md`, `adr/0001`–`0009`, `auth.md`, `accounts.md`, `households.md`, `notifications.md`, `homemix.md`, `homemix-authoring.md`, `devices.md`, `devices-protocol.md`, `device-capabilities.md`, `jarvis.md`, `mcp.md`, `plugins.md`, `plugin-chat.md`, `plugin-todo.md`, `web.md`, `deployment.md`, `development.md`, `working-with-the-repo.md`
-- **`.claude/agents/`**: `developer.md`, `tester.md`, `reviewer.md`, `devils-advocate.md`, `docs-writer.md`, `dotnet-architect.md`, `vue-architect.md`
-- **`.claude/skills/`**: `run-feature`, `spec-debate`, `dotnet-conventions`, `vue-conventions`, `testing-standards`, `code-review-checklist`
+- **`specs/`** (owner + `/spec-debate` write; agents read only): `household-jarvis-devices.md` + `-adr.md`, `household-planner.md`, `_TEMPLATE.md`, `CLAUDE_PROJECT_INSTRUCTIONS.md`
+- **Stage progress**: `.agents/STATUS.md` (Coordinator only)
+- **`docs/`**: `how-a-service-is-built.md`, `adr/0001`–`0009`, `auth.md`, `accounts.md`, `households.md`, `notifications.md`, `homemix.md`, `homemix-authoring.md`, `devices.md`, `devices-protocol.md`, `device-capabilities.md`, `jarvis.md`, `mcp.md`, `plugins.md`, `plugin-chat.md`, `plugin-todo.md`, `web.md`, `deployment.md`, `development.md`, `working-with-the-repo.md`, `schemas/`
+- **Project-local agents**: `.claude/agents/dotnet-architect.md`, `.claude/agents/vue-architect.md` (developer/tester/reviewer/devils-advocate/docs-writer/mapper come from `~/.agent-hub`)
+- **Project-local skills**: `.claude/skills/{dotnet-conventions,vue-conventions,testing-standards,code-review-checklist}` (`run-feature`, `spec-debate` are in the hub)
+- **Docker/env**: `compose.yaml`, `Dockerfile`, `Directory.Build.props`, `Directory.Packages.props`, `global.json`, `nuget.config` (root); `.claude/settings.json`, `.claude/CLAUDE.md`
