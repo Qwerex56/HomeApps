@@ -12,7 +12,8 @@ The owner (team lead) designs; Claude writes the code, including all the repetit
 
 The skills, agents (`developer`, `tester`, `reviewer`, `devils-advocate`, `docs-writer`, `mapper`, ...) and scripts live in
 `~/.agent-hub` (shared with Antigravity; see its `README.md` for who runs which role and with which model).
-This repo keeps only what is specific to HomeApps: the conventions skills, `dotnet-architect`/`vue-architect`, this file.
+This repo keeps no agents and no skills: the HomeApps conventions are hub skills `homeapps-*` (shared with every
+`../HomeApps.<Name>` repo), loaded through the `## Agents` section below.
 Do not copy a hub role into the repo: a project-local file overrides the hub and then hub improvements stop applying.
 
 - Run files: `.claude/runs/<name>/` (git-ignored). Progress across sessions: `.agents/STATUS.md` (committed, written only by the Coordinator).
@@ -38,7 +39,7 @@ Do not copy a hub role into the repo: a project-local file overrides the hub and
 
 ## Standing rules
 
-- Project skills: `dotnet-conventions`, `vue-conventions`, `testing-standards`, `code-review-checklist`.
+- Skills (from `~/.agent-hub/skills`): see `## Agents`.
 - One type per file; one folder per command/query with `Command`/`Validator`/`Handler` files.
 - Lean: no new abstractions, base classes or generic repositories without a real need.
 - Never touch `master` directly and never force-push. During a multi-stage plan the owner may name an integration
@@ -56,3 +57,13 @@ Do not copy a hub role into the repo: a project-local file overrides the hub and
 
 
 Pluginy i dodatki HomeMix to osobne repo obok tego folderu: ../HomeApps.<Nazwa> (Todo, Chat, Notes). Rdzeń (Devices, JARVIS) zostaje tutaj. Nie szukaj kodu pluginów w tym repo.
+
+## Agents
+
+profiles: dotnet, vue
+skills: homeapps-dotnet-conventions, homeapps-vue-conventions, homeapps-testing-standards, homeapps-code-review-checklist, homeapps-architecture
+
+## Context
+
+Specs for plugins are written here (`specs/<name>.md`) and built in `../HomeApps.<Name>`: their ADR names it in the
+header line `Target repo:`, and `/run-feature` works there (`--repo ../HomeApps.<Name>`).
