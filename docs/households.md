@@ -29,6 +29,7 @@ is not a member gets `404`, never `403`, so the ids of other households give not
 | `GET /households` | anyone | My households with my role; `ownershipReceived` marks a household I got automatically. |
 | `GET /households/{id}` | member, server admin | One household. Guests see no member count; only Owner and Admins see the guest link. |
 | `PUT /households/{id}` `{ name, description? }` | Owner, Admin | Rename or describe it. |
+| `PUT /households/v1/{id}/timezone` `{ timeZone }` | Owner, Admin | The household's IANA time zone (invalid: `400`). Effective zone = the household's, else the Owner's, else `Europe/Warsaw`; `HouseholdView` returns `timeZone` and `timeZoneSource` (`household`, `owner`, `fallback`). |
 | `POST /households/{id}/archive` | Owner, server admin | Hide it from everyone and revoke its invites. Kept for audit. |
 | `POST /households/{id}/restore` | server admin | Bring an archived household back. |
 | `POST /households/{id}/ownership/acknowledge` | Owner | Hide the "you are the Owner now" banner. |

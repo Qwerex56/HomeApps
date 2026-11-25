@@ -61,6 +61,8 @@ Every endpoint needs an access token from Auth and works on the caller's own dat
 | `PUT /notifications/settings` `{ showPreview, quietHours: { from, to, timeZone } \| null }` | `from`/`to` as `HH:mm`, `timeZone` IANA. |
 | `PUT /notifications/mutes` `{ householdId, source }` | Mutes a household (`source` null) or one plugin in it (`source` = plugin id). |
 | `DELETE /notifications/mutes?householdId=&source=` | Unmutes. |
+| `GET /notifications/v1/in-app?limit=50&unreadOnly=false` | The notification center: `{ unreadCount, items }`, the last 30 days. Kept even when no browser is subscribed. |
+| `POST /notifications/v1/in-app/{id}/read`, `POST /notifications/v1/in-app/read-all` | Mark one or all as read (`204`). |
 | `POST /notifications/test` | A test notification to all my devices, ignoring mutes. `{ delivered, gone, failed, skipped }`; `409 notifications.no_devices` without devices. |
 
 ## Sending a notification

@@ -31,6 +31,11 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 
 ### Added
 
+- **Release 3.0, stage 1:** in-app notification center (bell in the header, `/notifications/v1/in-app`); household
+  time zone (`PUT /households/v1/{id}/timezone`; effective zone = household, else owner, else `Europe/Warsaw`);
+  guests see the household's members; removing a device hides it from the household at once; profile picture upload
+  (`POST /users/v1/me/avatar`); JARVIS conversations can be renamed and searched (`?q=`).
+
 - **Household JARVIS tab and live device stream (H-9):** the household "Urządzenia" tab is now **JARVIS**
   (`/homes/:id/devices`), combining household assistant settings, device pairing, live state/controls, event history,
   and HomeMix widget device selection.
@@ -100,6 +105,12 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 - **Bridge with its own speech and computer actions (S-0):** `--speech local` transcribes and speaks on the Mac and
   sends only text (`say` on `/jarvis/voice?speech=local`); `--actions <file>` lets JARVIS run commands from that file
   on the Mac.
+
+### Upgrading
+
+- New volume `homeapps_avatars` (`/var/data/avatars` in `accounts`): add it to `compose.prod.yaml` and to your backups
+  (see `docs/deployment.md`). New routes live under `/v1`; the old paths keep working until 4.0.
+- Migrations run on start: Notifications (`InAppNotifications`), Households (`time_zone`).
 
 ## 2.4.1 (unreleased)
 
