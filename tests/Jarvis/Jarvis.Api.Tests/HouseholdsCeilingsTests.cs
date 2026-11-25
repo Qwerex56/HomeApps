@@ -50,7 +50,7 @@ public sealed class HouseholdsCeilingsTests
         Assert.False(first.HomeMix);
         Assert.Same(first, second);
         var request = Assert.Single(handler.Requests);
-        Assert.Equal($"http://households:8080/internal/households/{Household}/assistant", request.RequestUri!.ToString());
+        Assert.Equal($"http://households:8080/internal/v1/households/{Household}/assistant", request.RequestUri!.ToString());
         Assert.Equal("jarvis-service", request.Headers.GetValues("X-Client-Id").Single());
         Assert.Equal("s3cret", request.Headers.GetValues("X-Client-Secret").Single());
     }

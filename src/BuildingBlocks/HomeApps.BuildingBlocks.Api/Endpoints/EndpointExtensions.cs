@@ -67,12 +67,9 @@ public static class EndpointExtensions
     {
         ArgumentNullException.ThrowIfNull(app);
 
-        if (app is not VersionedRouteBuilder { Legacy: true })
-        {
-            return app.MapGroup($"{prefix}/v1");
-        }
-
-        return app.MapLegacyGroup(prefix);
+        return app is VersionedRouteBuilder { Legacy: true } pass
+            ? pass.Inner.MapLegacyGroup(prefix)
+            : app.MapGroup($"{prefix}/v1");
     }
 
     /// <summary>Marks a route group as the legacy (unversioned) set of the 3.x line: deprecated, removed in 4.0.</summary>

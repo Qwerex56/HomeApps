@@ -23,7 +23,7 @@ public sealed class InstallationTests(HomeMixApiFactory api) : IClassFixture<Hom
         Assert.Equal(HttpStatusCode.Created, install.StatusCode);
         var installed = await install.ReadJsonAsync();
         var id = installed.GetProperty("id").GetGuid();
-        Assert.Equal($"/homemix/api/installations/{id}", install.Headers.Location!.OriginalString);
+        Assert.Equal($"/homemix/api/v1/installations/{id}", install.Headers.Location!.OriginalString);
         Assert.Equal($"/homemix/run/{id}/", installed.GetProperty("runUrl").GetString());
         Assert.Equal("Household", installed.GetProperty("targetKind").GetString());
         var only = Assert.Single(list.EnumerateArray());
