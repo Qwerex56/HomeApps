@@ -21,7 +21,7 @@ internal sealed class PublishIntegrationEvents(IEventBus bus) :
         ArgumentNullException.ThrowIfNull(notification);
 
         var e = notification.DomainEvent;
-        return bus.PublishAsync(new Contracts.UserCreated(e.UserId, e.DisplayName, e.AvatarUrl?.ToString()), cancellationToken);
+        return bus.PublishAsync(new Contracts.UserCreated(e.UserId, e.DisplayName, e.AvatarUrl), cancellationToken);
     }
 
     public Task Handle(DomainEventNotification<DomainEvents.UserProfileUpdated> notification, CancellationToken cancellationToken)
@@ -29,7 +29,7 @@ internal sealed class PublishIntegrationEvents(IEventBus bus) :
         ArgumentNullException.ThrowIfNull(notification);
 
         var e = notification.DomainEvent;
-        return bus.PublishAsync(new Contracts.UserProfileUpdated(e.UserId, e.DisplayName, e.AvatarUrl?.ToString()), cancellationToken);
+        return bus.PublishAsync(new Contracts.UserProfileUpdated(e.UserId, e.DisplayName, e.AvatarUrl, e.TimeZone), cancellationToken);
     }
 
     public Task Handle(DomainEventNotification<DomainEvents.UserDisabled> notification, CancellationToken cancellationToken)

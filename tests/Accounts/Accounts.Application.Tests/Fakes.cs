@@ -123,3 +123,17 @@ internal sealed class FakeEventBus : IEventBus
         return Task.CompletedTask;
     }
 }
+
+internal sealed class InMemoryAvatarStore : IAvatarStore
+{
+    private readonly Dictionary<Guid, byte[]> _files = [];
+
+    public Task SaveAsync(Guid userId, ReadOnlyMemory<byte> content, CancellationToken cancellationToken)
+    {
+        _files[userId] = content.ToArray();
+        return Task.CompletedTask;
+    }
+
+    public Task<byte[]?> ReadAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult(_files.GetValueOrDefault(userId));
+}

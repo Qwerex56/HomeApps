@@ -20,6 +20,7 @@ public sealed class WiringTests
         services.AddSingleton<IUnitOfWork>(unitOfWork);
         services.AddSingleton<ICurrentUser>(w.CurrentUser);
         services.AddSingleton<IEventBus>(w.Bus);
+        services.AddSingleton<IAvatarStore>(new InMemoryAvatarStore());
         return services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
     }
 

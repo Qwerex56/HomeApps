@@ -17,7 +17,7 @@ internal static class Converters
         new(n => n!.Value, v => Domain.Users.PersonName.Create(v, "name").Value!);
 
     public static readonly ValueConverter<AvatarUrl?, string> AvatarUrl =
-        new(a => a!.Value.ToString(), v => Domain.Users.AvatarUrl.Create(v).Value!);
+        new(a => a!.Value, v => Domain.Users.AvatarUrl.Create(v).Value!);
 
     public static readonly ValueConverter<Locale, string> Locale = new(l => l.Value, v => Domain.Users.Locale.Create(v).Value);
 

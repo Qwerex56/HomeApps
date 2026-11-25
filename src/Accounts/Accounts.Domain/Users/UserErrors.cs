@@ -20,7 +20,15 @@ public static class UserErrors
         "The time zone must be an IANA zone like Europe/Warsaw.", ErrorKind.Validation);
 
     public static Error AvatarUrlInvalid => new AppError("profile.avatar_url_invalid",
-        $"The avatar must be an https address of at most {AvatarUrl.MaxLength} characters.", ErrorKind.Validation);
+        $"The avatar must be an https address or the server's own avatar path, of at most {AvatarUrl.MaxLength} characters.", ErrorKind.Validation);
+
+    public static Error AvatarTooLarge => new AppError("profile.avatar_too_large",
+        "The avatar file can be at most 2 MB.", ErrorKind.Validation);
+
+    public static Error AvatarTypeInvalid => new AppError("profile.avatar_type_invalid",
+        "The avatar must be a JPEG, PNG or WebP picture.", ErrorKind.Validation);
+
+    public static Error AvatarNotFound => new AppError("profile.avatar_not_found", "This account has no uploaded avatar.", ErrorKind.NotFound);
 
     public static Error DateOfBirthInvalid => new AppError("profile.date_of_birth_invalid",
         "The date of birth cannot be in the future or before 1900.", ErrorKind.Validation);
