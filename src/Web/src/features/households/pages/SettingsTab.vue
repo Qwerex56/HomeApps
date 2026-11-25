@@ -10,6 +10,7 @@ import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
+import Select from 'primevue/select'
 import FormField from '@/shared/components/FormField.vue'
 import PluginsSettings from '@/features/plugins/PluginsSettings.vue'
 import HomeMixSettings from '@/features/homemix/HomeMixSettings.vue'
@@ -64,6 +65,24 @@ watch(me, (value) => (nickname.value = value?.nickname ?? ''), { immediate: true
 const nicknameForm = useSubmit()
 async function saveNickname() {
   if (await nicknameForm.submit(() => householdsApi.setMyNickname(id.value, nickname.value.trim() || null))) {
+    toast.add({ severity: 'success', summary: t('households.settings.saved'), life: 3000 })
+    await queryClient.invalidateQueries({ queryKey: householdKeys.all })
+  }
+}
+
+// 2.11: the household's own time zone; without one it follows the owner's account (timeZoneSource).
+const zones = computed(() => {
+  // Intl.supportedValuesOf is in every current browser but not yet in this TypeScript lib.
+  const supported = (Intl as { supportedValuesOf?: (key: 'timeZone') => string[] }).supportedValuesOf
+  const all = supported?.('timeZone') ?? []
+  const current = props.household.timeZone
+  return current && !all.includes(current) ? [current, ...all] : all
+})
+const timeZone = ref('')
+watch(() => props.household.timeZone, (value) => (timeZone.value = value ?? ''), { immediate: true })
+const zoneForm = useSubmit()
+async function saveTimeZone() {
+  if (await zoneForm.submit(() => householdsApi.setTimeZone(id.value, timeZone.value))) {
     toast.add({ severity: 'success', summary: t('households.settings.saved'), life: 3000 })
     await queryClient.invalidateQueries({ queryKey: householdKeys.all })
   }
@@ -179,6 +198,31 @@ function archive() {
           <div class="flex justify-end">
             <Button type="submit" :label="t('common.save')" icon="pi pi-check" :loading="detailsForm.busy.value" />
           </div>
+        </form>
+      </template>
+    </Card>
+
+    <Card v-if="can.edit">
+      <template #title>{{ t('households.settings.timeZone') }}</template>
+      <template #content>
+        <form class="flex flex-col gap-3 sm:flex-row sm:items-end" novalidate @submit.prevent="saveTimeZone">
+          <FormField
+            id="householdTimeZone"
+            :label="t('households.settings.timeZone')"
+            :hint="t(`households.settings.timeZoneSource.${household.timeZoneSource ?? 'fallback'}`)"
+            :errors="zoneForm.fieldErrors.value.timeZone"
+            class="flex-1"
+          >
+            <Select
+              v-model="timeZone"
+              input-id="householdTimeZone"
+              :options="zones"
+              filter
+              fluid
+              data-testid="household-timezone"
+            />
+          </FormField>
+          <Button type="submit" :label="t('common.save')" :loading="zoneForm.busy.value" :disabled="!timeZone" class="sm:mb-6" />
         </form>
       </template>
     </Card>
