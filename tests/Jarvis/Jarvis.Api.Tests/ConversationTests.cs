@@ -6,6 +6,9 @@ using HomeApps.BuildingBlocks.Testing;
 using Jarvis.Application.Common;
 using Jarvis.Domain.Conversations;
 using Jarvis.Domain.ToolCalls;
+using Jarvis.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Jarvis.Api.Tests;
 
@@ -59,6 +62,29 @@ public sealed class ConversationTests(JarvisFactory factory)
         Assert.Empty(none);
         Assert.Equal(HttpStatusCode.BadRequest, tooLongQuery.StatusCode);
         Assert.Empty(wildcard);
+    }
+
+    [Fact]
+    public async Task A_phrase_inside_a_message_finds_the_conversation()
+    {
+        // The SSE answer path is not usable in every environment, so the message is seeded straight into the database.
+        var conversation = await StartAsync(_person);
+        await StartAsync(_person);
+        var owner = factory.CreateAuthenticatedClient(_person);
+        await owner.PatchAsJsonAsync($"/jarvis/api/conversations/{conversation.Id}/title", new { title = "Wakacje" });
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JarvisDbContext>();
+            var stored = await db.Conversations.SingleAsync(c => c.Id == conversation.Id);
+            db.Add(stored.Write("Szafki 60 cm do kuchni", TimeProvider.System));
+            await db.SaveChangesAsync();
+        }
+
+        var found = await owner.GetFromJsonAsync<List<ConversationView>>("/jarvis/api/v1/conversations?q=SZAFKI", Json) ?? [];
+        var none = await owner.GetFromJsonAsync<List<ConversationView>>("/jarvis/api/v1/conversations?q=zmywarka", Json) ?? [];
+
+        Assert.Equal(conversation.Id, Assert.Single(found).Id);
+        Assert.Empty(none);
     }
 
     [Fact]
