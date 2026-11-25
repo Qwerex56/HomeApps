@@ -38,6 +38,8 @@ export interface Document<T = unknown> {
   version: number
   updatedBy: string
   updatedAt: string
+  /** ISO time after which the document is no longer returned; null or missing for one that does not expire. */
+  expiresAt?: string | null
 }
 
 export interface Member {
@@ -114,7 +116,7 @@ export interface Methods {
   'data.list': { params: { scope?: Scope; collection: string }; result: Document[] }
   'data.get': { params: { scope?: Scope; collection: string; key: string }; result: Document | null }
   'data.put': {
-    params: { scope?: Scope; collection: string; key: string; value: unknown; version?: number }
+    params: { scope?: Scope; collection: string; key: string; value: unknown; version?: number; expiresAt?: string }
     result: Document
   }
   'data.delete': { params: { scope?: Scope; collection: string; key: string; version?: number }; result: null }

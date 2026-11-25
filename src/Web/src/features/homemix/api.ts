@@ -211,11 +211,12 @@ export const homemixApi = {
       value: unknown,
       scope: Scope = 'household',
       version?: number,
+      expiresAt?: string,
     ) {
       return (
         await http.put<Document>(
           dataUrl(installationId, collection, key),
-          { value, version: version ?? null },
+          { value, version: version ?? null, expiresAt: expiresAt ?? null },
           { params: { scope } },
         )
       ).data

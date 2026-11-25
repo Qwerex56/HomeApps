@@ -43,7 +43,7 @@ export interface HomeMix {
       collection: string,
       key: string,
       value: T,
-      options?: { scope?: Scope; version?: number },
+      options?: { scope?: Scope; version?: number; expiresAt?: string },
     ): Promise<Document<T>>
     delete(collection: string, key: string, options?: { scope?: Scope; version?: number }): Promise<void>
   }

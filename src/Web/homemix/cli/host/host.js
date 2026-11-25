@@ -138,7 +138,7 @@ const handlers = {
   'data.list': ({ collection, scope }) =>
     Object.values(store[space(scope, collection)] ?? {}).sort((a, b) => a.key.localeCompare(b.key)),
   'data.get': ({ collection, key, scope }) => store[space(scope, collection)]?.[key] ?? null,
-  'data.put': ({ collection, key, value, scope, version }) => {
+  'data.put': ({ collection, key, value, scope, version, expiresAt }) => {
     writable(scope, collection)
     const docs = (store[space(scope, collection)] ??= {})
     const current = docs[key]
@@ -150,6 +150,7 @@ const handlers = {
       version: (current?.version ?? 0) + 1,
       updatedBy: me.id,
       updatedAt: new Date().toISOString(),
+      expiresAt: expiresAt ?? null,
     }
     show()
     return docs[key]
