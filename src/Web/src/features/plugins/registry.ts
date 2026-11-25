@@ -55,13 +55,35 @@ function addStylesheet(href: string) {
   document.head.append(link)
 }
 
-async function loadPlugin(id: string): Promise<LoadedPlugin | null> {
+/** Stands in for the manifest of a plugin that did not answer. */
+function unavailableManifest(id: string): PluginManifest {
+  return {
+    manifestVersion: MANIFEST_VERSION,
+    id,
+    version: '',
+    requires: { homeApps: '0.0.0' },
+    name: { pl: id, en: id },
+    description: null,
+    icon: 'pi-box',
+    scopes: [],
+    enablement: null,
+    permissions: [],
+    endpoints: { api: `/plugins/${id}/api`, openApi: '', mcp: null, health: '' },
+    ui: null,
+    display: [],
+    mcp: null,
+    events: { publishes: [], consumes: [] },
+  }
+}
+
+async function loadPlugin(id: string): Promise<LoadedPlugin> {
   let manifest: PluginManifest
   try {
     manifest = (await http.get<PluginManifest>(`/plugins/${id}/manifest`)).data
   } catch {
-    // Listed but not running: leave it out instead of breaking the app.
-    return null
+    // Listed but not running (502 from the gateway, or no network): keep it in the list as unavailable, once;
+    // nothing retries it until the next page load.
+    return { manifest: unavailableManifest(id), module: null, problem: 'unavailable' }
   }
 
   if (manifest.manifestVersion !== MANIFEST_VERSION || !versionAtLeast(APP_VERSION, manifest.requires.homeApps)) {
@@ -96,8 +118,7 @@ export async function loadPluginIds(): Promise<string[]> {
 
 /** The instance's plugins (/plugins.json, from HOMEAPPS_PLUGINS) with their manifests and UI modules. */
 export async function loadPlugins(): Promise<LoadedPlugin[]> {
-  const loaded = await Promise.all((await loadPluginIds()).map(loadPlugin))
-  return loaded.filter((p): p is LoadedPlugin => p !== null)
+  return Promise.all((await loadPluginIds()).map(loadPlugin))
 }
 
 /** Loaded once per page load: a new plugin version shows after a reload, like a new app version. */

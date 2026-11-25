@@ -7,6 +7,19 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+# --bump: raise the patch version first, in Directory.Build.props and the package.json files that mirror it, so a plugin
+# restores the changed contracts instead of the copy of the same version it already has.
+if [[ "${1:-}" == "--bump" ]]; then
+    current=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props)
+    next="${current%.*}.$((${current##*.} + 1))"
+    sed -i.bak "s:<Version>$current</Version>:<Version>$next</Version>:" Directory.Build.props && rm Directory.Build.props.bak
+    for manifest in src/Web/package.json src/Web/plugin-sdk/package.json; do
+        sed -i.bak "s/\"version\": \"$current\"/\"version\": \"$next\"/" "$manifest" && rm "$manifest.bak"
+    done
+    echo "Version $current -> $next"
+fi
+
 feed="${HOMEAPPS_PACKAGES:-$HOME/.homeapps/packages}"
 version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props)
 
