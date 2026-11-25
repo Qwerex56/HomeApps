@@ -37,6 +37,31 @@ public sealed class ConversationTests(JarvisFactory factory)
     }
 
     [Fact]
+    public async Task A_conversation_can_be_renamed_and_found_by_its_title()
+    {
+        await StartAsync(_person);
+        var other = await StartAsync(_person);
+        var owner = factory.CreateAuthenticatedClient(_person);
+        var stranger = factory.CreateAuthenticatedClient(Guid.NewGuid());
+
+        var renamed = await owner.PatchAsJsonAsync($"/jarvis/api/conversations/{other.Id}/title", new { title = "Wakacje" });
+        var tooLong = await owner.PatchAsJsonAsync($"/jarvis/api/conversations/{other.Id}/title", new { title = new string('a', 81) });
+        var foreign = await stranger.PatchAsJsonAsync($"/jarvis/api/conversations/{other.Id}/title", new { title = "Mój" });
+        var byTitle = await owner.GetFromJsonAsync<List<ConversationView>>("/jarvis/api/conversations?q=wakac", Json) ?? [];
+        var none = await owner.GetFromJsonAsync<List<ConversationView>>("/jarvis/api/conversations?q=szafki", Json) ?? [];
+        var tooLongQuery = await owner.GetAsync($"/jarvis/api/conversations?q={new string('a', 101)}");
+        var wildcard = await owner.GetFromJsonAsync<List<ConversationView>>("/jarvis/api/conversations?q=%25", Json) ?? [];
+
+        Assert.True(renamed.IsSuccessStatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, tooLong.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, foreign.StatusCode);
+        Assert.Equal(other.Id, Assert.Single(byTitle).Id);
+        Assert.Empty(none);
+        Assert.Equal(HttpStatusCode.BadRequest, tooLongQuery.StatusCode);
+        Assert.Empty(wildcard);
+    }
+
+    [Fact]
     public async Task JARVIS_sees_the_conversation_so_far()
     {
         factory.Brain.Script = _ => Task.FromResult("Zapamiętane.");

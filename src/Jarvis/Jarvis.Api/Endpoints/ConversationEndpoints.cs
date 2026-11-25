@@ -10,6 +10,7 @@ using Jarvis.Application.Common;
 using Jarvis.Application.Conversations.DeleteConversation;
 using Jarvis.Application.Conversations.ListConversations;
 using Jarvis.Application.Conversations.ReadConversation;
+using Jarvis.Application.Conversations.RenameConversation;
 using Jarvis.Application.Conversations.SendMessage;
 using Jarvis.Application.Conversations.StartConversation;
 using Jarvis.Infrastructure.Live;
@@ -28,13 +29,16 @@ internal sealed class ConversationEndpoints : IEndpoint
     {
         var api = app.MapVersionedGroup("/jarvis/api").MapGroup("/conversations").WithTags("JARVIS");
 
-        api.MapGet("/", async (ICurrentUser user, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new ListConversationsQuery(user.RequiredUserId), ct)).ToHttpResult())
+        api.MapGet("/", async (ICurrentUser user, ISender sender, CancellationToken ct, string? q = null) =>
+            (await sender.Send(new ListConversationsQuery(user.RequiredUserId, q), ct)).ToHttpResult())
             .Produces<IReadOnlyList<ConversationView>>();
 
         api.MapPost("/", async (StartConversationRequest body, ICurrentUser user, ISender sender, CancellationToken ct) =>
             (await sender.Send(new StartConversationCommand(user.RequiredUserId, body.Title), ct)).ToHttpResult())
             .Produces<ConversationView>();
+
+        api.MapPatch("/{id:guid}/title", async (Guid id, RenameConversationRequest body, ICurrentUser user, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new RenameConversationCommand(user.RequiredUserId, id, body.Title), ct)).ToHttpResult());
 
         api.MapDelete("/{id:guid}", async (Guid id, ICurrentUser user, ISender sender, CancellationToken ct) =>
             (await sender.Send(new DeleteConversationCommand(user.RequiredUserId, id), ct)).ToHttpResult());
