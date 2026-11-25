@@ -91,6 +91,21 @@ describe('loadPlugins', () => {
     expect(plugins[1]).toMatchObject({ module: null, problem: 'unavailable' })
   })
 
+  it('answers a 502 from the gateway with an unavailable stub named by its id, asking once', async () => {
+    setPluginImporter(async () => ({ default: { id: 'weather' } }))
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(['weather']), { status: 200 })))
+    const get = vi.spyOn(http, 'get').mockRejectedValue(Object.assign(new Error('Bad Gateway'), { response: { status: 502 } }))
+
+    const [plugin] = await loadPlugins()
+
+    expect(plugin).toMatchObject({
+      manifest: { id: 'weather', name: { pl: 'weather', en: 'weather' }, ui: null },
+      module: null,
+      problem: 'unavailable',
+    })
+    expect(get).toHaveBeenCalledTimes(1)
+  })
+
   it('marks a plugin for a newer HomeApps or an unknown manifest as incompatible and never imports it', async () => {
     const importer = vi.fn()
     setPluginImporter(importer)
