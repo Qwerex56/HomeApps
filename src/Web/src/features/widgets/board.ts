@@ -17,10 +17,10 @@ export const boardKeys = {
 
 export const boardsApi = {
   async get(householdId: string, place: BoardPlace) {
-    return (await http.get<Board>(`/homemix/api/households/${householdId}/boards/${place}`)).data
+    return (await http.get<Board>(`/homemix/api/v1/households/${householdId}/boards/${place}`)).data
   },
   async save(householdId: string, place: BoardPlace, items: Cell[]) {
-    return (await http.put<Board>(`/homemix/api/households/${householdId}/boards/${place}`, { items })).data
+    return (await http.put<Board>(`/homemix/api/v1/households/${householdId}/boards/${place}`, { items })).data
   },
 }
 

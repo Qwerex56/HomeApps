@@ -90,42 +90,42 @@ export const adminKeys = {
 export const adminApi = {
   async list(filter: UserFilter) {
     const params = Object.fromEntries(Object.entries(filter).filter(([, value]) => value != null && value !== ''))
-    return (await http.get<UserPage>('/admin/users', { params })).data
+    return (await http.get<UserPage>('/admin/users/v1', { params })).data
   },
 
   async get(id: string) {
-    return (await http.get<User>(`/admin/users/${id}`)).data
+    return (await http.get<User>(`/admin/users/v1/${id}`)).data
   },
 
   async updateProfile(id: string, profile: ProfileInput) {
-    await http.put(`/admin/users/${id}/profile`, profile)
+    await http.put(`/admin/users/v1/${id}/profile`, profile)
   },
 
   async disable(id: string, reason: string | null) {
-    await http.post(`/admin/users/${id}/disable`, { reason })
+    await http.post(`/admin/users/v1/${id}/disable`, { reason })
   },
 
   async enable(id: string) {
-    await http.post(`/admin/users/${id}/enable`)
+    await http.post(`/admin/users/v1/${id}/enable`)
   },
 
   async history(id: string, before?: string) {
-    return (await http.get<HistoryEntry[]>(`/admin/users/${id}/history`, { params: before ? { before } : {} })).data
+    return (await http.get<HistoryEntry[]>(`/admin/users/v1/${id}/history`, { params: before ? { before } : {} })).data
   },
 
   /** UC-17: Owner only, a disabled account only, confirmed by typing its email (the body keeps it out of URLs). */
   async erase(id: string, confirmEmail: string) {
-    await http.delete(`/admin/users/${id}`, { data: { confirmEmail } })
+    await http.delete(`/admin/users/v1/${id}`, { data: { confirmEmail } })
   },
 
   /** A-22: ends every session of the user and sends them a reset link. */
   async resetPassword(id: string) {
-    await http.post(`/auth/admin/identities/${id}/password-reset`)
+    await http.post(`/auth/v1/admin/identities/${id}/password-reset`)
   },
 
   /** A-23: the Owner grants or removes Admin. Accounts learns it from Auth's event, so its copy follows a moment later. */
   async changeRole(id: string, role: Exclude<ServerRole, 'Owner'>) {
-    await http.put(`/auth/admin/identities/${id}/role`, { role })
+    await http.put(`/auth/v1/admin/identities/${id}/role`, { role })
   },
 }
 

@@ -28,7 +28,7 @@ const addon = `<!doctype html><script>
     cookie: await tryIt(() => document.cookie || 'blocked'),
     parentDocument: await tryIt(() => parent.document.title),
     parentStorage: await tryIt(() => parent.localStorage.getItem('homeapps.session')),
-    service: await tryIt(async () => (await fetch('${origin}/households', { credentials: 'include' })).status),
+    service: await tryIt(async () => (await fetch('${origin}/households/v1', { credentials: 'include' })).status),
     otherSite: await tryIt(async () => (await fetch('https://example.com/')).status),
   }, '*'))()
 </script>`

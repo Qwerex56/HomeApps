@@ -140,63 +140,63 @@ export const EVENTS_PAGE_SIZE = 50
 
 export const devicesApi = {
   async mine() {
-    return (await http.get<Device[]>('/devices')).data
+    return (await http.get<Device[]>('/devices/v1')).data
   },
 
   async household(householdId: string, state = true) {
-    return (await http.get<Device[]>(`/devices/households/${householdId}`, { params: state ? { state: true } : {} }))
+    return (await http.get<Device[]>(`/devices/v1/households/${householdId}`, { params: state ? { state: true } : {} }))
       .data
   },
 
   /** A household admin adds a device and gets its first pairing code. */
   async addSatellite(householdId: string, name: string) {
-    return (await http.post<PairingCode>(`/devices/households/${householdId}`, { name })).data
+    return (await http.post<PairingCode>(`/devices/v1/households/${householdId}`, { name })).data
   },
 
   /** A new code; the device's old pairing ends. */
   async newCode(deviceId: string) {
-    return (await http.post<PairingCode>(`/devices/${deviceId}/pairing-code`)).data
+    return (await http.post<PairingCode>(`/devices/v1/${deviceId}/pairing-code`)).data
   },
 
   /** Turned off, not deleted: its link drops and it may not connect again until restored. */
   async remove(deviceId: string) {
-    await http.delete(`/devices/${deviceId}`)
+    await http.delete(`/devices/v1/${deviceId}`)
   },
 
   async restore(deviceId: string) {
-    await http.post(`/devices/${deviceId}/restore`)
+    await http.post(`/devices/v1/${deviceId}/restore`)
   },
 
   async allow(deviceId: string, action: string, allowed: boolean) {
-    await http.put(`/devices/${deviceId}/actions/${encodeURIComponent(action)}/allow`, { allowed })
+    await http.put(`/devices/v1/${deviceId}/actions/${encodeURIComponent(action)}/allow`, { allowed })
   },
 
   async rename(deviceId: string, name: string) {
-    await http.put(`/devices/${deviceId}/name`, { name })
+    await http.put(`/devices/v1/${deviceId}/name`, { name })
   },
 
   async setNotes(deviceId: string, notes: string | null) {
-    await http.put(`/devices/${deviceId}/notes`, { notes })
+    await http.put(`/devices/v1/${deviceId}/notes`, { notes })
   },
 
   async setJarvis(deviceId: string, mayControl: boolean, asks: boolean) {
-    await http.put(`/devices/${deviceId}/jarvis`, { mayControl, asks })
+    await http.put(`/devices/v1/${deviceId}/jarvis`, { mayControl, asks })
   },
 
   async setControl(deviceId: string, control: string, value: unknown) {
-    await http.post(`/devices/${deviceId}/set`, { control, value })
+    await http.post(`/devices/v1/${deviceId}/set`, { control, value })
   },
 
   async state(deviceId: string) {
-    return (await http.get<DeviceStateInfo>(`/devices/${deviceId}/state`)).data
+    return (await http.get<DeviceStateInfo>(`/devices/v1/${deviceId}/state`)).data
   },
 
   async events(deviceId: string, skip = 0, limit = EVENTS_PAGE_SIZE) {
-    return (await http.get<DeviceEventItem[]>(`/devices/${deviceId}/events`, { params: { skip, limit } })).data
+    return (await http.get<DeviceEventItem[]>(`/devices/v1/${deviceId}/events`, { params: { skip, limit } })).data
   },
 
   async assistant(householdId: string) {
-    return (await http.get<HouseholdAssistant>(`/households/${householdId}/assistant`)).data
+    return (await http.get<HouseholdAssistant>(`/households/v1/${householdId}/assistant`)).data
   },
 
   async updateAssistant(
@@ -210,7 +210,7 @@ export const devicesApi = {
       locationEventDays: number
     },
   ) {
-    return (await http.put<HouseholdAssistant>(`/households/${householdId}/assistant`, settings)).data
+    return (await http.put<HouseholdAssistant>(`/households/v1/${householdId}/assistant`, settings)).data
   },
 }
 

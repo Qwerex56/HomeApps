@@ -23,55 +23,55 @@ export interface InvitationPreview {
 
 export const authApi = {
   async login(email: string, password: string) {
-    return (await http.post<TokenResponse>('/auth/login', { email, password, clientId: CLIENT_ID })).data
+    return (await http.post<TokenResponse>('/auth/v1/login', { email, password, clientId: CLIENT_ID })).data
   },
 
   async register(input: RegisterInput) {
-    return (await http.post<TokenResponse>('/auth/register', { ...input, clientId: CLIENT_ID })).data
+    return (await http.post<TokenResponse>('/auth/v1/register', { ...input, clientId: CLIENT_ID })).data
   },
 
   async refresh() {
-    return (await http.post<TokenResponse>('/auth/refresh', { clientId: CLIENT_ID })).data
+    return (await http.post<TokenResponse>('/auth/v1/refresh', { clientId: CLIENT_ID })).data
   },
 
   async logout() {
-    await http.post('/auth/logout', {})
+    await http.post('/auth/v1/logout', {})
   },
 
   async logoutEverywhere() {
-    await http.post('/auth/logout-all')
+    await http.post('/auth/v1/logout-all')
   },
 
   async invitation(token: string) {
-    return (await http.get<InvitationPreview>(`/auth/invitations/${encodeURIComponent(token)}`)).data
+    return (await http.get<InvitationPreview>(`/auth/v1/invitations/${encodeURIComponent(token)}`)).data
   },
 
   async acceptInvitation(token: string, input: AcceptInvitationInput) {
-    const url = `/auth/invitations/${encodeURIComponent(token)}/accept`
+    const url = `/auth/v1/invitations/${encodeURIComponent(token)}/accept`
     return (await http.post<TokenResponse>(url, { ...input, clientId: CLIENT_ID })).data
   },
 
   /** A-08: always 202, whether the address has an account or not (R9). */
   async forgotPassword(email: string) {
-    await http.post('/auth/password/forgot', { email })
+    await http.post('/auth/v1/password/forgot', { email })
   },
 
   async resetPassword(token: string, password: string) {
-    await http.post('/auth/password/reset', { token, password })
+    await http.post('/auth/v1/password/reset', { token, password })
   },
 
   /** The link from the "confirm your new password" email. Signs out every session (Q1). */
   async confirmPasswordChange(token: string) {
-    await http.post('/auth/me/password/confirm', { token })
+    await http.post('/auth/v1/me/password/confirm', { token })
   },
 
   async confirmEmailChange(token: string) {
-    await http.post('/auth/me/email/confirm', { token })
+    await http.post('/auth/v1/me/email/confirm', { token })
   },
 
   /** A-09, last step: the reactivation ticket becomes a normal session. 409 reactivation.pending until Auth hears from Accounts. */
   async completeReactivation(ticket: string) {
-    return (await http.post<TokenResponse>('/auth/reactivation/complete', { ticket, clientId: CLIENT_ID })).data
+    return (await http.post<TokenResponse>('/auth/v1/reactivation/complete', { ticket, clientId: CLIENT_ID })).data
   },
 
   /** A-15 "Yes": sign in to the existing account with its password; Google gets linked to it. */

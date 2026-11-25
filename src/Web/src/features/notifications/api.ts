@@ -18,40 +18,40 @@ export const notificationKeys = {
 
 export const notificationsApi = {
   async vapidPublicKey() {
-    return (await http.get<{ publicKey: string }>('/notifications/vapid-public-key')).data.publicKey
+    return (await http.get<{ publicKey: string }>('/notifications/v1/vapid-public-key')).data.publicKey
   },
 
   /** The browser's PushSubscription.toJSON(); the User-Agent goes along by itself (D6). */
   async registerDevice(subscription: PushSubscriptionJSON) {
-    return (await http.put<{ id: string }>('/notifications/devices', subscription)).data.id
+    return (await http.put<{ id: string }>('/notifications/v1/devices', subscription)).data.id
   },
 
   async forgetDevice(endpoint: string) {
-    await http.delete('/notifications/devices', { params: { endpoint } })
+    await http.delete('/notifications/v1/devices', { params: { endpoint } })
   },
 
   async removeDevice(id: string) {
-    await http.delete(`/notifications/devices/${id}`)
+    await http.delete(`/notifications/v1/devices/${id}`)
   },
 
   async settings() {
-    return (await http.get<NotificationSettings>('/notifications/settings')).data
+    return (await http.get<NotificationSettings>('/notifications/v1/settings')).data
   },
 
   async changeSettings(showPreview: boolean, quietHours: QuietHours | null) {
-    await http.put('/notifications/settings', { showPreview, quietHours })
+    await http.put('/notifications/v1/settings', { showPreview, quietHours })
   },
 
   async mute(householdId: string, source: string | null) {
-    await http.put('/notifications/mutes', { householdId, source })
+    await http.put('/notifications/v1/mutes', { householdId, source })
   },
 
   async unmute(householdId: string, source: string | null) {
-    await http.delete('/notifications/mutes', { params: source ? { householdId, source } : { householdId } })
+    await http.delete('/notifications/v1/mutes', { params: source ? { householdId, source } : { householdId } })
   },
 
   /** 409 notifications.no_devices when no device has notifications on. */
   async test() {
-    return (await http.post<DeliveryReport>('/notifications/test')).data
+    return (await http.post<DeliveryReport>('/notifications/v1/test')).data
   },
 }

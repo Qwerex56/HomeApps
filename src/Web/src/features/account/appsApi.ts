@@ -68,10 +68,10 @@ export const appsApi = {
   },
 
   async connected() {
-    return (await http.get<ConnectedApp[]>('/auth/me/apps')).data
+    return (await http.get<ConnectedApp[]>('/auth/v1/me/apps')).data
   },
 
   async disconnect(id: string) {
-    await http.delete(`/auth/me/sessions/${id}`)
+    await http.delete(`/auth/v1/me/sessions/${id}`)
   },
 }

@@ -35,101 +35,101 @@ export const householdKeys = {
 /** docs/households.md. Someone who is not a member gets 404, never 403. */
 export const householdsApi = {
   async mine() {
-    return (await http.get<MyHousehold[]>('/households')).data
+    return (await http.get<MyHousehold[]>('/households/v1')).data
   },
 
   async create(name: string, description: string | null) {
-    return (await http.post<{ id: string }>('/households', { name, description })).data.id
+    return (await http.post<{ id: string }>('/households/v1', { name, description })).data.id
   },
 
   async get(id: string) {
-    return (await http.get<Household>(`/households/${id}`)).data
+    return (await http.get<Household>(`/households/v1/${id}`)).data
   },
 
   async update(id: string, name: string, description: string | null) {
-    await http.put(`/households/${id}`, { name, description })
+    await http.put(`/households/v1/${id}`, { name, description })
   },
 
   async archive(id: string) {
-    await http.post(`/households/${id}/archive`)
+    await http.post(`/households/v1/${id}/archive`)
   },
 
   async restore(id: string) {
-    await http.post(`/households/${id}/restore`)
+    await http.post(`/households/v1/${id}/restore`)
   },
 
   async acknowledgeOwnership(id: string) {
-    await http.post(`/households/${id}/ownership/acknowledge`)
+    await http.post(`/households/v1/${id}/ownership/acknowledge`)
   },
 
   async newGuestLink(id: string) {
-    return (await http.post<{ code: string }>(`/households/${id}/guest-link`)).data.code
+    return (await http.post<{ code: string }>(`/households/v1/${id}/guest-link`)).data.code
   },
 
   async disableGuestLink(id: string) {
-    await http.delete(`/households/${id}/guest-link`)
+    await http.delete(`/households/v1/${id}/guest-link`)
   },
 
   async members(id: string) {
-    return (await http.get<Member[]>(`/households/${id}/members`)).data
+    return (await http.get<Member[]>(`/households/v1/${id}/members`)).data
   },
 
   async myMembership(id: string) {
-    return (await http.get<MyMembership>(`/households/${id}/members/me`)).data
+    return (await http.get<MyMembership>(`/households/v1/${id}/members/me`)).data
   },
 
   async setMyNickname(id: string, nickname: string | null) {
-    await http.put(`/households/${id}/members/me/nickname`, { nickname })
+    await http.put(`/households/v1/${id}/members/me/nickname`, { nickname })
   },
 
   async leave(id: string) {
-    await http.delete(`/households/${id}/members/me`)
+    await http.delete(`/households/v1/${id}/members/me`)
   },
 
   async setNickname(id: string, userId: string, nickname: string | null) {
-    await http.put(`/households/${id}/members/${userId}/nickname`, { nickname })
+    await http.put(`/households/v1/${id}/members/${userId}/nickname`, { nickname })
   },
 
   async setRole(id: string, userId: string, role: Exclude<HouseholdRole, 'Owner'>) {
-    await http.put(`/households/${id}/members/${userId}/role`, { role })
+    await http.put(`/households/v1/${id}/members/${userId}/role`, { role })
   },
 
   async setAccess(id: string, userId: string, until: string | null) {
-    await http.put(`/households/${id}/members/${userId}/access`, { until })
+    await http.put(`/households/v1/${id}/members/${userId}/access`, { until })
   },
 
   async remove(id: string, userId: string) {
-    await http.delete(`/households/${id}/members/${userId}`)
+    await http.delete(`/households/v1/${id}/members/${userId}`)
   },
 
   async transfer(id: string, userId: string) {
-    await http.post(`/households/${id}/ownership`, { userId })
+    await http.post(`/households/v1/${id}/ownership`, { userId })
   },
 
   async invites(id: string) {
-    return (await http.get<Invite[]>(`/households/${id}/invites`)).data
+    return (await http.get<Invite[]>(`/households/v1/${id}/invites`)).data
   },
 
   async invite(id: string, role: 'Member' | 'Guest', validity: InviteValidity, guestAccessUntil: string | null) {
-    await http.post(`/households/${id}/invites`, { role, validity, guestAccessUntil })
+    await http.post(`/households/v1/${id}/invites`, { role, validity, guestAccessUntil })
   },
 
   async revokeInvite(id: string, inviteId: string) {
-    await http.delete(`/households/${id}/invites/${inviteId}`)
+    await http.delete(`/households/v1/${id}/invites/${inviteId}`)
   },
 
   async preview(code: string) {
-    return (await http.get<InvitePreview>(`/invites/${encodeURIComponent(code)}`)).data
+    return (await http.get<InvitePreview>(`/invites/v1/${encodeURIComponent(code)}`)).data
   },
 
   async accept(code: string) {
-    return (await http.post<{ id: string }>(`/invites/${encodeURIComponent(code)}/accept`)).data.id
+    return (await http.post<{ id: string }>(`/invites/v1/${encodeURIComponent(code)}/accept`)).data.id
   },
 
   /** Q7: every household, newest first, 50 at a time; `before` is the last createdAt shown. */
   async all(q: string, before?: string) {
     const params = { ...(q ? { q } : {}), ...(before ? { before } : {}) }
-    return (await http.get<AdminHousehold[]>('/admin/households', { params })).data
+    return (await http.get<AdminHousehold[]>('/admin/households/v1', { params })).data
   },
 }
 
