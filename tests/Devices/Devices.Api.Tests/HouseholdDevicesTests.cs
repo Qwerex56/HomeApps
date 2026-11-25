@@ -104,6 +104,25 @@ public sealed class HouseholdDevicesTests(DevicesApiFactory api) : IClassFixture
         Assert.Equal("error", device.First.GetProperty("type").GetString());
     }
 
+    [Fact]
+    public async Task A_removed_device_disappears_from_the_household_list_but_the_admin_can_still_see_the_household()
+    {
+        Join();
+        using var admin = api.CreateAuthenticatedClient(_admin);
+        using var member = api.CreateAuthenticatedClient(_member);
+        var kept = (await (await AddAsync(admin, "salon")).Content.ReadFromJsonAsync<JsonElement>()).GetProperty("deviceId").GetGuid();
+        var removed = (await (await AddAsync(admin, "garaz")).Content.ReadFromJsonAsync<JsonElement>()).GetProperty("deviceId").GetGuid();
+
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync($"/devices/{removed}")).StatusCode);
+
+        var list = await admin.GetAsync($"/devices/households/{_household}");
+        Assert.Equal(HttpStatusCode.OK, list.StatusCode);
+        var body = await list.Content.ReadAsStringAsync();
+        Assert.DoesNotContain(removed.ToString(), body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(kept.ToString(), body, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(HttpStatusCode.OK, (await member.GetAsync($"/devices/households/{_household}")).StatusCode);
+    }
+
     private void Join()
     {
         api.Members.Add(_admin, _household, HouseholdRole.Admin);
