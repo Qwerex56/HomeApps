@@ -190,6 +190,11 @@ export const router = createRouter({
               component: () => import('@/features/admin/pages/HouseholdsPage.vue'),
             },
             {
+              path: 'about',
+              name: 'admin-about',
+              component: () => import('@/features/admin/pages/ServerAboutPage.vue'),
+            },
+            {
               path: 'plugins',
               name: 'admin-plugins',
               meta: { owner: true },

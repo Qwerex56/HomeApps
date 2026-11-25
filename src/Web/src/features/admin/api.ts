@@ -79,7 +79,32 @@ export interface HistoryEntry {
 /** Accounts returns the history 100 entries at a time (Q6); older ones with ?before. */
 export const HISTORY_PAGE = 100
 
+export interface ServiceAbout {
+  name: string
+  /** Null when the service did not answer. */
+  version: string | null
+  appliedMigrations: number
+  lastMigration: string | null
+}
+
+export interface PluginAbout {
+  id: string
+  version: string | null
+  status: 'healthy' | 'unavailable'
+}
+
+export interface ServerAbout {
+  currentVersion: string
+  latestVersion: string | null
+  /** Null when the newest release could not be read. */
+  isUpdateAvailable: boolean | null
+  releaseUrl: string | null
+  services: ServiceAbout[]
+  plugins: PluginAbout[]
+}
+
 export const adminKeys = {
+  about: ['admin', 'about'] as const,
   users: ['admin', 'users'] as const,
   list: (filter: UserFilter) => ['admin', 'users', 'list', filter] as const,
   user: (id: string) => ['admin', 'users', id] as const,
@@ -88,6 +113,10 @@ export const adminKeys = {
 
 /** UC-10 to UC-17 from Accounts, A-22 and A-23 from Auth. Both services check the caller's role again (R1–R5, R18). */
 export const adminApi = {
+  async about() {
+    return (await http.get<ServerAbout>('/admin/users/v1/server/about')).data
+  },
+
   async list(filter: UserFilter) {
     const params = Object.fromEntries(Object.entries(filter).filter(([, value]) => value != null && value !== ''))
     return (await http.get<UserPage>('/admin/users/v1', { params })).data
