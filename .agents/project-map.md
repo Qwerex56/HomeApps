@@ -1,6 +1,6 @@
 # HomeApps Project Map
 
-- **HEAD**: `b27aa7b` (master), last updated 2026-11-22
+- **HEAD**: `3f291a3` (master), last updated 2026-11-25
 - **Stack**: .NET 10 (`HomeApps.slnx`), Vue 3 + TypeScript (`src/Web`), PostgreSQL, RabbitMQ (MassTransit), SignalR, MCP (`ModelContextProtocol.AspNetCore`).
 - **Tools**: Mac Device Emulator (`tools/mac-device-emulator/MacDeviceEmulator.slnx`).
 - **Agent harness**: roles and skills live in `~/.agent-hub`; repo keeps only project-specific overrides (see Agent Overrides).
@@ -64,9 +64,8 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
 - JWT test helper: `TestJwt.CreateToken` / `TestJwt.CreateTokenWithClient`
 
 ## Specs, Docs & Agent Overrides
-- **`specs/`** (owner + `/spec-debate` write; agents read only): `household-jarvis-devices.md` + `-adr.md`, `household-planner.md`, `_TEMPLATE.md`, `CLAUDE_PROJECT_INSTRUCTIONS.md`
+- **`specs/`** (owner + `/spec-debate` write; agents read only): `household-jarvis-devices.md` + `-adr.md`, `household-planner.md` + `-adr.md`, `release-3.0.md`, `_TEMPLATE.md`, `CLAUDE_PROJECT_INSTRUCTIONS.md`
 - **Stage progress**: `.agents/STATUS.md` (Coordinator only)
 - **`docs/`**: `how-a-service-is-built.md`, `adr/0001`–`0009`, `auth.md`, `accounts.md`, `households.md`, `notifications.md`, `homemix.md`, `homemix-authoring.md`, `devices.md`, `devices-protocol.md`, `device-capabilities.md`, `jarvis.md`, `mcp.md`, `plugins.md`, `plugin-chat.md`, `plugin-todo.md`, `web.md`, `deployment.md`, `development.md`, `working-with-the-repo.md`, `schemas/`
-- **Project-local agents**: `.claude/agents/dotnet-architect.md`, `.claude/agents/vue-architect.md` (developer/tester/reviewer/devils-advocate/docs-writer/mapper come from `~/.agent-hub`)
-- **Project-local skills**: `.claude/skills/{dotnet-conventions,vue-conventions,testing-standards,code-review-checklist}` (`run-feature`, `spec-debate` are in the hub)
+- **Agents & skills**: none project-local (`.claude/agents/`, `.claude/skills/` removed). Roles and skills come from `~/.agent-hub`; HomeApps conventions are hub skills `homeapps-*`, profiles `dotnet`, `vue` (see `.claude/CLAUDE.md` `## Agents`).
 - **Docker/env**: `compose.yaml`, `Dockerfile`, `Directory.Build.props`, `Directory.Packages.props`, `global.json`, `nuget.config` (root); `.claude/settings.json`, `.claude/CLAUDE.md`
