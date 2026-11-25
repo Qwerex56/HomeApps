@@ -23,7 +23,9 @@ internal sealed class HouseholdDevicesEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var household = app.MapGroup("/devices/households/{householdId:guid}").WithTags("Devices");
+        var devices = app.MapVersionedGroup("/devices");
+
+        var household = app.MapVersionedGroup("/devices").MapGroup("/households/{householdId:guid}").WithTags("Devices");
 
         // ?capability=&role=&model= narrow the list to matching devices (2.5), ?state=true adds each one's last state.
         household.MapGet("/", async (
@@ -35,27 +37,27 @@ internal sealed class HouseholdDevicesEndpoints : IEndpoint
             (await sender.Send(new AddHouseholdDeviceCommand(householdId, body.Name), ct)).ToHttpResult())
             .Produces<PairingCodeView>();
 
-        app.MapPost("/devices/{deviceId:guid}/pairing-code", async (Guid deviceId, ISender sender, CancellationToken ct) =>
+        devices.MapPost("/{deviceId:guid}/pairing-code", async (Guid deviceId, ISender sender, CancellationToken ct) =>
             (await sender.Send(new NewPairingCodeCommand(deviceId), ct)).ToHttpResult())
             .WithTags("Devices")
             .Produces<PairingCodeView>();
 
         // D6: admins (and a person for their own computer) rename a device and write notes for JARVIS.
-        app.MapPut("/devices/{deviceId:guid}/name", async (Guid deviceId, RenameDeviceRequest body, ISender sender, CancellationToken ct) =>
+        devices.MapPut("/{deviceId:guid}/name", async (Guid deviceId, RenameDeviceRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(new RenameDeviceCommand(deviceId, body.Name), ct)).ToHttpResult())
             .WithTags("Devices");
 
-        app.MapPut("/devices/{deviceId:guid}/notes", async (Guid deviceId, SetAdminNotesRequest body, ISender sender, CancellationToken ct) =>
+        devices.MapPut("/{deviceId:guid}/notes", async (Guid deviceId, SetAdminNotesRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(new SetAdminNotesCommand(deviceId, body.Notes), ct)).ToHttpResult())
             .WithTags("Devices");
 
         // D6: admins decide whether JARVIS may control the device and whether it asks first ("Nie pytaj").
-        app.MapPut("/devices/{deviceId:guid}/jarvis", async (Guid deviceId, SetJarvisAccessRequest body, ISender sender, CancellationToken ct) =>
+        devices.MapPut("/{deviceId:guid}/jarvis", async (Guid deviceId, SetJarvisAccessRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(new SetJarvisAccessCommand(deviceId, body.MayControl, body.Asks), ct)).ToHttpResult())
             .WithTags("Devices");
 
         // S13: the satellite has no account yet, only the code (8 of 31 characters, valid 10 minutes, one use).
-        app.MapPost("/devices/pair", async (PairDeviceRequest body, ISender sender, CancellationToken ct) =>
+        devices.MapPost("/pair", async (PairDeviceRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(new PairDeviceCommand(body.Code, body.Descriptor is { ValueKind: not System.Text.Json.JsonValueKind.Null } d ? d.GetRawText() : null), ct)).ToHttpResult())
             .AllowAnonymous()
             .RequireRateLimiting(DependencyInjection.PairRateLimit)

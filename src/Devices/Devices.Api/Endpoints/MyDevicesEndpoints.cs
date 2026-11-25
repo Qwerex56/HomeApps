@@ -15,7 +15,7 @@ internal sealed class MyDevicesEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var devices = app.MapGroup("/devices").WithTags("Devices");
+        var devices = app.MapVersionedGroup("/devices").WithTags("Devices");
 
         devices.MapGet("/", async (ISender sender, CancellationToken ct) =>
             (await sender.Send(new GetMyDevicesQuery(), ct)).ToHttpResult())

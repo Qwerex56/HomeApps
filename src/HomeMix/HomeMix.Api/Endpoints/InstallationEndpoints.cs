@@ -26,7 +26,7 @@ internal sealed class InstallationEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var api = app.MapGroup("/homemix/api").WithTags("Installations");
+        var api = app.MapVersionedGroup("/homemix/api").WithTags("Installations");
 
         api.MapGet("/households/{householdId:guid}/installations", async (Guid householdId, ISender sender, CancellationToken ct) =>
                 (await sender.Send(new GetHouseholdInstallationsQuery(householdId), ct)).ToHttpResult())
@@ -34,7 +34,7 @@ internal sealed class InstallationEndpoints : IEndpoint
 
         api.MapPost("/households/{householdId:guid}/installations", async (Guid householdId, InstallRequest body, ISender sender, CancellationToken ct) =>
                 (await sender.Send(new InstallCommand(body.Sha256, TargetKind.Household, householdId, body.Consent), ct))
-                .ToCreatedHttpResult(view => $"/homemix/api/installations/{view.Id}"))
+                .ToCreatedHttpResult(view => $"/homemix/api/v1/installations/{view.Id}"))
             .Produces<InstallationView>(StatusCodes.Status201Created);
 
         api.MapGet("/me/installations", async (ISender sender, CancellationToken ct) =>
@@ -43,7 +43,7 @@ internal sealed class InstallationEndpoints : IEndpoint
 
         api.MapPost("/me/installations", async (InstallRequest body, ISender sender, CancellationToken ct) =>
                 (await sender.Send(new InstallCommand(body.Sha256, TargetKind.User, null, body.Consent), ct))
-                .ToCreatedHttpResult(view => $"/homemix/api/installations/{view.Id}"))
+                .ToCreatedHttpResult(view => $"/homemix/api/v1/installations/{view.Id}"))
             .Produces<InstallationView>(StatusCodes.Status201Created);
 
         // UI 2.4.1: the quick links bar, my account's add-ons in order.

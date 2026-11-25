@@ -17,7 +17,7 @@ internal sealed class HouseholdsServiceAdmins(HttpClient http) : IHouseholdAdmin
 
     public async Task<IReadOnlyList<Guid>> GetAdminIdsAsync(Guid householdId, CancellationToken cancellationToken)
     {
-        using var response = await http.GetAsync($"internal/households/{householdId}/members", cancellationToken);
+        using var response = await http.GetAsync($"internal/v1/households/{householdId}/members", cancellationToken);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return [];

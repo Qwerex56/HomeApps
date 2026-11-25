@@ -14,7 +14,7 @@ internal sealed class MeEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var me = app.MapGroup("/users/me").WithTags("My account");
+        var me = app.MapVersionedGroup("/users").MapGroup("/me").WithTags("My account");
 
         me.MapGet("/", async (ISender sender, CancellationToken ct) =>
             (await sender.Send(new GetMyAccountQuery(), ct)).ToHttpResult());

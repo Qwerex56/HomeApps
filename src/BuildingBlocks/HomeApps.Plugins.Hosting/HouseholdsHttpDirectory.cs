@@ -19,7 +19,7 @@ internal sealed class HouseholdsHttpDirectory(HttpClient http, IHttpContextAcces
         await GetAsync<HouseholdName>("households", cancellationToken) ?? [];
 
     public async Task<IReadOnlyList<MemberName>> MemberNamesAsync(Guid householdId, CancellationToken cancellationToken) =>
-        await GetAsync<MemberName>($"households/{householdId}/members/names", cancellationToken) ?? [];
+        await GetAsync<MemberName>($"households/v1/{householdId}/members/names", cancellationToken) ?? [];
 
     private async Task<List<T>?> GetAsync<T>(string path, CancellationToken cancellationToken)
     {

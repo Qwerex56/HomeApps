@@ -21,7 +21,7 @@ internal sealed class DataEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var data = app.MapGroup("/homemix/api/installations/{id:guid}/data/{collection}").WithTags("Data").AllowAssistant();
+        var data = app.MapVersionedGroup("/homemix/api").MapGroup("/installations/{id:guid}/data/{collection}").WithTags("Data").AllowAssistant();
 
         data.MapGet("/", async (Guid id, string collection, string? scope, ISender sender, CancellationToken ct) =>
                 (await sender.Send(new ListDocumentsQuery(id, Scope(scope), collection), ct)).ToHttpResult())

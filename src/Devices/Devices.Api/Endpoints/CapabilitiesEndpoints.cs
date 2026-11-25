@@ -15,7 +15,7 @@ internal sealed class CapabilitiesEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/devices/admin/capabilities").WithTags("Devices");
+        var group = app.MapVersionedGroup("/devices").MapGroup("/admin/capabilities").WithTags("Devices");
 
         group.MapGet("/", async (ISender sender, CancellationToken ct) =>
             (await sender.Send(new ListRegisteredCapabilitiesQuery(), ct)).ToHttpResult())

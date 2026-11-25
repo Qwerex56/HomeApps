@@ -20,7 +20,7 @@ internal sealed class DeviceEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var api = app.MapGroup("/homemix/api/installations/{id:guid}").WithTags("Devices");
+        var api = app.MapVersionedGroup("/homemix/api").MapGroup("/installations/{id:guid}").WithTags("Devices");
 
         api.MapGet("/devices", async (
                 Guid id, ISender sender, CancellationToken ct,

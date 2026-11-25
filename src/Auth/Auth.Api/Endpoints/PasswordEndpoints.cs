@@ -15,7 +15,7 @@ internal sealed class PasswordEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var password = app.MapGroup("/auth/password").WithTags("Password");
+        var password = app.MapVersionedGroup("/auth").MapGroup("/password").WithTags("Password");
 
         password.MapPost("/forgot", async (
                 ForgotPasswordRequest body, PerAddressLimiter perAddress, ISender sender, CancellationToken ct) =>

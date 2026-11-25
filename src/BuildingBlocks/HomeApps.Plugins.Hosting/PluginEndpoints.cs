@@ -1,5 +1,6 @@
 using FluentResults;
 using HomeApps.BuildingBlocks.Api.Assistant;
+using HomeApps.BuildingBlocks.Api.Endpoints;
 using HomeApps.BuildingBlocks.Api.Results;
 using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.Plugins.Manifest;
@@ -25,7 +26,13 @@ internal static class PluginEndpoints
             return;
         }
 
-        var enablement = app.MapGroup("/api/households/{householdId:guid}/enablement").WithTags("Plugin");
+        MapEnablement(app.MapGroup("/api/v1/households/{householdId:guid}/enablement"), manifest, legacy: false);
+        MapEnablement(app.MapLegacyGroup("/api/households/{householdId:guid}/enablement"), manifest, legacy: true);
+    }
+
+    private static void MapEnablement(RouteGroupBuilder enablement, PluginManifest manifest, bool legacy)
+    {
+        enablement.WithTags("Plugin");
 
         enablement.MapGet("/", async (Guid householdId, IHouseholdAccess access, PluginDbContext db, CancellationToken ct) =>
         {
@@ -38,7 +45,7 @@ internal static class PluginEndpoints
             return Results.Ok(EnablementView.Of(householdId, found));
         })
         .Produces<EnablementView>()
-        .WithName("GetPluginEnablement");
+        .WithName(legacy ? "GetPluginEnablementLegacy" : "GetPluginEnablement");
 
         enablement.MapPut("/", async (
             Guid householdId, EnablementRequest body, IHouseholdAccess access, ICurrentUser user, PluginDbContext db,
@@ -50,7 +57,7 @@ internal static class PluginEndpoints
                 return Result.Fail(PluginErrors.HouseholdNotFound).ToHttpResult();
             }
 
-            if (role < manifest.Enablement.MinRole)
+            if (role < manifest.Enablement!.MinRole)
             {
                 return Result.Fail(PluginErrors.Forbidden).ToHttpResult();
             }
@@ -68,7 +75,7 @@ internal static class PluginEndpoints
         })
         .Produces<EnablementView>()
         .DenyAssistant() // switching plugins is a household setting, the person's own decision (JV13)
-        .WithName("SetPluginEnablement");
+        .WithName(legacy ? "SetPluginEnablementLegacy" : "SetPluginEnablement");
     }
 }
 

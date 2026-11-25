@@ -22,7 +22,7 @@ internal sealed class AdminEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var admin = app.MapGroup("/homemix/api/admin").WithTags("Administration").RequireAuthorization(Policies.Owner);
+        var admin = app.MapVersionedGroup("/homemix/api").MapGroup("/admin").WithTags("Administration").RequireAuthorization(Policies.Owner);
 
         admin.MapGet("/installations", async (ISender sender, CancellationToken ct) =>
                 (await sender.Send(new ListAllInstallationsQuery(), ct)).ToHttpResult())

@@ -28,7 +28,7 @@ internal sealed partial class HouseholdDevices(HttpClient http, IOptions<Gateway
         try
         {
             var settings = options.Value;
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"{settings.DevicesUrl.TrimEnd('/')}/internal/households/{householdId}/devices?user={userId}");
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{settings.DevicesUrl.TrimEnd('/')}/internal/v1/households/{householdId}/devices?user={userId}");
             request.Headers.Add("X-Client-Id", settings.ClientId);
             request.Headers.Add("X-Client-Secret", settings.ClientSecret);
             using var response = await http.SendAsync(request, cancellationToken);

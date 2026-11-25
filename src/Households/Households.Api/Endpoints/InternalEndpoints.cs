@@ -19,8 +19,10 @@ internal sealed class InternalEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
+        var internalApi = app.MapVersionedGroup("/internal");
+
         // H-0: JARVIS reads the people for the spoken PIN (a satellite is not a member, so it cannot use /members).
-        app.MapGet("/internal/households/{id:guid}/members", async (Guid id, HttpRequest request, IConfiguration configuration, ISender sender, CancellationToken ct) =>
+        internalApi.MapGet("/households/{id:guid}/members", async (Guid id, HttpRequest request, IConfiguration configuration, ISender sender, CancellationToken ct) =>
             Authorized(request, configuration)
                 ? (await sender.Send(new ListHouseholdPeopleQuery(id), ct)).ToHttpResult()
                 : Results.Unauthorized())
@@ -29,7 +31,7 @@ internal sealed class InternalEndpoints : IEndpoint
             .Produces<IReadOnlyList<MemberView>>();
 
         // H-2: JARVIS filters a satellite's tools, and caps a person's, by the household's assistant settings.
-        app.MapGet("/internal/households/{id:guid}/assistant", async (Guid id, HttpRequest request, IConfiguration configuration, ISender sender, CancellationToken ct) =>
+        internalApi.MapGet("/households/{id:guid}/assistant", async (Guid id, HttpRequest request, IConfiguration configuration, ISender sender, CancellationToken ct) =>
             Authorized(request, configuration)
                 ? (await sender.Send(new GetHouseholdAssistantQuery(id), ct)).ToHttpResult()
                 : Results.Unauthorized())

@@ -21,7 +21,7 @@ internal sealed class AdminEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var users = app.MapGroup("/admin/users").WithTags("Administration").RequireAuthorization(Policies.Admin);
+        var users = app.MapVersionedGroup("/admin/users").WithTags("Administration").RequireAuthorization(Policies.Admin);
 
         users.MapGet("/", async (
             AccountStatus? status, ServerRole? role, string? q, int? page, int? pageSize, UserSort? sort, bool? desc,

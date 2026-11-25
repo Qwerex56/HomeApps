@@ -13,7 +13,7 @@ internal sealed class AdminEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var identities = app.MapGroup("/auth/admin/identities").WithTags("Administration");
+        var identities = app.MapVersionedGroup("/auth").MapGroup("/admin/identities").WithTags("Administration");
 
         identities.MapPost("/{id:guid}/password-reset", async (Guid id, ISender sender, CancellationToken ct) =>
             (await sender.Send(new ResetPasswordForCommand(id), ct)).ToHttpResult());

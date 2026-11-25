@@ -16,7 +16,7 @@ internal sealed class BoardEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var api = app.MapGroup("/homemix/api/households/{householdId:guid}/boards").WithTags("Boards");
+        var api = app.MapVersionedGroup("/homemix/api").MapGroup("/households/{householdId:guid}/boards").WithTags("Boards");
 
         api.MapGet("/{place}", async (Guid householdId, string place, ISender sender, CancellationToken ct) =>
                 (await sender.Send(new GetBoardQuery(householdId, place), ct)).ToHttpResult())

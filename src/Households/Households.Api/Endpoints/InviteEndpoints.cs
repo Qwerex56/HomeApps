@@ -19,11 +19,11 @@ internal sealed class InviteEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var invites = app.MapGroup("/households/{id:guid}/invites").WithTags("Invites");
+        var invites = app.MapVersionedGroup("/households").MapGroup("/{id:guid}/invites").WithTags("Invites");
 
         invites.MapPost("/", async (Guid id, InviteRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(new CreateInviteCommand(id, body.Role, body.Validity ?? InviteValidity.SevenDays, body.GuestAccessUntil), ct))
-            .ToCreatedHttpResult(invite => $"/households/{id}/invites/{invite.Id}"))
+            .ToCreatedHttpResult(invite => $"/households/v1/{id}/invites/{invite.Id}"))
             .Produces<InviteView>(StatusCodes.Status201Created)
             .RequireRateLimiting(RateLimits.Changes);
 
@@ -35,7 +35,7 @@ internal sealed class InviteEndpoints : IEndpoint
             (await sender.Send(new RevokeInviteCommand(id, inviteId), ct)).ToHttpResult())
             .RequireRateLimiting(RateLimits.Changes);
 
-        var byCode = app.MapGroup("/invites/{code}").WithTags("Invites");
+        var byCode = app.MapVersionedGroup("/invites").MapGroup("/{code}").WithTags("Invites");
 
         byCode.MapGet("/", async (string code, ISender sender, CancellationToken ct) =>
             (await sender.Send(new PreviewInviteQuery(code), ct)).ToHttpResult())

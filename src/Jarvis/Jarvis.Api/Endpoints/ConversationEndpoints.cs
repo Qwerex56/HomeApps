@@ -26,7 +26,7 @@ internal sealed class ConversationEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var api = app.MapGroup("/jarvis/api/conversations").WithTags("JARVIS");
+        var api = app.MapVersionedGroup("/jarvis/api").MapGroup("/conversations").WithTags("JARVIS");
 
         api.MapGet("/", async (ICurrentUser user, ISender sender, CancellationToken ct) =>
             (await sender.Send(new ListConversationsQuery(user.RequiredUserId), ct)).ToHttpResult())

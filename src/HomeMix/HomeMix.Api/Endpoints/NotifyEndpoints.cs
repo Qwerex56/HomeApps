@@ -11,7 +11,7 @@ namespace HomeMix.Api.Endpoints;
 internal sealed class NotifyEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app) =>
-        app.MapPost("/homemix/api/installations/{id:guid}/notify", async (Guid id, NotifyRequest body, ISender sender, CancellationToken ct) =>
+        app.MapVersionedGroup("/homemix/api").MapPost("/installations/{id:guid}/notify", async (Guid id, NotifyRequest body, ISender sender, CancellationToken ct) =>
                 (await sender.Send(new PushNotificationCommand(id, body.UserIds, body.Title, body.Body, body.Path, body.Tag), ct)).ToHttpResult())
             .WithTags("Notifications")
             .RequireRateLimiting(NotifyLimit.Policy)

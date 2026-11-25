@@ -14,7 +14,7 @@ internal sealed class AdminEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var admin = app.MapGroup("/admin/households").WithTags("Administration").RequireAuthorization(Policies.Admin);
+        var admin = app.MapVersionedGroup("/admin/households").WithTags("Administration").RequireAuthorization(Policies.Admin);
 
         admin.MapGet("/", async (string? q, DateTimeOffset? before, ISender sender, CancellationToken ct) =>
             (await sender.Send(new ListAllHouseholdsQuery(q, before), ct)).ToHttpResult())

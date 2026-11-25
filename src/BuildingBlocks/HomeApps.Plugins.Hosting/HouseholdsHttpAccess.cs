@@ -34,7 +34,7 @@ internal sealed class HouseholdsHttpAccess(
             throw new InvalidOperationException("Household access needs the caller's access token; there is no HTTP request with one.");
         }
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"households/{householdId}/members/me");
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"households/v1/{householdId}/members/me");
         request.Headers.TryAddWithoutValidation(HeaderNames.Authorization, authorization);
 
         using var response = await http.SendAsync(request, cancellationToken);

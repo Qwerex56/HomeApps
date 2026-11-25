@@ -35,7 +35,7 @@ internal sealed class DevicesHttpClient(HttpClient http, IHttpContextAccessor ac
 
     public async Task<PluginDeviceState?> GetStateAsync(Guid deviceId, CancellationToken cancellationToken)
     {
-        using var response = await SendAsync(HttpMethod.Get, $"devices/{deviceId}/state", null, cancellationToken);
+        using var response = await SendAsync(HttpMethod.Get, $"devices/v1/{deviceId}/state", null, cancellationToken);
         if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
         {
             return null;
@@ -48,7 +48,7 @@ internal sealed class DevicesHttpClient(HttpClient http, IHttpContextAccessor ac
     public async Task<Result> SetAsync(Guid deviceId, string control, JsonElement value, CancellationToken cancellationToken)
     {
         using var content = JsonContent.Create(new { control, value }, options: Json);
-        using var response = await SendAsync(HttpMethod.Post, $"devices/{deviceId}/set", content, cancellationToken);
+        using var response = await SendAsync(HttpMethod.Post, $"devices/v1/{deviceId}/set", content, cancellationToken);
         if (response.IsSuccessStatusCode)
         {
             return Result.Ok();
@@ -86,7 +86,7 @@ internal sealed class DevicesHttpClient(HttpClient http, IHttpContextAccessor ac
             query.Add("state=true");
         }
 
-        var path = $"devices/households/{householdId}";
+        var path = $"devices/v1/households/{householdId}";
         return query.Count == 0 ? path : $"{path}?{string.Join('&', query)}";
     }
 

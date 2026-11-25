@@ -32,7 +32,7 @@ internal sealed class SignInEndpoints : IEndpoint
 
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var auth = app.MapGroup("/auth").WithTags("Sign-in");
+        var auth = app.MapVersionedGroup("/auth").WithTags("Sign-in");
 
         auth.MapPost("/register", async (RegisterRequest body, HttpContext http, ISender sender, CancellationToken ct) =>
             (await sender.Send(new RegisterWithPasswordCommand(
