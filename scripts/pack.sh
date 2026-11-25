@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Packs the kit for plugins that live outside this repository (docs/plugins.md) into a local feed:
 # HomeApps.BuildingBlocks.*, HomeApps.Contracts, HomeApps.Plugins(.Hosting) and the test helpers as NuGet packages,
-# and @homeapps/plugin-sdk (the UI side) as an npm tarball. Needs `npm ci` in src/Web once.
+# and @home-apps/plugin-sdk (the UI side) as an npm tarball. Needs `npm ci` in src/Web once.
 # The version is HomeApps' own (Directory.Build.props). Run it again after changing the kit; a plugin's
 # nuget.config points at the feed. HOMEAPPS_PACKAGES changes where the feed is.
 set -euo pipefail

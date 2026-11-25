@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import type { WidgetProps } from '@homeapps/plugin-sdk'
+import type { WidgetProps } from '@home-apps/plugin-sdk'
 import { useGreetings } from './useGreetings'
 
 const props = defineProps<WidgetProps>()

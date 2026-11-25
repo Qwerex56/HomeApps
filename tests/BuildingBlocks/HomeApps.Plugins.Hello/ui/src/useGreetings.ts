@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { useHost } from '@homeapps/plugin-sdk'
+import { useHost } from '@home-apps/plugin-sdk'
 
 export interface Greeting {
   id: string

@@ -2,7 +2,7 @@
 import { defineAsyncComponent, onErrorCaptured, provide, ref, shallowRef, watch, type Component } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Message from 'primevue/message'
-import { HOST_KEY, type PluginHousehold, type PluginModule } from '@homeapps/plugin-sdk'
+import { HOST_KEY, type PluginHousehold, type PluginModule } from '@home-apps/plugin-sdk'
 import type { LoadedPlugin } from './registry'
 import { createHost } from './host'
 

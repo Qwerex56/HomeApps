@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AxiosResponse } from 'axios'
-import { hasPermission, type PluginManifest, type PluginModule } from '@homeapps/plugin-sdk'
+import { hasPermission, type PluginManifest, type PluginModule } from '@home-apps/plugin-sdk'
 import { http } from '@/api/http'
 import { i18n } from '@/shared/i18n'
 import { APP_VERSION, loadPlugins, setPluginImporter, versionAtLeast } from '../registry'
