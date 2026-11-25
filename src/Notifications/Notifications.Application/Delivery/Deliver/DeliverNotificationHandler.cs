@@ -20,6 +20,9 @@ internal sealed class DeliverNotificationHandler(
 
         // 2.13: the notification center gets everyone who has not muted it, with or without a device or push.
         var byUser = found.ToDictionary(r => r.UserId);
+        var toReplace = request.Tag is null
+            ? []
+            : await inApp.UnreadWithTagAsync(userIds, request.Tag, cancellationToken);
         foreach (var userId in userIds)
         {
             if (byUser.TryGetValue(userId, out var known) && known.IsMuted(request.HouseholdId, request.Source))
@@ -27,12 +30,9 @@ internal sealed class DeliverNotificationHandler(
                 continue;
             }
 
-            if (request.Tag is not null)
+            foreach (var replaced in toReplace.Where(n => n.UserId == userId))
             {
-                foreach (var replaced in await inApp.UnreadWithTagAsync(userId, request.Tag, cancellationToken))
-                {
-                    inApp.Remove(replaced);
-                }
+                inApp.Remove(replaced);
             }
 
             inApp.Add(InAppNotification.Create(

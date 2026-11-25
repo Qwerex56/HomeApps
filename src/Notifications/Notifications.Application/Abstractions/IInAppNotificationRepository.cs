@@ -13,7 +13,7 @@ public interface IInAppNotificationRepository
 
     Task<IReadOnlyList<InAppNotification>> UnreadAsync(Guid userId, DateTimeOffset since, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<InAppNotification>> UnreadWithTagAsync(Guid userId, string tag, CancellationToken cancellationToken);
+    Task<IReadOnlyList<InAppNotification>> UnreadWithTagAsync(IReadOnlyCollection<Guid> userIds, string tag, CancellationToken cancellationToken);
 
     void Add(InAppNotification notification);
 

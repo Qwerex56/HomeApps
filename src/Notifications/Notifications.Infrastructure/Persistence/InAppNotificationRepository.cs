@@ -24,8 +24,8 @@ internal sealed class InAppNotificationRepository(NotificationsDbContext db) : I
     public async Task<IReadOnlyList<InAppNotification>> UnreadAsync(Guid userId, DateTimeOffset since, CancellationToken cancellationToken) =>
         await db.InAppNotifications.Where(n => n.UserId == userId && n.ReadAt == null && n.CreatedAt >= since).ToListAsync(cancellationToken);
 
-    public async Task<IReadOnlyList<InAppNotification>> UnreadWithTagAsync(Guid userId, string tag, CancellationToken cancellationToken) =>
-        await db.InAppNotifications.Where(n => n.UserId == userId && n.ReadAt == null && n.Tag == tag).ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<InAppNotification>> UnreadWithTagAsync(IReadOnlyCollection<Guid> userIds, string tag, CancellationToken cancellationToken) =>
+        await db.InAppNotifications.Where(n => userIds.Contains(n.UserId) && n.ReadAt == null && n.Tag == tag).ToListAsync(cancellationToken);
 
     public void Add(InAppNotification notification) => db.InAppNotifications.Add(notification);
 
