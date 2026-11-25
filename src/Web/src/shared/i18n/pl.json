@@ -122,6 +122,7 @@
     "household": {
       "not_found": "Nie ma takiego domu albo nie należysz do niego.",
       "forbidden": "Nie masz uprawnień w tym domu.",
+      "timezone_invalid": "Strefa czasowa musi być w formacie IANA, np. Europe/Warsaw.",
       "archived": "Ten dom jest zarchiwizowany.",
       "already_member": "Już należysz do tego domu.",
       "full": "Ten dom ma już maksymalną liczbę osób.",
@@ -152,8 +153,7 @@
     },
     "plugin": {
       "disabled": "Ta aplikacja nie jest włączona w tym domu.",
-      "forbidden": "Twoja rola w tym domu na to nie pozwala.",
-      "timezone_invalid": "Strefa czasowa musi być w formacie IANA, np. Europe/Warsaw."
+      "forbidden": "Twoja rola w tym domu na to nie pozwala."
     },
     "notifications": {
       "no_devices": "Najpierw włącz powiadomienia na jakimś urządzeniu.",
