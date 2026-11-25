@@ -7,6 +7,7 @@ using HomeApps.Contracts.Notifications;
 using HomeApps.Plugins.Hello;
 using HomeApps.Plugins.Hosting;
 using MassTransit.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HomeApps.Plugins.Tests;
 
@@ -67,6 +68,17 @@ public sealed class HostingTests(HelloPluginFactory factory) : IClassFixture<Hel
         Assert.Equal(HttpStatusCode.OK, legacy.StatusCode);
         Assert.Equal("true", Assert.Single(legacy.Headers.GetValues("Deprecation")));
         Assert.Contains("2028", Assert.Single(legacy.Headers.GetValues("Sunset")), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_plugin_hub_and_manifest_stay_without_a_version()
+    {
+        using var _ = factory.CreateClient();
+        var patterns = factory.Services.GetRequiredService<Microsoft.AspNetCore.Routing.EndpointDataSource>().Endpoints
+            .OfType<Microsoft.AspNetCore.Routing.RouteEndpoint>().Select(e => e.RoutePattern.RawText).ToList();
+
+        Assert.Contains("/manifest", patterns);
+        Assert.DoesNotContain(patterns, p => p!.Contains("/v1/hub", StringComparison.Ordinal) || p.StartsWith("/v1/manifest", StringComparison.Ordinal));
     }
 
     [Fact]

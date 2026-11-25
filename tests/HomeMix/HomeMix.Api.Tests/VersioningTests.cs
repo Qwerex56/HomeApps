@@ -1,4 +1,6 @@
 using System.Net;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http.Json;
 using HomeApps.Contracts.Households;
 
@@ -35,5 +37,16 @@ public sealed class VersioningTests(HomeMixApiFactory api) : IClassFixture<HomeM
 
         Assert.NotEqual(HttpStatusCode.OK, versioned.StatusCode);
         Assert.False(versioned.Headers.Contains("Deprecation"));
+    }
+
+    [Fact]
+    public void The_hub_stays_without_a_version()
+    {
+        using var _ = api.CreateClient();
+        var patterns = api.Services.GetRequiredService<EndpointDataSource>().Endpoints
+            .OfType<RouteEndpoint>().Select(e => e.RoutePattern.RawText).ToList();
+
+        Assert.Contains("/homemix/hub", patterns);
+        Assert.DoesNotContain("/homemix/v1/hub", patterns);
     }
 }
