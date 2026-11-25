@@ -32,7 +32,7 @@ public sealed class ProcessFramesTests
         _handler = new ProcessFramesHandler(_devices, _telemetry, _stream, _bus, new AdminNotices(_directory, _bus, Microsoft.Extensions.Logging.Abstractions.NullLogger<AdminNotices>.Instance), _sources, _time);
     }
 
-    private static JsonElement Json(string json) => JsonDocument.Parse(json).RootElement.Clone();
+    private static JsonElement Json(string json) => JsonElement.Parse(json);
 
     private async Task<IReadOnlyList<FrameResult>> SendAsync(params DeviceFrame[] frames) =>
         (await _handler.Handle(new ProcessFramesCommand(_device.Id, frames), CancellationToken.None)).Value;

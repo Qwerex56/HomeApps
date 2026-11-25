@@ -34,7 +34,7 @@ public sealed class SetControlForAddonTests
     private Task<FluentResults.Result> SetAsync(Guid? installer = null, Guid? household = null, string control = "heating", string value = "2") =>
         new SetControlForAddonHandler(_devices, _links, _directory, _sources, _telemetry, _time, NullLogger<SetControlForAddonHandler>.Instance)
             .Handle(new SetControlForAddonCommand(
-                _device.Id, household ?? _household, control, JsonDocument.Parse(value).RootElement.Clone(), installer ?? _installer, _installation, "Termostat"),
+                _device.Id, household ?? _household, control, JsonElement.Parse(value), installer ?? _installer, _installation, "Termostat"),
                 CancellationToken.None);
 
     private static string Code(FluentResults.Result result) => ((AppError)result.Errors[0]).Code;

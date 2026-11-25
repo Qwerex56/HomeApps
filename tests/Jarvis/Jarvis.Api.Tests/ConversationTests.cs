@@ -99,7 +99,7 @@ public sealed class ConversationTests(JarvisFactory factory)
     {
         try
         {
-            return JsonDocument.Parse(data).RootElement.Clone();
+            return JsonElement.Parse(data);
         }
         catch (JsonException)
         {
