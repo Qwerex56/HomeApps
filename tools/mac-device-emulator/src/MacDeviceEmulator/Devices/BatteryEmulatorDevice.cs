@@ -90,8 +90,9 @@ public sealed class BatteryEmulatorDevice(
                     {
                         ["battery"] = batteryLevel.Value
                     };
+                    // Clone: the frames are serialized after this block, when a `using` document would already be disposed.
                     using var stateDoc = JsonDocument.Parse(JsonSerializer.Serialize(stateValues));
-                    frames.Add(new(Type: "state", Values: stateDoc.RootElement));
+                    frames.Add(new(Type: "state", Values: stateDoc.RootElement.Clone()));
                     frames.Add(new(Type: "status", Battery: batteryLevel.Value));
                     Console.WriteLine($"[{Name}] Sending POST /devices/report (battery: {batteryLevel.Value}%)...");
                 }

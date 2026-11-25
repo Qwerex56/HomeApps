@@ -10,6 +10,7 @@ using Devices.Application.Frames.ProcessFrames;
 using Devices.Application.Telemetry.GetDeviceEvents;
 using Devices.Application.Telemetry.GetDeviceState;
 using Devices.Application.Telemetry.GetStreamAccess;
+using HomeApps.BuildingBlocks.Api.Assistant;
 using HomeApps.BuildingBlocks.Api.Endpoints;
 using HomeApps.BuildingBlocks.Api.Results;
 using HomeApps.BuildingBlocks.Application.Abstractions;
@@ -65,6 +66,7 @@ internal sealed class DeviceStateEndpoints : IEndpoint
                     extensions: new Dictionary<string, object?> { [ResultHttpMapper.CodeExtension] = "devices.frame_failed" });
             }
         })
+            .AllowAssistant() // a device's token carries `act` (the device actor), so the guard would otherwise refuse this write
             .RequireRateLimiting(DependencyInjection.ReportRateLimit)
             .WithMetadata(new RequestSizeLimitAttribute(MaxReportBytes))
             .WithTags("Devices")

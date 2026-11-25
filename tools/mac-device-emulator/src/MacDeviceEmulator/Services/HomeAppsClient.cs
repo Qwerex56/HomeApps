@@ -18,8 +18,8 @@ public sealed record PairResponse(
     [property: JsonPropertyName("purpose")] string Purpose);
 
 public sealed record TokenResponse(
-    [property: JsonPropertyName("token")] string Token,
-    [property: JsonPropertyName("expiresIn")] int ExpiresIn);
+    [property: JsonPropertyName("accessToken")] string Token,
+    [property: JsonPropertyName("expiresAt")] DateTimeOffset ExpiresAt);
 
 public interface IHomeAppsClient
 {
