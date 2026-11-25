@@ -5,6 +5,7 @@ using Devices.Infrastructure.Persistence;
 using HomeApps.BuildingBlocks.Api;
 using HomeApps.BuildingBlocks.Infrastructure.Persistence;
 using HomeApps.BuildingBlocks.Mcp;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,9 @@ app.UseRateLimiter();
 
 // Inside the Docker network only; JARVIS's gateway lists and calls the devices' actions through it.
 app.MapHomeAppsMcp();
+
+// A missing DEVICES_CLIENT_SECRET stops the start here, before any migration (ValidateOnStart alone runs once the host starts).
+_ = app.Services.GetRequiredService<IOptions<DevicesOptions>>().Value;
 
 await app.MigrateDatabaseOnStartupAsync<DevicesDbContext>();
 

@@ -7,6 +7,7 @@ using Devices.Api.Stream;
 using Devices.Application.Abstractions;
 using HomeApps.BuildingBlocks.Api.Auth;
 using HomeApps.BuildingBlocks.Api.Results;
+using HomeApps.BuildingBlocks.Infrastructure.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
@@ -29,7 +30,7 @@ internal static class DependencyInjection
     public static WebApplicationBuilder AddDevicesApi(this WebApplicationBuilder builder)
     {
         var services = builder.Services;
-        services.AddOptions<DevicesOptions>().BindConfiguration(DevicesOptions.SectionName);
+        services.AddValidatedOptions<DevicesOptions>(DevicesOptions.SectionName);
         services.AddSingleton<DeviceLinks>();
         services.AddSingleton<IDeviceLinks>(provider => provider.GetRequiredService<DeviceLinks>());
         services.AddSingleton<DeviceStream>();
