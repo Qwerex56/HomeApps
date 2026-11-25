@@ -60,13 +60,13 @@ public sealed class ManifestTests
         var document = PluginManifestDocument.From(TestManifests.Valid);
 
         Assert.Equal(PluginManifestDocument.CurrentVersion, document.ManifestVersion);
-        Assert.Equal("/plugins/todo/api", document.Endpoints.Api);
+        Assert.Equal("/plugins/todo/api/v1", document.Endpoints.Api);
         Assert.Equal("/plugins/todo/openapi/v1.json", document.Endpoints.OpenApi);
         Assert.Equal("/plugins/todo/mcp", document.Endpoints.Mcp);
         Assert.Equal("/plugins/todo/health/ready", document.Endpoints.Health);
         Assert.Equal("/plugins/todo/ui/entry.js", document.Ui!.Entry);
-        Assert.Equal("/plugins/todo/api/households/{householdId}/display/today", Assert.Single(document.Display).Path);
-        Assert.Equal("/plugins/todo/api/households/{householdId}/enablement", document.Enablement!.Path);
+        Assert.Equal("/plugins/todo/api/v1/households/{householdId}/display/today", Assert.Single(document.Display).Path);
+        Assert.Equal("/plugins/todo/api/v1/households/{householdId}/enablement", document.Enablement!.Path);
         Assert.Equal("HomeApps.Contracts.Households.MemberLeft", Assert.Single(document.Events.Consumes));
     }
 

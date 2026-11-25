@@ -48,11 +48,11 @@ public sealed class DevicesClientTests
     [Fact]
     public void The_list_path_carries_only_the_filters_that_are_set()
     {
-        Assert.Equal($"devices/households/{Household}", DevicesHttpClient.ListPath(Household, null, false));
+        Assert.Equal($"devices/v1/households/{Household}", DevicesHttpClient.ListPath(Household, null, false));
         Assert.Equal(
-            $"devices/households/{Household}?capability=weather&role=weather_station&model=a%2Fstacja&state=true",
+            $"devices/v1/households/{Household}?capability=weather&role=weather_station&model=a%2Fstacja&state=true",
             DevicesHttpClient.ListPath(Household, new DeviceFilter("weather", "weather_station", "a/stacja"), true));
-        Assert.Equal($"devices/households/{Household}?role=light", DevicesHttpClient.ListPath(Household, new DeviceFilter(Role: "light"), false));
+        Assert.Equal($"devices/v1/households/{Household}?role=light", DevicesHttpClient.ListPath(Household, new DeviceFilter(Role: "light"), false));
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public sealed class DevicesClientTests
         var devices = await ClientOver(handler).ListAsync(Household, new DeviceFilter("weather"), true, CancellationToken.None);
 
         Assert.Equal(HttpMethod.Get, handler.Request!.Method);
-        Assert.Equal($"/devices/households/{Household}?capability=weather&state=true", handler.Request.RequestUri!.PathAndQuery);
+        Assert.Equal($"/devices/v1/households/{Household}?capability=weather&state=true", handler.Request.RequestUri!.PathAndQuery);
         Assert.Equal("Bearer abc", handler.Request.Headers.Authorization!.ToString());
         var device = Assert.Single(devices);
         Assert.Equal("a/stacja", device.Model);
@@ -97,7 +97,7 @@ public sealed class DevicesClientTests
 
         var state = await ClientOver(handler).GetStateAsync(Device, CancellationToken.None);
 
-        Assert.Equal($"/devices/{Device}/state", handler.Request!.RequestUri!.AbsolutePath);
+        Assert.Equal($"/devices/v1/{Device}/state", handler.Request!.RequestUri!.AbsolutePath);
         Assert.True(state!.LowBattery);
         Assert.True(state.Values.GetProperty("on").GetBoolean());
     }
@@ -111,7 +111,7 @@ public sealed class DevicesClientTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(HttpMethod.Post, handler.Request!.Method);
-        Assert.Equal($"/devices/{Device}/set", handler.Request.RequestUri!.AbsolutePath);
+        Assert.Equal($"/devices/v1/{Device}/set", handler.Request.RequestUri!.AbsolutePath);
         Assert.Equal("""{"control":"level","value":42}""", handler.Body);
     }
 

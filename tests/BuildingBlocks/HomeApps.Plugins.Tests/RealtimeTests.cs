@@ -49,7 +49,7 @@ public sealed class RealtimeTests(HelloPluginFactory factory) : IClassFixture<He
         var token = TestJwt.CreateToken(_guest);
 
         var response = await factory.CreateClient().GetAsync(
-            new Uri($"/plugins/hello/api/households/{_household}/greetings?access_token={token}", UriKind.Relative));
+            new Uri($"/plugins/hello/api/v1/households/{_household}/greetings?access_token={token}", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
