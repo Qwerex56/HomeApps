@@ -20,13 +20,14 @@ internal sealed class GetHouseholdDevicesHandler(IDeviceRepository devices, IHou
         }
 
         var filter = new DeviceFilter(Clean(query.Capability), Clean(query.Role), Clean(query.Model));
-        var found = (await devices.OfHouseholdsAsync([query.HouseholdId], cancellationToken)).AsEnumerable();
+        // 2.10: a removed (disabled) device is gone from the home; its history stays until the normal retention ends.
+        var found = (await devices.OfHouseholdsAsync([query.HouseholdId], cancellationToken)).Where(d => !d.IsDisabled);
         if (!filter.IsEmpty)
         {
-            found = found.Where(d => !d.IsDisabled && filter.Matches(d));
+            found = found.Where(filter.Matches);
         }
 
-        var ordered = found.OrderBy(d => d.IsDisabled).ThenBy(d => d.Name, StringComparer.Ordinal).ToList();
+        var ordered = found.OrderBy(d => d.Name, StringComparer.Ordinal).ToList();
         var states = query.WithState
             ? await telemetry.StatesAsync([.. ordered.Select(d => d.Id)], cancellationToken)
             : new Dictionary<Guid, DeviceState>();
