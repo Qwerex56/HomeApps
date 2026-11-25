@@ -27,7 +27,7 @@ internal sealed class CreateUserCopyHandler(IUserCopies users) : ICommandHandler
 }
 
 /// <summary>S2: <c>UserProfileUpdated</c>.</summary>
-public sealed record UpdateUserCopyCommand(Guid UserId, string DisplayName, string? AvatarUrl) : ICommand;
+public sealed record UpdateUserCopyCommand(Guid UserId, string DisplayName, string? AvatarUrl, string? TimeZone = null) : ICommand;
 
 internal sealed class UpdateUserCopyHandler(IUserCopies users) : ICommandHandler<UpdateUserCopyCommand>
 {
@@ -39,7 +39,7 @@ internal sealed class UpdateUserCopyHandler(IUserCopies users) : ICommandHandler
             return Result.Fail(ApplicationErrors.UserPending);
         }
 
-        user.UpdateProfile(command.DisplayName, command.AvatarUrl);
+        user.UpdateProfile(command.DisplayName, command.AvatarUrl, command.TimeZone);
         return Result.Ok();
     }
 }

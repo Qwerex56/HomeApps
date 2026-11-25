@@ -14,4 +14,6 @@ public sealed class AccountsDbContext(DbContextOptions<AccountsDbContext> option
     public DbSet<HistoryEntry> History => Set<HistoryEntry>();
 
     public DbSet<ErasedUser> ErasedUsers => Set<ErasedUser>();
+
+    public DbSet<StartupMarker> StartupMarkers => Set<StartupMarker>();
 }

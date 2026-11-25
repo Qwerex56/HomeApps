@@ -31,6 +31,7 @@ when several things are wrong (a profile form) they are all listed in `errors`. 
 | --- | --- |
 | `GET /users/me` | My account: profile, role, status, how it was created. |
 | `PUT /users/me/profile` | Replace my whole profile. |
+| `POST /users/v1/me/avatar` (multipart `file`) | Upload my picture: JPEG, PNG or WebP, up to 2 MB, checked by its content. `200` `{ avatarUrl }`, the file is served by `GET /users/v1/{userId}/avatar`. |
 | `POST /users/me/disable` `{ reason? }` | Disable my own account. |
 | `GET /users/me/history` | When my account changed and what kind of change it was (latest 50). |
 | `GET /users/me/reactivation` | The profile to check before coming back. Reactivation ticket only. |

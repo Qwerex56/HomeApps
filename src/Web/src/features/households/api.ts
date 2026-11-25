@@ -5,8 +5,17 @@ type Schemas = components['schemas']
 export type HouseholdRole = NonNullable<Schemas['HouseholdRole']>
 export type InviteValidity = NonNullable<Schemas['InviteValidity']>
 export type MyHousehold = Schemas['MyHouseholdView']
-export type Household = Schemas['HouseholdView']
+/** timeZone is the effective zone; timeZoneSource says where it came from (2.11). */
+export type Household = Schemas['HouseholdView'] & { timeZone?: string; timeZoneSource?: 'household' | 'owner' | 'fallback' }
 export type Member = Schemas['MemberView']
+/** 2.9: what a guest may see of the others: name, avatar and role, nothing else. */
+export interface MemberName {
+  userId: string
+  name: string
+  avatarUrl: string | null
+  role?: HouseholdRole | null
+  isActive?: boolean
+}
 export type MyMembership = Schemas['MyMembershipView']
 export type Invite = Schemas['InviteView']
 export type InvitePreview = Schemas['InvitePreviewView']
@@ -26,6 +35,7 @@ export const householdKeys = {
   mine: ['households', 'mine'] as const,
   one: (id: string) => ['households', id] as const,
   members: (id: string) => ['households', id, 'members'] as const,
+  names: (id: string) => ['households', id, 'names'] as const,
   me: (id: string) => ['households', id, 'me'] as const,
   invites: (id: string) => ['households', id, 'invites'] as const,
   preview: (code: string) => ['households', 'invite', code] as const,
@@ -72,6 +82,14 @@ export const householdsApi = {
 
   async members(id: string) {
     return (await http.get<Member[]>(`/households/v1/${id}/members`)).data
+  },
+
+  async names(id: string) {
+    return (await http.get<MemberName[]>(`/households/v1/${id}/members/names`)).data
+  },
+
+  async setTimeZone(id: string, timeZone: string) {
+    await http.put(`/households/v1/${id}/timezone`, { timeZone })
   },
 
   async myMembership(id: string) {

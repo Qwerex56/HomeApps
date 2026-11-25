@@ -49,12 +49,13 @@ public sealed partial class User
             return;
         }
 
-        var visibleToOthers = profile.DisplayName != Profile.DisplayName || profile.AvatarUrl != Profile.AvatarUrl;
+        var visibleToOthers = profile.DisplayName != Profile.DisplayName || profile.AvatarUrl != Profile.AvatarUrl
+            || profile.TimeZone != Profile.TimeZone;
         Profile = profile;
         Record(now, actorId, HistoryAction.ProfileUpdated, details: string.Join(", ", changed));
         if (visibleToOthers)
         {
-            _domainEvents.Add(new UserProfileUpdated(Id, profile.DisplayName.Value, profile.AvatarUrl?.Value));
+            _domainEvents.Add(new UserProfileUpdated(Id, profile.DisplayName.Value, profile.AvatarUrl?.Value, profile.TimeZone.Value));
         }
     }
 }

@@ -6,6 +6,9 @@ using HomeApps.BuildingBlocks.Testing;
 using Jarvis.Application.Common;
 using Jarvis.Domain.Conversations;
 using Jarvis.Domain.ToolCalls;
+using Jarvis.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Jarvis.Api.Tests;
 
@@ -34,6 +37,54 @@ public sealed class ConversationTests(JarvisFactory factory)
         Assert.Equal([MessageRole.Person, MessageRole.Assistant], messages.Select(m => m.Role));
         Assert.Equal(action.Id, Assert.Single(messages[1].Actions).Id);
         Assert.Equal("usuń mleko z listy", listed.Title);
+    }
+
+    [Fact]
+    public async Task A_conversation_can_be_renamed_and_found_by_its_title()
+    {
+        await StartAsync(_person);
+        var other = await StartAsync(_person);
+        var owner = factory.CreateAuthenticatedClient(_person);
+        var stranger = factory.CreateAuthenticatedClient(Guid.NewGuid());
+
+        var renamed = await owner.PatchAsJsonAsync($"/jarvis/api/conversations/{other.Id}/title", new { title = "Wakacje" });
+        var tooLong = await owner.PatchAsJsonAsync($"/jarvis/api/conversations/{other.Id}/title", new { title = new string('a', 81) });
+        var foreign = await stranger.PatchAsJsonAsync($"/jarvis/api/conversations/{other.Id}/title", new { title = "Mój" });
+        var byTitle = await owner.GetFromJsonAsync<List<ConversationView>>("/jarvis/api/conversations?q=wakac", Json) ?? [];
+        var none = await owner.GetFromJsonAsync<List<ConversationView>>("/jarvis/api/conversations?q=szafki", Json) ?? [];
+        var tooLongQuery = await owner.GetAsync($"/jarvis/api/conversations?q={new string('a', 101)}");
+        var wildcard = await owner.GetFromJsonAsync<List<ConversationView>>("/jarvis/api/conversations?q=%25", Json) ?? [];
+
+        Assert.True(renamed.IsSuccessStatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, tooLong.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, foreign.StatusCode);
+        Assert.Equal(other.Id, Assert.Single(byTitle).Id);
+        Assert.Empty(none);
+        Assert.Equal(HttpStatusCode.BadRequest, tooLongQuery.StatusCode);
+        Assert.Empty(wildcard);
+    }
+
+    [Fact]
+    public async Task A_phrase_inside_a_message_finds_the_conversation()
+    {
+        // The SSE answer path is not usable in every environment, so the message is seeded straight into the database.
+        var conversation = await StartAsync(_person);
+        await StartAsync(_person);
+        var owner = factory.CreateAuthenticatedClient(_person);
+        await owner.PatchAsJsonAsync($"/jarvis/api/conversations/{conversation.Id}/title", new { title = "Wakacje" });
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JarvisDbContext>();
+            var stored = await db.Conversations.SingleAsync(c => c.Id == conversation.Id);
+            db.Add(stored.Write("Szafki 60 cm do kuchni", TimeProvider.System));
+            await db.SaveChangesAsync();
+        }
+
+        var found = await owner.GetFromJsonAsync<List<ConversationView>>("/jarvis/api/v1/conversations?q=SZAFKI", Json) ?? [];
+        var none = await owner.GetFromJsonAsync<List<ConversationView>>("/jarvis/api/v1/conversations?q=zmywarka", Json) ?? [];
+
+        Assert.Equal(conversation.Id, Assert.Single(found).Id);
+        Assert.Empty(none);
     }
 
     [Fact]

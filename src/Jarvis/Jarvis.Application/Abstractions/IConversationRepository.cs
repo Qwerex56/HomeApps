@@ -7,7 +7,8 @@ public interface IConversationRepository
     Task<Conversation?> FindAsync(Guid id, CancellationToken cancellationToken);
 
     /// <summary>The person's conversations, latest activity first.</summary>
-    Task<IReadOnlyList<Conversation>> ListForOwnerAsync(Guid ownerId, CancellationToken cancellationToken);
+    /// <summary>The owner's conversations, newest activity first; <paramref name="search"/> keeps those whose title or any message contains it (case-insensitive).</summary>
+    Task<IReadOnlyList<Conversation>> ListForOwnerAsync(Guid ownerId, string? search, CancellationToken cancellationToken);
 
     /// <summary>The last <paramref name="count"/> messages, oldest first.</summary>
     Task<IReadOnlyList<ConversationMessage>> MessagesAsync(Guid conversationId, int count, CancellationToken cancellationToken);

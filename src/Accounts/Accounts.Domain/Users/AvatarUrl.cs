@@ -1,15 +1,23 @@
+using System.Text.RegularExpressions;
 using FluentResults;
 
 namespace Accounts.Domain.Users;
 
-/// <summary>An avatar picture address; in 1.0 only a URL (from Google or typed in), no upload.</summary>
-public sealed record AvatarUrl
+/// <summary>
+/// An avatar picture address: an https URL (from Google or typed in) or the server's own path to an uploaded file,
+/// <c>/users/v1/{userId}/avatar?v={timestamp}</c> (release 3.0, 2.15). The user id is in the path, never <c>/me</c>,
+/// so another user or a plugin can fetch it.
+/// </summary>
+public sealed partial record AvatarUrl
 {
     public const int MaxLength = 2048;
 
-    private AvatarUrl(Uri value) => Value = value;
+    private AvatarUrl(string value) => Value = value;
 
-    public Uri Value { get; }
+    public string Value { get; }
+
+    /// <summary>The path of an uploaded avatar; <paramref name="version"/> changes with every upload so caches let go.</summary>
+    public static AvatarUrl ForUpload(Guid userId, long version) => new($"/users/v1/{userId}/avatar?v={version}");
 
     /// <summary>Blank means "no avatar" and gives null.</summary>
     public static Result<AvatarUrl?> Create(string? raw)
@@ -20,14 +28,22 @@ public sealed record AvatarUrl
             return Result.Ok<AvatarUrl?>(null);
         }
 
-        if (value.Length > MaxLength
-            || !Uri.TryCreate(value, UriKind.Absolute, out var uri)
-            || uri.Scheme != Uri.UriSchemeHttps)
+        if (value.Length > MaxLength)
         {
             return Result.Fail<AvatarUrl?>(UserErrors.AvatarUrlInvalid);
         }
 
-        return new AvatarUrl(uri);
+        if (LocalPath().IsMatch(value))
+        {
+            return new AvatarUrl(value);
+        }
+
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
+        {
+            return Result.Fail<AvatarUrl?>(UserErrors.AvatarUrlInvalid);
+        }
+
+        return new AvatarUrl(uri.ToString());
     }
 
     /// <summary>From Google or Apple through Auth: a bad address is dropped rather than failing the registration.</summary>
@@ -37,5 +53,8 @@ public sealed record AvatarUrl
         return result.IsSuccess ? result.Value : null;
     }
 
-    public override string ToString() => Value.ToString();
+    public override string ToString() => Value;
+
+    [GeneratedRegex(@"^/users/v1/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/avatar(\?v=\d{1,20})?$")]
+    private static partial Regex LocalPath();
 }

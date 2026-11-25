@@ -138,4 +138,31 @@ public sealed class HouseholdTests
         Assert.True(h.Household.CanSeeMembers(A.ServerAdmin(), _time.Now));
         Assert.False(h.Household.CanSeeMembers(h.Stranger, _time.Now));
     }
+
+    [Theory]
+    [InlineData("owner", true)]
+    [InlineData("admin", true)]
+    [InlineData("member", false)]
+    [InlineData("guest", false)]
+    public void TimeZone_IsSetByOwnerAndAdminOnly(string who, bool allowed)
+    {
+        var h = new AHousehold(_time);
+
+        var result = h.Household.SetTimeZone(h.Of(who), "Europe/London", _time);
+
+        Assert.Equal(allowed, result.IsSuccess);
+        Assert.Equal(allowed ? "Europe/London" : null, h.Household.TimeZone);
+        Assert.Equal(allowed ? 1 : 0, h.Household.DomainEvents.OfType<HouseholdTimeZoneChanged>().Count());
+    }
+
+    [Theory]
+    [InlineData("Mars/Olympus")]
+    [InlineData("")]
+    [InlineData(null)]
+    public void TimeZone_MustBeAnIanaId(string? zone)
+    {
+        var h = new AHousehold(_time);
+
+        Assert.Equal("household.timezone_invalid", h.Household.SetTimeZone(h.Of("owner"), zone, _time).Code());
+    }
 }

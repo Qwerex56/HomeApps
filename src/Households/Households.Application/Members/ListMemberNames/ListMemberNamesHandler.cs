@@ -32,7 +32,7 @@ internal sealed class ListMemberNamesHandler(IHouseholdRepository households, IU
             .Select(m =>
             {
                 copies.TryGetValue(m.UserId, out var user);
-                return new MemberNameView(m.UserId, m.Nickname?.Value ?? user?.DisplayName ?? UserCopy.FallbackName, user?.AvatarUrl);
+                return new MemberNameView(m.UserId, m.Nickname?.Value ?? user?.DisplayName ?? UserCopy.FallbackName, user?.AvatarUrl, m.Role);
             })
             .OrderBy(m => m.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToList();

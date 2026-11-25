@@ -6,10 +6,11 @@ import Skeleton from 'primevue/skeleton'
 import { useHouseholdBoard } from '@/features/widgets/board'
 import WidgetGrid from '@/features/widgets/WidgetGrid.vue'
 import MembersTab from './MembersTab.vue'
+import MemberNames from './MemberNames.vue'
 import type { Household, HouseholdPermissions } from '../api'
 
 // "Główna" (UI 2.4.1): the first rows of the household's widgets (3×2, 5×3 or 8×5, the household card among them)
-// and its people. A guest sees no members (D2), only the widgets.
+// and its people. A guest sees the people by name, avatar and role only (2.9), no actions.
 const props = defineProps<{ household: Household; can: HouseholdPermissions }>()
 const { t } = useI18n()
 
@@ -28,6 +29,7 @@ const { cells, byKey, isPending } = useHouseholdBoard(widgetHousehold, 'Househol
       <WidgetGrid v-else :household="widgetHousehold" place="Household" :cells="cells" :by-key="byKey" fixed />
     </template>
     <MembersTab v-if="can.seeMembers" :household="household" :can="can" />
+    <MemberNames v-else-if="can.member" :household-id="household.id" />
     <Message v-else severity="info" :closable="false">{{ t('households.settings.guestInfo') }}</Message>
   </div>
 </template>

@@ -132,12 +132,14 @@ public sealed class AdminTests
         var owner = await SignedInAdmin(Contracts.ServerRole.Owner);
         await new DisableUserHandler(_w.Users, _w.CurrentUser, _w.Time).Handle(new DisableUserCommand(user.Id, null), default);
         user.ClearDomainEvents();
+        await _w.Avatars.SaveAsync(user.Id, new byte[] { 1 }, default);
 
-        var result = await new EraseUserHandler(_w.Users, _w.CurrentUser, _w.Time)
+        var result = await new EraseUserHandler(_w.Users, _w.Avatars, _w.CurrentUser, _w.Time)
             .Handle(new EraseUserCommand(user.Id, "adam@example.com"), default);
 
         Assert.True(result.IsSuccess);
         Assert.DoesNotContain(user, _w.Users.Items);
+        Assert.False(_w.Avatars.Has(user.Id));
         var trace = Assert.Single(_w.Users.Erased);
         Assert.Equal(owner.Id, trace.ErasedBy);
         Assert.IsType<Domain.Users.Events.UserErased>(Assert.Single(user.DomainEvents));
@@ -150,7 +152,7 @@ public sealed class AdminTests
         await SignedInAdmin(Contracts.ServerRole.Owner);
         await new DisableUserHandler(_w.Users, _w.CurrentUser, _w.Time).Handle(new DisableUserCommand(user.Id, null), default);
 
-        var result = await new EraseUserHandler(_w.Users, _w.CurrentUser, _w.Time)
+        var result = await new EraseUserHandler(_w.Users, _w.Avatars, _w.CurrentUser, _w.Time)
             .Handle(new EraseUserCommand(user.Id, "someone@example.com"), default);
 
         Assert.Equal("erase.confirmation_mismatch", result.Code());

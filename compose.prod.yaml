@@ -136,6 +136,8 @@ services:
     environment:
       <<: [*environment, *jwt]
       ConnectionStrings__Database: "Host=postgres;Database=homeapps_accounts;Username=${POSTGRES_USER:-homeapps};Password=${POSTGRES_PASSWORD}"
+    volumes:
+      - avatars:/var/data/avatars
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.accounts.rule=Host(`${HOMEAPPS_DOMAIN}`) && (PathPrefix(`/users`) || PathPrefix(`/admin/users`))"
@@ -286,3 +288,4 @@ volumes:
   rabbitmq-data:
   auth-keys:
   homemix-packages:
+  avatars:

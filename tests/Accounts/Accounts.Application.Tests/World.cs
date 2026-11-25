@@ -20,6 +20,8 @@ internal sealed class World
 
     public FakeEventBus Bus { get; } = new();
 
+    public InMemoryAvatarStore Avatars { get; } = new();
+
     public static Contracts.IdentityRegistered Identity(
         Guid? id = null,
         string email = "adam@example.com",

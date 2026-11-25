@@ -98,12 +98,23 @@ public sealed class ProfileTests
     public void ChangeOthersDoNotCopyGoesOnlyToHistory()
     {
         var user = AUser.Registered(_time);
-        var profile = Profile.Create("Adam", "Adam", "Nowak", null, null, "en-GB", "Europe/London", null, A.Today).Value;
+        var profile = Profile.Create("Adam", "Adam", "Nowak", null, null, "en-GB", "Europe/Warsaw", null, A.Today).Value;
 
         user.UpdateProfile(user.Self(), profile, _time);
 
-        Assert.Equal("Locale, TimeZone", user.History[^1].Details);
+        Assert.Equal("Locale", user.History[^1].Details);
         Assert.Empty(user.DomainEvents);
+    }
+
+    [Fact]
+    public void TimeZoneChangeIsPublishedWithTheZone()
+    {
+        var user = AUser.Registered(_time);
+        var profile = Profile.Create("Adam", "Adam", "Nowak", null, null, "pl-PL", "Europe/London", null, A.Today).Value;
+
+        user.UpdateProfile(user.Self(), profile, _time);
+
+        Assert.Equal("Europe/London", Assert.IsType<UserProfileUpdated>(Assert.Single(user.DomainEvents)).TimeZone);
     }
 
     [Fact]
@@ -113,6 +124,6 @@ public sealed class ProfileTests
 
         user.UpdateProfile(user.Self(), A.Profile(avatarUrl: "https://example.com/a.png"), _time);
 
-        Assert.Equal(new Uri("https://example.com/a.png"), Assert.IsType<UserProfileUpdated>(Assert.Single(user.DomainEvents)).AvatarUrl);
+        Assert.Equal("https://example.com/a.png", Assert.IsType<UserProfileUpdated>(Assert.Single(user.DomainEvents)).AvatarUrl);
     }
 }

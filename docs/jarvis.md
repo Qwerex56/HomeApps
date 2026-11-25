@@ -83,7 +83,8 @@ household's JARVIS is off or its Devices switch is off (H-2), or Devices does no
 - Page **JARVIS** (`/jarvis/:conversationId?`) in the menu: the person's conversations, the open one, the action card with
   Confirm / Cancel. The household picked in the header goes along as JARVIS's default.
 - API, only the owner's own (someone else's answers 404, the server's Owner too):
-  `GET/POST /jarvis/api/conversations`, `DELETE /jarvis/api/conversations/{id}`,
+  `GET/POST /jarvis/api/conversations`, `GET /jarvis/api/v1/conversations?q=` (`q` searches inside the messages),
+  `PATCH /jarvis/api/v1/conversations/{id}/title` (rename), `DELETE /jarvis/api/conversations/{id}`,
   `GET /jarvis/api/conversations/{id}/messages`, `POST /jarvis/api/conversations/{id}/messages` `{text, householdId?}`.
 - Sending answers with server-sent events: `text` (JSON string pieces), `action` (`ActionView`, as the gateway logs it),
   then `message` (the kept answer with its card) or `error` (`{code, detail}`). JARVIS sees the last 20 messages.

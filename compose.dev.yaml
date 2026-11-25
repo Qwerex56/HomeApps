@@ -127,6 +127,8 @@ services:
       Jwt__Authority: "http://auth:8080"
       Jwt__Issuer: "https://app.localhost"
       Jwt__RequireHttpsMetadata: "false"
+    volumes:
+      - avatars:/var/data/avatars
     depends_on:
       postgres:
         condition: service_healthy
@@ -354,3 +356,4 @@ volumes:
   postgres-data:
   auth-keys:
   homemix-packages:
+  avatars:

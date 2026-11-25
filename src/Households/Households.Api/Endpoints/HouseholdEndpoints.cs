@@ -9,6 +9,8 @@ namespace Households.Api.Endpoints;
 
 internal sealed record HouseholdRequest(string Name, string? Description);
 
+internal sealed record TimeZoneRequest(string TimeZone);
+
 /// <summary>H1–H6, the D5a banner and the guest link (D2b). The slices decide who may do what; 404 for non-members (Q3).</summary>
 internal sealed class HouseholdEndpoints : IEndpoint
 {
@@ -33,6 +35,10 @@ internal sealed class HouseholdEndpoints : IEndpoint
 
         households.MapPut("/{id:guid}", async (Guid id, HouseholdRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(new UpdateHouseholdCommand(id, body.Name, body.Description), ct)).ToHttpResult())
+            .RequireRateLimiting(RateLimits.Changes);
+
+        households.MapPut("/{id:guid}/timezone", async (Guid id, TimeZoneRequest body, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new SetHouseholdTimeZoneCommand(id, body.TimeZone), ct)).ToHttpResult())
             .RequireRateLimiting(RateLimits.Changes);
 
         households.MapPost("/{id:guid}/archive", async (Guid id, ISender sender, CancellationToken ct) =>

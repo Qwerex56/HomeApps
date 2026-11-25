@@ -9,6 +9,8 @@ public sealed record HouseholdCreated(Guid HouseholdId, Guid OwnerId, string Nam
 
 public sealed record HouseholdUpdated(Guid HouseholdId, string Name, string? Description) : IDomainEvent;
 
+public sealed record HouseholdTimeZoneChanged(Guid HouseholdId, string TimeZone) : IDomainEvent;
+
 /// <summary>D7: the household is gone for its members. Step 2 revokes its invites when this is raised.</summary>
 public sealed record HouseholdArchived(Guid HouseholdId) : IDomainEvent;
 

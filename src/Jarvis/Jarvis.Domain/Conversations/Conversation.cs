@@ -1,3 +1,5 @@
+using FluentResults;
+
 namespace Jarvis.Domain.Conversations;
 
 /// <summary>
@@ -43,6 +45,19 @@ public sealed class Conversation
     }
 
     public bool IsOwnedBy(Guid userId) => OwnerId == userId;
+
+    /// <summary>2.14: the person names the conversation; from now on the first words are not used as title.</summary>
+    public Result Rename(string? newTitle)
+    {
+        var title = newTitle?.Trim().ReplaceLineEndings(" ");
+        if (string.IsNullOrEmpty(title) || title.Length > TitleLength)
+        {
+            return Result.Fail(ConversationErrors.TitleInvalid);
+        }
+
+        Title = title;
+        return Result.Ok();
+    }
 
     /// <summary>The person wrote: the conversation moves up the list, and an unnamed one takes the first words as title.</summary>
     public ConversationMessage Write(string text, TimeProvider time)

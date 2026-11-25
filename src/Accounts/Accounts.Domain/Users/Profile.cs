@@ -94,6 +94,10 @@ public sealed record Profile
             TimeZoneId.Default,
             null);
 
+    /// <summary>The same profile with another avatar (an upload); every other field stays.</summary>
+    public Profile WithAvatar(AvatarUrl? avatarUrl) =>
+        new(DisplayName, FirstName, LastName, PreferredName, avatarUrl, Locale, TimeZone, DateOfBirth);
+
     /// <summary>Names of the fields that differ from <paramref name="other"/>, for the account history.</summary>
     public IReadOnlyList<string> ChangedFrom(Profile other)
     {

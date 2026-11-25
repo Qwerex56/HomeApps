@@ -5,7 +5,8 @@ namespace Households.Application.Common;
 /// <summary>
 /// H3. Parts depend on who asks (D2a): <see cref="MemberCount"/> only for members and up and server admins,
 /// <see cref="GuestLink"/> only for the Owner and Admins, <see cref="OwnershipReceivedAt"/> only for the Owner (D5a).
-/// <see cref="MyRole"/> is null for a server admin who is not a member.
+/// <see cref="MyRole"/> is null for a server admin who is not a member. <see cref="TimeZone"/> is the effective zone
+/// and <see cref="TimeZoneSource"/> says where it came from (<c>household</c>, <c>owner</c> or <c>fallback</c>), see <see cref="HouseholdTimeZones"/>.
 /// </summary>
 public sealed record HouseholdView(
     Guid Id,
@@ -17,7 +18,9 @@ public sealed record HouseholdView(
     HouseholdRole? MyRole,
     int? MemberCount,
     string? GuestLink,
-    DateTimeOffset? OwnershipReceivedAt);
+    DateTimeOffset? OwnershipReceivedAt,
+    string TimeZone = HouseholdTimeZones.Fallback,
+    string TimeZoneSource = HouseholdTimeZones.FallbackSource);
 
 /// <summary>H2.</summary>
 public sealed record MyHouseholdView(Guid Id, string Name, string? Description, HouseholdRole MyRole, int? MemberCount, bool OwnershipReceived);

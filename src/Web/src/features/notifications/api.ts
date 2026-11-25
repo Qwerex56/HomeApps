@@ -12,11 +12,43 @@ export type Device = Schemas['DeviceView']
 export type NotificationSettings = Schemas['NotificationSettingsView']
 export type DeliveryReport = Schemas['DeliveryReport']
 
+/** 2.13: one entry of the notification center; url is a path of the web app. */
+export interface InAppNotification {
+  id: string
+  source: string
+  category: string
+  tag: string | null
+  title: string
+  body: string
+  url: string
+  householdId: string | null
+  createdAt: string
+  readAt: string | null
+}
+export interface NotificationList {
+  unreadCount: number
+  items: InAppNotification[]
+}
+
 export const notificationKeys = {
   settings: ['notifications', 'settings'] as const,
+  inApp: ['notifications', 'in-app'] as const,
 }
 
 export const notificationsApi = {
+  /** The notification center: the last 30 days, newest first. */
+  async inApp(limit = 50) {
+    return (await http.get<NotificationList>('/notifications/v1/in-app', { params: { limit } })).data
+  },
+
+  async markRead(id: string) {
+    await http.post(`/notifications/v1/in-app/${id}/read`)
+  },
+
+  async markAllRead() {
+    await http.post('/notifications/v1/in-app/read-all')
+  },
+
   async vapidPublicKey() {
     return (await http.get<{ publicKey: string }>('/notifications/v1/vapid-public-key')).data.publicKey
   },

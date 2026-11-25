@@ -9,5 +9,5 @@ internal sealed class ListConversationsHandler(IConversationRepository conversat
     : IQueryHandler<ListConversationsQuery, IReadOnlyList<ConversationView>>
 {
     public async Task<Result<IReadOnlyList<ConversationView>>> Handle(ListConversationsQuery query, CancellationToken cancellationToken) =>
-        (await conversations.ListForOwnerAsync(query.UserId, cancellationToken)).Select(ConversationView.From).ToList();
+        (await conversations.ListForOwnerAsync(query.UserId, query.Search, cancellationToken)).Select(ConversationView.From).ToList();
 }

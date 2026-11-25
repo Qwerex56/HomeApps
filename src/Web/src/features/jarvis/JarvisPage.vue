@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
 import Textarea from 'primevue/textarea'
+import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Skeleton from 'primevue/skeleton'
 import { errorMessage } from '@/api/errorMessage'
@@ -23,9 +24,12 @@ const router = useRouter()
 const queryClient = useQueryClient()
 const { current: household } = useCurrentHousehold()
 
+// 2.14: the list can be searched by a phrase in the title or the messages (the server matches, at most 100 characters).
+const search = ref('')
+const phrase = computed(() => search.value.trim().slice(0, 100))
 const { data: conversations, isPending: listPending } = useQuery({
-  queryKey: jarvisKeys.conversations,
-  queryFn: jarvisApi.conversations,
+  queryKey: computed(() => (phrase.value ? jarvisKeys.search(phrase.value) : jarvisKeys.conversations)),
+  queryFn: () => jarvisApi.conversations(phrase.value || undefined),
 })
 const openId = computed(() => props.conversationId ?? null)
 const { data: messages, isPending: messagesPending } = useQuery({
@@ -120,6 +124,24 @@ async function remove() {
   }
 }
 
+const renaming = ref(false)
+const newTitle = ref('')
+function startRename() {
+  newTitle.value = title.value
+  renaming.value = true
+}
+async function rename() {
+  const value = newTitle.value.trim()
+  if (!openId.value || !value) return
+  try {
+    await jarvisApi.rename(openId.value, value)
+    renaming.value = false
+    await queryClient.invalidateQueries({ queryKey: jarvisKeys.conversations })
+  } catch (error) {
+    fail(error)
+  }
+}
+
 const title = computed(
   () => conversations.value?.find((c) => c.id === openId.value)?.title ?? t('jarvis.newConversation'),
 )
@@ -129,6 +151,15 @@ const title = computed(
   <div class="mx-auto flex max-w-6xl flex-col gap-4 md:h-[calc(100dvh-8rem)] md:flex-row">
     <aside class="flex shrink-0 flex-col gap-2 md:w-64" :aria-label="t('jarvis.conversations')">
       <Button :label="t('jarvis.newConversation')" icon="pi pi-plus" size="small" @click="startNew" />
+      <InputText
+        v-model="search"
+        type="search"
+        size="small"
+        maxlength="100"
+        :placeholder="t('jarvis.search')"
+        :aria-label="t('jarvis.search')"
+        data-testid="jarvis-search"
+      />
       <div v-if="listPending" class="flex flex-col gap-2">
         <Skeleton v-for="i in 3" :key="i" height="2.5rem" />
       </div>
@@ -143,7 +174,7 @@ const title = computed(
           {{ conversation.title }}
         </RouterLink>
         <p v-if="conversations?.length === 0" class="px-3 text-sm text-muted-color">
-          {{ t('jarvis.noConversations') }}
+          {{ phrase ? t('jarvis.noMatches') : t('jarvis.noConversations') }}
         </p>
       </nav>
     </aside>
@@ -151,10 +182,32 @@ const title = computed(
     <section class="flex min-h-[60dvh] flex-1 flex-col rounded-lg border border-surface-200 dark:border-surface-800">
       <header class="flex items-center gap-2 border-b border-surface-200 px-4 py-2 dark:border-surface-800">
         <i class="pi pi-sparkles text-primary" aria-hidden="true" />
-        <h1 class="flex-1 truncate font-semibold">{{ openId ? title : t('jarvis.title') }}</h1>
+        <form v-if="renaming" class="flex flex-1 items-center gap-1" @submit.prevent="rename">
+          <InputText
+            v-model="newTitle"
+            size="small"
+            maxlength="80"
+            class="flex-1"
+            :aria-label="t('jarvis.renameTitle')"
+            data-testid="jarvis-rename-input"
+          />
+          <Button type="submit" icon="pi pi-check" size="small" text rounded :aria-label="t('common.save')" :disabled="!newTitle.trim()" />
+          <Button icon="pi pi-times" size="small" text rounded severity="secondary" :aria-label="t('common.cancel')" @click="renaming = false" />
+        </form>
+        <h1 v-else class="flex-1 truncate font-semibold">{{ openId ? title : t('jarvis.title') }}</h1>
         <span v-if="household" class="hidden text-xs text-muted-color sm:inline">{{
           t('jarvis.household', { name: household.name })
         }}</span>
+        <Button
+          v-if="openId && !renaming"
+          icon="pi pi-pencil"
+          severity="secondary"
+          text
+          rounded
+          :aria-label="t('jarvis.rename')"
+          data-testid="jarvis-rename"
+          @click="startRename"
+        />
         <Button
           v-if="openId"
           icon="pi pi-trash"

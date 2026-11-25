@@ -90,3 +90,9 @@ internal static class Views
         u.Id, u.Email.Value, u.Role, u.Status, u.Profile.ToView(), u.DisablingView(forAdmin: true),
         u.Registration.ToView(), u.CreatedAt, u.UpdatedAt, u.LastSeenAt);
 }
+
+/// <summary>2.15: the address of the avatar just uploaded.</summary>
+public sealed record AvatarUploadedView(string AvatarUrl);
+
+/// <summary>2.15: an uploaded avatar as served: bytes, type (sniffed) and a strong ETag.</summary>
+public sealed record AvatarFileView(byte[] Content, string ContentType, string ETag);

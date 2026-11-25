@@ -7,6 +7,9 @@ public sealed record HouseholdCreated(Guid HouseholdId, Guid OwnerId, string Nam
 
 public sealed record HouseholdUpdated(Guid HouseholdId, string Name, string? Description) : IIntegrationEvent;
 
+/// <summary>An Admin or Owner set the household's own time zone (IANA id), overriding the owner's account zone.</summary>
+public sealed record HouseholdTimeZoneChanged(Guid HouseholdId, string TimeZone) : IIntegrationEvent;
+
 /// <summary>D7: the household is gone for its members (kept for audit). Treat its memberships as inactive.</summary>
 public sealed record HouseholdArchived(Guid HouseholdId) : IIntegrationEvent;
 

@@ -15,7 +15,7 @@ public sealed class EventTests
     public async Task EveryDomainEventOthersNeedBecomesAContract()
     {
         var id = Guid.NewGuid();
-        var avatar = new Uri("https://example.com/a.png");
+        var avatar = "https://example.com/a.png";
 
         await Handler.Handle(new DomainEventNotification<UserRegistered>(new(id, "Adam", avatar)), default);
         await Handler.Handle(new DomainEventNotification<UserProfileUpdated>(new(id, "Adam N.", null)), default);

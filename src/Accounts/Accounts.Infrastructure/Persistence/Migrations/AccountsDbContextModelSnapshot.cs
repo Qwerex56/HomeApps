@@ -228,6 +228,20 @@ namespace Accounts.Infrastructure.Persistence.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("Accounts.Infrastructure.Persistence.StartupMarker", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("DoneAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Name");
+
+                    b.ToTable("StartupMarkers", (string)null);
+                });
+
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.InboxState", b =>
                 {
                     b.Property<long>("Id")

@@ -6,6 +6,7 @@ import ColorSchemeToggle from '@/shared/components/ColorSchemeToggle.vue'
 import { useMyAccount } from '@/features/account/api'
 import { useMixRealtime } from '@/features/homemix/realtime'
 import QuickLinks from '@/features/homemix/QuickLinks.vue'
+import NotificationBell from '@/features/notifications/NotificationBell.vue'
 import UserMenu from './UserMenu.vue'
 
 const { t } = useI18n()
@@ -60,6 +61,7 @@ const store = { to: { name: 'store' }, label: 'app.store', icon: 'pi pi-shop', e
             <span>{{ t(store.label) }}</span>
           </RouterLink>
           <ColorSchemeToggle />
+          <NotificationBell />
           <UserMenu />
         </div>
       </div>

@@ -228,8 +228,9 @@ function newCode() {
             :loading="busy"
             @click="newCode"
           />
+          <!-- 2.10: a removed home device is gone from the list; only a personal computer can still come back. -->
           <Button
-            v-if="device.removed"
+            v-if="device.removed && !isHousehold"
             :label="t('devices.restore')"
             severity="secondary"
             outlined
