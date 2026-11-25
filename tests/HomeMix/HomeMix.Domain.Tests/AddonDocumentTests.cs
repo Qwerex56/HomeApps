@@ -48,6 +48,20 @@ public sealed class AddonDocumentTests
         Assert.Equal("[1]", document.Value);
     }
 
+    [Fact]
+    public void A_document_without_an_expiry_never_expires() =>
+        Assert.False(Document().IsExpired(Now.AddYears(10)));
+
+    [Fact]
+    public void A_document_is_expired_from_its_expiry_instant_on()
+    {
+        var document = AddonDocument.Create(Guid.NewGuid(), DataScope.Household, null, "notes", "a1", "{}", 2, Adam, Now, Now.AddHours(1));
+
+        Assert.False(document.IsExpired(Now.AddMinutes(59)));
+        Assert.True(document.IsExpired(Now.AddHours(1)));
+        Assert.True(document.IsExpired(Now.AddHours(2)));
+    }
+
     [Theory]
     [InlineData("sessions", true)]
     [InlineData("2026-11.notes_v2", true)]
