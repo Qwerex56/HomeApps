@@ -63,10 +63,10 @@ public sealed class TriggerDispatcherTests
         _states, _scripts, new FakeAdmins(Adam, _otherAdmin), limiter ?? new TriggerRunLimiter(_time), _bus, _unitOfWork, _time, NullLogger<TriggerDispatcher>.Instance);
 
     private static TriggerOccurrence Changed(string json, DeviceCandidate? device = null, string? changedBy = null) => new(
-        HouseholdId, device ?? Station, "stacja", TriggerKind.State, JsonDocument.Parse(json).RootElement.Clone(), null, null, changedBy, Now);
+        HouseholdId, device ?? Station, "stacja", TriggerKind.State, JsonElement.Parse(json), null, null, changedBy, Now);
 
     private static TriggerOccurrence Pressed(string name = "pressed") => new(
-        HouseholdId, Bell, "dzwonek", TriggerKind.Event, null, name, JsonDocument.Parse("""{"kind":"single"}""").RootElement.Clone(), null, Now);
+        HouseholdId, Bell, "dzwonek", TriggerKind.Event, null, name, JsonElement.Parse("""{"kind":"single"}"""), null, Now);
 
     [Fact]
     public async Task A_matching_state_change_runs_the_trigger_and_remembers_the_run()
@@ -108,7 +108,7 @@ public sealed class TriggerDispatcherTests
     [Fact]
     public async Task A_household_without_the_add_on_or_an_add_on_without_devices_runs_nothing()
     {
-        var elsewhere = new TriggerOccurrence(Guid.NewGuid(), Station, "stacja", TriggerKind.State, JsonDocument.Parse("""{"temperature":1}""").RootElement.Clone(), null, null, null, Now);
+        var elsewhere = new TriggerOccurrence(Guid.NewGuid(), Station, "stacja", TriggerKind.State, JsonElement.Parse("""{"temperature":1}"""), null, null, null, Now);
         await Dispatcher().DispatchAsync(elsewhere, CancellationToken.None);
 
         var withoutDevices = Package(Manifest.Replace("\"devices\", \"devices.control\"", "\"storage.household\"", StringComparison.Ordinal)

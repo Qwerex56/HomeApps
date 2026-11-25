@@ -44,7 +44,7 @@ public sealed class HomeAppsClient(HttpClient httpClient) : IHomeAppsClient
 
     public async Task<Result<PairResponse>> PairAsync(string serverUrl, string code, string descriptorJson, CancellationToken cancellationToken = default)
     {
-        var url = $"{serverUrl.TrimEnd('/')}/devices/pair";
+        var url = $"{serverUrl.TrimEnd('/')}/devices/v1/pair";
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
 
         using var doc = JsonDocument.Parse(descriptorJson);
@@ -69,7 +69,7 @@ public sealed class HomeAppsClient(HttpClient httpClient) : IHomeAppsClient
 
     public async Task<Result<string>> GetDeviceTokenAsync(string serverUrl, Guid deviceId, string secret, CancellationToken cancellationToken = default)
     {
-        var url = $"{serverUrl.TrimEnd('/')}/auth/devices/token";
+        var url = $"{serverUrl.TrimEnd('/')}/auth/v1/devices/token";
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
         var body = new
         {
@@ -103,7 +103,7 @@ public sealed class HomeAppsClient(HttpClient httpClient) : IHomeAppsClient
 
     public async Task<Result<IReadOnlyList<FrameResult>>> SendReportAsync(string serverUrl, string token, IReadOnlyList<DeviceFrame> frames, CancellationToken cancellationToken = default)
     {
-        var url = $"{serverUrl.TrimEnd('/')}/devices/report";
+        var url = $"{serverUrl.TrimEnd('/')}/devices/v1/report";
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         request.Content = JsonContent.Create(frames);
@@ -131,7 +131,7 @@ public sealed class HomeAppsClient(HttpClient httpClient) : IHomeAppsClient
 
     public async Task<Result<IReadOnlyList<VoiceActionView>>> GetPendingConfirmationsAsync(string serverUrl, string userToken, CancellationToken cancellationToken = default)
     {
-        var url = $"{serverUrl.TrimEnd('/')}/jarvis/api/confirmations?pending=true";
+        var url = $"{serverUrl.TrimEnd('/')}/jarvis/api/v1/confirmations?pending=true";
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userToken);
 
@@ -148,7 +148,7 @@ public sealed class HomeAppsClient(HttpClient httpClient) : IHomeAppsClient
 
     public async Task<Result<VoiceActionView>> DecideConfirmationAsync(string serverUrl, string userToken, Guid actionId, bool approve, CancellationToken cancellationToken = default)
     {
-        var url = $"{serverUrl.TrimEnd('/')}/jarvis/api/confirmations/{actionId}";
+        var url = $"{serverUrl.TrimEnd('/')}/jarvis/api/v1/confirmations/{actionId}";
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userToken);
         request.Content = JsonContent.Create(new { approve });

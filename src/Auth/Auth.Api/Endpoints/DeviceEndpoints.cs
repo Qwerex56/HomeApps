@@ -17,7 +17,10 @@ internal sealed class DeviceEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPost("/internal/devices", async (PairDeviceRequest body, ISender sender, CancellationToken ct) =>
+        var auth = app.MapVersionedGroup("/auth");
+        var internalApi = app.MapVersionedGroup("/internal");
+
+        internalApi.MapPost("/devices", async (PairDeviceRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(
                 new PairDeviceCommand(body.ClientId, body.ClientSecret, body.DeviceId, body.HouseholdId, body.Name), ct))
             .ToHttpResult())
@@ -26,7 +29,7 @@ internal sealed class DeviceEndpoints : IEndpoint
             .Produces<PairedDeviceView>();
 
         // S4: JARVIS asks whose PIN a satellite heard (internal network, his service secret).
-        app.MapPost("/internal/devices/speaker", async (IdentifySpeakerRequest body, ISender sender, CancellationToken ct) =>
+        internalApi.MapPost("/devices/speaker", async (IdentifySpeakerRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(
                 new IdentifySpeakerCommand(body.ClientId, body.ClientSecret, body.DeviceId, body.Candidates, body.Pin), ct))
             .ToHttpResult())
@@ -34,7 +37,7 @@ internal sealed class DeviceEndpoints : IEndpoint
             .WithTags("Internal")
             .Produces<SpeakerView>();
 
-        app.MapPost("/auth/devices/token", async (DeviceTokenRequest body, ISender sender, CancellationToken ct) =>
+        auth.MapPost("/devices/token", async (DeviceTokenRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(new IssueDeviceTokenCommand(body.DeviceId, body.Secret), ct)).ToHttpResult())
             .AllowAnonymous()
             .RequireRateLimiting(RateLimits.DeviceToken)

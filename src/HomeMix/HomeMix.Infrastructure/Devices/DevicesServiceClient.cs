@@ -26,7 +26,7 @@ internal sealed class DevicesServiceClient(HttpClient http, IOptions<HomeMixOpti
             throw new InvalidOperationException(TriggerErrors.NoServiceClient.Message);
         }
 
-        using var response = await http.GetAsync($"internal/households/{householdId}/devices?user={asUser}", cancellationToken);
+        using var response = await http.GetAsync($"internal/v1/households/{householdId}/devices?user={asUser}", cancellationToken);
         if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
         {
             return [];
@@ -55,7 +55,7 @@ internal sealed class DevicesServiceClient(HttpClient http, IOptions<HomeMixOpti
             installationId = installation.Id,
             addonName,
         };
-        using var response = await http.PostAsJsonAsync($"internal/devices/{deviceId}/set", body, Json, cancellationToken);
+        using var response = await http.PostAsJsonAsync($"internal/v1/devices/{deviceId}/set", body, Json, cancellationToken);
         if (response.IsSuccessStatusCode)
         {
             return Result.Ok();

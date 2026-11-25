@@ -23,7 +23,7 @@ internal sealed class MeEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var me = app.MapGroup("/auth/me").WithTags("My account");
+        var me = app.MapVersionedGroup("/auth").MapGroup("/me").WithTags("My account");
 
         me.MapGet("/", async (ISender sender, CancellationToken ct) =>
             (await sender.Send(new GetMeQuery(), ct)).ToHttpResult());

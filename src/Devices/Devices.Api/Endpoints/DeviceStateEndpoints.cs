@@ -36,23 +36,25 @@ internal sealed class DeviceStateEndpoints : IEndpoint
 
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapGet("/devices/{deviceId:guid}/state", async (Guid deviceId, ISender sender, CancellationToken ct) =>
+        var devices = app.MapVersionedGroup("/devices");
+
+        devices.MapGet("/{deviceId:guid}/state", async (Guid deviceId, ISender sender, CancellationToken ct) =>
             (await sender.Send(new GetDeviceStateQuery(deviceId), ct)).ToHttpResult())
             .WithTags("Devices")
             .Produces<DeviceStateView>();
 
-        app.MapGet("/devices/{deviceId:guid}/events", async (
+        devices.MapGet("/{deviceId:guid}/events", async (
                 Guid deviceId, ISender sender, CancellationToken ct, int skip = 0, int limit = GetDeviceEventsQuery.DefaultLimit) =>
             (await sender.Send(new GetDeviceEventsQuery(deviceId, skip, limit), ct)).ToHttpResult())
             .WithTags("Devices")
             .Produces<IReadOnlyList<DeviceEventView>>();
 
-        app.MapPost("/devices/{deviceId:guid}/set", async (Guid deviceId, SetControlRequest body, ISender sender, CancellationToken ct) =>
+        devices.MapPost("/{deviceId:guid}/set", async (Guid deviceId, SetControlRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(new SetControlCommand(deviceId, body.Control, body.Value), ct)).ToHttpResult())
             .WithTags("Devices");
 
         // The device's own token (its subject is the device); the frames are the same as on /devices/link.
-        app.MapPost("/devices/report", async (List<DeviceFrame> frames, ICurrentUser user, ISender sender, CancellationToken ct) =>
+        devices.MapPost("/report", async (List<DeviceFrame> frames, ICurrentUser user, ISender sender, CancellationToken ct) =>
         {
             try
             {
@@ -72,7 +74,7 @@ internal sealed class DeviceStateEndpoints : IEndpoint
             .WithTags("Devices")
             .Produces<IReadOnlyList<FrameResult>>();
 
-        app.MapGet("/devices/households/{householdId:guid}/stream", async (Guid householdId, ISender sender, DeviceStream stream, IConfiguration configuration, CancellationToken ct) =>
+        devices.MapGet("/households/{householdId:guid}/stream", async (Guid householdId, ISender sender, DeviceStream stream, IConfiguration configuration, CancellationToken ct) =>
         {
             var access = await sender.Send(new GetStreamAccessQuery(householdId), ct);
             return access.IsFailed ? access.ToHttpResult() : TypedResults.ServerSentEvents(ReadAsync(stream, householdId, access.Value, configuration.GetValue<TimeSpan?>(LifetimeSetting) ?? MaxLifetime, ct));

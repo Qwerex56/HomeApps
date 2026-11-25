@@ -82,7 +82,7 @@ internal sealed class FakeDevice : IAsyncDisposable
             throw new InvalidOperationException("Closed.");
         }
 
-        return JsonDocument.Parse(Encoding.UTF8.GetString(buffer, 0, received.Count)).RootElement.Clone();
+        return JsonElement.Parse(Encoding.UTF8.GetString(buffer, 0, received.Count));
     }
 
     public async ValueTask DisposeAsync()

@@ -29,7 +29,7 @@ internal sealed class HouseholdsHttpDirectory(HttpClient http, IConfiguration co
 
     private async Task<List<PersonResponse>> PeopleAsync(Guid householdId, CancellationToken cancellationToken)
     {
-        using var response = await SendAsync($"internal/households/{householdId}/members", cancellationToken);
+        using var response = await SendAsync($"internal/v1/households/{householdId}/members", cancellationToken);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return [];
@@ -41,7 +41,7 @@ internal sealed class HouseholdsHttpDirectory(HttpClient http, IConfiguration co
 
     public async Task<EventRetention> GetEventRetentionAsync(Guid householdId, CancellationToken cancellationToken)
     {
-        using var response = await SendAsync($"internal/households/{householdId}/assistant", cancellationToken);
+        using var response = await SendAsync($"internal/v1/households/{householdId}/assistant", cancellationToken);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return EventRetention.Default;

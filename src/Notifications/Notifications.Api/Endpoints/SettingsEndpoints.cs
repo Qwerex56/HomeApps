@@ -17,7 +17,7 @@ internal sealed class SettingsEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var notifications = app.MapGroup("/notifications").WithTags("Settings");
+        var notifications = app.MapVersionedGroup("/notifications").WithTags("Settings");
 
         notifications.MapGet("/settings", async (ISender sender, CancellationToken ct) =>
             (await sender.Send(new GetSettingsQuery(), ct)).ToHttpResult())

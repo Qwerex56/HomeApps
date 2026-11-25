@@ -18,7 +18,7 @@ internal static class LocationTag
     public static DeviceState StateOf(Device device, DateTimeOffset now)
     {
         var state = DeviceState.For(device.Id);
-        state.ApplyValues(System.Text.Json.JsonDocument.Parse("""{ "location": { "room": "kitchen" } }""").RootElement, now);
+        state.ApplyValues(System.Text.Json.JsonElement.Parse("""{ "location": { "room": "kitchen" } }"""), now);
         state.ApplyStatus(new StatusReport(41, null, -60, null, null, null), now);
         return state;
     }

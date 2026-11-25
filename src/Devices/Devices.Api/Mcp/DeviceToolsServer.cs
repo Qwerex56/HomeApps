@@ -21,7 +21,7 @@ internal sealed class DeviceToolsServer(ISender sender)
     /// <summary>The <c>_meta</c> key of a tool on a person's own computer (value <c>computer</c>); JARVIS's gateway keeps it away from household satellites (R1).</summary>
     public const string PurposeMeta = "homeapps/purpose";
 
-    private static readonly JsonElement NoInput = JsonDocument.Parse("""{"type":"object","properties":{}}""").RootElement.Clone();
+    private static readonly JsonElement NoInput = JsonElement.Parse("""{"type":"object","properties":{}}""");
 
     public async ValueTask<ListToolsResult> ListToolsAsync(CancellationToken cancellationToken)
     {
@@ -32,7 +32,7 @@ internal sealed class DeviceToolsServer(ISender sender)
             {
                 Name = t.Name,
                 Description = t.Description,
-                InputSchema = t.InputSchema is null ? NoInput : JsonDocument.Parse(t.InputSchema).RootElement.Clone(),
+                InputSchema = t.InputSchema is null ? NoInput : JsonElement.Parse(t.InputSchema),
                 Annotations = new ToolAnnotations
                 {
                     ReadOnlyHint = t.ReadOnly,

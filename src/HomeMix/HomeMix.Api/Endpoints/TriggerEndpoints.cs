@@ -16,7 +16,7 @@ internal sealed class TriggerEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var api = app.MapGroup("/homemix/api").WithTags("Triggers");
+        var api = app.MapVersionedGroup("/homemix/api").WithTags("Triggers");
 
         api.MapGet("/households/{householdId:guid}/triggers", async (Guid householdId, ISender sender, CancellationToken ct) =>
                 (await sender.Send(new ListHouseholdTriggersQuery(householdId), ct)).ToHttpResult())

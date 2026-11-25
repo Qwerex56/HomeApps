@@ -1,6 +1,6 @@
 {
   "name": "@home-apps/sdk",
-  "version": "2.4.0",
+  "version": "3.0.0",
   "description": "The HomeMix bridge for add-ons, the host side and the homemix.json types (docs/homemix.md)",
   "license": "MIT",
   "type": "module",

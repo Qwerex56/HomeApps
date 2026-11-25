@@ -14,12 +14,12 @@ internal sealed class HouseholdEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var households = app.MapGroup("/households").WithTags("Households");
+        var households = app.MapVersionedGroup("/households").WithTags("Households");
 
         households.MapPost("/", async (HouseholdRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(new CreateHouseholdCommand(body.Name, body.Description), ct))
             .Map(id => new IdResponse(id))
-            .ToCreatedHttpResult(created => $"/households/{created.Id}"))
+            .ToCreatedHttpResult(created => $"/households/v1/{created.Id}"))
             .Produces<IdResponse>(StatusCodes.Status201Created)
             .RequireRateLimiting(RateLimits.Changes);
 

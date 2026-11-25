@@ -17,7 +17,7 @@ internal sealed class AuthSatelliteIdentities(HttpClient http, IConfiguration co
 
     public async Task<Result<string>> PairAsync(Guid deviceId, Guid householdId, string name, CancellationToken cancellationToken)
     {
-        using var response = await http.PostAsJsonAsync("internal/devices", new
+        using var response = await http.PostAsJsonAsync("internal/v1/devices", new
         {
             clientId = configuration["Devices:ClientId"] ?? "devices-service",
             clientSecret = configuration["Devices:ClientSecret"] ?? string.Empty,

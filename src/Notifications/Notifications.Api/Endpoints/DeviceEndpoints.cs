@@ -16,7 +16,7 @@ internal sealed class DeviceEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var notifications = app.MapGroup("/notifications").WithTags("Devices");
+        var notifications = app.MapVersionedGroup("/notifications").WithTags("Devices");
 
         notifications.MapGet("/vapid-public-key", (VapidKeys keys) => TypedResults.Ok(new VapidPublicKey(keys.PublicKey)));
 

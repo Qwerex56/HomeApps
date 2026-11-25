@@ -1,6 +1,6 @@
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 import { useQueries, useQuery } from '@tanstack/vue-query'
-import { MANIFEST_VERSION, type PluginEnablement, type PluginManifest, type PluginModule } from '@homeapps/plugin-sdk'
+import { MANIFEST_VERSION, type PluginEnablement, type PluginManifest, type PluginModule } from '@home-apps/plugin-sdk'
 import { http } from '@/api/http'
 import { i18n } from '@/shared/i18n'
 

@@ -15,7 +15,7 @@ internal sealed class HouseholdSpeakers(HttpClient http, IOptions<GatewayOptions
     public async Task<SpeakerMatch> IdentifyAsync(Guid deviceId, Guid householdId, string? name, string pin, CancellationToken cancellationToken)
     {
         var settings = options.Value;
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"{settings.HouseholdsUrl.TrimEnd('/')}/internal/households/{householdId}/members");
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"{settings.HouseholdsUrl.TrimEnd('/')}/internal/v1/households/{householdId}/members");
         request.Headers.Add("X-Client-Id", settings.ClientId);
         request.Headers.Add("X-Client-Secret", settings.ClientSecret);
         using var listed = await http.SendAsync(request, cancellationToken);
@@ -30,7 +30,7 @@ internal sealed class HouseholdSpeakers(HttpClient http, IOptions<GatewayOptions
             return new SpeakerMatch(SpeakerOutcome.Unknown);
         }
 
-        using var asked = await http.PostAsJsonAsync($"{settings.AuthUrl.TrimEnd('/')}/internal/devices/speaker", new
+        using var asked = await http.PostAsJsonAsync($"{settings.AuthUrl.TrimEnd('/')}/internal/v1/devices/speaker", new
         {
             settings.ClientId,
             settings.ClientSecret,

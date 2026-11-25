@@ -32,7 +32,7 @@ public sealed class LocationStateVisibilityTests
         _devices.Add(_chair);
         _telemetry.Add(LocationTag.StateOf(_tag, Now));
         var chairState = DeviceState.For(_chair.Id);
-        chairState.ApplyValues(System.Text.Json.JsonDocument.Parse("""{ "heating": 2 }""").RootElement, Now);
+        chairState.ApplyValues(System.Text.Json.JsonElement.Parse("""{ "heating": 2 }"""), Now);
         _telemetry.Add(chairState);
     }
 
@@ -157,7 +157,7 @@ public sealed class LocationStateVisibilityTests
         var values = geo ? """{ "location": { "room": "hall" } }""" : """{ "heating": 1 }""";
 
         await Frames(stream).Handle(
-            new ProcessFramesCommand(device.Id, [new DeviceFrame("state", Values: System.Text.Json.JsonDocument.Parse(values).RootElement.Clone())]), CancellationToken.None);
+            new ProcessFramesCommand(device.Id, [new DeviceFrame("state", Values: System.Text.Json.JsonElement.Parse(values))]), CancellationToken.None);
 
         var message = Assert.Single(stream.Messages);
         Assert.Equal("state", message.Type);

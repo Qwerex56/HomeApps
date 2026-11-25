@@ -15,7 +15,7 @@ internal sealed class ReactivationEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var reactivation = app.MapGroup("/users/me").WithTags("My account").RequireAuthorization(ReactivationTicket.Policy);
+        var reactivation = app.MapVersionedGroup("/users").MapGroup("/me").WithTags("My account").RequireAuthorization(ReactivationTicket.Policy);
 
         reactivation.MapGet("/reactivation", async (ISender sender, CancellationToken ct) =>
             (await sender.Send(new GetReactivationFormQuery(), ct)).ToHttpResult());

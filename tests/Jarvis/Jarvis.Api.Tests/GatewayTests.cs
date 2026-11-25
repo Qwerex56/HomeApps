@@ -20,7 +20,7 @@ public sealed class GatewayTests(JarvisFactory factory)
         var client = factory.CreateClient();
 
         var refused = await client.PostAsync("/jarvis/mcp", new StringContent("{}"));
-        var metadata = JsonDocument.Parse(await client.GetStringAsync("/.well-known/oauth-protected-resource/jarvis/mcp")).RootElement;
+        var metadata = JsonElement.Parse(await client.GetStringAsync("/.well-known/oauth-protected-resource/jarvis/mcp"));
 
         Assert.Equal(HttpStatusCode.Unauthorized, refused.StatusCode);
         Assert.Contains("resource_metadata=", refused.Headers.WwwAuthenticate.ToString(), StringComparison.Ordinal);

@@ -11,7 +11,7 @@ namespace Jarvis.Api.Tests;
 /// </summary>
 internal sealed class FakeToolSet
 {
-    private static readonly JsonElement ObjectSchema = JsonDocument.Parse("""{"type":"object","properties":{}}""").RootElement.Clone();
+    private static readonly JsonElement ObjectSchema = JsonElement.Parse("""{"type":"object","properties":{}}""");
 
     public List<Tool> Tools { get; set; } = [];
 

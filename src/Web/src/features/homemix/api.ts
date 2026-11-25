@@ -39,7 +39,7 @@ export const mixKeys = {
   blocks: ['homemix', 'admin', 'blocks'] as const,
 }
 
-const base = '/homemix/api'
+const base = '/homemix/api/v1'
 
 /** The store's tabs (docs/homemix.md, "Numbers and domki"); `all` is the default order. */
 export type StoreTab = 'all' | 'featured' | 'popular' | 'hearts' | 'new'

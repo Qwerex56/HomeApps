@@ -23,7 +23,7 @@ internal sealed class MemberEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var household = app.MapGroup("/households/{id:guid}").WithTags("Members");
+        var household = app.MapVersionedGroup("/households").MapGroup("/{id:guid}").WithTags("Members");
         var members = household.MapGroup("/members");
 
         members.MapGet("/", async (Guid id, ISender sender, CancellationToken ct) =>

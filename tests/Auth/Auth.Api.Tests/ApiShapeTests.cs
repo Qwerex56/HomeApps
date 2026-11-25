@@ -54,7 +54,23 @@ public sealed class ApiShapeTests(AuthApiFactory api) : IClassFixture<AuthApiFac
             "POST /internal/devices",
             "POST /internal/devices/speaker",
         ];
-        Assert.Equal(expected.Order(StringComparer.Ordinal), anonymous);
+
+        // Everything but discovery, OAuth, Google's redirects and the probes is served twice: under /v1 and, for 3.x, as before.
+        string[] unversioned = ["/.well-known/", "/auth/external/", "/auth/oauth/", "/health/", "/openapi/"];
+        var served = expected
+            .SelectMany(e =>
+            {
+                var parts = e.Split(' ', 2);
+                if (unversioned.Any(p => parts[1].StartsWith(p, StringComparison.Ordinal)))
+                {
+                    return [e];
+                }
+
+                var root = parts[1].StartsWith("/internal/", StringComparison.Ordinal) ? "/internal" : "/auth";
+                return new[] { e, $"{parts[0]} {root}/v1{parts[1][root.Length..]}" };
+            })
+            .Order(StringComparer.Ordinal);
+        Assert.Equal(served, anonymous);
     }
 
     [Fact]

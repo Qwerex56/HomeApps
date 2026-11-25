@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Devices.Api;
 
 /// <summary>Configuration section <c>Devices</c>.</summary>
@@ -13,4 +15,8 @@ public sealed class DevicesOptions
 
     /// <summary>How long JARVIS waits for a device to answer an action.</summary>
     public TimeSpan ActionTimeout { get; set; } = TimeSpan.FromSeconds(20);
+
+    /// <summary>Devices' own service client secret for Auth and Households (<c>X-Client-Secret</c>); they list it. Devices does not start without it.</summary>
+    [Required(AllowEmptyStrings = false, ErrorMessage = "Missing required secret: DEVICES_CLIENT_SECRET")]
+    public string ClientSecret { get; set; } = string.Empty;
 }

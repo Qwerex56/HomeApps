@@ -18,7 +18,7 @@ public sealed class SetControlTests
 
     private Task<FluentResults.Result> SetAsync(HouseholdRole? role, string control, string value) =>
         new SetControlHandler(_devices, new FakeRoles(role), _links)
-            .Handle(new SetControlCommand(_device.Id, control, JsonDocument.Parse(value).RootElement.Clone()), CancellationToken.None);
+            .Handle(new SetControlCommand(_device.Id, control, JsonElement.Parse(value)), CancellationToken.None);
 
     [Theory]
     [InlineData(HouseholdRole.Member)]

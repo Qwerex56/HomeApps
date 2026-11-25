@@ -22,7 +22,7 @@ internal sealed class AuthDelegation(HttpClient http, IOptions<GatewayOptions> o
         }
 
         var settings = options.Value;
-        using var response = await http.PostAsJsonAsync("internal/delegation", new
+        using var response = await http.PostAsJsonAsync("internal/v1/delegation", new
         {
             settings.ClientId,
             settings.ClientSecret,

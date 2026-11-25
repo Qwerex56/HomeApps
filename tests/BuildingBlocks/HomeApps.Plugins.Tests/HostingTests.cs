@@ -7,6 +7,7 @@ using HomeApps.Contracts.Notifications;
 using HomeApps.Plugins.Hello;
 using HomeApps.Plugins.Hosting;
 using MassTransit.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HomeApps.Plugins.Tests;
 
@@ -50,9 +51,34 @@ public sealed class HostingTests(HelloPluginFactory factory) : IClassFixture<Hel
     [Fact]
     public async Task The_api_needs_a_token()
     {
-        var response = await factory.CreateClient().GetAsync(new Uri($"/plugins/hello/api/households/{_household}/greetings", UriKind.Relative));
+        var response = await factory.CreateClient().GetAsync(new Uri($"/plugins/hello/api/v1/households/{_household}/greetings", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Versioned_routes_carry_no_deprecation_and_the_legacy_ones_still_work_with_it()
+    {
+        GivenHousehold();
+        var versioned = await As(_owner).GetAsync(new Uri(Enablement, UriKind.Relative));
+        var legacy = await As(_owner).GetAsync(new Uri(Enablement.Replace("/api/v1/", "/api/", StringComparison.Ordinal), UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.OK, versioned.StatusCode);
+        Assert.False(versioned.Headers.Contains("Deprecation"));
+        Assert.Equal(HttpStatusCode.OK, legacy.StatusCode);
+        Assert.Equal("true", Assert.Single(legacy.Headers.GetValues("Deprecation")));
+        Assert.Contains("2028", Assert.Single(legacy.Headers.GetValues("Sunset")), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_plugin_hub_and_manifest_stay_without_a_version()
+    {
+        using var _ = factory.CreateClient();
+        var patterns = factory.Services.GetRequiredService<Microsoft.AspNetCore.Routing.EndpointDataSource>().Endpoints
+            .OfType<Microsoft.AspNetCore.Routing.RouteEndpoint>().Select(e => e.RoutePattern.RawText).ToList();
+
+        Assert.Contains("/manifest", patterns);
+        Assert.DoesNotContain(patterns, p => p!.Contains("/v1/hub", StringComparison.Ordinal) || p.StartsWith("/v1/manifest", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -157,9 +183,9 @@ public sealed class HostingTests(HelloPluginFactory factory) : IClassFixture<Hel
         Assert.Equal($"/homes/{_household}/apps/hello", sent.Url);
     }
 
-    private string Enablement => $"/plugins/hello/api/households/{_household}/enablement";
+    private string Enablement => $"/plugins/hello/api/v1/households/{_household}/enablement";
 
-    private string Greetings => $"/plugins/hello/api/households/{_household}/greetings";
+    private string Greetings => $"/plugins/hello/api/v1/households/{_household}/greetings";
 
     private void GivenHousehold()
     {

@@ -1,6 +1,6 @@
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 import { useToast } from 'primevue/usetoast'
-import { hasPermission, type HostApi, type PluginHousehold, type PluginManifest } from '@homeapps/plugin-sdk'
+import { hasPermission, type HostApi, type PluginHousehold, type PluginManifest } from '@home-apps/plugin-sdk'
 import { http } from '@/api/http'
 import { errorMessage } from '@/api/errorMessage'
 import { toProblem } from '@/api/problem'

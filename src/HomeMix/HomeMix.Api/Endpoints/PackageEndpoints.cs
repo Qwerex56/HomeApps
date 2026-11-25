@@ -19,7 +19,7 @@ internal sealed class PackageEndpoints : IEndpoint
 
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var packages = app.MapGroup("/homemix/api/packages").WithTags("Packages");
+        var packages = app.MapVersionedGroup("/homemix/api").MapGroup("/packages").WithTags("Packages");
 
         packages.MapPost("/", async (IFormFile file, ISender sender, CancellationToken ct) =>
             {

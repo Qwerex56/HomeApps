@@ -16,7 +16,9 @@ internal sealed class DelegationEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPost("/internal/delegation", async (DelegationRequest body, ISender sender, CancellationToken ct) =>
+        var internalApi = app.MapVersionedGroup("/internal");
+
+        internalApi.MapPost("/delegation", async (DelegationRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(
                 new DelegateToAssistantCommand(body.ClientId, body.ClientSecret, body.UserId, body.Channel, body.Reference), ct))
             .ToHttpResult())

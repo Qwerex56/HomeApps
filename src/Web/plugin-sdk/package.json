@@ -1,6 +1,6 @@
 {
-  "name": "@homeapps/plugin-sdk",
-  "version": "2.4.0",
+  "name": "@home-apps/plugin-sdk",
+  "version": "3.0.0",
   "description": "Types and helpers for HomeApps plugin UIs (docs/plugins.md)",
   "private": true,
   "type": "module",

@@ -72,7 +72,7 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       // The plugin SDK lives next to the app; the app uses its source, plugins its packed build (scripts/pack.sh).
-      '@homeapps/plugin-sdk': fileURLToPath(new URL('./plugin-sdk/src', import.meta.url)),
+      '@home-apps/plugin-sdk': fileURLToPath(new URL('./plugin-sdk/src', import.meta.url)),
       // The HomeMix SDK lives here too (docs/homemix.md, "Building one"); the app uses its source.
       '@home-apps/sdk/host': fileURLToPath(new URL('./homemix/sdk/src/host.ts', import.meta.url)),
       '@home-apps/sdk': fileURLToPath(new URL('./homemix/sdk/src/index.ts', import.meta.url)),

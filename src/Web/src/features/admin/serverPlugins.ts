@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
-import type { PluginManifest } from '@homeapps/plugin-sdk'
+import type { PluginManifest } from '@home-apps/plugin-sdk'
 import { APP_VERSION, loadPluginIds, usePlugins, versionAtLeast, type LoadedPlugin } from '@/features/plugins/registry'
 
 /** What the web app could do with the plugin's UI module. */

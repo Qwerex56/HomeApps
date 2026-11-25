@@ -17,11 +17,11 @@ internal sealed class InvitationEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var invitations = app.MapGroup("/auth/invitations").WithTags("Invitations");
+        var invitations = app.MapVersionedGroup("/auth").MapGroup("/invitations").WithTags("Invitations");
 
         invitations.MapPost("/", async (CreateInvitationRequest body, ISender sender, CancellationToken ct) =>
             (await sender.Send(new CreateInvitationCommand(body.Email), ct))
-                .ToCreatedHttpResult(_ => "/auth/invitations"))
+                .ToCreatedHttpResult(_ => "/auth/v1/invitations"))
             .RequireRateLimiting(RateLimits.Mail);
 
         invitations.MapGet("/", async (bool? all, InvitationStatus? status, ISender sender, CancellationToken ct) =>

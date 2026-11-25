@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { PluginManifest } from '@homeapps/plugin-sdk'
+import type { PluginManifest } from '@home-apps/plugin-sdk'
 import type { LoadedPlugin } from '@/features/plugins/registry'
 import { checkHealth, describeServerPlugins } from '../serverPlugins'
 

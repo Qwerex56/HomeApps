@@ -6,8 +6,8 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "paths": {
       "@/*": ["./src/*"],
-      "@homeapps/plugin-sdk": ["./plugin-sdk/src/index.ts"],
-      "@homeapps/plugin-sdk/vite": ["./plugin-sdk/src/vite.ts"],
+      "@home-apps/plugin-sdk": ["./plugin-sdk/src/index.ts"],
+      "@home-apps/plugin-sdk/vite": ["./plugin-sdk/src/vite.ts"],
       "@home-apps/sdk": ["./homemix/sdk/src/index.ts"],
       "@home-apps/sdk/host": ["./homemix/sdk/src/host.ts"]
     }

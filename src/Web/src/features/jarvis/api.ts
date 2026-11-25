@@ -30,23 +30,23 @@ export class AnswerError extends Error {
 
 export const jarvisApi = {
   async conversations() {
-    return (await http.get<Conversation[]>('/jarvis/api/conversations')).data
+    return (await http.get<Conversation[]>('/jarvis/api/v1/conversations')).data
   },
 
   async start() {
-    return (await http.post<Conversation>('/jarvis/api/conversations', { title: null })).data
+    return (await http.post<Conversation>('/jarvis/api/v1/conversations', { title: null })).data
   },
 
   async remove(id: string) {
-    await http.delete(`/jarvis/api/conversations/${id}`)
+    await http.delete(`/jarvis/api/v1/conversations/${id}`)
   },
 
   async messages(id: string) {
-    return (await http.get<ChatMessage[]>(`/jarvis/api/conversations/${id}/messages`)).data
+    return (await http.get<ChatMessage[]>(`/jarvis/api/v1/conversations/${id}/messages`)).data
   },
 
   async decide(actionId: string, approve: boolean) {
-    return (await http.post<Action>(`/jarvis/api/confirmations/${actionId}`, { approve })).data
+    return (await http.post<Action>(`/jarvis/api/v1/confirmations/${actionId}`, { approve })).data
   },
 
   /**
@@ -56,7 +56,7 @@ export const jarvisApi = {
   async send(id: string, text: string, householdId: string | null, on: AnswerHandlers, signal?: AbortSignal) {
     const session = useSessionStore()
     const post = (token: string | null) =>
-      fetch(`/jarvis/api/conversations/${id}/messages`, {
+      fetch(`/jarvis/api/v1/conversations/${id}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

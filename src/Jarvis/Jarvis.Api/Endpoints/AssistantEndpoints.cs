@@ -30,7 +30,7 @@ internal sealed class AssistantEndpoints : IEndpoint
 
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var api = app.MapGroup("/jarvis/api").WithTags("JARVIS");
+        var api = app.MapVersionedGroup("/jarvis/api").WithTags("JARVIS");
 
         api.MapPost("/ask", async (AskRequest body, ICurrentUser user, ISender sender, CancellationToken ct) =>
             (await sender.Send(new AskCommand(user.RequiredUserId, body.Text, body.HouseholdId, "app", null, []), ct)).ToHttpResult())

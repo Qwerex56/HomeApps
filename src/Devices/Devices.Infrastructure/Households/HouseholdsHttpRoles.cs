@@ -27,7 +27,7 @@ internal sealed class HouseholdsHttpRoles(HttpClient http, IHttpContextAccessor 
             return known;
         }
 
-        using var request = Request($"households/{householdId}/members/me");
+        using var request = Request($"households/v1/{householdId}/members/me");
         using var response = await http.SendAsync(request, cancellationToken);
         HouseholdRole? role = response.StatusCode switch
         {
@@ -48,7 +48,7 @@ internal sealed class HouseholdsHttpRoles(HttpClient http, IHttpContextAccessor 
             return _mine;
         }
 
-        using var request = Request("households/");
+        using var request = Request("households/v1/");
         using var response = await http.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
         var mine = await response.Content.ReadFromJsonAsync<List<MyHouseholdResponse>>(Json, cancellationToken) ?? [];

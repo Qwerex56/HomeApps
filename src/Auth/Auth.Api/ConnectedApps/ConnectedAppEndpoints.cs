@@ -23,6 +23,8 @@ internal sealed class ConnectedAppEndpoints : IEndpoint
 
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
+        var auth = app.MapVersionedGroup("/auth");
+
         var oauth = app.MapGroup("/auth/oauth").WithTags("Connected apps");
 
         // OAuth 2.1 4.1.1: the browser arrives here from the app. Everything is checked by the consent screen's
@@ -95,7 +97,7 @@ internal sealed class ConnectedAppEndpoints : IEndpoint
             (await sender.Send(new DecideConsentCommand(body.ToRequest(), body.Allow), ct)).ToHttpResult());
 
         // "Connected apps" in the account settings; disconnecting is DELETE /auth/me/sessions/{id}.
-        app.MapGet("/auth/me/apps", async (ISender sender, CancellationToken ct) =>
+        auth.MapGet("/me/apps", async (ISender sender, CancellationToken ct) =>
                 (await sender.Send(new ListConnectedAppsQuery(), ct)).ToHttpResult())
             .WithTags("My account");
     }

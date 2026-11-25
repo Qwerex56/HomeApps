@@ -63,7 +63,7 @@ public static class HomeAppsApiExtensions
     /// authorization (<see cref="AssistantGuardOptions"/>). Health checks are anonymous: <c>/health/live</c> (process up) and
     /// <c>/health/ready</c> (dependencies such as the database). OpenAPI is served at <c>/openapi/v1.json</c> in Development.
     /// </summary>
-    /// <param name="endpointsPrefix">Maps the <see cref="IEndpoint"/>s under this prefix, e.g. <c>/api</c> for a plugin.</param>
+    /// <param name="endpointsPrefix">Maps the <see cref="IEndpoint"/>s under this prefix and <c>{prefix}/v1</c>, e.g. <c>/api</c> for a plugin.</param>
     public static WebApplication UseHomeAppsDefaults(this WebApplication app, string? endpointsPrefix = null)
     {
         ArgumentNullException.ThrowIfNull(app);
@@ -83,7 +83,16 @@ public static class HomeAppsApiExtensions
             app.MapOpenApi().AllowAnonymous();
         }
 
-        app.MapEndpoints(endpointsPrefix is null ? null : app.MapGroup(endpointsPrefix));
+        if (endpointsPrefix is null)
+        {
+            app.MapVersionedEndpoints();
+        }
+        else
+        {
+            // A plugin's endpoints see a plain group: /api/v1 for the current routes, /api for the 3.x compatibility window.
+            app.MapEndpoints(app.MapGroup($"{endpointsPrefix}/v1"));
+            app.MapEndpoints(app.MapLegacyGroup(endpointsPrefix));
+        }
 
         return app;
     }

@@ -17,7 +17,7 @@ internal sealed class AssistantEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var assistant = app.MapGroup("/households/{id:guid}/assistant").WithTags("Assistant");
+        var assistant = app.MapVersionedGroup("/households").MapGroup("/{id:guid}/assistant").WithTags("Assistant");
 
         assistant.MapGet("/", async (Guid id, ISender sender, CancellationToken ct) =>
             (await sender.Send(new GetAssistantQuery(id), ct)).ToHttpResult())

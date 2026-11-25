@@ -46,16 +46,16 @@ export const accountKeys = {
 export const accountApi = {
   /** UC-02: the whole profile is replaced (Q5), so the form always sends every field. */
   async updateProfile(profile: ProfileInput) {
-    await http.put('/users/me/profile', profile)
+    await http.put('/users/v1/me/profile', profile)
   },
 
   async history() {
-    return (await http.get<MyHistoryEntry[]>('/users/me/history')).data
+    return (await http.get<MyHistoryEntry[]>('/users/v1/me/history')).data
   },
 
   /** UC-03: Accounts tells Auth, which ends every session; signing in again offers to bring the account back. */
   async disable(reason: string | null) {
-    await http.post('/users/me/disable', { reason })
+    await http.post('/users/v1/me/disable', { reason })
   },
 }
 
@@ -67,7 +67,7 @@ export function useMyAccount() {
   const session = useSessionStore()
   const query = useQuery({
     queryKey: accountKeys.me,
-    queryFn: async () => (await http.get<MyAccount>('/users/me')).data,
+    queryFn: async () => (await http.get<MyAccount>('/users/v1/me')).data,
     enabled: computed(() => session.status === 'signedIn'),
     retry: (failures, error) => toProblem(error).code === 'user.pending' && failures < 15,
     retryDelay: 2000,
@@ -81,10 +81,10 @@ export function useMyAccount() {
 /** UC-05: the reactivation form, read and sent with the reactivation ticket instead of a session. */
 export const reactivationApi = {
   async form(ticket: string) {
-    return (await http.get<Profile>('/users/me/reactivation', { ticket })).data
+    return (await http.get<Profile>('/users/v1/me/reactivation', { ticket })).data
   },
 
   async reactivate(ticket: string, profile: ProfileInput) {
-    await http.post('/users/me/reactivate', profile, { ticket })
+    await http.post('/users/v1/me/reactivate', profile, { ticket })
   },
 }

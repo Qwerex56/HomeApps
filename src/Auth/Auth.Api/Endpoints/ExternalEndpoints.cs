@@ -26,6 +26,8 @@ internal sealed class ExternalEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
+        var auth = app.MapVersionedGroup("/auth");
+
         var external = app.MapGroup("/auth/external").WithTags("Google");
 
         external.MapGet("/{provider}", async (
@@ -121,7 +123,7 @@ internal sealed class ExternalEndpoints : IEndpoint
             .AllowAnonymous();
 
         // A-11 (Q15): a navigation cannot carry the access token, so Vue asks for the URL first and then goes there.
-        app.MapPost("/auth/me/logins/{provider}/link", async (
+        auth.MapPost("/me/logins/{provider}/link", async (
                 string provider,
                 LinkStartRequest body,
                 HttpContext http,

@@ -31,7 +31,7 @@ public sealed record PluginManifestDocument(
     {
         ArgumentNullException.ThrowIfNull(manifest);
         var basePath = manifest.BasePath;
-        var api = $"{basePath}/api";
+        var api = $"{basePath}/api/v1";
 
         return new PluginManifestDocument(
             CurrentVersion,

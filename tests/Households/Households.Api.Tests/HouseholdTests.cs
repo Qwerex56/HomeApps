@@ -16,7 +16,7 @@ public sealed class HouseholdTests(HouseholdsApiFactory api) : IClassFixture<Hou
 
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
         var id = (await created.ReadJsonAsync()).GetProperty("id").GetGuid();
-        Assert.Equal($"/households/{id}", created.Headers.Location!.OriginalString);
+        Assert.Equal($"/households/v1/{id}", created.Headers.Location!.OriginalString);
         var mine = (await client.GetFromJsonAsync<JsonElement>("/households")).EnumerateArray().Single();
         Assert.Equal("Kowalscy", mine.GetProperty("name").GetString());
         Assert.Equal("Owner", mine.GetProperty("myRole").GetString());

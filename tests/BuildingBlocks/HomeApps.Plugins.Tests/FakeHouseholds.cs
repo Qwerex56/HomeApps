@@ -43,7 +43,7 @@ public sealed class FakeHouseholds : HttpMessageHandler
         Interlocked.Increment(ref _calls);
         LastAuthorization = request.Headers.Authorization?.ToString();
 
-        var segments = request.RequestUri!.AbsolutePath.Trim('/').Split('/');
+        var segments = request.RequestUri!.AbsolutePath.Trim('/').Split('/').Where((segment, i) => !(i == 1 && segment == "v1")).ToArray();
         var userId = Guid.Parse(TestUser.Of(LastAuthorization));
         if (segments.Length == 1)
         {

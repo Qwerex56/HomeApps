@@ -1,4 +1,4 @@
-import { definePlugin } from '@homeapps/plugin-sdk'
+import { definePlugin } from '@home-apps/plugin-sdk'
 import LatestWidget from './LatestWidget.vue'
 
 export default definePlugin({

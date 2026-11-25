@@ -10,11 +10,11 @@
     "pack": "vite build && homemix pack"
   },
   "dependencies": {
-    "@home-apps/css": "^2.4.0",
-    "@home-apps/sdk": "^2.4.0"
+    "@home-apps/css": "^3.0.0",
+    "@home-apps/sdk": "^3.0.0"
   },
   "devDependencies": {
-    "@home-apps/homemix": "^2.4.0",
+    "@home-apps/homemix": "^3.0.0",
     "vite": "^8.0.0"
   }
 }

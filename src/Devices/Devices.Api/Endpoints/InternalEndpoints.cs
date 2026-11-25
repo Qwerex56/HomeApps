@@ -20,8 +20,10 @@ internal sealed class InternalEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
+        var internalApi = app.MapVersionedGroup("/internal");
+
         // H-3c: the household's devices for JARVIS's prompt section, for one person (?user={guid}; members and the household's own devices only) (and its check that a satellite is an assistant).
-        app.MapGet("/internal/households/{id:guid}/devices", async (Guid id, Guid? user, HttpRequest request, IConfiguration configuration, ISender sender, CancellationToken ct) =>
+        internalApi.MapGet("/households/{id:guid}/devices", async (Guid id, Guid? user, HttpRequest request, IConfiguration configuration, ISender sender, CancellationToken ct) =>
             !(Authorized(request, configuration.GetSection("Devices:Internal")) || Authorized(request, configuration.GetSection(HomeMixSection)))
                 ? Results.Unauthorized()
                 : user is not { } person || person == Guid.Empty
@@ -32,7 +34,7 @@ internal sealed class InternalEndpoints : IEndpoint
             .Produces<IReadOnlyList<DeviceDescriptionView>>();
 
         // H-4b: an add-on's trigger changes a control as the add-on, within the installer's Admin+ rights; the add-on's consent is checked by HomeMix.
-        app.MapPost("/internal/devices/{id:guid}/set", async (Guid id, AddonSetRequest body, HttpRequest request, IConfiguration configuration, ISender sender, CancellationToken ct) =>
+        internalApi.MapPost("/devices/{id:guid}/set", async (Guid id, AddonSetRequest body, HttpRequest request, IConfiguration configuration, ISender sender, CancellationToken ct) =>
             !Authorized(request, configuration.GetSection(HomeMixSection))
                 ? Results.Unauthorized()
                 : (await sender.Send(new SetControlForAddonCommand(

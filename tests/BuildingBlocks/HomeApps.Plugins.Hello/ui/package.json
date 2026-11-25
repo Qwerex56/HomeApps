@@ -6,7 +6,7 @@
     "build": "vite build"
   },
   "devDependencies": {
-    "@homeapps/plugin-sdk": "file:../../../../src/Web/plugin-sdk",
+    "@home-apps/plugin-sdk": "file:../../../../src/Web/plugin-sdk",
     "@vitejs/plugin-vue": "^6.0.10",
     "axios": "^1.21.0",
     "typescript": "~5.9.3",

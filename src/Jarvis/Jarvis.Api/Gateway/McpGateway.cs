@@ -32,7 +32,7 @@ internal sealed partial class McpGateway(
     IToolSources sources, IHouseholdCeilings ceilings, SourceConnector connector, Caller caller, ISender sender, IMemoryCache cache, ILogger<McpGateway> logger)
 {
     public const string ActionResultTool = "jarvis_action_result";
-    private static readonly JsonElement ActionResultSchema = JsonDocument.Parse("""{"type":"object","properties":{"id":{"type":"string","description":"The action id."}},"required":["id"]}""").RootElement.Clone();
+    private static readonly JsonElement ActionResultSchema = JsonElement.Parse("""{"type":"object","properties":{"id":{"type":"string","description":"The action id."}},"required":["id"]}""");
 
     public async ValueTask<ListToolsResult> ListToolsAsync(CancellationToken cancellationToken)
     {

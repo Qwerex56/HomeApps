@@ -66,6 +66,7 @@ public sealed class AssistantTests(HomeMixApiFactory api) : IClassFixture<HomeMi
         var changes = api.Services.GetRequiredService<EndpointDataSource>().Endpoints
             .OfType<RouteEndpoint>()
             .Where(e => e.Metadata.GetMetadata<IHttpMethodMetadata>() is not null)
+            .Where(e => e.RoutePattern.RawText is not { } path || !path.StartsWith("/homemix/api/", StringComparison.Ordinal) || path.StartsWith("/homemix/api/v1/", StringComparison.Ordinal)) // the legacy twins repeat them
             .SelectMany(e => e.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods
                 .Where(m => m is not ("GET" or "HEAD" or "OPTIONS"))
                 .Select(m => $"{m} {e.RoutePattern.RawText} {e.Metadata.GetMetadata<AssistantAccessMetadata>()?.Access ?? AssistantAccess.Default}"))
@@ -75,29 +76,33 @@ public sealed class AssistantTests(HomeMixApiFactory api) : IClassFixture<HomeMi
 
         Assert.Equal(
         [
-            "DELETE /homemix/api/admin/blocks/{value} Default",
-            "DELETE /homemix/api/installations/{id:guid} Default",
-            "DELETE /homemix/api/installations/{id:guid}/data/{collection}/{key} Allow",
-            "DELETE /homemix/api/installations/{id:guid}/widgets/{place} Default",
-            "DELETE /homemix/api/store/{key} Default",
-            "DELETE /homemix/api/store/{key}/heart Default",
-            "POST /homemix/api/households/{householdId:guid}/installations Default",
-            "POST /homemix/api/installations/{id:guid}/notify Default",
-            "POST /homemix/api/me/installations Default",
-            "POST /homemix/api/packages/ Default",
-            "POST /homemix/api/packages/github Default",
-            "POST /homemix/api/packages/official/{addonId} Default",
-            "POST /homemix/api/store Default",
-            "POST /homemix/api/store/{key}/refresh Default",
+            "DELETE /homemix/api/v1/admin/blocks/{value} Default",
+            "DELETE /homemix/api/v1/installations/{id:guid} Default",
+            "DELETE /homemix/api/v1/installations/{id:guid}/data/{collection}/{key} Allow",
+            "DELETE /homemix/api/v1/installations/{id:guid}/widget-devices/{widgetId} Default",
+            "DELETE /homemix/api/v1/installations/{id:guid}/widgets/{place} Default",
+            "DELETE /homemix/api/v1/store/{key} Default",
+            "DELETE /homemix/api/v1/store/{key}/heart Default",
+            "POST /homemix/api/v1/households/{householdId:guid}/installations Default",
+            "POST /homemix/api/v1/installations/{id:guid}/devices/{deviceId:guid}/set Default",
+            "POST /homemix/api/v1/installations/{id:guid}/notify Default",
+            "POST /homemix/api/v1/me/installations Default",
+            "POST /homemix/api/v1/packages/ Default",
+            "POST /homemix/api/v1/packages/github Default",
+            "POST /homemix/api/v1/packages/official/{addonId} Default",
+            "POST /homemix/api/v1/store Default",
+            "POST /homemix/api/v1/store/{key}/refresh Default",
             "POST /mcp/ Allow",
-            "PUT /homemix/api/admin/blocks/{value} Default",
-            "PUT /homemix/api/admin/store/{key}/hidden Default",
-            "PUT /homemix/api/households/{householdId:guid}/boards/{place} Default",
-            "PUT /homemix/api/installations/{id:guid} Default",
-            "PUT /homemix/api/installations/{id:guid}/data/{collection}/{key} Allow",
-            "PUT /homemix/api/installations/{id:guid}/widgets/{place} Default",
-            "PUT /homemix/api/me/pins Default",
-            "PUT /homemix/api/store/{key}/heart Default",
+            "PUT /homemix/api/v1/admin/blocks/{value} Default",
+            "PUT /homemix/api/v1/admin/store/{key}/hidden Default",
+            "PUT /homemix/api/v1/households/{householdId:guid}/boards/{place} Default",
+            "PUT /homemix/api/v1/installations/{id:guid} Default",
+            "PUT /homemix/api/v1/installations/{id:guid}/data/{collection}/{key} Allow",
+            "PUT /homemix/api/v1/installations/{id:guid}/triggers/{triggerId} Default",
+            "PUT /homemix/api/v1/installations/{id:guid}/widget-devices/{widgetId} Default",
+            "PUT /homemix/api/v1/installations/{id:guid}/widgets/{place} Default",
+            "PUT /homemix/api/v1/me/pins Default",
+            "PUT /homemix/api/v1/store/{key}/heart Default",
         ], changes);
     }
 

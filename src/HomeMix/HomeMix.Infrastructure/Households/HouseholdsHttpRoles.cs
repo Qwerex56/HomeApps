@@ -27,7 +27,7 @@ internal sealed class HouseholdsHttpRoles(HttpClient http, IHttpContextAccessor 
             return known;
         }
 
-        using var request = Request($"households/{householdId}/members/me");
+        using var request = Request($"households/v1/{householdId}/members/me");
         using var response = await http.SendAsync(request, cancellationToken);
         HouseholdRole? role = response.StatusCode switch
         {
@@ -43,7 +43,7 @@ internal sealed class HouseholdsHttpRoles(HttpClient http, IHttpContextAccessor 
 
     public async Task<IReadOnlyList<Guid>> GetMemberIdsAsync(Guid householdId, CancellationToken cancellationToken)
     {
-        using var request = Request($"households/{householdId}/members/names");
+        using var request = Request($"households/v1/{householdId}/members/names");
         using var response = await http.SendAsync(request, cancellationToken);
         if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
         {
@@ -57,7 +57,7 @@ internal sealed class HouseholdsHttpRoles(HttpClient http, IHttpContextAccessor 
 
     public async Task<IReadOnlyList<HouseholdMember>> GetMembersAsync(Guid householdId, CancellationToken cancellationToken)
     {
-        using var request = Request($"households/{householdId}/members/");
+        using var request = Request($"households/v1/{householdId}/members/");
         using var response = await http.SendAsync(request, cancellationToken);
         if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
         {
@@ -73,7 +73,7 @@ internal sealed class HouseholdsHttpRoles(HttpClient http, IHttpContextAccessor 
 
     public async Task<IReadOnlyList<MyHousehold>> GetMyHouseholdsAsync(CancellationToken cancellationToken)
     {
-        using var request = Request("households/");
+        using var request = Request("households/v1/");
         using var response = await http.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
         var mine = await response.Content.ReadFromJsonAsync<List<MyHouseholdResponse>>(Json, cancellationToken);

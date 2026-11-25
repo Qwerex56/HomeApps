@@ -20,6 +20,7 @@ public class DevicesApiFactory : HomeAppsApiFactory<Program, DevicesDbContext>
     {
         ArgumentNullException.ThrowIfNull(builder);
         base.ConfigureWebHost(builder);
+        builder.UseSetting("Devices:ClientSecret", "test-devices-secret-0123456789");
         builder.UseSetting("Devices:Resource", Resource);
         builder.UseSetting("Devices:ActionTimeout", "00:00:03");
         builder.UseSetting("Devices:StreamLifetime", "00:00:01");

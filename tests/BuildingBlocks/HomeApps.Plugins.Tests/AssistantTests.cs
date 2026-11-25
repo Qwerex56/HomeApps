@@ -21,9 +21,9 @@ public sealed class AssistantTests(HelloPluginFactory factory) : IClassFixture<H
 
     private const string HouseholdName = "Dom";
 
-    private string Enablement => $"/plugins/hello/api/households/{_household}/enablement";
+    private string Enablement => $"/plugins/hello/api/v1/households/{_household}/enablement";
 
-    private string Greetings => $"/plugins/hello/api/households/{_household}/greetings";
+    private string Greetings => $"/plugins/hello/api/v1/households/{_household}/greetings";
 
     [Fact]
     public async Task An_assistant_writes_plugin_data_with_the_persons_rights()

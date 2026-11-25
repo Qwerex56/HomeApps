@@ -29,7 +29,7 @@ internal sealed partial class HouseholdsCeilings(
         try
         {
             var settings = options.Value;
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"{settings.HouseholdsUrl.TrimEnd('/')}/internal/households/{householdId}/assistant");
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{settings.HouseholdsUrl.TrimEnd('/')}/internal/v1/households/{householdId}/assistant");
             request.Headers.Add("X-Client-Id", settings.ClientId);
             request.Headers.Add("X-Client-Secret", settings.ClientSecret);
             using var response = await http.SendAsync(request, cancellationToken);

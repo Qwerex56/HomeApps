@@ -53,10 +53,11 @@ public sealed class HomeMixOptions
     [Url]
     public string DevicesUrl { get; set; } = "http://devices:8080";
 
-    /// <summary>HomeMix's service client (<c>X-Client-Id</c>/<c>X-Client-Secret</c>) for Devices and Households when an add-on's trigger runs with nobody logged in; they list it as <c>Internal:HomeMix</c>. No secret: triggers fail.</summary>
+    /// <summary>HomeMix's service client (<c>X-Client-Id</c>/<c>X-Client-Secret</c>) for Devices and Households when an add-on's trigger runs with nobody logged in; they list it as <c>Internal:HomeMix</c>. The secret is required: HomeMix does not start without it.</summary>
     [Required]
     public string ClientId { get; set; } = "homemix-service";
 
+    [Required(AllowEmptyStrings = false, ErrorMessage = "Missing required secret: HOMEMIX_CLIENT_SECRET")]
     public string ClientSecret { get; set; } = string.Empty;
 
     /// <summary>

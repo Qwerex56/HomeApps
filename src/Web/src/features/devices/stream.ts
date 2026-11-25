@@ -112,12 +112,12 @@ export interface ConnectDeviceStreamOptions {
 }
 
 /**
- * Opens one SSE request to `/devices/households/{id}/stream` with Bearer token (refreshing once on 401)
+ * Opens one SSE request to `/devices/v1/households/{id}/stream` with Bearer token (refreshing once on 401)
  * and forwards every event until the server closes the stream (~15 min) or `signal` aborts.
  */
 export async function connectDeviceStreamOnce(options: ConnectDeviceStreamOptions): Promise<void> {
   const fetchFn = options.fetchImpl ?? fetch
-  const url = `/devices/households/${encodeURIComponent(options.householdId)}/stream`
+  const url = `/devices/v1/households/${encodeURIComponent(options.householdId)}/stream`
   const open = (token: string | null) =>
     fetchFn(url, {
       method: 'GET',

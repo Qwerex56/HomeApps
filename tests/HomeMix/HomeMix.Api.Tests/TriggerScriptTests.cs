@@ -49,7 +49,7 @@ public sealed class TriggerScriptTests
         var installation = Installation.Install(package, InstallTarget.Household(HouseholdId), new Consent(package.Manifest.Capabilities, [], false), Installer, Now).Value;
         var station = new DeviceCandidate(Guid.NewGuid(), "Stacja", true, "a/stacja", ["weather_station"], ["weather"]);
         var occurrence = new TriggerOccurrence(
-            HouseholdId, station, "stacja", TriggerKind.State, JsonDocument.Parse(json).RootElement.Clone(), null, null, null, Now);
+            HouseholdId, station, "stacja", TriggerKind.State, JsonElement.Parse(json), null, null, null, Now);
         var runner = new TriggerScriptRunner(new ScriptRunner(new ScriptFiles(script), null!, NullLogger<ScriptRunner>.Instance), _devices);
         return (runner, new TriggerRun(installation, package.Manifest, package.Manifest.Triggers[0], occurrence));
     }
@@ -132,7 +132,7 @@ public sealed class TriggerScriptTests
             """, "{}");
         var occurrence = run.Occurrence with
         {
-            Kind = TriggerKind.Event, Changed = null, EventName = "pressed", Payload = JsonDocument.Parse("""{"kind":"long"}""").RootElement.Clone(),
+            Kind = TriggerKind.Event, Changed = null, EventName = "pressed", Payload = JsonElement.Parse("""{"kind":"long"}"""),
         };
 
         var result = await runner.RunAsync(run with { Occurrence = occurrence }, CancellationToken.None);
@@ -187,7 +187,7 @@ public sealed class TriggerScriptTests
     private sealed class FakeAddonDevices : IAddonDevices
     {
         public static readonly HouseholdDevice Heater = new(
-            Guid.NewGuid(), "Fotel", "fotel", "smart_home", true, "a/fotel", ["heater"], ["heating"], JsonDocument.Parse("""{"level":0}""").RootElement.Clone());
+            Guid.NewGuid(), "Fotel", "fotel", "smart_home", true, "a/fotel", ["heater"], ["heating"], JsonElement.Parse("""{"level":0}"""));
 
         public List<(Guid Device, string Control, string Value, Installation Installation, string AddonName)> Sets { get; } = [];
 

@@ -47,26 +47,26 @@ export const securityKeys = {
 
 export const securityApi = {
   async me() {
-    return (await http.get<Me>('/auth/me')).data
+    return (await http.get<Me>('/auth/v1/me')).data
   },
 
   /** 202: the change waits for the link in the email (/confirm-password). Without a password only `newPassword`. */
   async changePassword(currentPassword: string | null, newPassword: string) {
-    await http.put('/auth/me/password', { currentPassword, newPassword })
+    await http.put('/auth/v1/me/password', { currentPassword, newPassword })
   },
 
   /** 4-8 digits, with the same proof as a password change; Auth keeps only its hash. */
   async setPin(pin: string, currentPassword: string | null) {
-    await http.put('/auth/me/pin', { pin, currentPassword })
+    await http.put('/auth/v1/me/pin', { pin, currentPassword })
   },
 
   async clearPin() {
-    await http.delete('/auth/me/pin')
+    await http.delete('/auth/v1/me/pin')
   },
 
   /** 202: the change waits for the link sent to the new address (/confirm-email). */
   async changeEmail(newEmail: string, currentPassword: string | null) {
-    await http.put('/auth/me/email', { newEmail, currentPassword })
+    await http.put('/auth/v1/me/email', { newEmail, currentPassword })
   },
 
   /**
@@ -75,37 +75,37 @@ export const securityApi = {
    */
   async googleLinkUrl(returnPath: string) {
     return (
-      await http.post<{ url: string }>('/auth/me/logins/google/link', { clientId: CLIENT_ID, returnUrl: returnPath })
+      await http.post<{ url: string }>('/auth/v1/me/logins/google/link', { clientId: CLIENT_ID, returnUrl: returnPath })
     ).data.url
   },
 
   async unlink(provider: 'google' | 'apple') {
-    await http.delete(`/auth/me/logins/${provider}`)
+    await http.delete(`/auth/v1/me/logins/${provider}`)
   },
 
   async sessions() {
-    return (await http.get<Session[]>('/auth/me/sessions')).data
+    return (await http.get<Session[]>('/auth/v1/me/sessions')).data
   },
 
   async revokeSession(id: string) {
-    await http.delete(`/auth/me/sessions/${id}`)
+    await http.delete(`/auth/v1/me/sessions/${id}`)
   },
 
   /** D7: every active account may invite people to the app; the list shows the invitations I sent. */
   async invitations() {
-    return (await http.get<Invitation[]>('/auth/invitations')).data
+    return (await http.get<Invitation[]>('/auth/v1/invitations')).data
   },
 
   async invite(email: string) {
-    await http.post('/auth/invitations', { email })
+    await http.post('/auth/v1/invitations', { email })
   },
 
   async resendInvitation(id: string) {
-    await http.post(`/auth/invitations/${id}/resend`)
+    await http.post(`/auth/v1/invitations/${id}/resend`)
   },
 
   async revokeInvitation(id: string) {
-    await http.delete(`/auth/invitations/${id}`)
+    await http.delete(`/auth/v1/invitations/${id}`)
   },
 }
 
