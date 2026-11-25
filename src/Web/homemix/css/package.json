@@ -1,6 +1,6 @@
 {
   "name": "@home-apps/css",
-  "version": "2.4.0",
+  "version": "3.0.0",
   "description": "hm-* classes in the HomeApps look for HomeMix add-ons, with or without a framework (docs/homemix-authoring.md)",
   "license": "MIT",
   "repository": { "type": "git", "url": "git+https://github.com/Qwerex56/HomeApps.git", "directory": "src/Web/homemix/css" },

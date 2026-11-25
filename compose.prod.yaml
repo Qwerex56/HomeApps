@@ -83,7 +83,7 @@ services:
 
   auth:
     <<: *service
-    image: homeapps/auth:2.4.0
+    image: homeapps/auth:3.0.0
     build:
       context: .
       dockerfile: src/Auth/Auth.Api/Dockerfile
@@ -129,7 +129,7 @@ services:
 
   accounts:
     <<: *service
-    image: homeapps/accounts:2.4.0
+    image: homeapps/accounts:3.0.0
     build:
       context: .
       dockerfile: src/Accounts/Accounts.Api/Dockerfile
@@ -144,7 +144,7 @@ services:
 
   households:
     <<: *service
-    image: homeapps/households:2.4.0
+    image: homeapps/households:3.0.0
     build:
       context: .
       dockerfile: src/Households/Households.Api/Dockerfile
@@ -163,7 +163,7 @@ services:
 
   notifications:
     <<: *service
-    image: homeapps/notifications:2.4.0
+    image: homeapps/notifications:3.0.0
     build:
       context: .
       dockerfile: src/Notifications/Notifications.Api/Dockerfile
@@ -181,7 +181,7 @@ services:
 
   homemix:
     <<: *service
-    image: homeapps/homemix:2.4.0
+    image: homeapps/homemix:3.0.0
     build:
       context: .
       dockerfile: src/HomeMix/HomeMix.Api/Dockerfile
@@ -207,7 +207,7 @@ services:
 
   devices:
     <<: *service
-    image: homeapps/devices:2.4.0
+    image: homeapps/devices:3.0.0
     build:
       context: .
       dockerfile: src/Devices/Devices.Api/Dockerfile
@@ -232,7 +232,7 @@ services:
 
   jarvis:
     <<: *service
-    image: homeapps/jarvis:2.4.0
+    image: homeapps/jarvis:3.0.0
     build:
       context: .
       dockerfile: src/Jarvis/Jarvis.Api/Dockerfile
@@ -262,7 +262,7 @@ services:
       - "traefik.http.services.jarvis.loadbalancer.server.port=8080"
 
   web:
-    image: homeapps/web:2.4.0
+    image: homeapps/web:3.0.0
     restart: unless-stopped
     build:
       context: src/Web
