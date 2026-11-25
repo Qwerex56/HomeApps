@@ -1,4 +1,5 @@
 using Accounts.Application.Abstractions;
+using Accounts.Application.Admin.GetServerAbout;
 using Accounts.Domain.Common;
 using Accounts.Domain.Users;
 using HomeApps.BuildingBlocks.Application.Abstractions;
@@ -144,4 +145,24 @@ internal sealed class InMemoryAvatarStore : IAvatarStore
 
     public Task<byte[]?> ReadAsync(Guid userId, CancellationToken cancellationToken) =>
         Task.FromResult(_files.GetValueOrDefault(userId));
+}
+
+internal sealed class FakeServerInfo(string? latestTag = null) : IServerInfo
+{
+    public Task<IReadOnlyList<ServiceAboutView>> ServicesAsync(CancellationToken cancellationToken) => Task.FromResult(ServerInfoFixtures.Services);
+
+    public Task<IReadOnlyList<PluginAboutView>> PluginsAsync(CancellationToken cancellationToken) => Task.FromResult(ServerInfoFixtures.Plugins);
+
+    public Task<string?> LatestReleaseTagAsync(CancellationToken cancellationToken) => Task.FromResult(latestTag);
+}
+
+internal static class ServerInfoFixtures
+{
+    public static readonly IReadOnlyList<ServiceAboutView> Services =
+    [
+        new("Auth", "3.0.0", 8, "20261120_AddDelegations"),
+        new("Households", null, 0, null),
+    ];
+
+    public static readonly IReadOnlyList<PluginAboutView> Plugins = [new("todo", "1.2.0", "healthy")];
 }
