@@ -25,7 +25,16 @@ internal sealed class FileAvatarStore(string root) : IAvatarStore
 
     public Task DeleteAsync(Guid userId, CancellationToken cancellationToken)
     {
-        File.Delete(PathOf(userId));
+        // File.Delete ignores a missing file but throws for a missing directory (no avatar was ever uploaded): both are fine.
+        try
+        {
+            File.Delete(PathOf(userId));
+        }
+        catch (Exception ex) when (ex is DirectoryNotFoundException or IOException or UnauthorizedAccessException)
+        {
+            // Erasing the account must not fail because a picture could not be removed.
+        }
+
         return Task.CompletedTask;
     }
 
