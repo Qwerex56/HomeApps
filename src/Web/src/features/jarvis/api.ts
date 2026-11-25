@@ -12,6 +12,7 @@ export type ActionStatus = Schemas['ToolCallStatus']
 
 export const jarvisKeys = {
   conversations: ['jarvis', 'conversations'] as const,
+  search: (q: string) => ['jarvis', 'conversations', 'search', q] as const,
   messages: (id: string) => ['jarvis', 'conversations', id, 'messages'] as const,
 }
 
@@ -29,8 +30,14 @@ export class AnswerError extends Error {
 }
 
 export const jarvisApi = {
-  async conversations() {
-    return (await http.get<Conversation[]>('/jarvis/api/v1/conversations')).data
+  /** q: a phrase in the title or in any message (at most 100 characters). */
+  async conversations(q?: string) {
+    return (await http.get<Conversation[]>('/jarvis/api/v1/conversations', { params: q ? { q } : {} })).data
+  },
+
+  /** 1-80 characters; 400 jarvis.conversation_title_invalid otherwise. */
+  async rename(id: string, title: string) {
+    await http.patch(`/jarvis/api/v1/conversations/${id}/title`, { title })
   },
 
   async start() {
