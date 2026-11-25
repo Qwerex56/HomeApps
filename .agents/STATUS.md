@@ -13,6 +13,7 @@ Written only by the Coordinator (agent teams). Read it first when a session star
 | harness | lean-v2 (agent hub, cheaper teams) | doing | harness/lean-v2 | | 2026-11-22 |
 | household-planner | ADR (spec-debate) | done | | specs/household-planner-adr.md | 2026-11-22 |
 | release-3.0 | ADR (spec-debate) | done | | specs/release-3.0-adr.md | 2026-11-25 |
+| release-3.0 | Stage 0 | done (PR pending) | feat/release-3.0-stage-0 | specs/release-3.0-adr.md | 2026-11-25 |
 
 ## Decisions
 - 2026-11-21 (owner): agy roles run directly from the Coordinator, never through a Claude subagent. Devil's Advocate on agy uses `gemini-4-argon-<effort>`.
