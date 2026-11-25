@@ -80,6 +80,7 @@ public class AccountsApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Messaging:Transport", "InMemory");
         builder.UseSetting("Jwt:Authority", Issuer);
         builder.UseSetting("Accounts:RateLimits:Changes", Changes.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        builder.UseSetting("Avatars:Path", Path.Combine(Path.GetTempPath(), "homeapps-avatar-tests", Guid.NewGuid().ToString("N")));
 
         builder.ConfigureTestServices(services =>
         {
