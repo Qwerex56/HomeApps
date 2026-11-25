@@ -43,7 +43,18 @@ export const accountKeys = {
   history: ['accounts', 'me', 'history'] as const,
 }
 
+/** 2.15: what an avatar file may be, checked here too so the person gets the message before the upload. */
+export const AVATAR_MAX_BYTES = 2 * 1024 * 1024
+export const AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+
 export const accountApi = {
+  /** 2.15: the new picture; the answer is its address (/users/v1/{id}/avatar?v=...), already saved on the profile. */
+  async uploadAvatar(file: File) {
+    const form = new FormData()
+    form.append('file', file)
+    return (await http.post<{ avatarUrl: string }>('/users/v1/me/avatar', form)).data.avatarUrl
+  },
+
   /** UC-02: the whole profile is replaced (Q5), so the form always sends every field. */
   async updateProfile(profile: ProfileInput) {
     await http.put('/users/v1/me/profile', profile)

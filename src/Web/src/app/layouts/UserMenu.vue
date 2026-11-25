@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
 import Menu from 'primevue/menu'
-import Avatar from 'primevue/avatar'
+import UserAvatar from '@/shared/components/UserAvatar.vue'
 import { useSessionStore } from '@/features/auth/session'
 import { useMyAccount } from '@/features/account/api'
 
@@ -15,7 +15,6 @@ const { data: account } = useMyAccount()
 const menu = ref<InstanceType<typeof Menu>>()
 
 const name = computed(() => account.value?.profile.displayName ?? session.claims?.email ?? '')
-const initials = computed(() => name.value.slice(0, 1).toUpperCase())
 
 const items = computed(() => [
   { label: session.claims?.email, disabled: true },
@@ -38,8 +37,7 @@ const items = computed(() => [
 
 <template>
   <Button text rounded class="!p-1" :aria-label="t('app.account')" aria-haspopup="true" @click="menu?.toggle($event)">
-    <Avatar v-if="account?.profile.avatarUrl" :image="account.profile.avatarUrl" shape="circle" />
-    <Avatar v-else :label="initials" shape="circle" class="!bg-primary !text-primary-contrast" />
+    <UserAvatar :src="account?.profile.avatarUrl" :name="name" />
     <span class="hidden max-w-40 truncate text-sm md:inline">{{ name }}</span>
   </Button>
   <Menu ref="menu" :model="items" popup />

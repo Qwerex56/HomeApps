@@ -12,6 +12,7 @@ import Dialog from 'primevue/dialog'
 import FormField from '@/shared/components/FormField.vue'
 import { useSubmit } from '@/shared/composables/useSubmit'
 import { useSessionStore } from '@/features/auth/session'
+import AvatarUpload from '../components/AvatarUpload.vue'
 import ProfileForm from '../components/ProfileForm.vue'
 import { accountApi, accountKeys, useMyAccount } from '../api'
 
@@ -46,6 +47,7 @@ async function disable() {
     <Card>
       <template #title>{{ t('account.profile.title') }}</template>
       <template #content>
+        <AvatarUpload :name="account?.profile.displayName ?? ''" :avatar-url="account?.profile.avatarUrl ?? null" class="mb-6" @uploaded="saved" />
         <ProfileForm :profile="account?.profile" :save="accountApi.updateProfile" @saved="saved" />
       </template>
     </Card>
