@@ -5,7 +5,7 @@ namespace Devices.Domain.Tests;
 
 public sealed class ValueSchemaTests
 {
-    private static string? Check(string schema, string value) => ValueSchema.Check(schema, JsonDocument.Parse(value).RootElement);
+    private static string? Check(string schema, string value) => ValueSchema.Check(schema, JsonElement.Parse(value));
 
     [Theory]
     [InlineData("""{ "type": "boolean" }""", "true")]
@@ -79,7 +79,7 @@ public sealed class ValueSchemaTests
     [InlineData(3.001, false)]
     public void Minimum_and_maximum_are_inclusive(double value, bool fits)
     {
-        var problem = ValueSchema.Check("""{ "type": "number", "minimum": 0, "maximum": 3 }""", JsonDocument.Parse(value.ToString(System.Globalization.CultureInfo.InvariantCulture)).RootElement);
+        var problem = ValueSchema.Check("""{ "type": "number", "minimum": 0, "maximum": 3 }""", JsonElement.Parse(value.ToString(System.Globalization.CultureInfo.InvariantCulture)));
 
         Assert.Equal(fits, problem is null);
     }

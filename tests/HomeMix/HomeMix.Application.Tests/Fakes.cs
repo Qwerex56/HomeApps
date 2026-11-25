@@ -91,7 +91,7 @@ internal sealed class FakeDevices(params HouseholdDevice[] devices) : IHousehold
         Task.FromResult<IReadOnlyList<HouseholdDevice>>(devices);
 
     public Task<JsonElement?> GetStateAsync(Guid deviceId, CancellationToken cancellationToken) =>
-        Task.FromResult<JsonElement?>(JsonDocument.Parse("""{"values":{"on":true}}""").RootElement);
+        Task.FromResult<JsonElement?>(JsonElement.Parse("""{"values":{"on":true}}"""));
 
     public Task<Result> SetAsync(Guid deviceId, string control, JsonElement value, CancellationToken cancellationToken)
     {

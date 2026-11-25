@@ -8,7 +8,7 @@ public sealed class DeviceStateTests
     private static readonly DateTimeOffset Now = new(2026, 11, 18, 12, 0, 0, TimeSpan.Zero);
     private static readonly TimeSpan Minute = TimeSpan.FromMinutes(1);
 
-    private static JsonElement Json(string json) => JsonDocument.Parse(json).RootElement.Clone();
+    private static JsonElement Json(string json) => JsonElement.Parse(json);
 
     [Fact]
     public void New_values_replace_the_old_and_keep_the_others()
@@ -17,8 +17,8 @@ public sealed class DeviceStateTests
         state.ApplyValues(Json("""{ "heating": 1, "temperature": 20 }"""), Now);
         state.ApplyValues(Json("""{ "heating": 3 }"""), Now.AddMinutes(1));
 
-        Assert.Equal(3, JsonDocument.Parse(state.Values).RootElement.GetProperty("heating").GetInt32());
-        Assert.Equal(20, JsonDocument.Parse(state.Values).RootElement.GetProperty("temperature").GetInt32());
+        Assert.Equal(3, JsonElement.Parse(state.Values).GetProperty("heating").GetInt32());
+        Assert.Equal(20, JsonElement.Parse(state.Values).GetProperty("temperature").GetInt32());
         Assert.Equal(Now.AddMinutes(1), state.ValuesAt);
     }
 

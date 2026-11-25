@@ -59,7 +59,7 @@ public sealed class DeviceCapabilityTests
         var devices = new FakeDevices(Station);
         var handler = new SetInstallationDeviceHandler(Access(installation, package, HouseholdRole.Member, devices), devices);
 
-        var result = await handler.Handle(new SetInstallationDeviceCommand(installation.Id, Station.Id, "on", JsonDocument.Parse("true").RootElement), CancellationToken.None);
+        var result = await handler.Handle(new SetInstallationDeviceCommand(installation.Id, Station.Id, "on", JsonElement.Parse("true")), CancellationToken.None);
 
         Assert.Equal("homemix.capability_missing", Code(result));
         Assert.Empty(devices.Sets);
@@ -72,7 +72,7 @@ public sealed class DeviceCapabilityTests
         var devices = new FakeDevices(Relay);
         var handler = new SetInstallationDeviceHandler(Access(installation, package, HouseholdRole.Member, devices), devices);
 
-        var result = await handler.Handle(new SetInstallationDeviceCommand(installation.Id, Relay.Id, "on", JsonDocument.Parse("true").RootElement), CancellationToken.None);
+        var result = await handler.Handle(new SetInstallationDeviceCommand(installation.Id, Relay.Id, "on", JsonElement.Parse("true")), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Equal((Relay.Id, "on"), (devices.Sets[0].Device, devices.Sets[0].Control));
@@ -85,7 +85,7 @@ public sealed class DeviceCapabilityTests
         var devices = new FakeDevices(Relay);
         var handler = new SetInstallationDeviceHandler(Access(installation, package, HouseholdRole.Member, devices), devices);
 
-        var result = await handler.Handle(new SetInstallationDeviceCommand(installation.Id, Guid.NewGuid(), "on", JsonDocument.Parse("true").RootElement), CancellationToken.None);
+        var result = await handler.Handle(new SetInstallationDeviceCommand(installation.Id, Guid.NewGuid(), "on", JsonElement.Parse("true")), CancellationToken.None);
 
         Assert.Equal("homemix.device_not_found", Code(result));
         Assert.Empty(devices.Sets);
@@ -165,7 +165,7 @@ public sealed class DeviceCapabilityTests
         var access = Access(installation, package, HouseholdRole.Member, devices);
 
         var set = await new SetInstallationDeviceHandler(access, devices).Handle(
-            new SetInstallationDeviceCommand(installation.Id, Station.Id, "on", JsonDocument.Parse("true").RootElement), CancellationToken.None);
+            new SetInstallationDeviceCommand(installation.Id, Station.Id, "on", JsonElement.Parse("true")), CancellationToken.None);
         var state = await new GetInstallationDeviceStateHandler(access, devices).Handle(
             new GetInstallationDeviceStateQuery(installation.Id, Station.Id), CancellationToken.None);
 

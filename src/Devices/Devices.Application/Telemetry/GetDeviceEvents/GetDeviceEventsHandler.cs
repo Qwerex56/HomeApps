@@ -21,6 +21,6 @@ internal sealed class GetDeviceEventsHandler(IDeviceRepository devices, IDeviceT
 
         var events = await telemetry.EventsAsync(device.Value.Id, query.Skip, query.Limit, cancellationToken);
         return Result.Ok<IReadOnlyList<DeviceEventView>>(
-            [.. events.Select(e => new DeviceEventView(e.Id, e.Name, e.Data is null ? null : JsonDocument.Parse(e.Data).RootElement.Clone(), e.OccurredAt, e.IsLocation))]);
+            [.. events.Select(e => new DeviceEventView(e.Id, e.Name, e.Data is null ? null : JsonElement.Parse(e.Data), e.OccurredAt, e.IsLocation))]);
     }
 }

@@ -73,7 +73,7 @@ public sealed partial class ProtocolDocsExamplesTests
     public void The_documented_report_fits_the_weather_station_descriptor()
     {
         var station = DescriptorParser.Parse(Descriptor("qwerex56/stacja-v2")).Value;
-        var report = Blocks().Select(b => JsonDocument.Parse(b).RootElement)
+        var report = Blocks().Select(b => JsonElement.Parse(b))
             .Single(r => r.ValueKind == JsonValueKind.Array && r.GetArrayLength() > 0 && r[0].TryGetProperty("type", out _));
 
         Assert.InRange(report.GetArrayLength(), 1, 50);
@@ -101,7 +101,7 @@ public sealed partial class ProtocolDocsExamplesTests
 
     private static string Descriptor(string model) => Descriptors().Single(d => d.Contains($"\"{model}\"", StringComparison.Ordinal));
 
-    private static JsonElement Frame(string type) => Blocks().Select(b => JsonDocument.Parse(b).RootElement.Clone())
+    private static JsonElement Frame(string type) => Blocks().Select(b => JsonElement.Parse(b))
         .Single(r => r.ValueKind == JsonValueKind.Object && r.TryGetProperty("type", out var t) && t.GetString() == type);
 
     private static List<string> Blocks()

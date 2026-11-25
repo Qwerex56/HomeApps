@@ -107,7 +107,7 @@ public sealed class DevicesClientTests
     {
         var handler = new Handler(_ => new HttpResponseMessage(HttpStatusCode.OK));
 
-        var result = await ClientOver(handler).SetAsync(Device, "level", JsonDocument.Parse("42").RootElement, CancellationToken.None);
+        var result = await ClientOver(handler).SetAsync(Device, "level", JsonElement.Parse("42"), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(HttpMethod.Post, handler.Request!.Method);
@@ -123,7 +123,7 @@ public sealed class DevicesClientTests
             Content = new StringContent("""{"title":"x","detail":"The device is offline.","code":"devices.offline"}""", System.Text.Encoding.UTF8, "application/problem+json"),
         });
 
-        var result = await ClientOver(handler).SetAsync(Device, "on", JsonDocument.Parse("true").RootElement, CancellationToken.None);
+        var result = await ClientOver(handler).SetAsync(Device, "on", JsonElement.Parse("true"), CancellationToken.None);
 
         var error = Assert.IsType<AppError>(Assert.Single(result.Errors));
         Assert.Equal("devices.offline", error.Code);

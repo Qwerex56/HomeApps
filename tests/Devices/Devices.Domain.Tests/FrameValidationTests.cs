@@ -19,7 +19,7 @@ public sealed class FrameValidationTests
 
     private static readonly DeviceDescriptor Descriptor = DescriptorParser.Parse(Chair).Value;
 
-    private static JsonElement Json(string json) => JsonDocument.Parse(json).RootElement.Clone();
+    private static JsonElement Json(string json) => JsonElement.Parse(json);
 
     [Fact]
     public void State_of_declared_controls_and_sensors_is_accepted()
