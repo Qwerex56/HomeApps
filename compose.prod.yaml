@@ -136,6 +136,7 @@ services:
     environment:
       <<: [*environment, *jwt]
       ConnectionStrings__Database: "Host=postgres;Database=homeapps_accounts;Username=${POSTGRES_USER:-homeapps};Password=${POSTGRES_PASSWORD}"
+      ServerAbout__Plugins: ${HOMEAPPS_PLUGINS:-}
     volumes:
       - avatars:/var/data/avatars
     labels:

@@ -70,6 +70,7 @@ public static class DependencyInjection
             npgsql => npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null)));
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<TContext>());
+        services.AddScoped<IAppliedMigrations, AppliedMigrations<TContext>>();
 
         services.AddHealthChecks().AddDbContextCheck<TContext>("database", tags: ["ready"]);
 

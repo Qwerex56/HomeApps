@@ -1,6 +1,7 @@
 using Accounts.Api.Http;
 using Accounts.Application.Abstractions;
 using Accounts.Application.Admin;
+using Accounts.Application.Admin.GetServerAbout;
 using Accounts.Application.Common;
 using Accounts.Domain.Common;
 using Accounts.Domain.Users;
@@ -29,6 +30,9 @@ internal sealed class AdminEndpoints : IEndpoint
             (await sender.Send(new ListUsersQuery(
                 status, role, q, page ?? 1, pageSize ?? ListUsersQuery.DefaultPageSize, sort ?? UserSort.DisplayName, desc ?? false), ct))
             .ToHttpResult());
+
+        users.MapGet("/server/about", async (ISender sender, CancellationToken ct) =>
+            (await sender.Send(new GetServerAboutQuery(), ct)).ToHttpResult());
 
         users.MapGet("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
             (await sender.Send(new GetUserQuery(id), ct)).ToHttpResult());
