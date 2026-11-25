@@ -27,6 +27,10 @@ async function saved() {
   await queryClient.invalidateQueries({ queryKey: accountKeys.me })
   toast.add({ severity: 'success', summary: t('account.profile.saved'), life: 3000 })
 }
+async function avatarUploaded() {
+  await queryClient.invalidateQueries({ queryKey: accountKeys.me })
+  toast.add({ severity: 'success', summary: t('account.profile.avatar.done'), life: 3000 })
+}
 // UC-03: disabling my own account. Signing in again later offers to bring it back (A-09).
 const disableOpen = ref(false)
 const reason = ref('')
@@ -47,7 +51,7 @@ async function disable() {
     <Card>
       <template #title>{{ t('account.profile.title') }}</template>
       <template #content>
-        <AvatarUpload :name="account?.profile.displayName ?? ''" :avatar-url="account?.profile.avatarUrl ?? null" class="mb-6" @uploaded="saved" />
+        <AvatarUpload :name="account?.profile.displayName ?? ''" :avatar-url="account?.profile.avatarUrl ?? null" class="mb-6" @uploaded="avatarUploaded" />
         <ProfileForm :profile="account?.profile" :save="accountApi.updateProfile" @saved="saved" />
       </template>
     </Card>

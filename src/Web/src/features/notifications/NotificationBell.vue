@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import Button from 'primevue/button'
 import Badge from 'primevue/badge'
+import Skeleton from 'primevue/skeleton'
 import Drawer from 'primevue/drawer'
 import { notificationKeys, notificationsApi, type InAppNotification } from './api'
 
@@ -14,7 +15,7 @@ const router = useRouter()
 const queryClient = useQueryClient()
 const open = ref(false)
 
-const { data, isError } = useQuery({
+const { data, isError, isPending } = useQuery({
   queryKey: notificationKeys.inApp,
   queryFn: () => notificationsApi.inApp(),
   refetchInterval: 60_000,
@@ -59,6 +60,7 @@ async function show(item: InAppNotification) {
         @click="readAll.mutate()"
       />
       <p v-if="isError" class="text-muted-color">{{ t('notifications.center.failed') }}</p>
+      <Skeleton v-else-if="isPending" height="3rem" />
       <p v-else-if="!items.length" class="text-muted-color">{{ t('notifications.center.empty') }}</p>
       <ul v-else class="flex flex-col divide-y divide-surface-200 dark:divide-surface-700">
         <li v-for="item in items" :key="item.id">

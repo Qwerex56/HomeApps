@@ -5,7 +5,10 @@ import { useQuery } from '@tanstack/vue-query'
 import Card from 'primevue/card'
 import UserAvatar from '@/shared/components/UserAvatar.vue'
 import Tag from 'primevue/tag'
+import Message from 'primevue/message'
 import Skeleton from 'primevue/skeleton'
+import { errorMessage } from '@/api/errorMessage'
+import { toProblem } from '@/api/problem'
 import { householdKeys, householdsApi, type HouseholdRole } from '../api'
 import { roleSeverity } from '../tags'
 
@@ -13,7 +16,7 @@ import { roleSeverity } from '../tags'
 const props = defineProps<{ householdId: string }>()
 const { t } = useI18n()
 
-const { data: names, isPending } = useQuery({
+const { data: names, isPending, error } = useQuery({
   queryKey: computed(() => householdKeys.names(props.householdId)),
   queryFn: () => householdsApi.names(props.householdId),
 })
@@ -29,7 +32,8 @@ const sorted = computed(() =>
   <Card>
     <template #title>{{ t('households.tabs.members') }}</template>
     <template #content>
-      <div v-if="isPending" class="flex flex-col gap-3">
+      <Message v-if="error" severity="error" :closable="false">{{ errorMessage(toProblem(error)) }}</Message>
+      <div v-else-if="isPending" class="flex flex-col gap-3">
         <Skeleton v-for="i in 3" :key="i" height="3rem" />
       </div>
       <ul v-else class="flex flex-col divide-y divide-surface-200 dark:divide-surface-700" data-testid="member-names">
