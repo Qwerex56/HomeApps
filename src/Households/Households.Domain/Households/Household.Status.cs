@@ -40,6 +40,38 @@ public sealed partial class Household
         return Result.Ok();
     }
 
+    /// <summary>2.11: the Owner or an Admin sets the household's own time zone (an IANA id).</summary>
+    public Result SetTimeZone(Actor actor, string? timeZone, TimeProvider time)
+    {
+        ArgumentNullException.ThrowIfNull(actor);
+        ArgumentNullException.ThrowIfNull(time);
+
+        var now = time.GetUtcNow();
+        var acting = Acting(actor, now, HouseholdRole.Admin);
+        if (acting.IsFailed)
+        {
+            return acting.ToResult();
+        }
+
+        var value = timeZone?.Trim();
+        if (string.IsNullOrEmpty(value)
+            || !TimeZoneInfo.TryFindSystemTimeZoneById(value, out var zone)
+            || !zone.HasIanaId)
+        {
+            return Result.Fail(HouseholdErrors.TimeZoneInvalid);
+        }
+
+        if (TimeZone == zone.Id)
+        {
+            return Result.Ok();
+        }
+
+        TimeZone = zone.Id;
+        Touch(now);
+        _domainEvents.Add(new HouseholdTimeZoneChanged(Id, zone.Id));
+        return Result.Ok();
+    }
+
     /// <summary>
     /// H5, D7 ("delete household"): the Owner or a server admin. The household disappears for its members and its invites
     /// stop working; the data stays for audit.

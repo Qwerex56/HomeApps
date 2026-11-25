@@ -36,6 +36,9 @@ public sealed partial class Household : IHasDomainEvents
 
     public HouseholdStatus Status { get; private set; }
 
+    /// <summary>IANA id set by an Admin; null = follow the owner's account zone (release 3.0, Decision 5).</summary>
+    public string? TimeZone { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private set; }
 
     public DateTimeOffset UpdatedAt { get; private set; }

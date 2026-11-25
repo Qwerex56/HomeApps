@@ -34,5 +34,6 @@ internal sealed class UserCopyConfiguration : IEntityTypeConfiguration<UserCopy>
         builder.Property(u => u.Id).ValueGeneratedNever();
         builder.Property(u => u.DisplayName).HasMaxLength(UserCopy.DisplayNameMaxLength);
         builder.Property(u => u.AvatarUrl).HasMaxLength(UserCopy.AvatarUrlMaxLength);
+        builder.Property(u => u.TimeZone).HasMaxLength(UserCopy.TimeZoneMaxLength);
     }
 }

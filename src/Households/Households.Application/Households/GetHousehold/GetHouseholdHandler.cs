@@ -8,7 +8,7 @@ using HomeApps.BuildingBlocks.Application.Messaging;
 
 namespace Households.Application.Households;
 
-internal sealed class GetHouseholdHandler(IHouseholdRepository households, ICurrentUser currentUser, TimeProvider time)
+internal sealed class GetHouseholdHandler(IHouseholdRepository households, IUserCopies users, ICurrentUser currentUser, TimeProvider time)
     : IQueryHandler<GetHouseholdQuery, HouseholdView>
 {
     public async Task<Result<HouseholdView>> Handle(GetHouseholdQuery query, CancellationToken cancellationToken)
@@ -29,6 +29,8 @@ internal sealed class GetHouseholdHandler(IHouseholdRepository households, ICurr
 
         var role = household.RoleOf(actor, now);
         HouseholdRole? myRole = role.IsSuccess ? role.Value : null;
+        var owner = household.Owner is { } o ? await users.GetAsync(o.UserId, cancellationToken) : null;
+        var (timeZone, timeZoneSource) = HouseholdTimeZones.Resolve(household.TimeZone, owner?.TimeZone);
         return new HouseholdView(
             household.Id,
             household.Name.Value,
@@ -39,6 +41,8 @@ internal sealed class GetHouseholdHandler(IHouseholdRepository households, ICurr
             myRole,
             household.CanSeeMembers(actor, now) ? household.Members.Count : null,
             myRole >= HouseholdRole.Admin ? household.GuestCode?.Display : null,
-            myRole == HouseholdRole.Owner ? household.OwnershipReceivedAt : null);
+            myRole == HouseholdRole.Owner ? household.OwnershipReceivedAt : null,
+            timeZone,
+            timeZoneSource);
     }
 }

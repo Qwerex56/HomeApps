@@ -13,6 +13,7 @@ namespace Households.Application.Events;
 internal sealed class PublishIntegrationEvents(IEventBus bus, IHouseholdRepository households) :
     IDomainEventHandler<DomainEvents.HouseholdCreated>,
     IDomainEventHandler<DomainEvents.HouseholdUpdated>,
+    IDomainEventHandler<DomainEvents.HouseholdTimeZoneChanged>,
     IDomainEventHandler<DomainEvents.HouseholdArchived>,
     IDomainEventHandler<DomainEvents.HouseholdRestored>,
     IDomainEventHandler<DomainEvents.MemberJoined>,
@@ -32,6 +33,13 @@ internal sealed class PublishIntegrationEvents(IEventBus bus, IHouseholdReposito
         ArgumentNullException.ThrowIfNull(notification);
         var e = notification.DomainEvent;
         return bus.PublishAsync(new Contracts.HouseholdUpdated(e.HouseholdId, e.Name, e.Description), cancellationToken);
+    }
+
+    public Task Handle(DomainEventNotification<DomainEvents.HouseholdTimeZoneChanged> notification, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(notification);
+        var e = notification.DomainEvent;
+        return bus.PublishAsync(new Contracts.HouseholdTimeZoneChanged(e.HouseholdId, e.TimeZone), cancellationToken);
     }
 
     public Task Handle(DomainEventNotification<DomainEvents.HouseholdArchived> notification, CancellationToken cancellationToken)

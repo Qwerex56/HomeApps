@@ -35,6 +35,8 @@ public static class DependencyInjection
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUserDirectory, UserDirectory>();
+        services.AddSingleton<IAvatarStore, FileAvatarStore>();
+        services.AddHostedService<Jobs.ProfileRepublishOnStart>();
 
         return services;
     }

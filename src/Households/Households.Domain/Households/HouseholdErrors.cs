@@ -15,6 +15,9 @@ public static class HouseholdErrors
     public static Error NicknameInvalid => new AppError("household.nickname_invalid",
         $"The nickname may have at most {Nickname.MaxLength} characters and no control characters.", ErrorKind.Validation);
 
+    public static Error TimeZoneInvalid => new AppError("household.timezone_invalid",
+        "The time zone must be an IANA id such as Europe/Warsaw.", ErrorKind.Validation);
+
     public static Error RoleInvalid => new AppError("household.role_invalid",
         "Only Guest, Member and Admin can be given; ownership is handed over separately.", ErrorKind.Validation);
 

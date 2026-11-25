@@ -25,6 +25,7 @@ internal sealed class HouseholdConfiguration : IEntityTypeConfiguration<Househol
         builder.Property(h => h.Description).HasConversion(Converters.Description).HasMaxLength(HouseholdDescription.MaxLength);
         builder.Property(h => h.Status).HasConversion<string>().HasMaxLength(Converters.EnumLength);
         builder.HasIndex(h => h.CreatedAt);
+        builder.Property(h => h.TimeZone).HasMaxLength(64);
 
         builder.Property(h => h.GuestCode).HasConversion(Converters.OptionalCode).HasMaxLength(InviteCode.Length);
         builder.HasIndex(h => h.GuestCode).IsUnique();

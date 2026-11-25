@@ -10,6 +10,7 @@ public sealed class UserCopy
 {
     public const int DisplayNameMaxLength = 64;
     public const int AvatarUrlMaxLength = 2048;
+    public const int TimeZoneMaxLength = 64;
     public const string FallbackName = "Użytkownik";
 
     private UserCopy() { }
@@ -21,6 +22,9 @@ public sealed class UserCopy
     public string DisplayName { get; private set; } = FallbackName;
 
     public string? AvatarUrl { get; private set; }
+
+    /// <summary>IANA id of the account's time zone, from <c>UserProfileUpdated</c>; null until Accounts sends it.</summary>
+    public string? TimeZone { get; private set; }
 
     /// <summary>D6: false while the account is disabled; the member is shown greyed out and cannot take over a household (D5).</summary>
     public bool IsActive { get; private set; } = true;
@@ -39,10 +43,14 @@ public sealed class UserCopy
     }
 
     /// <summary>S2, from <c>UserProfileUpdated</c>.</summary>
-    public void UpdateProfile(string? displayName, string? avatarUrl)
+    public void UpdateProfile(string? displayName, string? avatarUrl, string? timeZone = null)
     {
         DisplayName = Text.Sanitize(displayName, DisplayNameMaxLength) ?? FallbackName;
         AvatarUrl = Text.Sanitize(avatarUrl, AvatarUrlMaxLength);
+        if (Text.Sanitize(timeZone, TimeZoneMaxLength) is { } zone && TimeZoneInfo.TryFindSystemTimeZoneById(zone, out _))
+        {
+            TimeZone = zone;
+        }
     }
 
     /// <summary>S3, from <c>UserDisabled</c>. A ban (disabled by an admin) also moves ownership: <see cref="Households.Household.OwnerBanned"/>.</summary>

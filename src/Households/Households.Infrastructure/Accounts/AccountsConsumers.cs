@@ -29,7 +29,7 @@ public sealed class UserProfileUpdatedConsumer(ISender sender) : IConsumer<UserP
     {
         ArgumentNullException.ThrowIfNull(context);
         var m = context.Message;
-        (await sender.Send(new UpdateUserCopyCommand(m.UserId, m.DisplayName, m.AvatarUrl), context.CancellationToken)).ThrowIfFailed(m.UserId);
+        (await sender.Send(new UpdateUserCopyCommand(m.UserId, m.DisplayName, m.AvatarUrl, m.TimeZone), context.CancellationToken)).ThrowIfFailed(m.UserId);
     }
 }
 
