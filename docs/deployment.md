@@ -154,7 +154,8 @@ VAPID keys). HomeMix add-ons' files are in the volume `homeapps_homemix-packages
 (`docker run --rm -v homeapps_homemix-packages:/p -v "$PWD":/b alpine tar czf /b/homemix-packages.tar.gz -C /p .`), or
 people reinstall their add-ons after a restore. Uploaded profile pictures are in the volume `homeapps_avatars`
 (`/var/data/avatars` in the `accounts` container); back it up the same way
-(`docker run --rm -v homeapps_avatars:/p -v "$PWD":/b alpine tar czf /b/avatars.tar.gz -C /p .`), or people upload them again:
+(`docker run --rm -v homeapps_avatars:/p -v "$PWD":/b alpine tar czf /b/avatars.tar.gz -C /p .`), or people upload them again.
+The databases are dumped with:
 
 ```bash
 docker compose -f compose.prod.yaml exec -T postgres pg_dumpall -U homeapps > homeapps-$(date +%F).sql
