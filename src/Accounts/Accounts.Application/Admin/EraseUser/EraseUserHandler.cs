@@ -8,11 +8,12 @@ using HomeApps.BuildingBlocks.Application.Messaging;
 
 namespace Accounts.Application.Admin;
 
-internal sealed class EraseUserHandler(IUserRepository users, ICurrentUser currentUser, TimeProvider time)
+internal sealed class EraseUserHandler(IUserRepository users, IAvatarStore avatars, ICurrentUser currentUser, TimeProvider time)
     : ICommandHandler<EraseUserCommand>
 {
-    public Task<Result> Handle(EraseUserCommand command, CancellationToken cancellationToken) =>
-        users.ForAdminAsync(currentUser, command.UserId, user =>
+    public async Task<Result> Handle(EraseUserCommand command, CancellationToken cancellationToken)
+    {
+        var result = await users.ForAdminAsync(currentUser, command.UserId, user =>
         {
             var erased = user.Erase(currentUser.Actor(), command.ConfirmEmail, time);
             if (erased.IsFailed)
@@ -24,4 +25,13 @@ internal sealed class EraseUserHandler(IUserRepository users, ICurrentUser curre
             users.AddErased(erased.Value);
             return Result.Ok();
         }, cancellationToken);
+
+        // The uploaded picture is personal data too (2.15).
+        if (result.IsSuccess)
+        {
+            await avatars.DeleteAsync(command.UserId, cancellationToken);
+        }
+
+        return result;
+    }
 }

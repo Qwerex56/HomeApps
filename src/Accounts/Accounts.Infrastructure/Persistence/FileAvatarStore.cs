@@ -23,5 +23,11 @@ internal sealed class FileAvatarStore(string root) : IAvatarStore
         return File.Exists(path) ? await File.ReadAllBytesAsync(path, cancellationToken) : null;
     }
 
+    public Task DeleteAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        File.Delete(PathOf(userId));
+        return Task.CompletedTask;
+    }
+
     private string PathOf(Guid userId) => Path.Combine(_root, $"{userId}.bin");
 }

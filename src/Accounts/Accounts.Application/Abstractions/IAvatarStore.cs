@@ -5,6 +5,9 @@ public interface IAvatarStore
 {
     Task SaveAsync(Guid userId, ReadOnlyMemory<byte> content, CancellationToken cancellationToken);
 
+    /// <summary>"Forget me": removes the file; nothing happens when there is none.</summary>
+    Task DeleteAsync(Guid userId, CancellationToken cancellationToken);
+
     /// <summary>The file's bytes, or null when the user has no uploaded avatar.</summary>
     Task<byte[]?> ReadAsync(Guid userId, CancellationToken cancellationToken);
 }

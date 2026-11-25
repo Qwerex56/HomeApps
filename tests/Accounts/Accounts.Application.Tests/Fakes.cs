@@ -128,9 +128,17 @@ internal sealed class InMemoryAvatarStore : IAvatarStore
 {
     private readonly Dictionary<Guid, byte[]> _files = [];
 
+    public bool Has(Guid userId) => _files.ContainsKey(userId);
+
     public Task SaveAsync(Guid userId, ReadOnlyMemory<byte> content, CancellationToken cancellationToken)
     {
         _files[userId] = content.ToArray();
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        _files.Remove(userId);
         return Task.CompletedTask;
     }
 
