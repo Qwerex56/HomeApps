@@ -4,7 +4,7 @@ using Notifications.Application.Abstractions;
 
 namespace Notifications.Application.AccountsSync.EraseRecipient;
 
-internal sealed class EraseRecipientHandler(IRecipientRepository recipients) : ICommandHandler<EraseRecipientCommand>
+internal sealed class EraseRecipientHandler(IRecipientRepository recipients, IInAppNotificationRepository inApp) : ICommandHandler<EraseRecipientCommand>
 {
     public async Task<Result> Handle(EraseRecipientCommand command, CancellationToken cancellationToken)
     {
@@ -14,6 +14,7 @@ internal sealed class EraseRecipientHandler(IRecipientRepository recipients) : I
             recipients.Remove(recipient);
         }
 
+        await inApp.RemoveAllOfAsync(command.UserId, cancellationToken);
         return Result.Ok();
     }
 }

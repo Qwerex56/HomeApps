@@ -21,6 +21,7 @@ public static class DependencyInjection
 
         services.AddHomeAppsInfrastructure<NotificationsDbContext>(configuration, "notifications", typeof(DependencyInjection).Assembly);
         services.AddScoped<IRecipientRepository, RecipientRepository>();
+        services.AddScoped<IInAppNotificationRepository, InAppNotificationRepository>();
 
         services.AddOptions<VapidOptions>().BindConfiguration(VapidOptions.SectionName);
         services.AddSingleton<VapidKeys>();

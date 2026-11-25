@@ -126,7 +126,7 @@ public sealed class Recipient
             return DeliveryDecision.NoDevices;
         }
 
-        if (householdId is { } household && _mutes.Any(m => m.HouseholdId == household && (m.Source is null || m.Source == source)))
+        if (IsMuted(householdId, source))
         {
             return DeliveryDecision.Muted;
         }
@@ -138,6 +138,10 @@ public sealed class Recipient
 
         return DeliveryDecision.Deliver;
     }
+
+    /// <summary>The household, or this source in it, is muted; the person gets neither a push nor an in-app notification (2.13).</summary>
+    public bool IsMuted(Guid? householdId, string source) =>
+        householdId is { } household && _mutes.Any(m => m.HouseholdId == household && (m.Source is null || m.Source == source));
 
     private PushDevice? FindDevice(string endpoint) =>
         _devices.Find(d => string.Equals(d.Endpoint, endpoint, StringComparison.Ordinal));

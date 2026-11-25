@@ -1,6 +1,7 @@
 using HomeApps.BuildingBlocks.Infrastructure.Persistence;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Notifications.Domain.InApp;
 using Notifications.Domain.Recipients;
 
 namespace Notifications.Infrastructure.Persistence;
@@ -10,4 +11,6 @@ public sealed class NotificationsDbContext(DbContextOptions<NotificationsDbConte
     : HomeAppsDbContext(options, publisher)
 {
     public DbSet<Recipient> Recipients => Set<Recipient>();
+
+    public DbSet<InAppNotification> InAppNotifications => Set<InAppNotification>();
 }
