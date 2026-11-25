@@ -72,11 +72,11 @@ public sealed class InviteTests(HouseholdsApiFactory api) : IClassFixture<Househ
         Assert.Equal(JsonValueKind.Null, view.GetProperty("guestLink").ValueKind);
         Assert.Equal(HttpStatusCode.Forbidden, (await guestClient.GetAsync($"/households/{household}/members")).StatusCode);
 
-        // C4: names and avatars only, so a plugin can show a guest who wrote what.
+        // C4: names and avatars, plus the role (2.9); never emails or invite data.
         var names = await guestClient.GetFromJsonAsync<JsonElement>($"/households/{household}/members/names");
         Assert.Equal(2, names.GetArrayLength());
         Assert.All(names.EnumerateArray(), n =>
-            Assert.Equal(["userId", "name", "avatarUrl"], n.EnumerateObject().Select(p => p.Name).ToArray()));
+            Assert.Equal(["userId", "name", "avatarUrl", "role", "isActive"], n.EnumerateObject().Select(p => p.Name).ToArray()));
         Assert.Contains(names.EnumerateArray(), n => n.GetProperty("userId").GetGuid() == owner);
         using var stranger = api.SignedIn(await api.UserAsync());
         Assert.Equal(HttpStatusCode.NotFound, (await stranger.GetAsync($"/households/{household}/members/names")).StatusCode);

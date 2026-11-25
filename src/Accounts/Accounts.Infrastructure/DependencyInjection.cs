@@ -35,7 +35,7 @@ public static class DependencyInjection
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUserDirectory, UserDirectory>();
-        services.AddSingleton<IAvatarStore, FileAvatarStore>();
+        services.AddSingleton<IAvatarStore>(new FileAvatarStore(configuration["Avatars:Path"] ?? FileAvatarStore.DefaultRoot));
         services.AddHostedService<Jobs.ProfileRepublishOnStart>();
 
         return services;

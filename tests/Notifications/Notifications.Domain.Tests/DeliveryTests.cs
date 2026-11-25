@@ -73,4 +73,15 @@ public sealed class DeliveryTests
         Assert.Equal("notifications.quiet_hours_empty", QuietHours.Create(new TimeOnly(1, 0), new TimeOnly(1, 0), "UTC").Code());
         Assert.Equal("notifications.unknown_time_zone", QuietHours.Create(new TimeOnly(1, 0), new TimeOnly(2, 0), "Mars/Olympus").Code());
     }
+
+    [Fact]
+    public void A_muted_household_is_muted_even_without_devices()
+    {
+        var recipient = Recipient.Create(Guid.NewGuid());
+        recipient.Mute(Household, "chat");
+
+        Assert.True(recipient.IsMuted(Household, "chat"));
+        Assert.False(recipient.IsMuted(Household, "todo"));
+        Assert.False(recipient.IsMuted(null, "chat"));
+    }
 }
