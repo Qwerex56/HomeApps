@@ -9,8 +9,8 @@ internal sealed class DocumentRepository(HomeMixDbContext db) : IDocumentReposit
     public Task<AddonDocument?> FindAsync(DataSpace space, string collection, string key, CancellationToken cancellationToken) =>
         In(space, collection).FirstOrDefaultAsync(d => d.Key == key, cancellationToken);
 
-    public async Task<IReadOnlyList<AddonDocument>> ListAsync(DataSpace space, string collection, CancellationToken cancellationToken) =>
-        await In(space, collection).OrderBy(d => d.Key).ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<AddonDocument>> ListAsync(DataSpace space, string collection, DateTimeOffset now, CancellationToken cancellationToken) =>
+        await In(space, collection).Where(d => d.ExpiresAt == null || d.ExpiresAt > now).OrderBy(d => d.Key).ToListAsync(cancellationToken);
 
     public Task<int> CountAsync(DataSpace space, string collection, CancellationToken cancellationToken) =>
         In(space, collection).CountAsync(cancellationToken);
@@ -25,6 +25,9 @@ internal sealed class DocumentRepository(HomeMixDbContext db) : IDocumentReposit
         db.Documents
             .Where(d => !db.Installations.Any(i => i.Id == d.InstallationId && (i.RemovedAt == null || i.RemovedAt >= removedBefore)))
             .ExecuteDeleteAsync(cancellationToken);
+
+    public Task<int> DeleteExpiredAsync(DateTimeOffset now, CancellationToken cancellationToken) =>
+        db.Documents.Where(d => d.ExpiresAt != null && d.ExpiresAt <= now).ExecuteDeleteAsync(cancellationToken);
 
     public void Add(AddonDocument document) => db.Documents.Add(document);
 

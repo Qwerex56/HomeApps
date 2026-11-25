@@ -32,7 +32,7 @@ internal sealed class DataEndpoints : IEndpoint
             .Produces<DocumentView>();
 
         data.MapPut("/{key}", async (Guid id, string collection, string key, string? scope, PutDocumentRequest body, ISender sender, CancellationToken ct) =>
-                (await sender.Send(new PutDocumentCommand(id, Scope(scope), collection, key, body.Value, body.Version), ct))
+                (await sender.Send(new PutDocumentCommand(id, Scope(scope), collection, key, body.Value, body.Version, body.ExpiresAt), ct))
                 .ToHttpResult())
             .Produces<DocumentView>();
 

@@ -35,9 +35,12 @@ public sealed class AddonDocument
 
     public DateTimeOffset UpdatedAt { get; private set; }
 
+    /// <summary>When the document stops being returned and is purged; <c>null</c> for one that does not expire.</summary>
+    public DateTimeOffset? ExpiresAt { get; private set; }
+
     public static AddonDocument Create(
         Guid installationId, DataScope scope, Guid? ownerUserId, string collection, string key, string value, int size, Guid by,
-        DateTimeOffset now) =>
+        DateTimeOffset now, DateTimeOffset? expiresAt = null) =>
         new()
         {
             Id = Guid.CreateVersion7(),
@@ -51,10 +54,11 @@ public sealed class AddonDocument
             Version = 1,
             UpdatedBy = by,
             UpdatedAt = now,
+            ExpiresAt = expiresAt,
         };
 
     /// <param name="expectedVersion">The version the writer read, or <c>null</c> to overwrite whatever is there.</param>
-    public Result Replace(string value, int size, int? expectedVersion, Guid by, DateTimeOffset now)
+    public Result Replace(string value, int size, int? expectedVersion, Guid by, DateTimeOffset now, DateTimeOffset? expiresAt = null)
     {
         if (!Matches(expectedVersion))
         {
@@ -66,11 +70,14 @@ public sealed class AddonDocument
         Version++;
         UpdatedBy = by;
         UpdatedAt = now;
+        ExpiresAt = expiresAt;
         return Result.Ok();
     }
 
     /// <summary>A reinstall of the same add-on in the same place takes over the data of the removed installation.</summary>
     public void MoveTo(Guid installationId) => InstallationId = installationId;
+
+    public bool IsExpired(DateTimeOffset now) => ExpiresAt is { } at && at <= now;
 
     public bool Matches(int? expectedVersion) => expectedVersion is null || expectedVersion == Version;
 }
