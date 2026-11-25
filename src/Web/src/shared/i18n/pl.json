@@ -329,6 +329,13 @@
       "preferredNameHint": "Np. dla JARVIS-a. Puste = imię albo nazwa.",
       "dateOfBirth": "Data urodzenia",
       "avatarUrl": "Adres zdjęcia",
+      "avatar": {
+        "choose": "Wybierz zdjęcie",
+        "hint": "JPG, PNG lub WebP, do 2 MB.",
+        "tooLarge": "Zdjęcie jest za duże (najwyżej 2 MB).",
+        "badType": "Zdjęcie musi być w formacie JPG, PNG lub WebP.",
+        "done": "Zdjęcie zapisane"
+      },
       "locale": "Język",
       "timeZone": "Strefa czasowa",
       "saved": "Profil zapisany"
@@ -659,6 +666,12 @@
       "nicknameHint": "Tak będą Cię widzieć domownicy. Puste = Twoja nazwa.",
       "saved": "Zapisano",
       "guestInfo": "Jako gość widzisz tylko nazwę domu i swoje członkostwo.",
+      "timeZone": "Strefa czasowa domu",
+      "timeZoneSource": {
+        "household": "Ustawiona dla tego domu.",
+        "owner": "Domyślnie ze strefy właściciela domu. Wybierz strefę, żeby ją ustawić na stałe.",
+        "fallback": "Domyślnie Europe/Warsaw. Wybierz strefę, żeby ją ustawić."
+      },
       "leave": "Opuść dom",
       "leaveTitle": "Opuścić dom?",
       "leaveText": "Stracisz dostęp do domu „{name}”. Wrócić można tylko z nowym zaproszeniem.",
@@ -696,6 +709,13 @@
     }
   },
   "notifications": {
+    "center": {
+      "open": "Powiadomienia",
+      "title": "Powiadomienia",
+      "empty": "Nic nowego z ostatnich 30 dni.",
+      "markAll": "Oznacz wszystkie jako przeczytane",
+      "failed": "Nie udało się pobrać powiadomień."
+    },
     "saved": "Zapisano ustawienia powiadomień.",
     "device": {
       "title": "To urządzenie",
