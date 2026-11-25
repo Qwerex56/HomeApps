@@ -74,7 +74,7 @@ describe('session', () => {
       return { status: 200, statusText: 'OK', data: 'ok', headers: {}, config }
     }
 
-    const response = await http.get('/users/me')
+    const response = await http.get('/users/v1/me')
 
     expect(response.data).toBe('ok')
     expect(seen).toHaveLength(2)
@@ -89,7 +89,7 @@ describe('session', () => {
       throw httpError(401, config)
     }
 
-    await expect(http.post('/auth/login', {})).rejects.toBeInstanceOf(AxiosError)
+    await expect(http.post('/auth/v1/login', {})).rejects.toBeInstanceOf(AxiosError)
     expect(refresh).not.toHaveBeenCalled()
   })
 
@@ -102,7 +102,7 @@ describe('session', () => {
       return { status: 200, statusText: 'OK', data: {}, headers: {}, config }
     }
 
-    await http.get('/users/me/reactivation', { ticket: 'reactivation-ticket' })
+    await http.get('/users/v1/me/reactivation', { ticket: 'reactivation-ticket' })
 
     expect(auth).toBe('Bearer reactivation-ticket')
   })
