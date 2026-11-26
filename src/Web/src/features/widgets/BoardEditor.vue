@@ -4,12 +4,13 @@ import { useI18n } from 'vue-i18n'
 import { useQueryClient } from '@tanstack/vue-query'
 import { GridItem, GridLayout } from 'grid-layout-plus'
 import Button from 'primevue/button'
+import Drawer from 'primevue/drawer'
 import Message from 'primevue/message'
 import { useSubmit } from '@/shared/composables/useSubmit'
 import { homemixApi, mixKeys, type Installation } from '@/features/homemix/api'
 import WidgetSettingsDialog from '@/features/homemix/WidgetSettingsDialog.vue'
 import { boardKeys, boardsApi, type BoardPlace, type BoardWidget, type WidgetHousehold } from './board'
-import { COLUMNS, FIXED_ROWS, defaultHeight, firstFree, nearest, sizeOf, type Cell, type Fit } from './layout'
+import { COLUMNS, FIXED_ROWS, MAX_H, defaultHeight, firstFree, nearest, sizeFor, type Cell, type Fit } from './layout'
 import { GAP, rowHeightFor, useGridWidth } from './useGridWidth'
 
 // The "Widżety" editor (UI 2.4.1): drag a widget to move it, drag its corner to change its width (snapped to the
@@ -33,13 +34,47 @@ const { width } = useGridWidth(root)
 const rowHeight = computed(() => rowHeightFor(width.value, COLUMNS))
 const visibleLine = computed(() => FIXED_ROWS[COLUMNS]! * (rowHeight.value + GAP) + GAP / 2)
 
+// The palette (2.6): a widget taken off the grid waits in the drawer; "+ Dodaj" or a drag puts it back.
+const removed = ref(new Set<string>())
+const paletteOpen = ref(false)
+const palette = computed(() => [...props.byKey.values()].filter((w) => !layout.value.some((item) => item.i === w.key)))
+
+function remove(item: Item) {
+  layout.value = layout.value.filter((it) => it.i !== item.i)
+  removed.value = new Set(removed.value).add(item.i)
+}
+
+function add(key: string) {
+  const w = props.byKey.get(key)
+  if (!w || layout.value.some((item) => item.i === key)) return
+  const h = defaultHeight(w.w)
+  const at = firstFree(
+    layout.value.map(({ i, ...rest }) => ({ key: i, ...rest })),
+    w.w,
+    h,
+  )
+  layout.value = [...layout.value, { i: key, ...at, w: w.w, h, fit: 'Center' }]
+  const next = new Set(removed.value)
+  next.delete(key)
+  removed.value = next
+}
+
+function dragStart(event: DragEvent, key: string) {
+  event.dataTransfer?.setData('text/plain', key)
+}
+
+function drop(event: DragEvent) {
+  const key = event.dataTransfer?.getData('text/plain')
+  if (key) add(key)
+}
+
 // ⚙ can turn an add-on's widget off or pick another one while the editor is open.
 watch(
   () => props.byKey,
   (byKey) => {
     const kept = layout.value.filter((item) => byKey.has(item.i))
     for (const [key, w] of byKey) {
-      if (kept.some((item) => item.i === key)) continue
+      if (kept.some((item) => item.i === key) || removed.value.has(key)) continue
       const h = defaultHeight(w.w)
       const at = firstFree(
         kept.map(({ i, ...rest }) => ({ key: i, ...rest })),
@@ -81,7 +116,7 @@ async function save(items: Item[]) {
     for (const item of items) {
       const w = widget(item)
       if (w.kind === 'mix' && item.w !== w.w)
-        await homemixApi.chooseWidget(w.installation.id, props.place, w.widget.id, sizeOf[item.w]!)
+        await homemixApi.chooseWidget(w.installation.id, props.place, w.widget.id, sizeFor(item.w))
     }
   })
   await queryClient.invalidateQueries({ queryKey: boardKeys.one(props.household.id, props.place) })
@@ -95,7 +130,13 @@ async function save(items: Item[]) {
     <Message v-if="formError" severity="error" :closable="false">{{ formError }}</Message>
     <p class="text-sm text-muted-color md:hidden">{{ t('widgets.editor.narrow') }}</p>
     <div class="overflow-x-auto">
-      <div ref="root" class="relative min-w-[720px]" :style="{ minHeight: `${visibleLine + 32}px` }">
+      <div
+        ref="root"
+        class="relative min-w-[720px]"
+        :style="{ minHeight: `${visibleLine + 32}px` }"
+        @dragover.prevent
+        @drop.prevent="drop"
+      >
         <div
           class="pointer-events-none absolute inset-x-0 z-[1] border-t-2 border-dashed border-primary"
           :style="{ top: `${visibleLine}px` }"
@@ -124,7 +165,7 @@ async function save(items: Item[]) {
             :h="item.h"
             :min-w="Math.min(...widget(item).widths)"
             :max-w="Math.max(...widget(item).widths)"
-            :max-h="12"
+            :max-h="MAX_H"
             @resized="snap"
           >
             <div
@@ -137,9 +178,18 @@ async function save(items: Item[]) {
                 }}</span>
               </div>
               <div class="text-xs text-muted-color">
-                {{ t(`homemix.widgets.size.${sizeOf[item.w]}`) }} · {{ t('widgets.editor.rows', item.h) }}
+                {{ t(`homemix.widgets.size.${sizeFor(item.w)}`) }} · {{ t('widgets.editor.rows', item.h) }}
               </div>
               <div class="mt-auto flex flex-wrap gap-1">
+                <Button
+                  size="small"
+                  text
+                  rounded
+                  severity="secondary"
+                  icon="pi pi-times"
+                  :aria-label="t('widgets.palette.remove')"
+                  @click="remove(item)"
+                />
                 <Button
                   v-if="place === 'Wall'"
                   size="small"
@@ -165,10 +215,34 @@ async function save(items: Item[]) {
       </div>
     </div>
     <div class="flex flex-wrap justify-end gap-2">
+      <Button
+        :label="t('widgets.palette.open')"
+        icon="pi pi-th-large"
+        severity="secondary"
+        outlined
+        @click="paletteOpen = true"
+      />
       <Button :label="t('widgets.editor.reset')" severity="secondary" text :loading="busy" @click="save([])" />
       <Button :label="t('common.cancel')" severity="secondary" text @click="emit('done')" />
       <Button :label="t('common.save')" icon="pi pi-check" :loading="busy" @click="save(layout)" />
     </div>
+    <Drawer v-model:visible="paletteOpen" position="right" :header="t('widgets.palette.title')">
+      <p v-if="!palette.length" class="text-sm text-muted-color">{{ t('widgets.palette.empty') }}</p>
+      <ul v-else class="flex flex-col gap-2">
+        <li
+          v-for="w in palette"
+          :key="w.key"
+          class="flex cursor-grab items-center gap-2 rounded-lg border border-surface-300 p-2 dark:border-surface-600"
+          draggable="true"
+          data-testid="palette-item"
+          @dragstart="dragStart($event, w.key)"
+        >
+          <i :class="w.icon" aria-hidden="true" />
+          <span class="min-w-0 flex-1 truncate">{{ w.kind === 'core' ? t('widgets.householdCard') : w.title }}</span>
+          <Button size="small" icon="pi pi-plus" :label="t('widgets.palette.add')" @click="add(w.key)" />
+        </li>
+      </ul>
+    </Drawer>
     <WidgetSettingsDialog
       v-model:visible="settingsOpen"
       :installation="settingsFor"

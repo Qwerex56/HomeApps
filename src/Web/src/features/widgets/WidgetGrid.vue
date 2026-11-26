@@ -53,7 +53,12 @@ function boxStyle(cell: Cell) {
 </script>
 
 <template>
-  <div ref="root" class="w-full" :class="{ 'h-full': fill }">
+  <div
+    ref="root"
+    class="w-full"
+    :class="{ 'h-full': fill, 'mx-auto max-w-3xl': cells.length === 1 }"
+    :data-single="cells.length === 1 || undefined"
+  >
     <div v-if="width > 0" class="grid" :style="gridStyle">
       <div
         v-for="cell in shown"
