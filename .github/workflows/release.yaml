@@ -1,0 +1,88 @@
+name: Release
+
+# A version branch or tag `V<x>.<y>.<z>` (like V3.0.0) builds everything and publishes a GitHub Release
+# with the notes of that version from CHANGELOG.md. The server still builds its own images after `git pull`.
+on:
+  push:
+    branches: ["V*.*.*"]
+    tags: ["V*.*.*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the version matches the ref name
+        run: |
+          version="${GITHUB_REF_NAME#V}"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Ref name '$GITHUB_REF_NAME' is not V<x>.<y>.<z>."; exit 1
+          fi
+          props=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props | head -n 1)
+          web=$(node -p "require('./src/Web/package.json').version")
+          if [ "$props" != "$version" ]; then
+            echo "::error::Directory.Build.props has <Version>$props</Version> but the ref is $GITHUB_REF_NAME. Set it to $version."; exit 1
+          fi
+          if [ "$web" != "$version" ]; then
+            echo "::error::src/Web/package.json has version $web but the ref is $GITHUB_REF_NAME. Set it to $version."; exit 1
+          fi
+          if ! grep -q "^## ${version//./\\.}\b" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## $version' section."; exit 1
+          fi
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore
+        run: dotnet restore HomeApps.slnx
+      - name: Build
+        run: dotnet build HomeApps.slnx --configuration Release --no-restore
+      - name: Test
+        run: dotnet test HomeApps.slnx --configuration Release --no-build
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/Web/package-lock.json
+      - name: Build the web app
+        working-directory: src/Web
+        run: |
+          npm ci
+          npm run build
+      - name: Build the images
+        env:
+          # Only to satisfy `${VAR:?}` in compose.prod.yaml; building does not use the values.
+          JARVIS_CLIENT_SECRET: build
+          DEVICES_CLIENT_SECRET: build
+          HOMEMIX_CLIENT_SECRET: build
+        run: docker compose -f compose.prod.yaml build
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract the notes from CHANGELOG.md
+        run: |
+          version="${GITHUB_REF_NAME#V}"
+          awk -v v="$version" '
+            /^## / { if (found) exit; if (index($0, "## " v) == 1) { found = 1; next } }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "::error::CHANGELOG.md section for $version is empty."; exit 1
+          fi
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --title "HomeApps ${GITHUB_REF_NAME#V}" \
+            --notes-file release-notes.md --target "$GITHUB_SHA"
