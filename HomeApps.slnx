@@ -3,7 +3,6 @@
 		<Project Path="tests/Integration/HomeApps.IntegrationTests/HomeApps.IntegrationTests.csproj" />
 	</Folder>
 	<Folder Name="/Solution Items/">
-		<File Path=".env" />
 		<File Path="compose.dev.yaml" />
 		<File Path="compose.prod.yaml" />
 		<File Path="Directory.Build.props" />
