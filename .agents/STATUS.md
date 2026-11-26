@@ -15,6 +15,7 @@ Written only by the Coordinator (agent teams). Read it first when a session star
 | release-3.0 | ADR (spec-debate) | done | | specs/release-3.0-adr.md | 2026-11-25 |
 | release-3.0 | Stage 0 | done (PR pending) | feat/release-3.0-stage-0 | specs/release-3.0-adr.md | 2026-11-25 |
 | release-3.0 | Stage 1 | done (PR pending) | feat/release-3.0-stage-1 | specs/release-3.0-adr.md | 2026-11-26 |
+| release-3.0 | Stage 2 | done (PR pending) | feat/release-3.0-stage-2 | specs/release-3.0-adr.md | 2026-11-26 |
 
 ## Decisions
 - 2026-11-21 (owner): agy roles run directly from the Coordinator, never through a Claude subagent. Devil's Advocate on agy uses `gemini-4-argon-<effort>`.
