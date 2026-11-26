@@ -17,6 +17,8 @@ internal sealed class AddonDocumentConfiguration : IEntityTypeConfiguration<Addo
         builder.Property(d => d.Value).HasColumnType("jsonb");
         builder.Property(d => d.Version).IsConcurrencyToken();
 
+        builder.HasIndex(d => d.ExpiresAt).HasFilter("\"ExpiresAt\" IS NOT NULL");
+
         // OwnerUserId is null in the shared scope, and those must be unique too.
         builder.HasIndex(d => new { d.InstallationId, d.Scope, d.OwnerUserId, d.Collection, d.Key }).IsUnique().AreNullsDistinct(false);
     }

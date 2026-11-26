@@ -42,6 +42,14 @@ when several things are wrong (a profile form) they are all listed in `errors`. 
 | `POST /admin/users/{id}/disable` `{ reason? }`, `POST /admin/users/{id}/enable` | Disable or enable an account. |
 | `GET /admin/users/{id}/history?before=` | The full audit history, 100 entries at a time; `before` is the oldest `at` shown. |
 | `DELETE /admin/users/{id}` `{ confirmEmail }` | Erase a disabled account for good ("forget me"). Owner only. |
+| `GET /admin/users/v1/server/about` | "About the server" for the Admin page: this version, the latest release, each service's version and last migration, and the plugins of `HOMEAPPS_PLUGINS` with their health. Admin or Owner. |
+
+### About the server
+
+Every service answers `GET /health/version` anonymously: its name, version and the migrations applied. The Accounts
+endpoint above gathers them from all seven services (and the plugins listed in `ServerAbout:Plugins`). Accounts reads
+that list from `HOMEAPPS_PLUGINS` through compose (`ServerAbout__Plugins`), so the page matches the plugins the web app
+loads; a plugin that is listed but not answering shows as `unavailable` with no version, and the rest of the page still loads.
 
 Who may change whom is decided in the domain: an Admin manages Users, the Owner also manages Admins, nobody touches
 the Owner, and only the Owner erases.
@@ -73,6 +81,7 @@ The limits are in memory, so a restart starts from zero.
 | `Jwt:Issuer` | Auth's public address, the `iss` of the tokens, e.g. `https://app.localhost`. |
 | `Jwt:RequireHttpsMetadata` | Off when `Jwt:Authority` is plain http inside the Docker network or on localhost. |
 | `Accounts:RateLimits:Changes`, `Window` | The limit on changes per person (default 10 in `00:10:00`). |
+| `ServerAbout:Plugins` | Comma-separated plugin ids for the About page; compose sets it from `HOMEAPPS_PLUGINS`. Empty is valid. |
 
 ## Events
 

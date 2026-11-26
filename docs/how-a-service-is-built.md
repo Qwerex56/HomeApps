@@ -78,7 +78,8 @@ In Development the API applies migrations on start; anywhere else only with `Dat
 | `RabbitMq:Host`, `Port`, `VirtualHost`, `Username`, `Password` | Broker connection |
 | `Messaging:Transport` | `RabbitMq` (default) or `InMemory` (tests, or running one service alone) |
 
-Health: `GET /health/live` (process) and `GET /health/ready` (database), both anonymous.
+Health: `GET /health/live` (process) and `GET /health/ready` (database), both anonymous. `GET /health/version` answers the
+service's name, version and applied migrations (the About-the-server page reads it).
 OpenAPI: `GET /openapi/v1.json` in Development.
 
 ## Tests

@@ -4,7 +4,7 @@ using HomeMix.Application.Abstractions;
 
 namespace HomeMix.Application.Data.ListDocuments;
 
-internal sealed class ListDocumentsHandler(DataAccess access, IDocumentRepository documents)
+internal sealed class ListDocumentsHandler(DataAccess access, IDocumentRepository documents, TimeProvider time)
     : IQueryHandler<ListDocumentsQuery, IReadOnlyList<DocumentView>>
 {
     public async Task<Result<IReadOnlyList<DocumentView>>> Handle(ListDocumentsQuery query, CancellationToken cancellationToken)
@@ -15,7 +15,7 @@ internal sealed class ListDocumentsHandler(DataAccess access, IDocumentRepositor
             return space.ToResult();
         }
 
-        var list = await documents.ListAsync(space.Value, query.Collection, cancellationToken);
+        var list = await documents.ListAsync(space.Value, query.Collection, time.GetUtcNow(), cancellationToken);
         return Result.Ok<IReadOnlyList<DocumentView>>(list.Select(DocumentView.From).ToList());
     }
 }

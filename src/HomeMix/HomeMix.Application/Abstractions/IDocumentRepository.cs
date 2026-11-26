@@ -6,8 +6,8 @@ public interface IDocumentRepository
 {
     Task<AddonDocument?> FindAsync(DataSpace space, string collection, string key, CancellationToken cancellationToken);
 
-    /// <summary>A collection's documents, by key.</summary>
-    Task<IReadOnlyList<AddonDocument>> ListAsync(DataSpace space, string collection, CancellationToken cancellationToken);
+    /// <summary>A collection's documents that have not expired at <paramref name="now"/>, by key.</summary>
+    Task<IReadOnlyList<AddonDocument>> ListAsync(DataSpace space, string collection, DateTimeOffset now, CancellationToken cancellationToken);
 
     Task<int> CountAsync(DataSpace space, string collection, CancellationToken cancellationToken);
 
@@ -22,6 +22,9 @@ public interface IDocumentRepository
     /// installations that do not exist; returns how many.
     /// </summary>
     Task<int> DeleteUnreachableAsync(DateTimeOffset removedBefore, CancellationToken cancellationToken);
+
+    /// <summary>Deletes the documents that expired at or before <paramref name="now"/>; returns how many.</summary>
+    Task<int> DeleteExpiredAsync(DateTimeOffset now, CancellationToken cancellationToken);
 
     void Add(AddonDocument document);
 

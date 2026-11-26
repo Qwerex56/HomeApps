@@ -510,7 +510,25 @@
       "users": "Konta",
       "households": "Domy",
       "plugins": "Pluginy serwera",
-      "addons": "Dodatki"
+      "addons": "Dodatki",
+      "about": "O serwerze"
+    },
+    "about": {
+      "title": "O serwerze",
+      "current": "Wersja HomeApps: {version}",
+      "latest": "Najnowsza wersja: {version}",
+      "updateAvailable": "Jest nowsza wersja",
+      "upToDate": "Masz najnowszą wersję",
+      "updateUnknown": "Nie udało się sprawdzić najnowszej wersji",
+      "release": "Zobacz wydanie",
+      "services": "Serwisy",
+      "migrations": "Migracje: {count}, ostatnia: {last}",
+      "noAnswer": "brak odpowiedzi",
+      "plugins": "Pluginy",
+      "noPlugins": "Brak pluginów",
+      "healthy": "działa",
+      "unavailable": "niedostępny",
+      "refresh": "Odśwież"
     },
     "households": {
       "title": "Wszystkie domy",

@@ -110,7 +110,13 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 
 - New volume `homeapps_avatars` (`/var/data/avatars` in `accounts`): add it to `compose.prod.yaml` and to your backups
   (see `docs/deployment.md`). New routes live under `/v1`; the old paths keep working until 4.0.
-- Migrations run on start: Notifications (`InAppNotifications`), Households (`time_zone`).
+- Migrations run on start: Notifications (`InAppNotifications`), Households (`time_zone`), HomeMix (`DocumentExpiration`:
+  a nullable `ExpiresAt` on add-on documents, additive, no data rewrite).
+- Accounts reads `HOMEAPPS_PLUGINS` (through `ServerAbout__Plugins` in both compose files) for the admin "About the server"
+  page: set it in `.env` or the page lists no plugins. Every service answers `GET /health/version` (anonymous).
+- Add-ons: `data.put` takes `expiresAt` (`{ version, expiresAt }` in the SDK, `expiresAt` in the body); expired documents are
+  hidden on read and purged by the hourly job.
+- Plugin developers: `scripts/pack.sh --bump` raises the patch version of the kit's contracts before packing.
 
 ## 2.4.1 (unreleased)
 

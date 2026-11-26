@@ -46,7 +46,13 @@ internal sealed class PutDocumentHandler(
             space.Value.InstallationId, space.Value.Target, space.Value.Scope, space.Value.OwnerUserId, command.Collection, command.Key, me));
         if (document is not null)
         {
-            var replaced = document.Replace(json, size, command.Version, me, now);
+            // An expired document is gone for the writer too: a version read before names nothing.
+            if (document.IsExpired(now) && command.Version is not null)
+            {
+                return Result.Fail(DataErrors.Conflict);
+            }
+
+            var replaced = document.Replace(json, size, command.Version, me, now, command.ExpiresAt);
             return replaced.IsFailed ? replaced : DocumentView.From(document);
         }
 
@@ -62,7 +68,7 @@ internal sealed class PutDocumentHandler(
         }
 
         var created = AddonDocument.Create(
-            space.Value.InstallationId, space.Value.Scope, space.Value.OwnerUserId, command.Collection, command.Key, json, size, me, now);
+            space.Value.InstallationId, space.Value.Scope, space.Value.OwnerUserId, command.Collection, command.Key, json, size, me, now, command.ExpiresAt);
         documents.Add(created);
         return DocumentView.From(created);
     }

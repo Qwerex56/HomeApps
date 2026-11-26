@@ -88,6 +88,7 @@ HomeApps version, pack the kit they build on:
 
 ```bash
 scripts/pack.sh          # → ~/.homeapps/packages
+scripts/pack.sh --bump   # after changing a contract: patch version +1 (Directory.Build.props, package.json files), then packs
 ```
 
 **In containers**, as in production. In the plugin's folder:
@@ -149,6 +150,7 @@ running. The web app: `npm run test:run` in `src/Web`; the end-to-end check agai
 | Certificate warning, or the bridge refuses the connection | `scripts/dev-cert.sh`, then `docker compose restart traefik`; Firefox needs `nss` before `mkcert -install` |
 | 404 from Traefik on every path | `docker compose ps`: Traefik must run, and vite for the app itself |
 | 502 on a service's path | neither its container nor Rider runs it: `docker compose ps`, `docker compose logs <service>` |
+| A plugin shows as unavailable (*Chwilowo niedostępna*) in the household settings, with no 502 loops in the console | `/plugins.json` lists it but its manifest does not answer (502 or no network): start its container or Rider process and reload the page; the app keeps working without it |
 | A plugin is missing under **Aplikacje** | `curl https://app.localhost/plugins.json` must list it (restart vite after editing `.env`); its manifest must answer at `/plugins/<id>/manifest` |
 | `network homeapps_default not found` in a plugin | start HomeApps first; its compose project must be named `homeapps` (it is, in `compose.dev.yaml`) |
 | `required variable ... is missing` in a plugin | the `.env` link is missing, or `CHAT_MEDIA_SIGNING_KEY` for Chat |

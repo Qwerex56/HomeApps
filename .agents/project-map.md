@@ -1,6 +1,6 @@
 # HomeApps Project Map
 
-- **HEAD**: `4493295` (master), last updated 2026-11-25, version 3.0.0 (all services, images, npm packages)
+- **HEAD**: `c787971` (branch `feat/release-3.0-stage-2`, base master), last updated 2026-11-26 (refreshed from `4493295`; release 3.0 stage 0-1 merged/done)
 - **Stack**: .NET 10 (`HomeApps.slnx`), Vue 3 + TypeScript (`src/Web`), PostgreSQL, RabbitMQ (MassTransit), SignalR, MCP (`ModelContextProtocol.AspNetCore`). npm scope `@home-apps/*`.
 - **API versioning**: every service serves `/v1/...` (`MapVersionedGroup`, `EndpointExtensions.MapVersionedEndpoints`); legacy unversioned routes answer with `Deprecation`/`Sunset` (2028-01-01). Unversioned by design: OAuth and sockets. Clients and tests use `/v1`.
 - **Tools**: Mac Device Emulator (`tools/mac-device-emulator/MacDeviceEmulator.slnx`).
@@ -21,12 +21,17 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
 - **`src/Auth/`** (`/auth`): Users, OAuth/OIDC, connected apps, JWTs, refresh tokens.
   - Endpoints: `src/Auth/Auth.Api/Endpoints/`, `src/Auth/Auth.Api/ConnectedApps/ConnectedAppEndpoints.cs`
   - Security/JWT: `src/Auth/Auth.Infrastructure/Security/TokenIssuer.cs` (always emits `client_id` on first-party tokens; distinguish first-party vs connected-app by `aud == JwtOptions.Audience`), `ClientRegistry.cs`, `SigningKeys.cs`, `PasswordHasher.cs`
-- **`src/Accounts/`** (`/accounts`): Profiles, preferences, user lifecycle.
-  - Endpoints: `src/Accounts/Accounts.Api/Endpoints/` (`MeEndpoints.cs`, `AdminEndpoints.cs`, `ReactivationEndpoints.cs`)
+- **`src/Accounts/`** (`/accounts`): Profiles, preferences, avatars, user lifecycle.
+  - Endpoints: `src/Accounts/Accounts.Api/Endpoints/` (`MeEndpoints.cs` [`POST /users/v1/me/avatar`], `AdminEndpoints.cs`, `ReactivationEndpoints.cs`)
+  - Use cases: `Accounts.Application/{MyAccount,Admin}/<Feature>/` (one folder per command/query; `MyAccount/UploadMyAvatar`, `GetUserAvatar`); `Common/AvatarImage.cs`, `Abstractions/IAvatarStore.cs`
+  - Storage: `Accounts.Infrastructure/Persistence/FileAvatarStore.cs` (volume `homeapps_avatars` at `/var/data/avatars`); startup `Jobs/ProfileRepublishOnStart.cs` + `StartupMarker.cs` (migration `StartupMarkers`)
+  - Domain: `Accounts.Domain/Users/` (`AvatarUrl.cs`, `Profile.cs`, `User.Profile.cs`, `Events/UserProfileUpdated.cs`)
 - **`src/Households/`** (`/households`): Households, memberships, roles (`Guest < Member < Admin < Owner`), invites.
-  - Endpoints: `src/Households/Households.Api/Endpoints/` (`HouseholdEndpoints.cs`, `MemberEndpoints.cs`, `InviteEndpoints.cs`, `AssistantEndpoints.cs`, `InternalEndpoints.cs`, `AdminEndpoints.cs`)
+  - Endpoints: `src/Households/Households.Api/Endpoints/` (`HouseholdEndpoints.cs` [incl. `PUT /households/v1/{id}/timezone`], `MemberEndpoints.cs`, `InviteEndpoints.cs`, `AssistantEndpoints.cs`, `InternalEndpoints.cs`, `AdminEndpoints.cs`)
+  - Application is split per feature: `Households.Application/{Households,Members,Invites}/<Feature>/`; time zone rule (household, else owner, else `Europe/Warsaw`): `Households.Application/Common/HouseholdTimeZones.cs`; account sync: `AccountsSync/AccountsSync.cs`
 - **`src/Notifications/`** (`/notifications`): In-app & push notifications, SignalR delivery.
-  - Endpoints: `src/Notifications/Notifications.Api/Endpoints/`
+  - Endpoints: `src/Notifications/Notifications.Api/Endpoints/` (`InAppEndpoints.cs` → `/notifications/v1/in-app`, list / mark read / mark all read)
+  - In-app center: `Notifications.Application/InApp/` (`ListInApp`, `MarkInAppRead`, `MarkAllInAppRead`), `Notifications.Domain/InApp/InAppNotification.cs`, `Notifications.Infrastructure/Persistence/InAppNotificationRepository.cs` (table `InAppNotifications`)
 - **`src/HomeMix/`** (`/homemix`): Plugin/mix items, shared lists, chat/todo plugins (plugin code itself lives in sibling repos, see Plugins).
   - Endpoints: `src/HomeMix/HomeMix.Api/Endpoints/` (`BoardEndpoints`, `PackageEndpoints`, `StoreEndpoints`, `TriggerEndpoints`, `InstallationEndpoints`, `DataEndpoints`, `DeviceEndpoints`, `NotifyEndpoints`, `AdminEndpoints`)
   - Startup: fails before migrations if `HOMEMIX_CLIENT_SECRET` is empty (`HomeMix.Api/Program.cs`)
@@ -38,7 +43,7 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
   - Application & Stream: `src/Devices/Devices.Application/Common/DeviceViews.cs` (`DeviceDescriptorView` at line 145), `Abstractions/IDeviceStream.cs`, `Abstractions/DeviceStreamMessage.cs`, `Frames/ProcessFrames/ProcessFramesHandler.cs`, `Heartbeat/CheckHeartbeats/CheckHeartbeatsHandler.cs`
   - Realtime SSE: `src/Devices/Devices.Api/Stream/` (`DeviceStream.cs`, `StreamSubscription.cs`)
 - **`src/Jarvis/`** (`/jarvis`): AI assistant runs, conversations, external MCP gateway, tool confirmations, voice bridge.
-  - Endpoints: `src/Jarvis/Jarvis.Api/Endpoints/` (`AssistantEndpoints.cs`, `ConversationEndpoints.cs`); household ceilings & devices: `Jarvis.Infrastructure/Gateway/HouseholdsCeilings.cs`, `HouseholdDevices.cs`, `AuthDelegation.cs`
+  - Endpoints: `src/Jarvis/Jarvis.Api/Endpoints/` (`AssistantEndpoints.cs`, `ConversationEndpoints.cs` [rename: `Requests/RenameConversationRequest.cs`; list search `?q=`]; use cases `Jarvis.Application/Conversations/`); household ceilings & devices: `Jarvis.Infrastructure/Gateway/HouseholdsCeilings.cs`, `HouseholdDevices.cs`, `AuthDelegation.cs`
   - MCP Gateway: `src/Jarvis/Jarvis.Api/Gateway/McpGateway.cs`
   - Voice WebSocket & Session: `src/Jarvis/Jarvis.Api/Voice/` (`VoiceEndpoint.cs` at `/jarvis/voice`, `VoiceSession.cs`)
 - **`src/Contracts/`**: `HomeApps.Contracts` (`IIntegrationEvent` records, e.g. `DeviceStateChanged`).
@@ -70,8 +75,9 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
 - JWT test helper: `TestJwt.CreateToken` / `TestJwt.CreateTokenWithClient`
 
 ## Specs, Docs & Agent Overrides
-- **`specs/`** (owner + `/spec-debate` write; agents read only): `household-jarvis-devices.md` + `-adr.md`, `household-planner.md` + `-adr.md`, `release-3.0.md` + `release-3.0-adr.md` (3.0 stages 0-4; Stage 0 merged in PR #72), `_TEMPLATE.md`, `CLAUDE_PROJECT_INSTRUCTIONS.md`
+- **`specs/`** (owner + `/spec-debate` write; agents read only): `household-jarvis-devices.md` + `-adr.md`, `household-planner.md` + `-adr.md`, `release-3.0.md` + `release-3.0-adr.md` (3.0 stages 0-4; Stage 0 merged in PR #72, Stage 1 merged in PR #73; Stage 2 in progress), `_TEMPLATE.md`, `CLAUDE_PROJECT_INSTRUCTIONS.md`
 - **Stage progress**: `.agents/STATUS.md` (committed, Coordinator only). Release 3.0 runs `/run-feature @specs/release-3.0.md --base master "Stage N"`, branches `feat/release-3.0-stage-N`.
+- **Changelog & upgrade notes**: `CHANGELOG.md` (`### Upgrading` section per release; 3.0 stage 1 added the avatars volume and migrations).
 - **`docs/`**: `how-a-service-is-built.md`, `adr/0001`–`0009`, `auth.md`, `accounts.md`, `households.md`, `notifications.md`, `homemix.md`, `homemix-authoring.md`, `devices.md`, `devices-protocol.md`, `device-capabilities.md`, `jarvis.md`, `mcp.md`, `plugins.md`, `plugin-chat.md`, `plugin-todo.md`, `web.md`, `deployment.md`, `development.md`, `working-with-the-repo.md`, `schemas/`
 - **Agents & skills**: none project-local (`.claude/agents/`, `.claude/skills/` removed). Roles and skills come from `~/.agent-hub`; HomeApps conventions are hub skills `homeapps-*`, profiles `dotnet`, `vue` (see `.claude/CLAUDE.md` `## Agents`).
-- **Docker/env**: `compose.yaml`, `Dockerfile`, `Directory.Build.props`, `Directory.Packages.props`, `global.json`, `nuget.config`, `compose.prod.yaml`, `scripts/pack.sh` (root); `.claude/settings.json`, `.claude/CLAUDE.md`
+- **Docker/env**: `compose.yaml`, `compose.dev.yaml`, `Dockerfile`, `Directory.Build.props`, `Directory.Packages.props`, `global.json`, `nuget.config`, `compose.prod.yaml` (volume `homeapps_avatars`), `scripts/pack.sh` (root); `src/Accounts/Accounts.Api/Dockerfile`; `.claude/settings.json`, `.claude/CLAUDE.md`

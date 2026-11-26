@@ -81,11 +81,29 @@ describe('loadPlugins', () => {
     expect(i18n.global.t('plugins.todo.hello', { name: 'Ala' })).toBe('Cześć Ala')
   })
 
-  it('leaves out a listed plugin that is not running', async () => {
+  it('keeps a listed plugin that is not running as unavailable', async () => {
     setPluginImporter(async () => ({ default: { id: 'todo' } }))
     givenPlugins(['todo', 'weather'], { todo: manifest('todo') })
 
-    expect((await loadPlugins()).map((p) => p.manifest.id)).toEqual(['todo'])
+    const plugins = await loadPlugins()
+
+    expect(plugins.map((p) => p.manifest.id)).toEqual(['todo', 'weather'])
+    expect(plugins[1]).toMatchObject({ module: null, problem: 'unavailable' })
+  })
+
+  it('answers a 502 from the gateway with an unavailable stub named by its id, asking once', async () => {
+    setPluginImporter(async () => ({ default: { id: 'weather' } }))
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(['weather']), { status: 200 })))
+    const get = vi.spyOn(http, 'get').mockRejectedValue(Object.assign(new Error('Bad Gateway'), { response: { status: 502 } }))
+
+    const [plugin] = await loadPlugins()
+
+    expect(plugin).toMatchObject({
+      manifest: { id: 'weather', name: { pl: 'weather', en: 'weather' }, ui: null },
+      module: null,
+      problem: 'unavailable',
+    })
+    expect(get).toHaveBeenCalledTimes(1)
   })
 
   it('marks a plugin for a newer HomeApps or an unknown manifest as incompatible and never imports it', async () => {

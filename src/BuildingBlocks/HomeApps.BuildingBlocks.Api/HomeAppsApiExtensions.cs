@@ -78,6 +78,17 @@ public static class HomeAppsApiExtensions
         app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = c => c.Tags.Contains("live") }).AllowAnonymous();
         app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = c => c.Tags.Contains("ready") }).AllowAnonymous();
 
+        // Anonymous like the other health endpoints: Accounts reads it over the Docker network for "About the server".
+        app.MapGet("/health/version", async (IServiceProvider services, CancellationToken ct) =>
+        {
+            var assembly = Assembly.GetEntryAssembly();
+            var version = assembly?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+                ?? assembly?.GetName().Version?.ToString() ?? "0.0.0";
+            var migrations = services.GetService<IAppliedMigrations>() is { } applied ? await applied.ListAsync(ct) : [];
+            return TypedResults.Ok(new ServiceVersion(
+                assembly?.GetName().Name?.Split('.')[0] ?? "Unknown", version.Split('+')[0], migrations));
+        }).AllowAnonymous();
+
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi().AllowAnonymous();

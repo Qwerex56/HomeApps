@@ -201,4 +201,36 @@ public sealed class DataTests(HomeMixApiFactory api) : IClassFixture<HomeMixApiF
 
         Assert.Equal("sun", back.GetProperty("value").GetString());
     }
+
+    [Fact]
+    public async Task Expired_documents_are_not_returned_and_the_purge_deletes_them()
+    {
+        var home = await HouseholdAsync(AddonZip.Manifest(id: "expiry"), Requests.Household);
+        using var member = api.SignedIn(home.Member);
+        using var guest = api.SignedIn(home.Guest);
+        (await member.PutAsJsonAsync(Url(home.Installation, "notes", "stale"), new { value = "old", expiresAt = DateTimeOffset.UtcNow.AddDays(1) }))
+            .EnsureSuccessStatusCode();
+        (await member.PutAsJsonAsync(Url(home.Installation, "notes", "kept"), new { value = "new" })).EnsureSuccessStatusCode();
+
+        await using (var scope = api.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<HomeMixDbContext>();
+            await db.Documents.Where(d => d.InstallationId == home.Installation && d.Key == "stale")
+                .ExecuteUpdateAsync(u => u.SetProperty(d => d.ExpiresAt, DateTimeOffset.UtcNow.AddMinutes(-1)));
+        }
+
+        using var read = await guest.GetAsync(Url(home.Installation, "notes", "stale"));
+        var list = await guest.GetFromJsonAsync<JsonElement>(Url(home.Installation, "notes"));
+
+        Assert.Equal(HttpStatusCode.NotFound, read.StatusCode);
+        Assert.Equal(["kept"], list.EnumerateArray().Select(d => d.GetProperty("key").GetString()));
+
+        await using var purgeScope = api.Services.CreateAsyncScope();
+        var db2 = purgeScope.ServiceProvider.GetRequiredService<HomeMixDbContext>();
+        var purged = await purgeScope.ServiceProvider.GetRequiredService<ISender>().Send(new PurgeRemovedDataCommand());
+
+        Assert.True(purged.Value >= 1);
+        Assert.False(await db2.Documents.AnyAsync(d => d.InstallationId == home.Installation && d.Key == "stale"));
+        Assert.True(await db2.Documents.AnyAsync(d => d.InstallationId == home.Installation && d.Key == "kept"));
+    }
 }

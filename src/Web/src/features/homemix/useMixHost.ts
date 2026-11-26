@@ -149,7 +149,7 @@ export function useMixHost(frame: Ref<HTMLIFrameElement | undefined>, options: (
       homemixApi.data.list(options().installation.id, collection, scope) as Promise<Document[]>,
     'data.get': ({ collection, key, scope }) =>
       homemixApi.data.get(options().installation.id, collection, key, scope) as Promise<Document | null>,
-    async 'data.put'({ collection, key, value, scope, version }) {
+    async 'data.put'({ collection, key, value, scope, version, expiresAt }) {
       const document = (await homemixApi.data.put(
         options().installation.id,
         collection,
@@ -157,6 +157,7 @@ export function useMixHost(frame: Ref<HTMLIFrameElement | undefined>, options: (
         value,
         scope,
         version,
+        expiresAt,
       )) as Document
       changed(scope ?? 'household', collection, key)
       return document

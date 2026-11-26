@@ -36,6 +36,14 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUserDirectory, UserDirectory>();
         services.AddSingleton<IAvatarStore>(new FileAvatarStore(configuration["Avatars:Path"] ?? FileAvatarStore.DefaultRoot));
+        services.AddSingleton<IServerInfo>(_ =>
+        {
+            var http = new HttpClient();
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("HomeApps");
+            http.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            var plugins = (configuration["ServerAbout:Plugins"] ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            return new About.ServerInfo(http, plugins);
+        });
         services.AddHostedService<Jobs.ProfileRepublishOnStart>();
 
         return services;

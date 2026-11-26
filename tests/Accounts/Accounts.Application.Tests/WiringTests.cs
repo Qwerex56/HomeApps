@@ -21,6 +21,7 @@ public sealed class WiringTests
         services.AddSingleton<ICurrentUser>(w.CurrentUser);
         services.AddSingleton<IEventBus>(w.Bus);
         services.AddSingleton<IAvatarStore>(new InMemoryAvatarStore());
+        services.AddSingleton<IServerInfo>(new FakeServerInfo());
         return services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
     }
 

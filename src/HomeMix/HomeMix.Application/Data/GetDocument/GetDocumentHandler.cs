@@ -5,7 +5,7 @@ using HomeMix.Domain.Data;
 
 namespace HomeMix.Application.Data.GetDocument;
 
-internal sealed class GetDocumentHandler(DataAccess access, IDocumentRepository documents) : IQueryHandler<GetDocumentQuery, DocumentView>
+internal sealed class GetDocumentHandler(DataAccess access, IDocumentRepository documents, TimeProvider time) : IQueryHandler<GetDocumentQuery, DocumentView>
 {
     public async Task<Result<DocumentView>> Handle(GetDocumentQuery query, CancellationToken cancellationToken)
     {
@@ -16,6 +16,6 @@ internal sealed class GetDocumentHandler(DataAccess access, IDocumentRepository 
         }
 
         var document = await documents.FindAsync(space.Value, query.Collection, query.Key, cancellationToken);
-        return document is null ? Result.Fail(DataErrors.NotFound) : DocumentView.From(document);
+        return document is null || document.IsExpired(time.GetUtcNow()) ? Result.Fail(DataErrors.NotFound) : DocumentView.From(document);
     }
 }

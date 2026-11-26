@@ -81,6 +81,9 @@ namespace HomeMix.Infrastructure.Persistence.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid>("InstallationId")
                         .HasColumnType("uuid");
 
@@ -115,6 +118,9 @@ namespace HomeMix.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasFilter("\"ExpiresAt\" IS NOT NULL");
 
                     b.HasIndex("InstallationId", "Scope", "OwnerUserId", "Collection", "Key")
                         .IsUnique();

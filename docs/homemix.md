@@ -294,6 +294,10 @@ DELETE /homemix/api/installations/{id}/data/{collection}/{key}?scope=...&version
 GET    /homemix/api/installations/{id}/me                                           { "role": "Member", "permissions": [...] }
 ```
 
+`PUT` may add `"expiresAt": "2026-12-31T00:00:00Z"` (or `null`): a document past that moment is hidden from every read
+at once and deleted by the hourly purge job. In the bridge it is `data.put(key, value, { version, expiresAt })`. Use it
+for things that stop mattering (a note with a due date), not for data that must be kept.
+
 `scope` defaults to `household`. `version` is the one read before: a stale one answers 409 `homemix.conflict`;
 without it the write wins. Who may do what:
 

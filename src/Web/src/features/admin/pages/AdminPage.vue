@@ -9,6 +9,7 @@ const session = useSessionStore()
 const tabs = computed(() => [
   { name: 'admin-users', label: 'admin.tabs.users', icon: 'pi pi-users' },
   { name: 'admin-households', label: 'admin.tabs.households', icon: 'pi pi-home' },
+  { name: 'admin-about', label: 'admin.tabs.about', icon: 'pi pi-info-circle' },
   ...(session.isOwner
     ? [
         { name: 'admin-plugins', label: 'admin.tabs.plugins', icon: 'pi pi-box' },
