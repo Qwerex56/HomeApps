@@ -49,6 +49,7 @@ const appRoute = computed<RouteLocationRaw | null>(() => {
       <div class="min-h-0 flex-1 overflow-auto">
         <MixFrame
           v-if="widget.kind === 'mix'"
+          :key="widget.size"
           :installation="widget.installation"
           :household="household"
           page=""

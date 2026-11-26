@@ -6,7 +6,7 @@ import ToastService from 'primevue/toastservice'
 import { i18n } from '@/shared/i18n'
 import BoardEditor from '../BoardEditor.vue'
 import { GridItem } from 'grid-layout-plus'
-import type { BoardWidget } from '../board'
+import { boardKeys, boardsApi, type BoardWidget } from '../board'
 
 vi.mock('grid-layout-plus', async () => {
   const { defineComponent, h } = await import('vue')
@@ -97,5 +97,96 @@ describe('widget palette', () => {
 
     expect(wrapper.findAllComponents(GridItem)[0]!.attributes('w')).toBe('4')
     wrapper.unmount()
+  })
+
+  describe('saving', () => {
+    const board = { place: 'Household', items: [], updatedAt: '2026-11-26T10:00:00Z' }
+
+    function mountWith(queryClient: QueryClient) {
+      const byKey = new Map([['a', widget('a', 'Alfa')], ['b', widget('b', 'Beta')]])
+      const cells = [
+        { key: 'a', x: 0, y: 0, w: 2, h: 1, fit: 'Center' as const },
+        { key: 'b', x: 2, y: 0, w: 2, h: 1, fit: 'Center' as const },
+      ]
+      return mount(BoardEditor, {
+        attachTo: document.body,
+        props: {
+          household: { id: 'h1', name: 'Dom', myRole: 'Owner' },
+          place: 'Household',
+          cells,
+          byKey,
+          updatedAt: '2026-11-26T09:00:00Z',
+        },
+        global: { plugins: [i18n, PrimeVue, ToastService, [VueQueryPlugin, { queryClient }]] },
+      })
+    }
+
+    const button = (wrapper: ReturnType<typeof mountWith>, label: string) =>
+      wrapper.findAll('button').find((b) => b.text().includes(label))!
+
+    it('sends the loaded date, puts the saved board in the cache and closes', async () => {
+      const save = vi.spyOn(boardsApi, 'save').mockResolvedValue(board as never)
+      const queryClient = new QueryClient()
+      const wrapper = mountWith(queryClient)
+      await flushPromises()
+
+      await button(wrapper, 'Zapisz').trigger('click')
+      await flushPromises()
+
+      expect(save).toHaveBeenCalledWith('h1', 'Household', expect.any(Array), '2026-11-26T09:00:00Z', false)
+      expect(queryClient.getQueryData(boardKeys.one('h1', 'Household'))).toEqual(board)
+      expect(wrapper.emitted('done')).toHaveLength(1)
+      wrapper.unmount()
+    })
+
+    it('"Ułóż od nowa" saves the default layout, not an empty one', async () => {
+      const save = vi.spyOn(boardsApi, 'save').mockResolvedValue(board as never)
+      const wrapper = mountWith(new QueryClient())
+      await flushPromises()
+
+      await button(wrapper, 'Ułóż od nowa').trigger('click')
+      await flushPromises()
+
+      expect(save.mock.calls[save.mock.calls.length - 1]![2]).toHaveLength(2)
+      wrapper.unmount()
+    })
+
+    it('stays open on a 409, asks, and overwrites with force', async () => {
+      const conflict = Object.assign(new Error('conflict'), {
+        isAxiosError: true,
+        response: { status: 409, headers: {}, data: { status: 409, code: 'homemix.board_conflict' } },
+      })
+      const save = vi.spyOn(boardsApi, 'save').mockRejectedValueOnce(conflict).mockResolvedValue(board as never)
+      const wrapper = mountWith(new QueryClient())
+      await flushPromises()
+
+      await button(wrapper, 'Zapisz').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.emitted('done')).toBeUndefined()
+      expect(document.body.textContent).toContain('Układ zmienił się w międzyczasie')
+
+      const overwrite = [...document.body.querySelectorAll('button')].find((b) => b.textContent?.includes('Nadpisz mimo to'))!
+      overwrite.click()
+      await flushPromises()
+
+      expect(save.mock.calls[save.mock.calls.length - 1]![4]).toBe(true)
+      expect(wrapper.emitted('done')).toHaveLength(1)
+      wrapper.unmount()
+    })
+
+    it('stays open with a message when the save fails', async () => {
+      vi.spyOn(boardsApi, 'save').mockRejectedValue(new Error('boom'))
+      const wrapper = mountWith(new QueryClient())
+      await flushPromises()
+
+      await button(wrapper, 'Zapisz').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.emitted('done')).toBeUndefined()
+      expect(wrapper.text()).toContain('Nie udało się zapisać układu')
+      expect(wrapper.findAllComponents(GridItem)).toHaveLength(2)
+      wrapper.unmount()
+    })
   })
 })

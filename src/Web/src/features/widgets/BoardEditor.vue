@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useQueryClient } from '@tanstack/vue-query'
 import { GridItem, GridLayout } from 'grid-layout-plus'
 import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
 import Drawer from 'primevue/drawer'
 import Message from 'primevue/message'
 import { useSubmit } from '@/shared/composables/useSubmit'
 import { homemixApi, mixKeys, type Installation } from '@/features/homemix/api'
 import WidgetSettingsDialog from '@/features/homemix/WidgetSettingsDialog.vue'
 import { boardKeys, boardsApi, type BoardPlace, type BoardWidget, type WidgetHousehold } from './board'
-import { COLUMNS, FIXED_ROWS, MAX_H, defaultHeight, firstFree, nearest, sizeFor, type Cell, type Fit } from './layout'
+import { COLUMNS, FIXED_ROWS, MAX_H, arrange, defaultHeight, firstFree, nearest, sizeFor, type Cell, type Fit } from './layout'
 import { GAP, rowHeightFor, useGridWidth } from './useGridWidth'
 
 // The "Widżety" editor (UI 2.4.1): drag a widget to move it, drag its corner to change its width (snapped to the
@@ -20,6 +21,8 @@ const props = defineProps<{
   place: BoardPlace
   cells: Cell[]
   byKey: Map<string, BoardWidget>
+  /** The date of the board the editor started from; the server refuses a save when it has moved on (2.18). */
+  updatedAt?: string | null
 }>()
 const emit = defineEmits<{ done: [] }>()
 const { t } = useI18n()
@@ -105,23 +108,54 @@ function toggleFit(item: Item) {
 const settingsFor = ref<Installation | null>(null)
 const settingsOpen = computed({ get: () => !!settingsFor.value, set: (v) => !v && (settingsFor.value = null) })
 
-async function save(items: Item[]) {
-  const ok = await submit(async () => {
-    await boardsApi.save(
-      props.household.id,
-      props.place,
-      items.map(({ i, x, y, w, h, fit }) => ({ key: i, x, y, w, h, fit })),
-    )
-    // An add-on's width is its own size setting: a new width is a new size.
-    for (const item of items) {
-      const w = widget(item)
-      if (w.kind === 'mix' && item.w !== w.w)
-        await homemixApi.chooseWidget(w.installation.id, props.place, w.widget.id, sizeFor(item.w))
-    }
-  })
-  await queryClient.invalidateQueries({ queryKey: boardKeys.one(props.household.id, props.place) })
-  await queryClient.invalidateQueries({ queryKey: mixKeys.all })
+const conflict = ref(false)
+
+function load(cells: Cell[]) {
+  layout.value = cells.map(({ key, fit, ...rest }) => ({ i: key, fit, ...rest }))
+  removed.value = new Set()
+}
+
+// "Ułóż od nowa": the layout of a board nobody arranged (a board saved empty would stay empty).
+function defaults(): Item[] {
+  return arrange([], [...props.byKey.values()], false).map(({ key, fit, ...rest }) => ({ i: key, fit, ...rest }))
+}
+
+async function save(items: Item[], force = false) {
+  conflict.value = false
+  const ok = await submit(
+    async () => {
+      const saved = await boardsApi.save(
+        props.household.id,
+        props.place,
+        items.map(({ i, x, y, w, h, fit }) => ({ key: i, x, y, w, h, fit })),
+        props.updatedAt,
+        force,
+      )
+      // The saved board is the board now, before the realtime refetch and before the add-ons' sizes are written.
+      queryClient.setQueryData(boardKeys.one(props.household.id, props.place), saved)
+      // An add-on's width is its own size setting: a new size is a new setting.
+      for (const item of items) {
+        const w = widget(item)
+        if (w.kind === 'mix' && sizeFor(item.w) !== w.size)
+          await homemixApi.chooseWidget(w.installation.id, props.place, w.widget.id, sizeFor(item.w))
+      }
+      await queryClient.invalidateQueries({ queryKey: mixKeys.all })
+    },
+    (problem) => {
+      // The editor stays open with the work in it (2.17); a 409 asks what to do (2.18).
+      if (problem.status === 409 && problem.code === 'homemix.board_conflict') conflict.value = true
+      else formError.value = t('widgets.editor.saveFailed')
+      return true
+    },
+  )
   if (ok) emit('done')
+}
+
+async function reload() {
+  conflict.value = false
+  await queryClient.invalidateQueries({ queryKey: boardKeys.one(props.household.id, props.place) })
+  await nextTick()
+  load(props.cells)
 }
 </script>
 
@@ -222,7 +256,7 @@ async function save(items: Item[]) {
         outlined
         @click="paletteOpen = true"
       />
-      <Button :label="t('widgets.editor.reset')" severity="secondary" text :loading="busy" @click="save([])" />
+      <Button :label="t('widgets.editor.reset')" severity="secondary" text :loading="busy" @click="save(defaults())" />
       <Button :label="t('common.cancel')" severity="secondary" text @click="emit('done')" />
       <Button :label="t('common.save')" icon="pi pi-check" :loading="busy" @click="save(layout)" />
     </div>
@@ -243,6 +277,13 @@ async function save(items: Item[]) {
         </li>
       </ul>
     </Drawer>
+    <Dialog v-model:visible="conflict" modal :header="t('widgets.editor.conflictTitle')" :style="{ width: '28rem' }">
+      <p>{{ t('widgets.editor.conflictMessage') }}</p>
+      <template #footer>
+        <Button :label="t('widgets.editor.reload')" severity="secondary" text @click="reload" />
+        <Button :label="t('widgets.editor.overwrite')" severity="danger" @click="save(layout, true)" />
+      </template>
+    </Dialog>
     <WidgetSettingsDialog
       v-model:visible="settingsOpen"
       :installation="settingsFor"

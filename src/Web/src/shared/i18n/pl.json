@@ -61,7 +61,12 @@
       "narrow": "Układ ma 8 kolumn, na telefonie przewiń go w bok.",
       "visibleLine": "Powyżej linii: widoczne na Głównej i tablecie",
       "rows": "{n} wiersz | {n} wiersze | {n} wierszy",
-      "reset": "Ułóż od nowa"
+      "reset": "Ułóż od nowa",
+      "saveFailed": "Nie udało się zapisać układu. Twoje zmiany są nadal tutaj, spróbuj jeszcze raz.",
+      "conflictTitle": "Układ zmienił się w międzyczasie",
+      "conflictMessage": "Ktoś inny zmienił układ, kiedy go edytowałeś. Możesz nadpisać go swoją wersją albo wczytać nowszy układ (stracisz swoje zmiany).",
+      "overwrite": "Nadpisz mimo to",
+      "reload": "Wczytaj nowszy układ"
     }
   },
   "errors": {
@@ -193,6 +198,7 @@
       "not_a_recipient": "Powiadomienie może trafić tylko do osób z tego domu.",
       "block_not_found": "Ten dodatek nie jest zablokowany.",
       "block_in_configuration": "Ta blokada pochodzi z konfiguracji serwera (HomeMix:Blocked) i tam się ją zdejmuje.",
+      "board_conflict": "Układ został zmieniony przez kogoś innego w międzyczasie.",
       "widget_place": "Ten widget nie może stać w tym miejscu.",
       "widget_unknown": "Ten dodatek nie ma takiego widgetu w tym miejscu.",
       "widget_size": "Ten widget nie ma takiego rozmiaru.",
@@ -211,6 +217,10 @@
       "avatar_too_large": "Zdjęcie jest za duże (najwyżej 2 MB).",
       "avatar_type_invalid": "Zdjęcie musi być w formacie JPG, PNG lub WebP.",
       "avatar_url_invalid": "Adres zdjęcia musi zaczynać się od https://."
+    },
+    "assistant": {
+      "not_waiting": "Ta akcja już nie czeka na potwierdzenie.",
+      "not_asker": "Tylko osoba, która prosiła JARVIS-a, może potwierdzić tę akcję."
     },
     "jarvis": {
       "conversation_not_found": "Nie ma takiej rozmowy.",

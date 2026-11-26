@@ -6,7 +6,7 @@ import type { components } from '@/api/types/homemix'
 import { localized, useHouseholdPlugins, type LoadedPlugin } from '@/features/plugins/registry'
 import { useInstallations, type AddonWidget, type Installation } from '@/features/homemix/api'
 import { placedWidgets } from '@/features/homemix/widgets'
-import { arrange, widthOf, widthsFor, type Available, type Cell, type Fit } from './layout'
+import { MAX_W, arrange, widthOf, widthsFor, type Available, type Cell, type Fit } from './layout'
 
 export type BoardPlace = 'Household' | 'Wall'
 export type Board = components['schemas']['BoardView']
@@ -19,8 +19,15 @@ export const boardsApi = {
   async get(householdId: string, place: BoardPlace) {
     return (await http.get<Board>(`/homemix/api/v1/households/${householdId}/boards/${place}`)).data
   },
-  async save(householdId: string, place: BoardPlace, items: Cell[]) {
-    return (await http.put<Board>(`/homemix/api/v1/households/${householdId}/boards/${place}`, { items })).data
+  /** `expectedUpdatedAt` is the date the editor loaded: another save since then is a 409 unless `force` overwrites it. */
+  async save(householdId: string, place: BoardPlace, items: Cell[], expectedUpdatedAt?: string | null, force = false) {
+    return (
+      await http.put<Board>(`/homemix/api/v1/households/${householdId}/boards/${place}`, {
+        items,
+        expectedUpdatedAt,
+        force,
+      })
+    ).data
   },
 }
 
@@ -64,18 +71,24 @@ export function useHouseholdBoard(household: MaybeRefOrGetter<WidgetHousehold | 
       fixedWidth: false,
     }
     const mixes = placedWidgets(installations.value ?? [], place).map(
-      ({ installation, widget, size }): BoardWidget => ({
-        key: `mix:${installation.id}/${widget.id}`,
-        kind: 'mix',
-        installation,
-        widget,
-        size,
-        title: localized(widget.title),
-        icon: `pi ${installation.icon}`,
-        widths: widthsFor(widget.sizes as WidgetSize[]),
-        w: widthOf[size],
-        fixedWidth: true,
-      }),
+      ({ installation, widget, size }): BoardWidget => {
+        // Free width, one column at a time, between the narrowest and widest size the add-on declares (1-8 without).
+        const declared = widthsFor((widget.sizes ?? []) as WidgetSize[])
+        const min = declared.length ? Math.min(...declared) : 1
+        const max = declared.length ? Math.max(...declared) : MAX_W
+        return {
+          key: `mix:${installation.id}/${widget.id}`,
+          kind: 'mix',
+          installation,
+          widget,
+          size,
+          title: localized(widget.title),
+          icon: `pi ${installation.icon}`,
+          widths: Array.from({ length: max - min + 1 }, (_, i) => min + i),
+          w: widthOf[size],
+          fixedWidth: false,
+        }
+      },
     )
     const fromPlugins = plugins.value.flatMap((plugin) =>
       (plugin.manifest.ui?.widgets ?? [])
@@ -96,6 +109,8 @@ export function useHouseholdBoard(household: MaybeRefOrGetter<WidgetHousehold | 
     return [core, ...fromPlugins, ...mixes]
   })
 
+  // An arranged board has a date: an empty one is then a real choice, not "nobody arranged it yet".
+  const isConfigured = computed(() => board.data.value?.updatedAt != null)
   const cells = computed(() =>
     arrange(
       (board.data.value?.items ?? []).map((i) => ({
@@ -107,6 +122,7 @@ export function useHouseholdBoard(household: MaybeRefOrGetter<WidgetHousehold | 
         fit: i.fit as Fit,
       })),
       widgets.value,
+      isConfigured.value,
     ),
   )
   const byKey = computed(() => new Map(widgets.value.map((w) => [w.key, w])))

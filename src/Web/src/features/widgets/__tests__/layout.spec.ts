@@ -71,4 +71,24 @@ describe('widget layout', () => {
     expect(rest).toEqual([])
     expect(only).toMatchObject({ key: 'a', x: 2, y: 0, w: 4, h: 3 })
   })
+
+  it('does not put widgets back on an arranged board, even an empty one', () => {
+    const widgets = [widget('a', 2), widget('b', 2)]
+
+    expect(arrange([], widgets, true)).toEqual([])
+    expect(arrange([cell('a', 0, 0, 2)], widgets, true).map((c) => c.key)).toEqual(['a'])
+  })
+
+  it('keeps the saved place and size of a single widget on an arranged board', () => {
+    const [only] = arrange([cell('a', 1, 2, 5, 2)], [widget('a', 2, [1, 2, 3, 4, 5, 6, 7, 8])], true)
+
+    expect(only).toMatchObject({ key: 'a', x: 1, y: 2, w: 5, h: 2 })
+  })
+
+  it('lets a free-width add-on widget take any width of its widths', () => {
+    const a = widget('a', 4, [1, 2, 3, 4, 5, 6, 7, 8])
+
+    expect(arrange([cell('a', 0, 0, 5), cell('b', 0, 1, 1)], [a, widget('b', 1)], true)[0]).toMatchObject({ w: 5 })
+    expect(arrange([cell('a', 0, 0, 1), cell('b', 0, 1, 1)], [a, widget('b', 1)], true)[0]).toMatchObject({ w: 1 })
+  })
 })

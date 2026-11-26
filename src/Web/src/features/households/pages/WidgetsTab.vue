@@ -61,6 +61,7 @@ const board = computed(() => (place.value === 'Wall' ? wall : page))
       :place="place"
       :cells="board.cells.value"
       :by-key="board.byKey.value"
+      :updated-at="board.board.data.value?.updatedAt"
       @done="editing = false"
     />
     <WidgetGrid

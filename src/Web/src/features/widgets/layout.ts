@@ -74,12 +74,14 @@ export interface Available {
 
 /**
  * The saved layout fitted to the widgets that exist now: gone ones are dropped, sizes follow the add-ons' settings,
- * anything that would now overlap moves down, and widgets not placed yet go to the first free places after.
+ * anything that would now overlap moves down, and, while nobody has arranged the board (`isConfigured` false),
+ * widgets not placed yet go to the first free places after.
  */
-export function arrange(saved: readonly Cell[], available: readonly Available[]): Cell[] {
+export function arrange(saved: readonly Cell[], available: readonly Available[], isConfigured = false): Cell[] {
   const byKey = new Map(available.map((a) => [a.key, a]))
   const only = available.length === 1 ? available[0]! : null
-  if (only && (!only.fixedWidth || only.widths.includes(SINGLE.w))) {
+  // Only an unarranged board shows a single widget as the default; an arranged one keeps what was saved.
+  if (!isConfigured && only && (!only.fixedWidth || only.widths.includes(SINGLE.w))) {
     const fit = saved.find((c) => c.key === only.key)?.fit
     return [{ key: only.key, x: SINGLE.x, y: 0, w: SINGLE.w, h: SINGLE.h, fit: fit === 'Fill' ? 'Fill' : 'Center' }]
   }
@@ -100,10 +102,13 @@ export function arrange(saved: readonly Cell[], available: readonly Available[])
     while (placed.some((p) => overlaps(p, { x, y, w, h }))) y++
     placed.push({ key: cell.key, x, y, w, h, fit: cell.fit === 'Fill' ? 'Fill' : 'Center' })
   }
-  for (const widget of available) {
-    if (placed.some((p) => p.key === widget.key)) continue
-    const h = defaultHeight(widget.w)
-    placed.push({ key: widget.key, ...firstFree(placed, widget.w, h), w: widget.w, h, fit: 'Center' })
+  // On an arranged board a widget that is not on it waits on the palette (even when the board is empty).
+  if (!isConfigured) {
+    for (const widget of available) {
+      if (placed.some((p) => p.key === widget.key)) continue
+      const h = defaultHeight(widget.w)
+      placed.push({ key: widget.key, ...firstFree(placed, widget.w, h), w: widget.w, h, fit: 'Center' })
+    }
   }
   return placed
 }

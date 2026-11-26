@@ -1393,6 +1393,9 @@ export interface components {
         };
         SaveBoardRequest: {
             items: components["schemas"]["BoardItemInput"][];
+            /** Format: date-time */
+            expectedUpdatedAt?: null | string;
+            force?: boolean;
         };
         StoreCounts: {
             /** Format: int32 */
