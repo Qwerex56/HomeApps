@@ -54,6 +54,26 @@ public sealed class DecideHandlerTests
     }
 
     [Fact]
+    public async Task A_denial_publishes_the_denied_card_to_the_channel_too()
+    {
+        var run = AssistantRun.Start(_person, "chat", "c1/m3", null, "q", _time);
+        _runs.Add(run);
+        var call = ToolCall.AwaitConfirmation(run.Id, _person, "tool", "{}", _time);
+        _calls.Add(call);
+
+        var result = await new DecideHandler(_calls, _runs, new Executor(), _bus, _time)
+            .Handle(new DecideCommand(_person, call.Id, false), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var published = Assert.IsType<AssistantResponded>(Assert.Single(_bus.Published));
+        Assert.Equal("chat", published.Channel);
+        Assert.Equal("c1/m3", published.Reference);
+        var action = Assert.Single(published.Actions);
+        Assert.Equal(call.Id, action.ConfirmationId);
+        Assert.Equal("Denied", action.Status);
+    }
+
+    [Fact]
     public async Task A_run_without_a_reference_publishes_nothing()
     {
         var run = AssistantRun.Start(_person, "app", null, null, "q", _time);
