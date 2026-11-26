@@ -1,12 +1,14 @@
 using FluentResults;
+using HomeApps.BuildingBlocks.Application.Abstractions;
 using HomeApps.BuildingBlocks.Application.Messaging;
+using HomeApps.Contracts.Assistant;
 using Jarvis.Application.Abstractions;
 using Jarvis.Application.Common;
 using Jarvis.Domain.ToolCalls;
 
 namespace Jarvis.Application.Actions.Decide;
 
-internal sealed class DecideHandler(IToolCallRepository calls, IToolExecutor executor, TimeProvider time)
+internal sealed class DecideHandler(IToolCallRepository calls, IRunRepository runs, IToolExecutor executor, IEventBus events, TimeProvider time)
     : ICommandHandler<DecideCommand, ActionView>
 {
     public async Task<Result<ActionView>> Handle(DecideCommand command, CancellationToken cancellationToken)
@@ -33,6 +35,21 @@ internal sealed class DecideHandler(IToolCallRepository calls, IToolExecutor exe
             call.Deny();
         }
 
-        return ActionView.From(call, time.GetUtcNow());
+        var view = ActionView.From(call, time.GetUtcNow());
+
+        // A decision taken anywhere (the JARVIS page, MCP, a channel's card) tells the channel the run came from.
+        if (call.RunId != Guid.Empty)
+        {
+            var run = await runs.FindAsync(call.RunId, cancellationToken);
+            if (run is not null && !string.IsNullOrWhiteSpace(run.Channel) && run.Reference is not null)
+            {
+                var action = Cards.Action(view);
+                await events.PublishAsync(
+                    new AssistantResponded(call.Id, run.Channel, run.Reference, action.Description, [action]),
+                    cancellationToken);
+            }
+        }
+
+        return view;
     }
 }
