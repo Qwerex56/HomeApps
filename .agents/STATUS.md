@@ -15,7 +15,8 @@ Written only by the Coordinator (agent teams). Read it first when a session star
 | release-3.0 | ADR (spec-debate) | done | | specs/release-3.0-adr.md | 2026-11-25 |
 | release-3.0 | Stage 0 | done (PR pending) | feat/release-3.0-stage-0 | specs/release-3.0-adr.md | 2026-11-25 |
 | release-3.0 | Stage 1 | done (PR pending) | feat/release-3.0-stage-1 | specs/release-3.0-adr.md | 2026-11-26 |
-| release-3.0 | Stage 2 | done (PR pending) | feat/release-3.0-stage-2 | specs/release-3.0-adr.md | 2026-11-26 |
+| release-3.0 | Stage 2 | done (PR #74) | feat/release-3.0-stage-2 | specs/release-3.0-adr.md | 2026-11-26 |
+| release-3.0 | Stage 3 | done (PR pending) | feat/release-3.0-stage-3 | specs/release-3.0-adr.md | 2026-11-26 |
 
 ## Decisions
 - 2026-11-21 (owner): agy roles run directly from the Coordinator, never through a Claude subagent. Devil's Advocate on agy uses `gemini-4-argon-<effort>`.
@@ -23,6 +24,7 @@ Written only by the Coordinator (agent teams). Read it first when a session star
 - 2026-11-22 (owner): household-planner Q1-Q4 per recommendation (A): Guest gets push; both recurrence modes; one overdue recurring task; imported calendars stored in full and masked as "busy".
 - 2026-11-25 (owner): release-3.0: okno /v1 = cały cykl 3.x; historia usuniętego urządzenia zostaje do końca retencji; strefa domu z konta właściciela (nullable, efektywna = dom ?? właściciel ?? Europe/Warsaw).
 - 2026-11-26 (owner): release-3.0 Stage 1 includes the web UI; 2.11 zone propagation (JARVIS prompt, HomeMixContext, plugin header) deferred until its contract is defined.
+- 2026-11-26 (owner): release-3.0 Stage 3: raise HomeMix board MaxWidth 3 -> 8 so the editor's widths 1-8 can be saved.
 
 ## Blockers
 - Argon quality as a gate, Haiku as developer and agy token measurement are not measured yet (pilots).
