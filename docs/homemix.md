@@ -494,7 +494,7 @@ in `Account`.
 
   Keys: `core:household`, `mix:{installationId}/{widgetId}`, `plugin:{pluginId}/{widgetId}`. Widgets missing from the
   layout go to the first free places; gone ones are skipped. Errors: `homemix.board_overlap`, `homemix.board_out_of_grid`
-  (x + w over 8, w not 1-3, h not 1-12), `homemix.board_duplicate`, `homemix.board_fit`, `homemix.board_forbidden`
+  (x + w over 8, w not 1-8, h not 1-12), `homemix.board_duplicate`, `homemix.board_fit`, `homemix.board_forbidden`
   (not an admin). Saving sends `board.changed` (`householdId`, `place`) to the household.
 - **Quick links (UI 2.4.1).** Up to 8 add-ons of one's own account stand on the bar under the header, in order:
   `PUT /homemix/api/me/pins { "installations": [id, ...] }` pins those and unpins the rest; `pin` (0 first, or null)

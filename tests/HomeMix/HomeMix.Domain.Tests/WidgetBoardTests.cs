@@ -25,7 +25,7 @@ public sealed class WidgetBoardTests
 
     [Theory]
     [InlineData(6, 0, 3, 1, "homemix.board_out_of_grid")]
-    [InlineData(0, 0, 4, 1, "homemix.board_out_of_grid")]
+    [InlineData(0, 0, 9, 1, "homemix.board_out_of_grid")]
     [InlineData(0, 0, 1, 0, "homemix.board_out_of_grid")]
     [InlineData(-1, 0, 1, 1, "homemix.board_out_of_grid")]
     [InlineData(1, 0, 2, 2, "homemix.board_overlap")]
@@ -37,6 +37,16 @@ public sealed class WidgetBoardTests
 
         Assert.Equal(code, Assert.IsType<HomeApps.BuildingBlocks.Domain.Errors.AppError>(arranged.Errors[0]).Code);
         Assert.Empty(board.Items);
+    }
+
+    [Fact]
+    public void A_widget_can_be_as_wide_as_the_whole_grid()
+    {
+        var board = WidgetBoard.Create(Guid.NewGuid(), BoardPlaces.Wall);
+
+        var arranged = board.Arrange([Item("mix:a", 0, 0, 8, 6)], Guid.NewGuid(), Now);
+
+        Assert.True(arranged.IsSuccess);
     }
 
     [Fact]

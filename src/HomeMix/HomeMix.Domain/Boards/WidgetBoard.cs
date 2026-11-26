@@ -10,7 +10,7 @@ namespace HomeMix.Domain.Boards;
 public sealed class WidgetBoard
 {
     public const int Columns = 8;
-    public const int MaxWidth = 3;
+    public const int MaxWidth = 8;
     public const int MaxHeight = 12;
     public const int MaxRow = 999;
     public const int MaxItems = 64;
