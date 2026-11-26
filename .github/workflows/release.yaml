@@ -57,7 +57,15 @@ jobs:
           npm run build
       - name: Build the images
         env:
-          # Only to satisfy `${VAR:?}` in compose.prod.yaml; building does not use the values.
+          # Dummies only to satisfy the required `${VAR:?}` in compose.prod.yaml; building does not use them.
+          HOMEAPPS_DOMAIN: example.test
+          POSTGRES_PASSWORD: build
+          RABBITMQ_PASSWORD: build
+          AUTH_BOOTSTRAP_EMAIL: build@example.test
+          SMTP_HOST: smtp.example.test
+          SMTP_FROM: build@example.test
+          NOTIFICATIONS_VAPID_PUBLIC_KEY: build
+          NOTIFICATIONS_VAPID_PRIVATE_KEY: build
           JARVIS_CLIENT_SECRET: build
           DEVICES_CLIENT_SECRET: build
           HOMEMIX_CLIENT_SECRET: build
@@ -84,5 +92,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Re-pushing the same ref: delete the old release first (see docs/working-with-the-repo.md).
           gh release create "$GITHUB_REF_NAME" --title "HomeApps ${GITHUB_REF_NAME#V}" \
             --notes-file release-notes.md --target "$GITHUB_SHA"
