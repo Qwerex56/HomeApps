@@ -109,6 +109,7 @@ const settingsFor = ref<Installation | null>(null)
 const settingsOpen = computed({ get: () => !!settingsFor.value, set: (v) => !v && (settingsFor.value = null) })
 
 const conflict = ref(false)
+const conflicted = ref<Item[]>([])
 
 function load(cells: Cell[]) {
   layout.value = cells.map(({ key, fit, ...rest }) => ({ i: key, fit, ...rest }))
@@ -122,6 +123,7 @@ function defaults(): Item[] {
 
 async function save(items: Item[], force = false) {
   conflict.value = false
+  conflicted.value = items
   const ok = await submit(
     async () => {
       const saved = await boardsApi.save(
@@ -143,7 +145,7 @@ async function save(items: Item[], force = false) {
     },
     (problem) => {
       // The editor stays open with the work in it (2.17); a 409 asks what to do (2.18).
-      if (problem.status === 409 && problem.code === 'homemix.board_conflict') conflict.value = true
+      if (problem.status === 409 && (problem.code === 'homemix.board_conflict' || problem.code === 'concurrency.conflict')) conflict.value = true
       else formError.value = t('widgets.editor.saveFailed')
       return true
     },
@@ -280,8 +282,8 @@ async function reload() {
     <Dialog v-model:visible="conflict" modal :header="t('widgets.editor.conflictTitle')" :style="{ width: '28rem' }">
       <p>{{ t('widgets.editor.conflictMessage') }}</p>
       <template #footer>
-        <Button :label="t('widgets.editor.reload')" severity="secondary" text @click="reload" />
-        <Button :label="t('widgets.editor.overwrite')" severity="danger" @click="save(layout, true)" />
+        <Button :label="t('widgets.editor.reload')" severity="secondary" text :disabled="busy" @click="reload" />
+        <Button :label="t('widgets.editor.overwrite')" severity="danger" :disabled="busy" :loading="busy" @click="save(conflicted, true)" />
       </template>
     </Dialog>
     <WidgetSettingsDialog

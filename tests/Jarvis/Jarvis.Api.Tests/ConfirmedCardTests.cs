@@ -1,5 +1,8 @@
 using HomeApps.BuildingBlocks.Testing;
 using HomeApps.Contracts.Assistant;
+using Jarvis.Infrastructure.Persistence;
+using MassTransit.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Jarvis.Api.Tests;
 
@@ -40,9 +43,35 @@ public sealed class ConfirmedCardTests(JarvisFactory factory)
         var before = factory.Published.OfType<AssistantResponded>().Count(m => m.InvocationId == confirmation);
 
         await factory.Harness.Bus.Publish(new AssistantConfirmed(confirmation, Guid.NewGuid(), true, "chat", "c1/m8"));
-        await Task.Delay(1000);
+        Assert.True(await factory.Harness.Consumed.Any<AssistantConfirmed>(
+            c => c.Context.Message.ConfirmationId == confirmation && c.Context.Message.UserId != person));
 
         Assert.Equal(before, factory.Published.OfType<AssistantResponded>().Count(m => m.InvocationId == confirmation));
+    }
+
+    [Fact]
+    public async Task A_click_on_an_expired_card_publishes_the_card_as_expired()
+    {
+        var person = Guid.NewGuid();
+        factory.Brain.Script = async mcp =>
+            (await mcp.CallTextAsync("todo_delete_task", new Dictionary<string, object?> { ["title"] = "Jajka" })).Text;
+        var invocation = Guid.NewGuid();
+        await factory.Harness.Bus.Publish(new AssistantInvoked(
+            invocation, "chat", "c1/m9", null, person, "usuń jajka", [], DateTimeOffset.UtcNow));
+        var confirmation = Assert.Single((await AnswerToAsync(invocation)).Actions).ConfirmationId!.Value;
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JarvisDbContext>();
+            var call = await db.ToolCalls.FindAsync(confirmation);
+            db.Entry(call!).Property(nameof(call.ConfirmBy)).CurrentValue = DateTimeOffset.UtcNow.AddMinutes(-1);
+            await db.SaveChangesAsync();
+        }
+
+        await factory.Harness.Bus.Publish(new AssistantConfirmed(confirmation, person, true, "chat", "c1/m9"));
+        var card = Assert.Single(await CardsAsync(confirmation, 1));
+
+        Assert.Equal("c1/m9", card.Reference);
+        Assert.Equal("Expired", Assert.Single(card.Actions).Status);
     }
 
     private async Task<IReadOnlyList<AssistantResponded>> CardsAsync(Guid confirmation, int count)

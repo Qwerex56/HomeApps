@@ -175,6 +175,42 @@ describe('widget palette', () => {
       wrapper.unmount()
     })
 
+    it('treats a concurrency.conflict 409 like a board conflict', async () => {
+      const conflict = Object.assign(new Error('conflict'), {
+        isAxiosError: true,
+        response: { status: 409, headers: {}, data: { status: 409, code: 'concurrency.conflict' } },
+      })
+      vi.spyOn(boardsApi, 'save').mockRejectedValueOnce(conflict).mockResolvedValue(board as never)
+      const wrapper = mountWith(new QueryClient())
+      await flushPromises()
+
+      await button(wrapper, 'Zapisz').trigger('click')
+      await flushPromises()
+
+      expect(document.body.textContent).toContain('Układ zmienił się w międzyczasie')
+      wrapper.unmount()
+    })
+
+    it('overwrites with the items that conflicted', async () => {
+      const conflict = Object.assign(new Error('conflict'), {
+        isAxiosError: true,
+        response: { status: 409, headers: {}, data: { status: 409, code: 'homemix.board_conflict' } },
+      })
+      const save = vi.spyOn(boardsApi, 'save').mockRejectedValueOnce(conflict).mockResolvedValue(board as never)
+      const wrapper = mountWith(new QueryClient())
+      await flushPromises()
+
+      await button(wrapper, 'Zapisz').trigger('click')
+      await flushPromises()
+      const first = save.mock.calls[0]![2]
+      const overwrite = [...document.body.querySelectorAll('button')].find((b) => b.textContent?.includes('Nadpisz mimo to'))!
+      overwrite.click()
+      await flushPromises()
+
+      expect(save.mock.calls[save.mock.calls.length - 1]![2]).toEqual(first)
+      wrapper.unmount()
+    })
+
     it('stays open with a message when the save fails', async () => {
       vi.spyOn(boardsApi, 'save').mockRejectedValue(new Error('boom'))
       const wrapper = mountWith(new QueryClient())
