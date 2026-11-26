@@ -50,6 +50,13 @@
       "Center": "Wyśrodkuj",
       "Fill": "Wypełnij"
     },
+    "palette": {
+      "open": "Paleta widżetów",
+      "title": "Dostępne widżety",
+      "add": "Dodaj",
+      "remove": "Zdejmij z siatki",
+      "empty": "Wszystkie widżety są na siatce."
+    },
     "editor": {
       "narrow": "Układ ma 8 kolumn, na telefonie przewiń go w bok.",
       "visibleLine": "Powyżej linii: widoczne na Głównej i tablecie",
@@ -688,6 +695,7 @@
       "disabled": "Link dla gości wyłączony"
     },
     "settings": {
+      "apps": "Aplikacje domu",
       "membership": "Moje członkostwo",
       "nicknameHint": "Tak będą Cię widzieć domownicy. Puste = Twoja nazwa.",
       "saved": "Zapisano",

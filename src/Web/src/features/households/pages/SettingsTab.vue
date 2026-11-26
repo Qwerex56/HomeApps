@@ -12,12 +12,11 @@ import Button from 'primevue/button'
 import Message from 'primevue/message'
 import Select from 'primevue/select'
 import FormField from '@/shared/components/FormField.vue'
-import PluginsSettings from '@/features/plugins/PluginsSettings.vue'
-import HomeMixSettings from '@/features/homemix/HomeMixSettings.vue'
 import { useSubmit } from '@/shared/composables/useSubmit'
 import { errorMessage } from '@/api/errorMessage'
 import { toProblem } from '@/api/problem'
 import { householdKeys, householdsApi, type Household, type HouseholdPermissions } from '../api'
+import HouseholdAppsSection from './HouseholdAppsSection.vue'
 import InvitesTab from './InvitesTab.vue'
 
 // My membership (nickname, leaving) for everyone; name and description for Owner and Admins; archive for the Owner.
@@ -231,12 +230,7 @@ function archive() {
       <InvitesTab :household="household" :can="can" />
     </section>
 
-    <PluginsSettings v-if="can.member" :household="household" />
-    <HomeMixSettings
-      v-if="can.member"
-      :target="{ kind: 'Household', householdId: household.id }"
-      :can-manage="can.edit"
-    />
+    <HouseholdAppsSection v-if="can.edit" :household="household" />
 
     <Card v-if="can.archive" class="border border-red-200 dark:border-red-900">
       <template #title>{{ t('households.settings.archive') }}</template>

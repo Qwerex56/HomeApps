@@ -6,7 +6,7 @@ import type { components } from '@/api/types/homemix'
 import { localized, useHouseholdPlugins, type LoadedPlugin } from '@/features/plugins/registry'
 import { useInstallations, type AddonWidget, type Installation } from '@/features/homemix/api'
 import { placedWidgets } from '@/features/homemix/widgets'
-import { arrange, widthOf, type Available, type Cell, type Fit } from './layout'
+import { arrange, widthOf, widthsFor, type Available, type Cell, type Fit } from './layout'
 
 export type BoardPlace = 'Household' | 'Wall'
 export type Board = components['schemas']['BoardView']
@@ -59,8 +59,8 @@ export function useHouseholdBoard(household: MaybeRefOrGetter<WidgetHousehold | 
       kind: 'core',
       title: toValue(household)?.name ?? '',
       icon: 'pi pi-home',
-      widths: [1, 2, 3],
-      w: 3,
+      widths: widthsFor(['Small', 'Medium', 'Large']),
+      w: 4,
       fixedWidth: false,
     }
     const mixes = placedWidgets(installations.value ?? [], place).map(
@@ -72,7 +72,7 @@ export function useHouseholdBoard(household: MaybeRefOrGetter<WidgetHousehold | 
         size,
         title: localized(widget.title),
         icon: `pi ${installation.icon}`,
-        widths: widget.sizes.map((s) => widthOf[s as WidgetSize]),
+        widths: widthsFor(widget.sizes as WidgetSize[]),
         w: widthOf[size],
         fixedWidth: true,
       }),
@@ -88,9 +88,9 @@ export function useHouseholdBoard(household: MaybeRefOrGetter<WidgetHousehold | 
           size: w.size,
           title: localized(w.title),
           icon: `pi ${plugin.manifest.icon}`,
-          widths: [widthOf[w.size]],
+          widths: widthsFor(['Small', 'Medium', 'Large']),
           w: widthOf[w.size],
-          fixedWidth: true,
+          fixedWidth: false,
         })),
     )
     return [core, ...fromPlugins, ...mixes]
