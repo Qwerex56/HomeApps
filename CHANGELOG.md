@@ -6,6 +6,10 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 
 ### Changed
 
+- **Widget board and household apps (release 3.0, Stage 3, web):** widgets resize freely in 2D (1-8 columns, 1-6
+  rows) in the board editor, taken-off widgets wait in a palette drawer ("+ Dodaj" or drag back), a single widget
+  shows as Medium and centred, and household settings get an "Aplikacje domu" section for Owner and Admin (HomeMix
+  add-ons and system plugins in one place). Removed tiles are not persisted yet. See `docs/web.md`.
 - **Local development in one path:** `docs/development.md` covers the whole local setup: `scripts/dev-cert.sh`
   (mkcert certificate for `app.localhost` and `*.app.localhost`, so no warnings and no `--insecure` for the bridge;
   `certs/*.pem` are no longer in git), `.env.example` with `COMPOSE_FILE`/`COMPOSE_PROFILES` (plain

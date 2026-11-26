@@ -173,7 +173,7 @@ on the next refresh. Erasing asks for the account's email, which goes in the DEL
 | `/homes/:id/members` | Members (Member and up): roles, nicknames, a guest's access end, removing, handing over. Inactive accounts greyed out (D6). |
 | `/homes/:id/invites` | Personal invites (Member or Guest, 30 minutes to 7 days) with copy and share, and the guest link (Owner, Admin). |
 | `/homes/:id/devices` | **JARVIS** tab (`features/devices`): left column with the household JARVIS card (`AssistantCard`), devices grouped by purpose (`assistant`, `smart_home`) and a link to "Moje komputery" (`/account/devices`). Live SSE stream (`/devices/households/{id}/stream` over `fetch` + `ReadableStream` with Bearer token, 15 min reconnect, 30 s polling fallback when disconnected), schema-driven controls (`ControlWidget`: switch, slider committing on release, select, button, number, text; 20 s confirmation timeout), sensors (`SensorList`), lazy event history (`DeviceEvents`), and admin settings (`DeviceAdminPanel`). Role matrix: Guest reads state (without `geo` values), health and read-only JARVIS switches; Member also sets controls and reads events; Admin/Owner manages assistant settings, pairing, names, notes and JARVIS switches. |
-| `/homes/:id/settings` | My membership (nickname, leaving), name and description (Owner, Admin), archiving (Owner). A guest sees only this tab and the read-only views. |
+| `/homes/:id/settings` | My membership (nickname, leaving), name and description (Owner, Admin), archiving (Owner), and the **Aplikacje domu** section (`#apps`, `HouseholdAppsSection`; Owner and Admin only): the HomeMix add-ons (install, update, remove, configure widgets) and the server's system plugins with their on/off switch (`PluginsSettings`), one place for the household's apps. A guest sees only this tab and the read-only views. |
 | `/join/:code` | Personal invites and the guest link: what the code leads to, then joining. |
 | `/admin/homes` | Every household for the server Admin and Owner, archiving and restoring. |
 
@@ -183,6 +183,23 @@ households.md only to show the right buttons; Polish plurals ("1 osoba, 3 osoby,
 in `shared/i18n`.
 
 On a phone the main menu moves to a tab bar at the bottom of the screen.
+
+## Widget board editor
+
+`features/widgets` holds the household's widget board (`BoardEditor.vue`, `WidgetGrid.vue`, `layout.ts`, `board.ts`),
+saved through the HomeMix board API ([homemix.md](homemix.md), "Widgets"). The layout is `grid-layout-plus` on 8
+columns; rows are `MAX_H` = 6 high at most.
+
+- **Free 2D resize:** a widget's width (1-8 columns) and height (1-6 rows) are set independently in the editor and
+  stored as `w` and `h` on the board. A HomeMix add-on's `Small`/`Medium`/`Large` size follows the width (1-2,
+  3-5, 6-8) when it is chosen.
+- **Palette drawer:** taking a widget off the grid puts it in the right-hand drawer (PrimeVue `Drawer`, opened by the
+  palette button). A widget on the palette can be dragged back onto the grid or added with "+ Dodaj"; a widget that is
+  on the grid is not offered there.
+- **One widget:** when exactly one widget is visible, the grid shows it as `Medium` (4 × 3), centred horizontally.
+- **Plugins and add-ons without widgets:** a plugin whose `homemix.json` declares `"widgets": []` (or no key) gets
+  no placeholder tile and no palette entry.
+- **Known limit:** a widget removed from the grid is not persisted yet; after a reload it is back on the grid.
 
 ## PWA and the wall tablet
 
