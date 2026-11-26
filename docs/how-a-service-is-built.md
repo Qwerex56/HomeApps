@@ -65,6 +65,9 @@ dotnet tool restore
 dotnet ef migrations add Initial -p src/Accounts/Accounts.Infrastructure -s src/Accounts/Accounts.Api -o Persistence/Migrations
 ```
 
+HomeMix is the exception: `src/HomeMix/HomeMix.Api` does not reference `Microsoft.EntityFrameworkCore.Design` (the
+`DesignTimeDbContextFactory` lives in Infrastructure), so use `-s src/HomeMix/HomeMix.Infrastructure` there.
+
 In Development the API applies migrations on start; anywhere else only with `Database:MigrateOnStartup=true`
 (`MigrateDatabaseOnStartupAsync` in the kit). Production compose sets it, since every service runs as one instance.
 

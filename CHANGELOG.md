@@ -2,6 +2,18 @@
 
 Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>` (`V<version>` from 3.0).
 
+## 3.0.1 (unreleased)
+
+### Fixed
+
+- **Confirmations everywhere:** a decision on a JARVIS action card (HomeApps, REST or the chat channel) now updates the
+  card live in every open chat, including the card's buttons and status; a second click on a settled card gets a
+  clear message and a refresh instead of a stuck spinner.
+- **Widgets (board):** an add-on widget's width is free from 1 to 8 columns (no more snapping to presets); a saved layout
+  stays as saved after a refetch and an emptied board stays empty; an add-on's iframe picks up a new size.
+- **Board save conflicts:** saving a board that someone else changed in the meantime shows a conflict dialog ("Wczytaj
+  nowszy" reloads the board, or overwrite anyway); the API answers `409 homemix.board_conflict`. See `docs/homemix.md`.
+
 ## 3.0.0 (unreleased)
 
 ### Changed
