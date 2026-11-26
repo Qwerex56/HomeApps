@@ -1,6 +1,6 @@
 # Changelog
 
-Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`.
+Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>` (`V<version>` from 3.0).
 
 ## 3.0.0 (unreleased)
 

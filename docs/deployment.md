@@ -149,7 +149,8 @@ new secrets and 18 migrations. Migrations are not reversible: the way back is a 
    and the new `homeapps_avatars` (profile pictures; it is created empty on the first start).
 2. **Add to `.env`** (compare with `.env.prod.example`): `JARVIS_CLIENT_SECRET`, `DEVICES_CLIENT_SECRET` and
    `HOMEMIX_CLIENT_SECRET` (long random strings; a service refuses to start while one is empty), and `HOMEAPPS_PLUGINS`
-   (the admin "About the server" page lists no plugins without it).
+   (the admin "About the server" page lists no plugins without it). Optional: `JARVIS_VOICE_URL` (the voice service; voice stays off while empty).
+   Devices uses a new database, `homeapps_devices`; include it in later backups.
 3. **Pull and start:** `git pull` (or `git checkout V3.0.0`), then `docker compose -f compose.prod.yaml up -d --build`.
 4. **Check after the start:**
    - `docker compose -f compose.prod.yaml ps`: every service is `running`/`healthy`, none restarting.
