@@ -1,6 +1,6 @@
 # HomeApps Project Map
 
-- **HEAD**: `c787971` (branch `feat/release-3.0-stage-2`, base master), last updated 2026-11-26 (refreshed from `4493295`; release 3.0 stage 0-1 merged/done)
+- **HEAD**: `67293e9` (branch `feat/release-3.0-stage-4`, base master), last updated 2026-11-26 (refreshed from `c787971`; release 3.0 stages 0-3 merged, stage 4 in progress)
 - **Stack**: .NET 10 (`HomeApps.slnx`), Vue 3 + TypeScript (`src/Web`), PostgreSQL, RabbitMQ (MassTransit), SignalR, MCP (`ModelContextProtocol.AspNetCore`). npm scope `@home-apps/*`.
 - **API versioning**: every service serves `/v1/...` (`MapVersionedGroup`, `EndpointExtensions.MapVersionedEndpoints`); legacy unversioned routes answer with `Deprecation`/`Sunset` (2028-01-01). Unversioned by design: OAuth and sockets. Clients and tests use `/v1`.
 - **Tools**: Mac Device Emulator (`tools/mac-device-emulator/MacDeviceEmulator.slnx`).
@@ -26,6 +26,8 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
   - Use cases: `Accounts.Application/{MyAccount,Admin}/<Feature>/` (one folder per command/query; `MyAccount/UploadMyAvatar`, `GetUserAvatar`); `Common/AvatarImage.cs`, `Abstractions/IAvatarStore.cs`
   - Storage: `Accounts.Infrastructure/Persistence/FileAvatarStore.cs` (volume `homeapps_avatars` at `/var/data/avatars`); startup `Jobs/ProfileRepublishOnStart.cs` + `StartupMarker.cs` (migration `StartupMarkers`)
   - Domain: `Accounts.Domain/Users/` (`AvatarUrl.cs`, `Profile.cs`, `User.Profile.cs`, `Events/UserProfileUpdated.cs`)
+  - Server about (admin): `GET /users/v1/admin/users/server/about` in `AdminEndpoints.cs`; `Accounts.Application/Admin/GetServerAbout/` (`GetServerAboutHandler`, `ServerAboutView`, `ServiceAboutView`, `PluginAboutView`), port `Abstractions/IServerInfo.cs`, adapter `Accounts.Infrastructure/About/ServerInfo.cs`; wiring in `Accounts.Infrastructure/DependencyInjection.cs`
+  - Shared about/migrations plumbing: `BuildingBlocks.Api/ServiceVersion.cs`, `BuildingBlocks.Application/Abstractions/IAppliedMigrations.cs`, `BuildingBlocks.Infrastructure/Persistence/AppliedMigrations.cs`
 - **`src/Households/`** (`/households`): Households, memberships, roles (`Guest < Member < Admin < Owner`), invites.
   - Endpoints: `src/Households/Households.Api/Endpoints/` (`HouseholdEndpoints.cs` [incl. `PUT /households/v1/{id}/timezone`], `MemberEndpoints.cs`, `InviteEndpoints.cs`, `AssistantEndpoints.cs`, `InternalEndpoints.cs`, `AdminEndpoints.cs`)
   - Application is split per feature: `Households.Application/{Households,Members,Invites}/<Feature>/`; time zone rule (household, else owner, else `Europe/Warsaw`): `Households.Application/Common/HouseholdTimeZones.cs`; account sync: `AccountsSync/AccountsSync.cs`
@@ -34,6 +36,8 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
   - In-app center: `Notifications.Application/InApp/` (`ListInApp`, `MarkInAppRead`, `MarkAllInAppRead`), `Notifications.Domain/InApp/InAppNotification.cs`, `Notifications.Infrastructure/Persistence/InAppNotificationRepository.cs` (table `InAppNotifications`)
 - **`src/HomeMix/`** (`/homemix`): Plugin/mix items, shared lists, chat/todo plugins (plugin code itself lives in sibling repos, see Plugins).
   - Endpoints: `src/HomeMix/HomeMix.Api/Endpoints/` (`BoardEndpoints`, `PackageEndpoints`, `StoreEndpoints`, `TriggerEndpoints`, `InstallationEndpoints`, `DataEndpoints`, `DeviceEndpoints`, `NotifyEndpoints`, `AdminEndpoints`)
+  - Addon data store: `HomeMix.Api/Endpoints/DataEndpoints.cs` (`/homemix/api/installations/{id}/data/{collection}`, GET/PUT/DELETE by key, `scope`, `version`; `AllowAssistant`); use cases `HomeMix.Application/Data/` (`PutDocument`, `GetDocument`, `ListDocuments`, `PurgeRemovedData`); domain `HomeMix.Domain/Data/AddonDocument.cs` (`ExpiresAt`, `IsExpired`); repo `HomeMix.Infrastructure/Persistence/DocumentRepository.cs`; migration `DocumentExpiration`
+  - Boards: `HomeMix.Domain/Boards/WidgetBoard.cs` (widget widths 1-8)
   - Startup: fails before migrations if `HOMEMIX_CLIENT_SECRET` is empty (`HomeMix.Api/Program.cs`)
   - Devices client: `src/HomeMix/HomeMix.Infrastructure/Devices/DevicesServiceClient.cs`, `DevicesHttp.cs`
 - **`src/Devices/`** (`/devices`): Household satellites, pairing codes, device states, built-in computer capabilities.
@@ -50,7 +54,10 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
 - **`src/BuildingBlocks/`**: `HomeApps.BuildingBlocks.{Domain,Application,Infrastructure,Api,Mcp}`, `HomeApps.Plugins`, `HomeApps.Plugins.Hosting`.
 - **`src/Web/`**: Vue 3 SPA, API calls on `/v1` paths (`src/api/http.ts`), plugin UI SDK `@home-apps/plugin-sdk` (`src/features/{account,admin,auth,devices,home,homemix,households,jarvis,notifications,plugins,wall,widgets}`, `src/api/types/`, `src/api/errorMessage.ts`, `src/shared/i18n/pl.json`).
   - Devices UI: `src/Web/src/features/devices/` (`api.ts`, `stream.ts`, `useDeviceStream.ts`, `assistantFlags.ts`, `pages/HouseholdDevicesTab.vue`, `pages/MyDevicesPage.vue`, `components/DeviceCard.vue`, `components/PairingCodeDialog.vue`, `components/AssistantCard.vue`, `components/ControlWidget.vue`, `components/SensorList.vue`, `components/DeviceEvents.vue`, `components/DeviceAdminPanel.vue`)
-  - HomeMix host & widgets: `src/Web/src/features/homemix/` (`useMixHost.ts`, `WidgetSettingsDialog.vue`, `realtime.ts`, `deviceId.ts`, `frameEvents.ts`, `widgets.ts`)
+  - HomeMix host & widgets: `src/Web/src/features/homemix/` (`useMixHost.ts`, `api.ts`, `WidgetSettingsDialog.vue`, `realtime.ts`, `deviceId.ts`, `frameEvents.ts`, `widgets.ts`)
+  - Widget board editor/grid: `src/Web/src/features/widgets/` (`board.ts`, `layout.ts`, `BoardEditor.vue`, `WidgetGrid.vue`); plugin registry `features/plugins/registry.ts`
+  - Admin server about: `src/Web/src/features/admin/pages/ServerAboutPage.vue`, `features/admin/api.ts`; router `src/Web/src/app/router.ts`
+  - HomeMix addon SDK & local CLI (JS, not in `npm` workspace `src/Web/src`): `src/Web/homemix/sdk/src/{client,protocol}.ts`, `src/Web/homemix/cli/host/host.js`, `src/Web/homemix/create-homemix/`, `src/Web/homemix/vue/`
 
 ## Plugins (sibling repos)
 - Plugins and HomeMix addons are NOT in this repo. Todo lives in `../HomeApps.Todo` (`src/Todo.{Api,Application,Contracts,Domain,Infrastructure,Web}`, `docs/plan.md`, `README.md`).
@@ -75,9 +82,9 @@ Each service has 4 layers: `<Svc>.Domain`, `<Svc>.Application`, `<Svc>.Infrastru
 - JWT test helper: `TestJwt.CreateToken` / `TestJwt.CreateTokenWithClient`
 
 ## Specs, Docs & Agent Overrides
-- **`specs/`** (owner + `/spec-debate` write; agents read only): `household-jarvis-devices.md` + `-adr.md`, `household-planner.md` + `-adr.md`, `release-3.0.md` + `release-3.0-adr.md` (3.0 stages 0-4; Stage 0 merged in PR #72, Stage 1 merged in PR #73; Stage 2 in progress), `_TEMPLATE.md`, `CLAUDE_PROJECT_INSTRUCTIONS.md`
+- **`specs/`** (owner + `/spec-debate` write; agents read only): `household-jarvis-devices.md` + `-adr.md`, `household-planner.md` + `-adr.md`, `release-3.0.md` + `release-3.0-adr.md` (3.0 stages 0-4; Stages 0-3 merged, PRs #72, #73, #75 and later; Stage 4 in progress), `_TEMPLATE.md`, `CLAUDE_PROJECT_INSTRUCTIONS.md`
 - **Stage progress**: `.agents/STATUS.md` (committed, Coordinator only). Release 3.0 runs `/run-feature @specs/release-3.0.md --base master "Stage N"`, branches `feat/release-3.0-stage-N`.
-- **Changelog & upgrade notes**: `CHANGELOG.md` (`### Upgrading` section per release; 3.0 stage 1 added the avatars volume and migrations).
+- **Changelog & upgrade notes**: `CHANGELOG.md` (`### Upgrading` section per release; 3.0 stage 1 added the avatars volume and migrations; `docs/homemix.md`, `docs/accounts.md`, `docs/development.md` touched in stage 3).
 - **`docs/`**: `how-a-service-is-built.md`, `adr/0001`–`0009`, `auth.md`, `accounts.md`, `households.md`, `notifications.md`, `homemix.md`, `homemix-authoring.md`, `devices.md`, `devices-protocol.md`, `device-capabilities.md`, `jarvis.md`, `mcp.md`, `plugins.md`, `plugin-chat.md`, `plugin-todo.md`, `web.md`, `deployment.md`, `development.md`, `working-with-the-repo.md`, `schemas/`
 - **Agents & skills**: none project-local (`.claude/agents/`, `.claude/skills/` removed). Roles and skills come from `~/.agent-hub`; HomeApps conventions are hub skills `homeapps-*`, profiles `dotnet`, `vue` (see `.claude/CLAUDE.md` `## Agents`).
 - **Docker/env**: `compose.yaml`, `compose.dev.yaml`, `Dockerfile`, `Directory.Build.props`, `Directory.Packages.props`, `global.json`, `nuget.config`, `compose.prod.yaml` (volume `homeapps_avatars`), `scripts/pack.sh` (root); `src/Accounts/Accounts.Api/Dockerfile`; `.claude/settings.json`, `.claude/CLAUDE.md`
