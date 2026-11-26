@@ -10,6 +10,9 @@ public static class BoardErrors
     public static Error Forbidden => new AppError(
         "homemix.board_forbidden", "Only a household's admins can arrange its widgets.", ErrorKind.Forbidden);
 
+    public static Error Conflict => new AppError(
+        "homemix.board_conflict", "The board was changed by someone else meanwhile.", ErrorKind.Conflict);
+
     public static Error TooMany => new AppError(
         "homemix.board_too_many", $"A board holds at most {WidgetBoard.MaxItems} widgets.", ErrorKind.Validation);
 

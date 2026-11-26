@@ -58,4 +58,28 @@ public sealed class BoardTests(HomeMixApiFactory api) : IClassFixture<HomeMixApi
         Assert.Equal(HttpStatusCode.NotFound, place.StatusCode);
         Assert.Equal("homemix.board_overlap", await overlap.CodeAsync());
     }
+
+    [Fact]
+    public async Task A_save_of_an_arranged_board_needs_its_date_or_force_else_409()
+    {
+        var admin = Guid.NewGuid();
+        var household = api.Household(admin);
+        using var admins = api.SignedIn(admin);
+        var url = $"/homemix/api/households/{household}/boards/Household";
+        var one = new object[] { new { key = "a", x = 0, y = 0, w = 2, h = 1 } };
+
+        using var first = await admins.PutAsJsonAsync(url, new { items = one });
+        var loaded = (await first.ReadJsonAsync()).GetProperty("updatedAt").GetString();
+        using var stale = await admins.PutAsJsonAsync(url, new { items = one, expectedUpdatedAt = "2020-01-01T00:00:00Z" });
+        using var missing = await admins.PutAsJsonAsync(url, new { items = one });
+        using var forced = await admins.PutAsJsonAsync(url, new { items = one, force = true });
+        using var fresh = await admins.PutAsJsonAsync(url, new { items = one, expectedUpdatedAt = (await forced.ReadJsonAsync()).GetProperty("updatedAt").GetString() });
+
+        Assert.NotNull(loaded);
+        Assert.Equal(HttpStatusCode.Conflict, stale.StatusCode);
+        Assert.Equal("homemix.board_conflict", await stale.CodeAsync());
+        Assert.Equal(HttpStatusCode.Conflict, missing.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, forced.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, fresh.StatusCode);
+    }
 }

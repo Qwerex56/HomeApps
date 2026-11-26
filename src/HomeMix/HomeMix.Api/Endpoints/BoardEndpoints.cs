@@ -23,7 +23,7 @@ internal sealed class BoardEndpoints : IEndpoint
             .Produces<BoardView>();
 
         api.MapPut("/{place}", async (Guid householdId, string place, SaveBoardRequest body, ISender sender, CancellationToken ct) =>
-                (await sender.Send(new SaveBoardCommand(householdId, place, body.Items ?? []), ct)).ToHttpResult())
+                (await sender.Send(new SaveBoardCommand(householdId, place, body.Items ?? [], body.ExpectedUpdatedAt, body.Force), ct)).ToHttpResult())
             .Produces<BoardView>();
     }
 }

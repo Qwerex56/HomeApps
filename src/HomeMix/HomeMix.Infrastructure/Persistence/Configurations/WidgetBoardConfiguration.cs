@@ -16,6 +16,8 @@ internal sealed class WidgetBoardConfiguration : IEntityTypeConfiguration<Widget
         builder.HasKey(b => new { b.HouseholdId, b.Place });
         builder.Property(b => b.Place).HasMaxLength(16);
 
+        builder.Property(b => b.UpdatedAt).IsConcurrencyToken();
+
         // Always read and written as a whole: one jsonb column.
         builder.Property<List<BoardItem>>("_items").HasColumnName("Items").HasColumnType("jsonb")
             .HasConversion(
