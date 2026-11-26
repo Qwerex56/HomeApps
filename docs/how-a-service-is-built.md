@@ -82,6 +82,14 @@ Health: `GET /health/live` (process) and `GET /health/ready` (database), both an
 service's name, version and applied migrations (the About-the-server page reads it).
 OpenAPI: `GET /openapi/v1.json` in Development.
 
+## API versioning
+
+Public routes carry a version prefix under the service's route prefix: `/auth/v1/...`, `/devices/v1/...`,
+`/notifications/v1/...`, `/homemix/api/v1/...`, `/jarvis/api/v1/...`, `/users/v1/...`, `/households/v1/...`
+(`/admin/users/v1/...`, `/invites/v1/...`). The version is in the path only, never in a header. The unversioned paths
+of 2.x still answer, with deprecation headers, until 4.0. Health, OpenAPI, the SSE/WebSocket links and static files
+stay unversioned. A breaking change gets `/v2` next to `/v1`; clients are told in [CHANGELOG.md](../CHANGELOG.md).
+
 ## Tests
 
 - `*.Domain.Tests`: aggregates only, no mocks.

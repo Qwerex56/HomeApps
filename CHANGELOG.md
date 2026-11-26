@@ -1,8 +1,8 @@
 # Changelog
 
-Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`.
+Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>` (`V<version>` from 3.0).
 
-## Unreleased: JARVIS voice
+## 3.0.0 (unreleased)
 
 ### Changed
 
@@ -110,8 +110,13 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
   sends only text (`say` on `/jarvis/voice?speech=local`); `--actions <file>` lets JARVIS run commands from that file
   on the Mac.
 
-### Upgrading
+### Upgrading from 2.4.x
 
+Back up first, then follow "Upgrading from 2.4 to 3.0" in `docs/deployment.md` (checklist and rollback there).
+
+- New secrets in `.env`: `JARVIS_CLIENT_SECRET`, `DEVICES_CLIENT_SECRET`, `HOMEMIX_CLIENT_SECRET` (services refuse to
+  start while empty).
+- Migrations are not reversible: rolling back means restoring the backup of the databases and volumes.
 - New volume `homeapps_avatars` (`/var/data/avatars` in `accounts`): add it to `compose.prod.yaml` and to your backups
   (see `docs/deployment.md`). New routes live under `/v1`; the old paths keep working until 4.0.
 - Migrations run on start: Notifications (`InAppNotifications`), Households (`time_zone`), HomeMix (`DocumentExpiration`:

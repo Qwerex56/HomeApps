@@ -27,6 +27,7 @@ rozmawiają przez RabbitMQ (MassTransit, outbox). Każdy ma bogatą domenę i po
 Infrastructure / Api. Wspólny kod to mały kit w `src/BuildingBlocks` i kontrakty wiadomości w `src/Contracts`.
 Przed wszystkim stoi Traefik; front to Vue 3 + TypeScript, PrimeVue i Tailwind.
 
+- [docs/README.md](docs/README.md): spis dokumentacji i ścieżka czytania
 - [docs/how-a-service-is-built.md](docs/how-a-service-is-built.md): jak wygląda serwis i jak dodać kolejny
 - [docs/plugins.md](docs/plugins.md): pluginy poza tym repo (manifest, uprawnienia, paczki kitu)
 - [docs/homemix.md](docs/homemix.md): dodatki HomeMix wgrywane z aplikacji na dom albo konto (piaskownica, most, JARVIS)

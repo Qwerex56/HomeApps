@@ -89,6 +89,9 @@ What runs on GitHub:
 | --- | --- | --- |
 | `ci.yml` | Every pull request, and pushes to master | Restores, builds and tests `HomeApps.slnx` in Release. |
 | `homemix-npm.yml` | A tag `homemix-v<version>`, or by hand | Builds the HomeMix tooling, checks the official add-ons with it and publishes `@home-apps/sdk`, `@home-apps/css`, `@home-apps/vue`, `@home-apps/homemix` and `@home-apps/create-homemix` to npm (secret `NPM_TOKEN`). |
+| `release.yaml` | A push of a branch or tag `V<x>.<y>.<z>` (like `V3.0.0`) | Fails when `<Version>` in `Directory.Build.props` or `version` in `src/Web/package.json` differs from the ref name, or `CHANGELOG.md` has no section for it. Then builds and tests the solution, builds the web app and the `compose.prod.yaml` images, and creates a GitHub Release with that CHANGELOG section as notes. |
+
+Re-pushing a ref that already has a release fails at `gh release create`: delete the release first (`gh release delete V3.0.0`), then run the workflow again.
 
 If CI fails, open the failed run from the pull request's Checks tab; the step log shows the compiler or test
 error. Fix it on the same branch and push again; CI reruns by itself.
@@ -98,7 +101,7 @@ error. Fix it on the same branch and push again; CI reruns by itself.
 1. Set `<Version>` in `Directory.Build.props` and the image tags in `compose.prod.yaml` to the new version.
 2. Add the version to [CHANGELOG.md](../CHANGELOG.md), including any new setting in `.env.prod.example`.
 3. Run both smoke tests on a fresh stack ([deployment.md](deployment.md#checking-a-release-the-smoke-tests)).
-4. Tag master: `git tag -a v2.0.0 -m "HomeApps 2.0.0"`.
+4. Push the branch or tag `V2.0.0` (capital V): `release.yaml` checks the versions, builds and publishes the GitHub Release. Also tag master (3.0 refs use the capital V): `git tag -a v2.0.0 -m "HomeApps 2.0.0"`.
 5. If the HomeMix tooling changed, set the same version in the five `src/Web/homemix/*/package.json` (and the
    `@home-apps/sdk` dependency of `vue` and `cli`, `@home-apps/css` of `vue`), then push a tag `homemix-v2.4.0`: `homemix-npm.yml` publishes them.
    Authors get them with `npm create @home-apps/homemix@latest` ([homemix-authoring.md](homemix-authoring.md)).
