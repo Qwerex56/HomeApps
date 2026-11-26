@@ -1,10 +1,17 @@
 import { describe, expect, it, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
+import { createRouter, createMemoryHistory } from 'vue-router'
+import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
+import PrimeVue from 'primevue/config'
+import ToastService from 'primevue/toastservice'
+import ConfirmationService from 'primevue/confirmationservice'
 import { i18n } from '@/shared/i18n'
 import { householdPermissions, type Household } from '../api'
 import HouseholdAppsSection from '../pages/HouseholdAppsSection.vue'
+import SettingsTab from '../pages/SettingsTab.vue'
 
+vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} })
 vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: () => undefined, removeEventListener: () => undefined }))
 
 // 2.12: one "Aplikacje domu" section that holds the plugins list and the HomeMix add-ons.
@@ -44,5 +51,24 @@ describe('Aplikacje domu (2.12)', () => {
     expect(householdPermissions('Admin').edit).toBe(true)
     expect(householdPermissions('Member').edit).toBe(false)
     expect(householdPermissions('Guest').edit).toBe(false)
+  })
+
+  it.each([
+    ['Owner', true],
+    ['Admin', true],
+    ['Member', false],
+    ['Guest', false],
+  ] as const)('SettingsTab renders #apps for %s: %s', async (role, visible) => {
+    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: {} }] })
+    const wrapper = mount(SettingsTab, {
+      props: { household: { ...household, myRole: role } as Household, can: householdPermissions(role) },
+      global: {
+        plugins: [i18n, PrimeVue, ToastService, ConfirmationService, router, [VueQueryPlugin, { queryClient: new QueryClient() }]],
+        stubs: { HouseholdAppsSection: { template: '<section id="apps" />' }, InvitesTab: true },
+      },
+    })
+    await flushPromises()
+
+    expect(wrapper.find('#apps').exists()).toBe(visible)
   })
 })
