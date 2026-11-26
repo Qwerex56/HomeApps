@@ -140,6 +140,26 @@ The same goes for every command below.)
 Migrations run as the new containers start. Read [CHANGELOG.md](../CHANGELOG.md) first: a release that changes
 `.env` says so there.
 
+### Upgrading from 2.4 to 3.0
+
+3.0 adds services' routes under `/v1` (the old paths keep working until 4.0), the Devices and JARVIS services, three
+new secrets and 14 migrations. Migrations are not reversible: the way back is a restore of the backup.
+
+1. **Back up first** ([Backups](#backups)): every database, `secrets/`, `.env`, and the volumes `homeapps_homemix-packages`
+   and the new `homeapps_avatars` (profile pictures; it is created empty on the first start).
+2. **Add to `.env`** (compare with `.env.prod.example`): `JARVIS_CLIENT_SECRET`, `DEVICES_CLIENT_SECRET` and
+   `HOMEMIX_CLIENT_SECRET` (long random strings; a service refuses to start while one is empty), and `HOMEAPPS_PLUGINS`
+   (the admin "About the server" page lists no plugins without it).
+3. **Pull and start:** `git pull` (or `git checkout v3.0.0`), then `docker compose -f compose.prod.yaml up -d --build`.
+4. **Check after the start:**
+   - `docker compose -f compose.prod.yaml ps`: every service is `running`/`healthy`, none restarting.
+   - `docker compose -f compose.prod.yaml logs --tail 50 <service>` shows no migration error.
+   - Sign in; your homes, members, HomeMix add-ons, chat and todo data are still there.
+   - Admin, "O serwerze": 3.0.0 for every service and the plugins healthy.
+   - `GET /health/version` of a service answers its version.
+5. **Rollback:** `docker compose -f compose.prod.yaml down`, `git checkout v2.4.1`, restore the databases and volumes from
+   step 1, `up -d --build`.
+
 ## Plugins
 
 Apps beyond the core run from their own repositories and compose files and join this stack's network. Each one is
