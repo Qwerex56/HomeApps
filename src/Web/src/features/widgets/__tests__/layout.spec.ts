@@ -91,4 +91,14 @@ describe('widget layout', () => {
     expect(arrange([cell('a', 0, 0, 5), cell('b', 0, 1, 1)], [a, widget('b', 1)], true)[0]).toMatchObject({ w: 5 })
     expect(arrange([cell('a', 0, 0, 1), cell('b', 0, 1, 1)], [a, widget('b', 1)], true)[0]).toMatchObject({ w: 1 })
   })
+
+  it('arranging a saved layout again changes nothing, so a refetch after a save cannot move a tile back', () => {
+    const widgets = [widget('a', 4, [1, 2, 3, 4, 5, 6, 7, 8]), widget('b', 1)]
+    const saved = [cell('a', 0, 0, 5, 1), cell('b', 0, 1, 1, 1)]
+
+    const once = arrange(saved, widgets, true)
+
+    expect(once[0]).toMatchObject({ key: 'a', w: 5 })
+    expect(arrange(once, widgets, true)).toEqual(once)
+  })
 })
