@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { BoardPlace, BoardWidget, WidgetHousehold } from './board'
-import { clip, FIXED_ROWS, flow, type Cell } from './layout'
+import { clip, FIXED_ROWS, flow, SINGLE, type Cell } from './layout'
 import { GAP, useGridWidth } from './useGridWidth'
 import WidgetTile from './WidgetTile.vue'
 
@@ -24,7 +24,10 @@ const props = defineProps<{
 const root = ref<HTMLElement>()
 const { width, columnsFor, rowHeight } = useGridWidth(root)
 const cols = computed(() => props.columns ?? columnsFor(width.value))
-const rows = computed(() => FIXED_ROWS[cols.value] ?? 5)
+const rows = computed(() => {
+  const base = FIXED_ROWS[cols.value] ?? 5
+  return props.cells.length === 1 ? Math.max(base, SINGLE.h) : base
+})
 const shown = computed(() => {
   const flowed = flow(props.cells, cols.value)
   return props.fixed ? clip(flowed, rows.value) : flowed
