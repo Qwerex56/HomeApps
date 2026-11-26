@@ -489,13 +489,24 @@ in `Account`.
 
   ```
   GET /homemix/api/households/{id}/boards/{Household|Wall}   any member; no items until someone arranged it
-  PUT /homemix/api/households/{id}/boards/{Household|Wall}   { "items": [{ "key": "mix:{installationId}/{widgetId}", "x": 0, "y": 0, "w": 2, "h": 1, "fit": "Center" }] }
+  PUT /homemix/api/households/{id}/boards/{Household|Wall}   { "items": [{ "key": "mix:{installationId}/{widgetId}", "x": 0, "y": 0, "w": 2, "h": 1, "fit": "Center" }], "expectedUpdatedAt": "2026-11-26T10:00:00Z", "force": false }
   ```
 
+  `expectedUpdatedAt` is the board's `updatedAt` the editor loaded (optional, 1 ms tolerance); `force: true` overwrites
+  without the check. A board that was never arranged (`updatedAt` null) counts as a conflict for a save that sends no
+  `expectedUpdatedAt`, so two admins arranging the same empty board cannot overwrite each other silently. An empty
+  `items` list is a valid saved layout (the grid stays empty, not refilled with defaults).
+
   Keys: `core:household`, `mix:{installationId}/{widgetId}`, `plugin:{pluginId}/{widgetId}`. Widgets missing from the
-  layout go to the first free places; gone ones are skipped. Errors: `homemix.board_overlap`, `homemix.board_out_of_grid`
-  (x + w over 8, w not 1-8, h not 1-12), `homemix.board_duplicate`, `homemix.board_fit`, `homemix.board_forbidden`
-  (not an admin). Saving sends `board.changed` (`householdId`, `place`) to the household.
+  layout go to the first free places (only while the board is not yet arranged); gone ones are skipped. Errors:
+  `homemix.board_overlap`, `homemix.board_out_of_grid` (x + w over 8, w not 1-8, h not 1-12), `homemix.board_duplicate`,
+  `homemix.board_fit`, `homemix.board_forbidden` (not an admin). Conflicts are `409`:
+  - `homemix.board_conflict`: the board changed since `expectedUpdatedAt` (someone saved first). Reload the board and
+    choose again, or send the same items with `force: true`.
+  - `concurrency.conflict`: a true race, two saves hit the database at once (`WidgetBoard.UpdatedAt` is the concurrency
+    token). Reload and retry.
+
+  Saving sends `board.changed` (`householdId`, `place`) to the household.
 - **Quick links (UI 2.4.1).** Up to 8 add-ons of one's own account stand on the bar under the header, in order:
   `PUT /homemix/api/me/pins { "installations": [id, ...] }` pins those and unpins the rest; `pin` (0 first, or null)
   is in every installation. A household's add-ons and other people's cannot be pinned (`homemix.installation_not_found`).

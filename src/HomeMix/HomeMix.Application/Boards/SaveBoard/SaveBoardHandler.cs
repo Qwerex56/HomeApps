@@ -29,6 +29,12 @@ internal sealed class SaveBoardHandler(
         }
 
         var board = await boards.FindAsync(command.HouseholdId, command.Place, cancellationToken);
+        if (board is not null && !command.Force
+            && (command.ExpectedUpdatedAt is null || Math.Abs((board.UpdatedAt - command.ExpectedUpdatedAt.Value).TotalMilliseconds) > 1))
+        {
+            return Result.Fail(BoardErrors.Conflict);
+        }
+
         if (board is null)
         {
             board = WidgetBoard.Create(command.HouseholdId, command.Place);

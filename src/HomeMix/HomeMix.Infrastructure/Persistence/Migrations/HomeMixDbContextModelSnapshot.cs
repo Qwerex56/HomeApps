@@ -54,6 +54,7 @@ namespace HomeMix.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(16)");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
+                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("UpdatedBy")

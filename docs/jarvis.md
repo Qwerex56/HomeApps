@@ -44,7 +44,9 @@ Settings (`Jarvis`):
   (whole home, since midnight UTC) that the budget is spent.
 - **Actions:** in a run the gateway logs every call. `readOnlyHint` = a read (not on the card); `destructiveHint: false`
   = done and shown; anything else (MCP's default counts as destructive) is not called but waits 10 minutes for
-  `POST /jarvis/api/confirmations/{id}` `{approve}` or `AssistantConfirmed`, only from the person who asked.
+  `POST /jarvis/api/confirmations/{id}` `{approve}` or `AssistantConfirmed`, only from the person who asked. A decision
+  made on any path (the HomeApps screen, the REST call or the channel's button) publishes `AssistantResponded` for the
+  run's channel, so an external card updates live; a repeated decision on a card that is already settled gets `409`.
   The gateway keeps a tool's annotations 5 minutes per person, except a device's: those are read from Devices on every
   call, so a device's "Pytaj" / "Nie pytaj" switch works at once (H-4c).
 - **Computer tools (H-4c, H-7):** Devices marks the tools of a person's own computer with `_meta` `"homeapps/purpose": "computer"`
