@@ -88,9 +88,9 @@ export function useHouseholdBoard(household: MaybeRefOrGetter<WidgetHousehold | 
           size: w.size,
           title: localized(w.title),
           icon: `pi ${plugin.manifest.icon}`,
-          widths: [widthOf[w.size]],
+          widths: widthsFor(['Small', 'Medium', 'Large']),
           w: widthOf[w.size],
-          fixedWidth: true,
+          fixedWidth: false,
         })),
     )
     return [core, ...fromPlugins, ...mixes]
