@@ -20,6 +20,7 @@ Written only by the Coordinator (agent teams). Read it first when a session star
 | release-3.0 | Stage 4 | done (PR pending) | feat/release-3.0-stage-4 | specs/release-3.0-adr.md | 2026-11-26 |
 | fix-3.0-post-release | ADR (spec-debate) | done | | specs/fix-3.0-post-release-adr.md | 2026-11-26 |
 | fix-3.0-post-release | Stages 1-4 (HomeApps + Chat) | done (PR pending) | feat/fix-3.0-post-release | specs/fix-3.0-post-release-adr.md | 2026-11-26 |
+| jarvis-desktop-rework | ADR (spec-debate) | done | | specs/jarvis-desktop-rework-adr.md (stages S1-S4 here, D1-D4 in ../HomeApps.Desktop) | 2026-11-27 |
 
 ## Decisions
 - 2026-11-21 (owner): agy roles run directly from the Coordinator, never through a Claude subagent. Devil's Advocate on agy uses `gemini-4-argon-<effort>`.
@@ -32,3 +33,4 @@ Written only by the Coordinator (agent teams). Read it first when a session star
 
 ## Blockers
 - Argon quality as a gate, Haiku as developer and agy token measurement are not measured yet (pilots).
+- 2026-11-27 (owner): jarvis-desktop-rework Q1-Q4 per recommendation (A): pending setting waits indefinitely; server turn lease for multi-PC; full PC tool parity on macOS and Windows; history view-only.
