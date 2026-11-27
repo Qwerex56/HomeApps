@@ -170,6 +170,15 @@ run with `dotnet run --project src/Jarvis.VoiceBridge -- --server https://home-a
 `--speech local`, `--actions`, `--pair`) is in its `docs/bridge.md`. It talks to HomeApps only over `/jarvis/voice`
 and `/devices/link`.
 
+**Desktop OAuth contract (first-party client).** Confirmations (`/jarvis/api/confirmations`) refuse connected apps, so
+HomeApps.Desktop signs in as the static Auth client `homeapps-desktop` (`Auth:Clients`, type `Native`, redirect
+`http://127.0.0.1/callback`, any loopback port; not registered by DCR, whose ids are always `app_*`):
+`/auth/oauth/authorize` with `client_id=homeapps-desktop`, `response_type=code`, PKCE S256,
+`redirect_uri=http://127.0.0.1:<port>/callback`, `scope=homeapps` and **`resource=homeapps`**; `/auth/oauth/token` with the
+same `client_id`, `redirect_uri`, `code_verifier` and `resource=homeapps` (refresh: `grant_type=refresh_token`). The token's
+`aud` is `homeapps`, so the gateway, `/jarvis/voice` and the confirmations accept it. Any other app asking for
+`resource=homeapps` gets `invalid_target`. Production: `Auth__Clients__3__*` in `compose.prod.yaml`.
+
 ## Production
 
 `compose.prod.yaml` runs JARVIS next to the other services (database `homeapps_jarvis`, migrated on start). In `.env`:
