@@ -19,7 +19,7 @@ internal sealed class VoiceEndpoint : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("/jarvis/voice", async (
-            HttpContext http, ICurrentUser user, IOptions<VoiceOptions> options, IHouseholdDevices householdDevices, IServiceScopeFactory scopes, ILogger<VoiceSession> logger) =>
+            HttpContext http, ICurrentUser user, IOptions<VoiceOptions> options, IHouseholdDevices householdDevices, IServiceScopeFactory scopes, TurnLeases leases, ILogger<VoiceSession> logger) =>
         {
             // A listener with its own speech engine (S1) needs none on the server.
             var local = string.Equals(http.Request.Query["speech"], "local", StringComparison.Ordinal);
@@ -59,7 +59,7 @@ internal sealed class VoiceEndpoint : IEndpoint
             }
 
             using var socket = await http.WebSockets.AcceptWebSocketAsync();
-            using var session = new VoiceSession(socket, user.RequiredUserId, satellite, local, scopes, options.Value, logger);
+            using var session = new VoiceSession(socket, user.RequiredUserId, satellite, local, scopes, leases, options.Value, logger);
             await session.RunAsync(http.RequestAborted);
             return Results.Empty;
         }).WithTags("JARVIS");
