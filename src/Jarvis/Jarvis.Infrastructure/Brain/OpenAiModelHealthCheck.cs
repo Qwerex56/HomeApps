@@ -33,7 +33,8 @@ internal sealed partial class OpenAiModelHealthCheck(HttpClient http, IOptions<O
             using var response = await http.SendAsync(request, timeout.Token);
             response.EnsureSuccessStatusCode();
         }
-        catch (Exception exception) when (exception is HttpRequestException or OperationCanceledException && !cancellationToken.IsCancellationRequested)
+        catch (Exception exception) when (exception is HttpRequestException or UriFormatException or InvalidOperationException
+            || exception is OperationCanceledException && !cancellationToken.IsCancellationRequested)
         {
             LogUnavailable(exception);
         }

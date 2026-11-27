@@ -37,7 +37,36 @@ public sealed class OpenAiChatBrainTests(JarvisFactory factory)
         var said = await RunAsync(model, maxTurns: 3);
 
         Assert.Equal(3, model.Requests.Count);
-        Assert.Single(said.OfType<BrainFinished>());
+        Assert.Equal("JARVIS jest chwilowo niedostępny", said.OfType<BrainFinished>().Single().Text);
+    }
+
+    [Fact]
+    public async Task Keepalives_and_usage_chunks_in_the_stream_are_skipped()
+    {
+        var model = new FakeModel(["data: \n\n: ping\n\n" + FakeModel.Text("Cześć.").Replace("data: [DONE]", "data: {\"choices\":null,\"usage\":{}}\n\ndata: [DONE]")]);
+
+        var said = await RunAsync(model);
+
+        Assert.Equal("Cześć.", said.OfType<BrainFinished>().Single().Text);
+    }
+
+    [Fact]
+    public async Task Without_config_the_agent_says_he_is_switched_off_and_the_model_is_not_called()
+    {
+        var model = new FakeModel();
+        var brain = Brain(model, new OpenAiChatOptions());
+        factory.Brain.IsReady = brain.IsReady;
+        try
+        {
+            var answer = await AssistantTests.AskAsync(factory, _person, "cześć");
+
+            Assert.Equal(Jarvis.Application.Runs.Ask.Answers.SwitchedOff, answer.Text);
+            Assert.Empty(model.Requests);
+        }
+        finally
+        {
+            factory.Brain.IsReady = true;
+        }
     }
 
     [Fact]

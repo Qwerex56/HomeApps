@@ -151,7 +151,8 @@ internal sealed partial class OpenAiChatBrain(
             }
         }
 
-        yield return new BrainFinished(answer.Length == 0 ? Unavailable : answer.ToString(), settings.Model, null);
+        // The turn limit ran out with tool calls still unresolved: no half answer.
+        yield return new BrainFinished(Unavailable, settings.Model, null);
     }
 
     private async Task<McpClient> ConnectAsync(OpenAiChatOptions settings, BrainRequest request, CancellationToken cancellationToken)
@@ -243,14 +244,19 @@ internal sealed partial class OpenAiChatBrain(
             }
 
             var data = line[5..].Trim();
+            if (data.Length == 0)
+            {
+                continue;
+            }
+
             if (data == "[DONE]")
             {
                 yield break;
             }
 
             using var chunk = JsonDocument.Parse(data);
-            if (!chunk.RootElement.TryGetProperty("choices", out var choices) || choices.GetArrayLength() == 0
-                || !choices[0].TryGetProperty("delta", out var delta))
+            if (!chunk.RootElement.TryGetProperty("choices", out var choices) || choices.ValueKind != JsonValueKind.Array || choices.GetArrayLength() == 0
+                || !choices[0].TryGetProperty("delta", out var delta) || delta.ValueKind != JsonValueKind.Object)
             {
                 continue;
             }
@@ -267,7 +273,7 @@ internal sealed partial class OpenAiChatBrain(
                     var function = call.TryGetProperty("function", out var f) ? f : default;
                     yield return new Delta(
                         null,
-                        call.TryGetProperty("index", out var index) ? index.GetInt32() : 0,
+                        call.TryGetProperty("index", out var index) && index.ValueKind == JsonValueKind.Number ? index.GetInt32() : 0,
                         call.TryGetProperty("id", out var id) ? id.GetString() : null,
                         function.ValueKind == JsonValueKind.Object && function.TryGetProperty("name", out var name) ? name.GetString() : null,
                         function.ValueKind == JsonValueKind.Object && function.TryGetProperty("arguments", out var arguments) ? arguments.GetString() : null);

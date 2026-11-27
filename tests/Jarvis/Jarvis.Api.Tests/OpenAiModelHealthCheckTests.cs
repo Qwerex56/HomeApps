@@ -20,6 +20,18 @@ public sealed class OpenAiModelHealthCheckTests
     }
 
     [Fact]
+    public async Task A_malformed_URL_is_logged_as_critical_and_does_not_stop_start()
+    {
+        var log = new RecordingLogger<OpenAiModelHealthCheck>();
+        var check = new OpenAiModelHealthCheck(
+            new HttpClient(new FakeModel()), Options.Create(new OpenAiChatOptions { BaseUrl = "not a url", Model = "m" }), log);
+
+        await check.StartAsync(CancellationToken.None);
+
+        Assert.Contains(log.Entries, e => e.Level == LogLevel.Critical);
+    }
+
+    [Fact]
     public async Task A_reachable_model_logs_nothing_critical()
     {
         var log = new RecordingLogger<OpenAiModelHealthCheck>();
