@@ -16,4 +16,5 @@ public sealed record DeviceStateView(
     int? Rssi,
     long? Uptime,
     string? Firmware,
-    string? Error);
+    string? Error,
+    JsonElement? PendingSettings = null);

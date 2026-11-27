@@ -219,6 +219,9 @@ namespace Devices.Infrastructure.Persistence.Migrations
                     b.Property<bool>("LowBattery")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("PendingSettings")
+                        .HasColumnType("text");
+
                     b.Property<int?>("Rssi")
                         .HasColumnType("integer");
 

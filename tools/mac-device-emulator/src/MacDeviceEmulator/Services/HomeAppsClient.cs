@@ -125,8 +125,8 @@ public sealed class HomeAppsClient(HttpClient httpClient) : IHomeAppsClient
             return Result.Fail($"Report request failed with status {response.StatusCode}: {content}");
         }
 
-        var result = await response.Content.ReadFromJsonAsync<List<FrameResult>>(JsonOptions, cancellationToken);
-        return result is not null ? Result.Ok<IReadOnlyList<FrameResult>>(result) : Result.Fail("Empty report response");
+        var result = await response.Content.ReadFromJsonAsync<ReportResponse>(JsonOptions, cancellationToken);
+        return result?.Results is not null ? Result.Ok<IReadOnlyList<FrameResult>>(result.Results) : Result.Fail("Empty report response");
     }
 
     public async Task<Result<IReadOnlyList<VoiceActionView>>> GetPendingConfirmationsAsync(string serverUrl, string userToken, CancellationToken cancellationToken = default)

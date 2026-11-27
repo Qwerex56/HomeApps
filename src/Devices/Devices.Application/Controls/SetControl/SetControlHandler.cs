@@ -8,7 +8,7 @@ using HomeApps.Contracts.Households;
 
 namespace Devices.Application.Controls.SetControl;
 
-internal sealed class SetControlHandler(IDeviceRepository devices, IHouseholdRoles households, IDeviceLinks links)
+internal sealed class SetControlHandler(IDeviceRepository devices, IHouseholdRoles households, IDeviceLinks links, IDeviceTelemetry telemetry, IDeviceStream stream)
     : ICommandHandler<SetControlCommand>
 {
     public async Task<Result> Handle(SetControlCommand command, CancellationToken cancellationToken)
@@ -25,6 +25,27 @@ internal sealed class SetControlHandler(IDeviceRepository devices, IHouseholdRol
         }
 
         var valid = FrameValidation.CheckSet(descriptor.Value, command.Control, command.Value);
-        return valid.IsFailed ? valid : await links.SetAsync(device.Value.Id, command.Control!, command.Value!.Value, cancellationToken);
+        if (valid.IsFailed)
+        {
+            return valid;
+        }
+
+        if (descriptor.Value.Sleepy)
+        {
+            // A sleepy device keeps no link: the value waits (last one wins) and goes out with the answer to its next report.
+            var state = await telemetry.FindStateAsync(device.Value.Id, cancellationToken);
+            if (state is null)
+            {
+                state = DeviceState.For(device.Value.Id);
+                telemetry.Add(state);
+            }
+
+            state.SetPendingSetting(command.Control!, command.Value!.Value);
+            stream.Publish(new DeviceStreamMessage(
+                device.Value.HouseholdId!.Value, "changed", new { deviceId = device.Value.Id, reason = "pending_settings" }));
+            return Result.Ok();
+        }
+
+        return await links.SetAsync(device.Value.Id, command.Control!, command.Value!.Value, cancellationToken);
     }
 }

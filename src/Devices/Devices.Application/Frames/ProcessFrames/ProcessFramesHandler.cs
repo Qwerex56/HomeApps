@@ -18,9 +18,9 @@ namespace Devices.Application.Frames.ProcessFrames;
 /// </summary>
 internal sealed class ProcessFramesHandler(
     IDeviceRepository devices, IDeviceTelemetry telemetry, IDeviceStream stream, IEventBus bus, AdminNotices notices, IControlSources sources, TimeProvider time)
-    : ICommandHandler<ProcessFramesCommand, IReadOnlyList<FrameResult>>
+    : ICommandHandler<ProcessFramesCommand, ReportResponseView>
 {
-    public async Task<Result<IReadOnlyList<FrameResult>>> Handle(ProcessFramesCommand command, CancellationToken cancellationToken)
+    public async Task<Result<ReportResponseView>> Handle(ProcessFramesCommand command, CancellationToken cancellationToken)
     {
         var device = await devices.FindAsync(command.DeviceId, cancellationToken);
         if (device is not { IsPairedSatellite: true, IsDisabled: false, Descriptor: not null }
@@ -55,7 +55,7 @@ internal sealed class ProcessFramesHandler(
             device.Seen(now);
         }
 
-        return results;
+        return new ReportResponseView(results, state.GetPendingSettingsForReport());
     }
 
     private async Task<Result> ApplyStateAsync(
@@ -68,6 +68,7 @@ internal sealed class ProcessFramesHandler(
         }
 
         var changed = state.ApplyValues(frame.Values!.Value, now);
+        state.ClearPendingSettingOnState(frame.Values.Value);
         stream.Publish(new DeviceStreamMessage(device.HouseholdId!.Value, "state", new { deviceId = device.Id, values = frame.Values.Value, at = now }, MembersOnly: device.IsLocationDevice));
         if (changed is not null)
         {

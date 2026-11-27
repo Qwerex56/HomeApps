@@ -21,6 +21,10 @@ public sealed record FrameResult(
     [property: JsonPropertyName("code")] string? Code = null,
     [property: JsonPropertyName("text")] string? Text = null);
 
+public sealed record ReportResponse(
+    [property: JsonPropertyName("results")] List<FrameResult>? Results,
+    [property: JsonPropertyName("settings")] JsonElement? Settings = null);
+
 public sealed record LinkMessage(
     [property: JsonPropertyName("type")] string Type,
     [property: JsonPropertyName("device")] string? Device = null,

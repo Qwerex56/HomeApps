@@ -45,6 +45,12 @@ public sealed class DeviceState
     /// <summary>The battery is below the threshold and admins were told; ends when it recovers.</summary>
     public bool LowBattery { get; private set; }
 
+    /// <summary>
+    /// A JSON object of control values a sleepy device has not applied yet (last value wins, no queue), or <c>null</c>.
+    /// Sent with every report and cleared only when the device reports the value in a <c>state</c> frame.
+    /// </summary>
+    public string? PendingSettings { get; private set; }
+
     public static DeviceState For(Guid deviceId) => new() { DeviceId = deviceId };
 
     /// <summary>
@@ -69,6 +75,44 @@ public sealed class DeviceState
         Values = current.ToJsonString();
         ValuesAt = now;
         return changed.Count == 0 ? null : changed.ToJsonString();
+    }
+
+    /// <summary>A member set a control of a sleepy device: it replaces an earlier pending value of the same control.</summary>
+    public void SetPendingSetting(string control, JsonElement value)
+    {
+        var pending = PendingSettings is null ? new JsonObject() : JsonNode.Parse(PendingSettings)!.AsObject();
+        pending[control] = JsonNode.Parse(value.GetRawText());
+        PendingSettings = pending.ToJsonString();
+    }
+
+    /// <summary>A copy of the pending settings for the report answer; nothing is cleared here.</summary>
+    public JsonElement? GetPendingSettingsForReport() =>
+        PendingSettings is null ? null : JsonElement.Parse(PendingSettings);
+
+    /// <summary>
+    /// A <c>state</c> frame arrived: a pending setting whose value the device now reports is applied and goes away.
+    /// A different value (the device reported before it got the setting) keeps it pending. Returns whether anything went.
+    /// </summary>
+    public bool ClearPendingSettingOnState(JsonElement reportedValues)
+    {
+        if (PendingSettings is null)
+        {
+            return false;
+        }
+
+        var pending = JsonNode.Parse(PendingSettings)!.AsObject();
+        var cleared = false;
+        foreach (var reported in reportedValues.EnumerateObject())
+        {
+            if (pending.TryGetPropertyValue(reported.Name, out var wanted) && JsonNode.DeepEquals(wanted, JsonNode.Parse(reported.Value.GetRawText())))
+            {
+                pending.Remove(reported.Name);
+                cleared = true;
+            }
+        }
+
+        PendingSettings = pending.Count == 0 ? null : pending.ToJsonString();
+        return cleared;
     }
 
     private const int LowBatteryHysteresis = 5;
