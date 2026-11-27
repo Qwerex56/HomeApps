@@ -59,6 +59,19 @@ public sealed class GeneratedToolsTests
     }
 
     [Fact]
+    public void A_sleepy_device_offers_set_while_offline_because_the_value_waits_for_its_report()
+    {
+        var sleepy = PairedDevice.Create(Now, """
+            { "format": "homeapps.device/1", "model": "a/fotel", "version": "1.0.0", "purpose": "smart_home", "sleepy": true,
+              "controls": [ { "name": "heating", "value": { "type": "integer", "minimum": 0, "maximum": 3 } } ] }
+            """);
+
+        var names = GeneratedTools.For(Reach(sleepy), online: false).Select(t => t.Name);
+
+        Assert.Contains("fotel_set", names);
+    }
+
+    [Fact]
     public void A_device_without_controls_offers_no_set()
     {
         var device = PairedDevice.Create(Now, descriptor: """{ "format": "homeapps.device/1", "model": "a/b", "version": "1", "purpose": "assistant" }""");
