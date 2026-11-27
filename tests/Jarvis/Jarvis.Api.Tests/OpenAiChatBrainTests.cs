@@ -67,7 +67,23 @@ public sealed class OpenAiChatBrainTests(JarvisFactory factory)
         Assert.DoesNotContain("\"tak\"", Jarvis.Application.Common.Prompts.Spoken, StringComparison.Ordinal);
     }
 
-    private async Task<List<BrainEvent>> RunAsync(FakeModel model, int maxTurns = 8, TimeSpan? timeout = null)
+    [Fact]
+    public async Task A_general_question_is_sent_with_the_scope_rule_and_answered_with_the_refusal_without_a_tool_call()
+    {
+        const string refusal = "Pomagam tylko w sprawach domu w HomeApps, np. listy, plan, urządzenia. W czym mogę pomóc?";
+        var model = new FakeModel([FakeModel.Text(refusal)]);
+
+        var said = await RunAsync(model, system: Jarvis.Application.Common.Prompts.SystemFor("app"), prompt: "napisz wypracowanie o Wojnie Trzydziestoletniej");
+
+        Assert.Single(model.Requests);
+        var messages = model.Requests[0]["messages"]!.AsArray();
+        Assert.Equal("system", messages[0]!["role"]!.GetValue<string>());
+        Assert.Contains("ZASADA ZAKRESU", messages[0]!["content"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.DoesNotContain(messages, m => m!["role"]!.GetValue<string>() == "tool");
+        Assert.Equal(refusal, said.OfType<BrainFinished>().Single().Text);
+    }
+
+    private async Task<List<BrainEvent>> RunAsync(FakeModel model, int maxTurns = 8, TimeSpan? timeout = null, string system = "system", string prompt = "dodaj mleko")
     {
         var brain = Brain(model, new OpenAiChatOptions
         {
@@ -77,7 +93,7 @@ public sealed class OpenAiChatBrainTests(JarvisFactory factory)
             GatewayUrl = "http://localhost/jarvis/mcp",
             Timeout = timeout ?? TimeSpan.FromSeconds(15),
         });
-        var request = new BrainRequest(Guid.NewGuid(), "system", "dodaj mleko", TestJwt.CreateToken(_person));
+        var request = new BrainRequest(Guid.NewGuid(), system, prompt, TestJwt.CreateToken(_person));
         var said = new List<BrainEvent>();
         await foreach (var e in brain.RunAsync(request, CancellationToken.None))
         {
