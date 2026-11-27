@@ -80,6 +80,8 @@ household's JARVIS is off or its Devices switch is off (H-2), or Devices does no
   household ceiling work whatever a device writes.
 - **Voice:** a satellite token opens `/jarvis/voice` only when Devices lists that device with purpose `assistant` (403 otherwise, 503 when
   Devices cannot be asked).
+- **Turn lease:** one turn per person at a time. A second listener on `/jarvis/voice` gets `lease_conflict` (`turn_in_progress`)
+  and stays quiet until the turn ends; the lease renews while the turn runs and expires after five seconds without renewal.
 
 ## Conversations in the app (J2c)
 
@@ -174,7 +176,7 @@ and `/devices/link`.
 HomeApps.Desktop signs in as the static Auth client `homeapps-desktop` (`Auth:Clients`, type `Native`, redirect
 `http://127.0.0.1/callback`, any loopback port; not registered by DCR, whose ids are always `app_*`):
 `/auth/oauth/authorize` with `client_id=homeapps-desktop`, `response_type=code`, PKCE S256,
-`redirect_uri=http://127.0.0.1:<port>/callback`, `scope=homeapps` and **`resource=homeapps`**; `/auth/oauth/token` with the
+`redirect_uri=http://127.0.0.1:<port>/callback` and **`resource=homeapps`** (no `scope` parameter is sent or read); `/auth/oauth/token` with the
 same `client_id`, `redirect_uri`, `code_verifier` and `resource=homeapps` (refresh: `grant_type=refresh_token`). The token's
 `aud` is `homeapps`, so the gateway, `/jarvis/voice` and the confirmations accept it. Any other app asking for
 `resource=homeapps` gets `invalid_target`. Production: `Auth__Clients__3__*` in `compose.prod.yaml`.

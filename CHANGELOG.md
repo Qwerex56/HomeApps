@@ -4,6 +4,20 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 
 ## 3.0.1 (unreleased)
 
+### Changed
+
+- **JARVIS brain (S1 desktop rework):** the answers come from any OpenAI-compatible endpoint with tool calling
+  (`JARVIS_MODEL_BASE_URL`, `JARVIS_MODEL_NAME`, `JARVIS_MODEL_API_KEY`, `Jarvis__OpenAi__MaxTurns`) instead of Claude Code
+  (`JARVIS_CLAUDE_CODE_OAUTH_TOKEN` and `JARVIS_CLAUDE_MODEL` are no longer used). Claude Code can still connect to the gateway.
+- **Scope refusal:** JARVIS refuses requests outside the person's scope instead of acting on them.
+- **On-screen confirmations:** actions that need a confirmation show a card on the desktop app; the answer goes back to the
+  same run.
+- **Voice turn lease:** a second listener on `/jarvis/voice` gets `lease_conflict` (`turn_in_progress`) and stays quiet
+  while a turn runs.
+- **Message channel:** JARVIS messages carry a `Channel` field, so the chat and voice paths can be told apart.
+- **Desktop sign-in:** HomeApps.Desktop uses the first-party Auth client `homeapps-desktop` (PKCE, loopback redirect,
+  `resource=homeapps`); confirmations refuse connected apps. See `docs/jarvis.md`.
+
 ### Fixed
 
 - **Confirmations everywhere:** a decision on a JARVIS action card (HomeApps, REST or the chat channel) now updates the
