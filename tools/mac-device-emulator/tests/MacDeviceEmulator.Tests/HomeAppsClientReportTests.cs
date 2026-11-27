@@ -19,7 +19,7 @@ public sealed class HomeAppsClientReportTests
             });
     }
 
-    private static async Task<Result<IReadOnlyList<FrameResult>>> ReportAsync(string body)
+    private static async Task<Result<ReportResponse>> ReportAsync(string body)
     {
         var client = new HomeAppsClient(new HttpClient(new StubHandler(body)));
         return await client.SendReportAsync("http://localhost:5000", "token", [new DeviceFrame("status")]);
@@ -31,8 +31,9 @@ public sealed class HomeAppsClientReportTests
         var result = await ReportAsync("""{ "results": [ { "ok": true } ], "settings": { "heating": 3 } }""");
 
         Assert.True(result.IsSuccess);
-        Assert.Single(result.Value);
-        Assert.True(result.Value[0].Ok);
+        Assert.Single(result.Value.Results!);
+        Assert.True(result.Value.Results![0].Ok);
+        Assert.Equal(3, result.Value.Settings!.Value.GetProperty("heating").GetInt32());
     }
 
     [Fact]
@@ -41,6 +42,6 @@ public sealed class HomeAppsClientReportTests
         var result = await ReportAsync("""{ "results": [ { "ok": false, "code": "devices.invalid_frame", "text": "bad" } ], "settings": null }""");
 
         Assert.True(result.IsSuccess);
-        Assert.False(result.Value[0].Ok);
+        Assert.False(result.Value.Results![0].Ok);
     }
 }
