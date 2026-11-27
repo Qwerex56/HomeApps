@@ -100,4 +100,33 @@ public sealed class SleepyDownlinkTests
 
         Assert.Equal(3, answer.Settings!.Value.GetProperty("heating").GetInt32());
     }
+
+    [Theory]
+    [InlineData("3.0")]
+    [InlineData("3")]
+    public async Task A_reported_number_equal_in_value_clears_the_setting_whatever_its_spelling(string reported)
+    {
+        await SetAsync("3");
+
+        var answer = await ReportAsync(new DeviceFrame("state", Values: Json($$"""{ "heating": {{reported}} }""")));
+
+        Assert.Null(answer.Settings);
+    }
+
+    [Fact]
+    public async Task A_device_removed_while_a_change_waits_takes_no_more_settings_and_reports_are_refused()
+    {
+        await SetAsync("3");
+        _device.Disable(Now);
+
+        var set = await SetAsync("2");
+        var report = await new ProcessFramesHandler(
+            _devices, _telemetry, _stream, new FakeBus(),
+            new AdminNotices(new FakeDirectory(), new FakeBus(), Microsoft.Extensions.Logging.Abstractions.NullLogger<AdminNotices>.Instance),
+            new RecentControlSources(_time), _time).Handle(new ProcessFramesCommand(_device.Id, [new DeviceFrame("status")]), CancellationToken.None);
+
+        Assert.True(set.IsFailed);
+        Assert.True(report.IsFailed);
+        Assert.Equal("""{"heating":3}""", _telemetry.States[_device.Id].PendingSettings);
+    }
 }

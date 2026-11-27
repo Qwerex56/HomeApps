@@ -132,7 +132,7 @@ report and the `silent`/`lowBattery` flags) and the events (`DeviceEvents`). For
 | GET | `/devices/{id}/state` | guest and above | `{deviceId, values, valuesAt, online, silent, lowBattery, lastStatusAt, battery, voltage, rssi, uptime, firmware, error}` |
 | GET | `/devices/{id}/events?skip=0&limit=50` | member and above | the device's events, newest first, `limit` 1 to 200: `[{id, name, data, occurredAt, isLocation}]` (403 `devices.members_only` for a guest, D9) |
 | POST | `/devices/{id}/set` | member and above | `{"control": "level", "value": 3}`: checked against the control's schema, sent as `set`, answers when the device did (403 `devices.read_only` for a guest, 409 `devices.offline`, 404 `devices.control_not_found`) |
-| POST | `/devices/report` | the device's own token | an array of frames (at most 50, 64 KB), answers a result per frame |
+| POST | `/devices/report` | the device's own token | an array of frames (at most 50, 64 KB), answers `{results, settings}`: a result per frame, and the control values of a sleepy device that wait for it (`null` when none) |
 | GET | `/devices/households/{householdId}/stream` | guest and above | Server-Sent Events, see below |
 
 ### Finding devices (H-4a)
