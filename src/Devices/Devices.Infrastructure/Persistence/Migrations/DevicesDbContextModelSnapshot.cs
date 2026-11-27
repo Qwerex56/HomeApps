@@ -238,6 +238,12 @@ namespace Devices.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("ValuesAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.Property<double?>("Voltage")
                         .HasColumnType("double precision");
 

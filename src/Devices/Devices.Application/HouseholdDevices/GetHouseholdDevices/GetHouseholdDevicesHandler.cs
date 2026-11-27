@@ -43,6 +43,7 @@ internal sealed class GetHouseholdDevicesHandler(IDeviceRepository devices, IHou
         var (values, valuesAt) = StateValues.Of(device, state, role);
         return new DeviceStateView(
             device.Id, values, valuesAt, !device.IsDisabled && links.IsOnline(device.Id), state?.Silent ?? false, state?.LowBattery ?? false,
-            state?.LastStatusAt, state?.Battery, state?.Voltage, state?.Rssi, state?.Uptime, state?.Firmware, state?.Error);
+            state?.LastStatusAt, state?.Battery, state?.Voltage, state?.Rssi, state?.Uptime, state?.Firmware, state?.Error,
+            state?.GetPendingSettingsForReport());
     }
 }
