@@ -4,6 +4,15 @@ Versions follow [Semantic Versioning](https://semver.org). Tags are `v<version>`
 
 ## 3.0.1 (unreleased)
 
+### Added
+
+- **Settings for sleepy household devices (H-4 S2):** a control changed on a battery device that sleeps is kept by the
+  server (`pendingSettings` on `GET /devices/{id}/state`) and sent back in the answer of `POST /devices/report`, now
+  `{results, settings}` (the frame results are unchanged). The device clears a value when it reports it in a `state`
+  frame. The web app shows such a control as "Czeka na urządzenie" until then, JARVIS can set sleepy devices, a silent
+  sleepy device stays controllable, and the state carries a row version. The emulator applies received settings; the
+  firmware side arrives with the next stage. See `docs/devices.md` and `docs/devices-protocol.md`.
+
 ### Fixed
 
 - **Confirmations everywhere:** a decision on a JARVIS action card (HomeApps, REST or the chat channel) now updates the
