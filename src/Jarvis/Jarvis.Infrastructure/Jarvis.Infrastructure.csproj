@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- JARVIS adapters: Postgres, messages, Auth's delegation endpoint, plugin manifests, MCP clients, the Claude Code brain. -->
+  <!-- JARVIS adapters: Postgres, messages, Auth's delegation endpoint, plugin manifests, MCP clients, the OpenAI-compatible brain. -->
   <ItemGroup>
     <ProjectReference Include="..\Jarvis.Application\Jarvis.Application.csproj" />
     <ProjectReference Include="..\..\BuildingBlocks\HomeApps.BuildingBlocks.Infrastructure\HomeApps.BuildingBlocks.Infrastructure.csproj" />
