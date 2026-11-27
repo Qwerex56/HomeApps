@@ -106,6 +106,18 @@ public sealed class AssistantTests(JarvisFactory factory) : IDisposable
     }
 
     [Fact]
+    public async Task The_desktop_app_with_a_gateway_token_can_list_and_decide_confirmations_unlike_other_connected_apps()
+    {
+        var desktop = factory.CreateClient(TestJwt.CreateAppToken(_person, JarvisFactory.Resource, "homeapps-desktop"));
+
+        var list = await desktop.GetAsync("/jarvis/api/confirmations");
+        var decide = await desktop.PostAsJsonAsync($"/jarvis/api/confirmations/{Guid.NewGuid()}", new { approve = true });
+
+        Assert.Equal(HttpStatusCode.OK, list.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, decide.StatusCode);
+    }
+
+    [Fact]
     public async Task A_first_party_user_with_client_id_can_list_confirmations()
     {
         var firstPartyToken = TestJwt.CreateTokenWithClient(_person, clientId: "homeapps-web");

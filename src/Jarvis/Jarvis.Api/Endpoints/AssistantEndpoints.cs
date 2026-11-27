@@ -8,6 +8,7 @@ using Jarvis.Api.Requests;
 using Jarvis.Application.Actions.Decide;
 using Jarvis.Application.Actions.ListPendingConfirmations;
 using Jarvis.Application.Common;
+using Jarvis.Application.Gateway;
 using Jarvis.Application.Runs.Ask;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -36,9 +37,9 @@ internal sealed class AssistantEndpoints : IEndpoint
             (await sender.Send(new AskCommand(user.RequiredUserId, body.Text, body.HouseholdId, "app", null, []), ct)).ToHttpResult())
             .Produces<AnswerView>();
 
-        api.MapGet("/confirmations", async (bool? pending, HttpContext http, ICurrentUser user, ISender sender, IOptions<JwtOptions> jwt, CancellationToken ct) =>
+        api.MapGet("/confirmations", async (bool? pending, HttpContext http, ICurrentUser user, ISender sender, IOptions<JwtOptions> jwt, IOptions<GatewayOptions> gateway, CancellationToken ct) =>
         {
-            if (IsConnectedApp(http, jwt.Value))
+            if (IsConnectedApp(http, jwt.Value, gateway.Value))
             {
                 return Result.Fail(ConnectedAppForbidden).ToHttpResult();
             }
@@ -52,9 +53,9 @@ internal sealed class AssistantEndpoints : IEndpoint
         })
         .Produces<IReadOnlyList<ActionView>>();
 
-        api.MapPost("/confirmations/{id:guid}", async (Guid id, DecisionRequest body, HttpContext http, ICurrentUser user, ISender sender, IOptions<JwtOptions> jwt, CancellationToken ct) =>
+        api.MapPost("/confirmations/{id:guid}", async (Guid id, DecisionRequest body, HttpContext http, ICurrentUser user, ISender sender, IOptions<JwtOptions> jwt, IOptions<GatewayOptions> gateway, CancellationToken ct) =>
         {
-            if (IsConnectedApp(http, jwt.Value))
+            if (IsConnectedApp(http, jwt.Value, gateway.Value))
             {
                 return Result.Fail(ConnectedAppForbidden).ToHttpResult();
             }
@@ -64,8 +65,13 @@ internal sealed class AssistantEndpoints : IEndpoint
         .Produces<ActionView>();
     }
 
-    private static bool IsConnectedApp(HttpContext context, JwtOptions jwt) =>
+    /// <summary>A token of the person's own audience is first-party, and so is HomeApps.Desktop's (its client id); any other is a connected app's.</summary>
+    private static bool IsConnectedApp(HttpContext context, JwtOptions jwt, GatewayOptions gateway) =>
         !context.User.Claims.Any(c =>
             (c.Type == ClaimNames.Audience || c.Type == "aud")
-            && string.Equals(c.Value, jwt.Audience, StringComparison.Ordinal));
+            && string.Equals(c.Value, jwt.Audience, StringComparison.Ordinal))
+        && !context.User.Claims.Any(c =>
+            c.Type == ClaimNames.ClientId
+            && !string.IsNullOrWhiteSpace(gateway.DesktopClientId)
+            && string.Equals(c.Value, gateway.DesktopClientId, StringComparison.Ordinal));
 }
