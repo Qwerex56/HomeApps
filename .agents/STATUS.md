@@ -21,6 +21,7 @@ Written only by the Coordinator (agent teams). Read it first when a session star
 | fix-3.0-post-release | ADR (spec-debate) | done | | specs/fix-3.0-post-release-adr.md | 2026-11-26 |
 | fix-3.0-post-release | Stages 1-4 (HomeApps + Chat) | done (PR pending) | feat/fix-3.0-post-release | specs/fix-3.0-post-release-adr.md | 2026-11-26 |
 | jarvis-desktop-rework | ADR (spec-debate) | done | | specs/jarvis-desktop-rework-adr.md (stages S1-S4 here, D1-D4 in ../HomeApps.Desktop) | 2026-11-27 |
+| jarvis-desktop-rework | S2 | done (PR pending) | feat/jarvis-desktop-rework-s2 | specs/jarvis-desktop-rework-adr.md | 2026-11-27 |
 
 ## Decisions
 - 2026-11-21 (owner): agy roles run directly from the Coordinator, never through a Claude subagent. Devil's Advocate on agy uses `gemini-4-argon-<effort>`.
