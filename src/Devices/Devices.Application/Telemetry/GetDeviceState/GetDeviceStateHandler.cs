@@ -22,6 +22,7 @@ internal sealed class GetDeviceStateHandler(IDeviceRepository devices, IDeviceTe
         var (values, valuesAt) = StateValues.Of(device.Value, state, await households.GetRoleAsync(device.Value.HouseholdId!.Value, cancellationToken));
         return new DeviceStateView(
             device.Value.Id, values, valuesAt, links.IsOnline(device.Value.Id), state?.Silent ?? false, state?.LowBattery ?? false,
-            state?.LastStatusAt, state?.Battery, state?.Voltage, state?.Rssi, state?.Uptime, state?.Firmware, state?.Error);
+            state?.LastStatusAt, state?.Battery, state?.Voltage, state?.Rssi, state?.Uptime, state?.Firmware, state?.Error,
+            state?.GetPendingSettingsForReport());
     }
 }

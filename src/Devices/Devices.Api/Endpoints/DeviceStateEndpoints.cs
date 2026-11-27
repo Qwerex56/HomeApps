@@ -72,7 +72,7 @@ internal sealed class DeviceStateEndpoints : IEndpoint
             .RequireRateLimiting(DependencyInjection.ReportRateLimit)
             .WithMetadata(new RequestSizeLimitAttribute(MaxReportBytes))
             .WithTags("Devices")
-            .Produces<IReadOnlyList<FrameResult>>();
+            .Produces<ReportResponseView>();
 
         devices.MapGet("/households/{householdId:guid}/stream", async (Guid householdId, ISender sender, DeviceStream stream, IConfiguration configuration, CancellationToken ct) =>
         {

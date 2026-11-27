@@ -116,7 +116,7 @@ internal sealed partial class LinkSession(WebSocket socket, DeviceLinks links, I
             {
                 refusal = Refusal(processed.Errors[0] is AppError app ? app.Code : "devices.invalid_frame", processed.Errors[0].Message);
             }
-            else if (processed.Value[0] is { Ok: false } refused)
+            else if (processed.Value.Results[0] is { Ok: false } refused)
             {
                 refusal = Refusal(refused.Code, refused.Text);
             }

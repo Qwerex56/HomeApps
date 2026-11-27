@@ -12,12 +12,14 @@ public sealed class SetControlTests
 
     private readonly FakeDevices _devices = new();
     private readonly FakeLinks _links = new();
+    private readonly FakeTelemetry _telemetry = new();
+    private readonly FakeStream _stream = new();
     private readonly Device _device = PairedDevice.Create(Now);
 
     public SetControlTests() => _devices.Add(_device);
 
     private Task<FluentResults.Result> SetAsync(HouseholdRole? role, string control, string value) =>
-        new SetControlHandler(_devices, new FakeRoles(role), _links)
+        new SetControlHandler(_devices, new FakeRoles(role), _links, _telemetry, _stream)
             .Handle(new SetControlCommand(_device.Id, control, JsonElement.Parse(value)), CancellationToken.None);
 
     [Theory]

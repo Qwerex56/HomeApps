@@ -27,7 +27,7 @@ public interface IHomeAppsClient
 
     Task<Result<string>> GetDeviceTokenAsync(string serverUrl, Guid deviceId, string secret, CancellationToken cancellationToken = default);
 
-    Task<Result<IReadOnlyList<FrameResult>>> SendReportAsync(string serverUrl, string token, IReadOnlyList<DeviceFrame> frames, CancellationToken cancellationToken = default);
+    Task<Result<ReportResponse>> SendReportAsync(string serverUrl, string token, IReadOnlyList<DeviceFrame> frames, CancellationToken cancellationToken = default);
 
     Task<Result<IReadOnlyList<VoiceActionView>>> GetPendingConfirmationsAsync(string serverUrl, string userToken, CancellationToken cancellationToken = default);
 
@@ -101,7 +101,7 @@ public sealed class HomeAppsClient(HttpClient httpClient) : IHomeAppsClient
         return result is not null ? Result.Ok(result.Token) : Result.Fail("Empty token response");
     }
 
-    public async Task<Result<IReadOnlyList<FrameResult>>> SendReportAsync(string serverUrl, string token, IReadOnlyList<DeviceFrame> frames, CancellationToken cancellationToken = default)
+    public async Task<Result<ReportResponse>> SendReportAsync(string serverUrl, string token, IReadOnlyList<DeviceFrame> frames, CancellationToken cancellationToken = default)
     {
         var url = $"{serverUrl.TrimEnd('/')}/devices/v1/report";
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
@@ -125,8 +125,8 @@ public sealed class HomeAppsClient(HttpClient httpClient) : IHomeAppsClient
             return Result.Fail($"Report request failed with status {response.StatusCode}: {content}");
         }
 
-        var result = await response.Content.ReadFromJsonAsync<List<FrameResult>>(JsonOptions, cancellationToken);
-        return result is not null ? Result.Ok<IReadOnlyList<FrameResult>>(result) : Result.Fail("Empty report response");
+        var result = await response.Content.ReadFromJsonAsync<ReportResponse>(JsonOptions, cancellationToken);
+        return result?.Results is not null ? Result.Ok(result) : Result.Fail("Empty report response");
     }
 
     public async Task<Result<IReadOnlyList<VoiceActionView>>> GetPendingConfirmationsAsync(string serverUrl, string userToken, CancellationToken cancellationToken = default)

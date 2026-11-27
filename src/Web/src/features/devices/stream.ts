@@ -9,6 +9,7 @@ export type DeviceStreamChangedReason =
   | 'restored'
   | 'paired'
   | 'descriptor'
+  | 'pending_settings'
 
 export type DeviceStreamEvent =
   | { type: 'ping' }

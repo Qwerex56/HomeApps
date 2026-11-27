@@ -103,6 +103,13 @@ public static class Descriptors
         { "type": "power" }
       ],
       "jarvis": "Mac battery smart home test device reporting real battery via pmset every 60s.",
+      "controls": [
+        {
+          "name": "level",
+          "label": "Level",
+          "value": { "type": "integer", "minimum": 0, "maximum": 3 }
+        }
+      ],
       "sensors": [
         {
           "name": "battery",

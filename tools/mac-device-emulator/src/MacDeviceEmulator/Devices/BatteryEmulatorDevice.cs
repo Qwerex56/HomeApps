@@ -12,10 +12,14 @@ public sealed class BatteryEmulatorDevice(
     string configPath,
     string? pairingCode,
     IHomeAppsClient client,
-    IMacSystem macSystem) : IEmulatorDevice
+    IMacSystem macSystem,
+    TimeSpan? wakeInterval = null) : IEmulatorDevice
 {
     public string DeviceKey => "battery";
     public string Name => "Mac Battery (test)";
+
+    // Settings the server handed out in a report: applied now, reported in the next state frame (which clears them there).
+    private readonly Dictionary<string, JsonElement> _applied = [];
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {
@@ -84,17 +88,23 @@ public sealed class BatteryEmulatorDevice(
                 var batteryLevel = await macSystem.GetBatteryLevelAsync(cancellationToken);
 
                 var frames = new List<DeviceFrame>();
-                if (batteryLevel.HasValue)
+                if (batteryLevel.HasValue || _applied.Count > 0)
                 {
-                    var stateValues = new Dictionary<string, object>
+                    var stateValues = new Dictionary<string, object>();
+                    if (batteryLevel.HasValue)
                     {
-                        ["battery"] = batteryLevel.Value
-                    };
+                        stateValues["battery"] = batteryLevel.Value;
+                    }
+
+                    foreach (var applied in _applied)
+                    {
+                        stateValues[applied.Key] = applied.Value;
+                    }
                     // Clone: the frames are serialized after this block, when a `using` document would already be disposed.
                     using var stateDoc = JsonDocument.Parse(JsonSerializer.Serialize(stateValues));
                     frames.Add(new(Type: "state", Values: stateDoc.RootElement.Clone()));
-                    frames.Add(new(Type: "status", Battery: batteryLevel.Value));
-                    Console.WriteLine($"[{Name}] Sending POST /devices/report (battery: {batteryLevel.Value}%)...");
+                    frames.Add(new(Type: "status", Battery: batteryLevel));
+                    Console.WriteLine($"[{Name}] Sending POST /devices/report (battery: {batteryLevel}%)...");
                 }
                 else
                 {
@@ -114,7 +124,15 @@ public sealed class BatteryEmulatorDevice(
                 }
                 else
                 {
-                    Console.WriteLine($"[{Name}] Report accepted successfully ({reportResult.Value.Count} frames acknowledged).");
+                    Console.WriteLine($"[{Name}] Report accepted successfully ({reportResult.Value.Results!.Count} frames acknowledged).");
+                    if (reportResult.Value.Settings is { ValueKind: JsonValueKind.Object } settings)
+                    {
+                        foreach (var setting in settings.EnumerateObject())
+                        {
+                            _applied[setting.Name] = setting.Value.Clone();
+                            Console.WriteLine($"[{Name}] Applied setting {setting.Name} = {setting.Value}; it is reported on the next wake.");
+                        }
+                    }
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -124,8 +142,9 @@ public sealed class BatteryEmulatorDevice(
                 continue;
             }
 
-            Console.WriteLine($"[{Name}] Sleeping for 60 seconds (wake interval)...");
-            await Task.Delay(TimeSpan.FromSeconds(60), cancellationToken);
+            var sleep = wakeInterval ?? TimeSpan.FromSeconds(60);
+            Console.WriteLine($"[{Name}] Sleeping for {sleep.TotalSeconds:0} seconds (wake interval)...");
+            await Task.Delay(sleep, cancellationToken);
         }
     }
 }

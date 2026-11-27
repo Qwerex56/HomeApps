@@ -35,7 +35,7 @@ public sealed class ProcessFramesTests
     private static JsonElement Json(string json) => JsonElement.Parse(json);
 
     private async Task<IReadOnlyList<FrameResult>> SendAsync(params DeviceFrame[] frames) =>
-        (await _handler.Handle(new ProcessFramesCommand(_device.Id, frames), CancellationToken.None)).Value;
+        (await _handler.Handle(new ProcessFramesCommand(_device.Id, frames), CancellationToken.None)).Value.Results;
 
     [Fact]
     public async Task State_is_stored_with_its_time_and_streamed()

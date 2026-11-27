@@ -16,6 +16,8 @@ const props = defineProps<{
   value: unknown
   disabledReason: string | null
   pending: boolean
+  /** A sleepy device has not applied the value yet; the server keeps it until the device reports. */
+  awaitingDevice?: boolean
 }>()
 const emit = defineEmits<{ set: [value: unknown] }>()
 const { t } = useI18n()
@@ -38,7 +40,7 @@ const kind = computed<'switch' | 'slider' | 'select' | 'button' | 'number' | 'te
   return 'text'
 })
 
-const isDisabled = computed(() => !!props.disabledReason || props.pending)
+const isDisabled = computed(() => !!props.disabledReason || props.pending || props.awaitingDevice)
 const labelText = computed(() => props.control.label || props.control.name)
 
 // Slider local drag position so sliding is smooth while only committing on release (no optimistic cache write).
@@ -96,7 +98,11 @@ function commitButton() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-1.5 py-1.5" :data-testid="`control-${control.name}`">
+  <div
+    class="flex flex-col gap-1.5 py-1.5"
+    :data-testid="`control-${control.name}`"
+    :aria-busy="pending || awaitingDevice ? 'true' : undefined"
+  >
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div class="min-w-0">
         <div class="text-sm font-medium">{{ labelText }}</div>
@@ -104,7 +110,10 @@ function commitButton() {
       </div>
 
       <div class="flex items-center gap-2">
-        <span v-if="pending" class="text-xs text-muted-color" data-testid="control-pending">
+        <span v-if="awaitingDevice" class="text-xs text-muted-color" data-testid="control-awaiting-device">
+          {{ t('devices.controls.awaitingDevice') }}
+        </span>
+        <span v-else-if="pending" class="text-xs text-muted-color" data-testid="control-pending">
           {{ t('devices.controls.pending') }}
         </span>
 

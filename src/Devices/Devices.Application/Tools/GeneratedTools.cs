@@ -54,7 +54,8 @@ internal static class GeneratedTools
         var household = device.HouseholdId;
         var about = About(device);
         yield return new DeviceTool(reachable.ToolName(State), $"Last known values and health (online, silent, battery) of {about}", null, true, false, household);
-        if (online && !Blocks(device, jarvisCaller) && Controls(device) is { Count: > 0 } controls)
+        if ((online || (device.Descriptor is not null && DescriptorParser.Parse(device.Descriptor) is { IsSuccess: true, Value.Sleepy: true }))
+            && !Blocks(device, jarvisCaller) && Controls(device) is { Count: > 0 } controls)
         {
             yield return new DeviceTool(reachable.ToolName(Set), $"Set one control of {about} Controls: {Listed(controls)}", SetSchema(controls), false, device.JarvisAsks, household);
         }

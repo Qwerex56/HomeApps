@@ -248,7 +248,7 @@ public sealed class DevicesTests
         mac.GetBatteryLevelAsync(Arg.Any<CancellationToken>()).Returns(91);
 
         client.SendReportAsync("http://localhost:5000", "bat-token", Arg.Any<IReadOnlyList<DeviceFrame>>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Ok<IReadOnlyList<FrameResult>>(new List<FrameResult> { new(true), new(true) }));
+            .Returns(Result.Ok(new ReportResponse(new List<FrameResult> { new(true), new(true) })));
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
         var tempConfig = Path.Combine(Path.GetTempPath(), $"bat-test-{Guid.NewGuid():N}.json");
@@ -278,6 +278,45 @@ public sealed class DevicesTests
             frames.Any(f => f.Type == "state") &&
             frames.Any(f => f.Type == "status" && f.Battery == 91)
         ), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Sleepy_battery_device_applies_settings_from_a_report_and_reports_the_value_next_wake()
+    {
+        var client = Substitute.For<IHomeAppsClient>();
+        var mac = Substitute.For<IMacSystem>();
+        var storage = new EmulatorStorage();
+        var deviceId = Guid.NewGuid();
+        storage.Devices["battery"] = new PairedDeviceState
+        {
+            DeviceId = deviceId, HouseholdId = Guid.NewGuid(), Name = "Mac Battery (test)", Secret = "sec", Slug = "mac-battery-test", Purpose = "smart_home",
+        };
+        client.GetDeviceTokenAsync(Arg.Any<string>(), deviceId, "sec", Arg.Any<CancellationToken>()).Returns(Result.Ok("bat-token"));
+        mac.GetBatteryLevelAsync(Arg.Any<CancellationToken>()).Returns(80);
+
+        var reports = new List<IReadOnlyList<DeviceFrame>>();
+        client.SendReportAsync(Arg.Any<string>(), "bat-token", Arg.Do<IReadOnlyList<DeviceFrame>>(f => reports.Add(f)), Arg.Any<CancellationToken>())
+            .Returns(
+                Result.Ok(new ReportResponse([new(true), new(true)], System.Text.Json.JsonDocument.Parse("""{ "level": 3 }""").RootElement.Clone())),
+                Result.Ok(new ReportResponse([new(true), new(true)])));
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(1500));
+        var tempConfig = Path.Combine(Path.GetTempPath(), $"bat-set-{Guid.NewGuid():N}.json");
+        try
+        {
+            await new BatteryEmulatorDevice("http://localhost:5000", storage, tempConfig, null, client, mac, TimeSpan.FromMilliseconds(100)).RunAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            if (File.Exists(tempConfig)) File.Delete(tempConfig);
+        }
+
+        Assert.True(reports.Count >= 2);
+        Assert.DoesNotContain("level", reports[0].First(f => f.Type == "state").Values!.Value.GetRawText(), StringComparison.Ordinal);
+        Assert.Equal(3, reports[1].First(f => f.Type == "state").Values!.Value.GetProperty("level").GetInt32());
     }
 
     [Fact]
@@ -550,7 +589,7 @@ public sealed class DevicesTests
 
         IReadOnlyList<DeviceFrame>? capturedFrames = null;
         client.SendReportAsync(Arg.Any<string>(), "bat-token", Arg.Do<IReadOnlyList<DeviceFrame>>(f => capturedFrames = f), Arg.Any<CancellationToken>())
-            .Returns(Result.Ok<IReadOnlyList<FrameResult>>(new List<FrameResult> { new(true) }));
+            .Returns(Result.Ok(new ReportResponse(new List<FrameResult> { new(true) })));
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
         var tempConfig = Path.Combine(Path.GetTempPath(), $"bat-nobat-{Guid.NewGuid():N}.json");
