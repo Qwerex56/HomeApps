@@ -15,7 +15,7 @@ parytecie; kolejność platform macOS → Windows → Linux → Android.
 ma historii rozmów, JARVIS odpowiada na wszystko i działa tylko na jednym modelu, a urządzenia na baterii nie
 dostają ustawień z domu.
 **Efekt:** JARVIS słucha w tle (na słowo albo ciągle), pokazuje się tylko ikoną w trayu / na pasku menu, ma log
-rozmów, eksperymentalne narzędzia PC, odmawia spraw spoza domu, działa na dowolnym modelu (także lokalnym), a tani
+rozmów, eksperymentalne narzędzia PC, odmawia spraw spoza domu, działa na dowolnym modelu z API zgodnym z OpenAI (także lokalnym), bez tokenu subskrypcji Claude, a tani
 ESP32-C3 wysyła dane pogodowe i odbiera „jak często” z aplikacji; pomiary energii mówią, który tryb zasilania wybrać.
 
 ## 2. Wymagania funkcjonalne i kryteria akceptacji (Given / When / Then)
@@ -76,16 +76,26 @@ ESP32-C3 wysyła dane pogodowe i odbiera „jak często” z aplikacji; pomiary 
 - **Given** powitanie, „co potrafisz?”, data/godzina, „tak/nie” przy potwierdzeniu
 - **Then** to jest w zakresie, bez odmowy
 
-### 2.7 Dowolny model dla JARVIS-a
+### 2.7 Dowolny model dla JARVIS-a (API zgodne z OpenAI)
+
+Cel (właściciel, 2026-11-27): pozbyć się tokenu subskrypcji Claude z `.env` (to był tylko test) i dać możliwość
+podłączenia modeli lokalnych.
 
 - **Given** Owner serwera w konfiguracji
-- **When** wybiera dostawcę zgodnego z API OpenAI i podaje adres (np. Ollama / LM Studio na swoim PC), model i
-  opcjonalny klucz
-- **Then** JARVIS rozmawia tym modelem z tymi samymi narzędziami, uprawnieniami, potwierdzeniami i zasadą 2.6;
-  dotychczasowy Claude zostaje drugą opcją
+- **When** podaje adres serwera zgodnego z API OpenAI (np. Ollama / LM Studio / llama.cpp na swoim PC albo usługa
+  w chmurze), nazwę modelu i opcjonalny klucz
+- **Then** JARVIS rozmawia tym modelem z tymi samymi narzędziami, uprawnieniami, potwierdzeniami i zasadą 2.6, w
+  czacie, głosie i na satelicie
+- **Given** wdrożenie po tej zmianie
+- **Then** JARVIS nie korzysta już z subskrypcji Claude: zmiennej z tokenem nie ma w `.env`, w compose ani w
+  dokumentacji, a obraz JARVIS-a nie zawiera Claude Code; podłączanie zewnętrznych aplikacji (Claude Code,
+  claude.ai) do bramki narzędzi JARVIS-a działa bez zmian
+- **Given** brak skonfigurowanego modelu
+- **Then** JARVIS mówi, że jest wyłączony (jak dziś bez tokenu)
 - **Given** model niedostępny albo bez obsługi narzędzi
 - **Then** jest to widoczne przy starcie / w teście konfiguracji, a osoba słyszy „JARVIS jest chwilowo niedostępny”
-- Wymiana modelu nie wymaga przebudowy ani zmian w domach i kontach
+- Klucz modelu (gdy jest) to sekret w `.env`; model lokalny nie wymaga klucza. Wymiana modelu nie wymaga przebudowy
+  ani zmian w domach i kontach
 
 ### 2.8 Ustawienia w dół dla urządzeń na baterii
 
@@ -140,6 +150,7 @@ urządzenia. W czym mogę pomóc?”.
   wybór modelu tylko Owner serwera; zmiana kontrolki uśpionego urządzenia jak dziś (Member+).
 - **Edge-case'y:** fałszywe aktywacje z TV; kilka komputerów osoby słyszy to samo zdanie (odpowiada jeden);
   model lokalny ignoruje narzędzia albo zasadę 2.6; urządzenie usunięte, gdy czeka na nie zmiana; ikona schowana.
+- **Migracja:** po wdrożeniu stara zmienna z tokenem Claude jest ignorowana; w opisie wydania krok „usuń ją z `.env`, ustaw adres modelu”.
 - **Prywatność i dane:** mikrofon domyślnie w trybie słowa, wskaźnik zawsze widoczny, audio lokalnie, tekst 7 dni
   (jak dziś); przy modelu lokalnym dane nie wychodzą z domu.
 - **Wydajność / skala:** tryb ciągły obciąża komputer (lokalne STT + model); tryb lekki na słabszym sprzęcie.
