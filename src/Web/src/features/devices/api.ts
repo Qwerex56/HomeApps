@@ -73,6 +73,7 @@ export interface DeviceStateInfo {
   uptime: number | null
   firmware: string | null
   error: string | null
+  pendingSettings?: Record<string, unknown> | null
 }
 
 export interface DeviceEventItem {

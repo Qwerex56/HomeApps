@@ -64,19 +64,20 @@ const controlDisabledReason = computed<string | null>(() => {
   if (props.device.removed) return t('devices.locked.removed')
   if (!props.device.paired) return t('devices.locked.unpaired')
   if (!canControl.value) return t('devices.locked.guest')
-  if (sleepy.value) return t('devices.sleepyLocked')
   if (props.device.state?.silent) return t('devices.locked.silent')
-  if (!props.device.online) return t('devices.locked.offline')
+  if (!props.device.online && !sleepy.value) return t('devices.locked.offline')
   return null
 })
 
-// Pending control changes waiting for either a `state` frame update or the 20s timeout (`devices.no_answer`).
-const pendingControls = ref<Record<string, ReturnType<typeof setTimeout>>>({})
+// Pending control changes of an awake device wait for a `state` frame or the 20s timeout (`devices.no_answer`).
+// A sleepy device has no timeout: the server keeps the value (`pendingSettings`) until the device reports it.
+const pendingControls = ref<Record<string, ReturnType<typeof setTimeout> | true>>({})
+const awaitingDevice = (name: string) => Boolean(props.device.state?.pendingSettings && name in props.device.state.pendingSettings)
 
 function clearPending(controlName: string) {
   const timer = pendingControls.value[controlName]
   if (timer) {
-    clearTimeout(timer)
+    if (timer !== true) clearTimeout(timer)
     const next = { ...pendingControls.value }
     delete next[controlName]
     pendingControls.value = next
@@ -94,20 +95,27 @@ watch(
 
 onBeforeUnmount(() => {
   for (const timer of Object.values(pendingControls.value)) {
-    clearTimeout(timer)
+    if (timer !== true) clearTimeout(timer)
   }
 })
 
 async function setControlValue(controlName: string, value: unknown) {
   clearPending(controlName)
-  const timeout = setTimeout(() => {
-    clearPending(controlName)
-    toast.add({ severity: 'error', summary: t('errors.devices.no_answer'), life: 6000 })
-  }, 20_000)
+  const timeout = sleepy.value
+    ? true
+    : setTimeout(() => {
+        clearPending(controlName)
+        toast.add({ severity: 'error', summary: t('errors.devices.no_answer'), life: 6000 })
+      }, 20_000)
   pendingControls.value = { ...pendingControls.value, [controlName]: timeout }
 
   try {
     await devicesApi.setControl(props.device.id, controlName, value)
+    if (sleepy.value) {
+      // The server now holds the value; the refreshed state tells which controls still wait for the device.
+      await queryClient.invalidateQueries({ queryKey: deviceKeys.all })
+      clearPending(controlName)
+    }
   } catch (error) {
     clearPending(controlName)
     const problem = toProblem(error)
@@ -283,6 +291,7 @@ function newCode() {
         :value="values[control.name]"
         :disabled-reason="controlDisabledReason"
         :pending="Boolean(pendingControls[control.name])"
+        :awaiting-device="awaitingDevice(control.name)"
         @set="(val) => setControlValue(control.name, val)"
       />
     </div>

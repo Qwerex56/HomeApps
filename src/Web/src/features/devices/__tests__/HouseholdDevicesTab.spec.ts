@@ -521,3 +521,58 @@ describe('HomeMix consent and widget device picker (2.17)', () => {
 })
 
 
+
+describe('Sleepy device controls (downlink)', () => {
+  const sleepyChair: Device = {
+    ...chair,
+    online: false,
+    descriptor: { ...chair.descriptor!, sleepy: true },
+    state: { ...chair.state!, online: false },
+  }
+
+  it('is not locked by sleepy or offline state and sets without the 20s false timeout', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.spyOn(devicesApi, 'household').mockResolvedValue([sleepyChair])
+    const setControl = vi.spyOn(devicesApi, 'setControl').mockResolvedValue(undefined)
+    const wrapper = render('Member')
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('sterowanie niedostępne')
+    expect(wrapper.find('[data-testid=control-disabled-reason]').exists()).toBe(false)
+
+    await wrapper.find('[data-testid=control-lampka]').findComponent(ToggleSwitch).vm.$emit('update:modelValue', true)
+    await flushPromises()
+    expect(setControl).toHaveBeenCalledWith('d1', 'lampka', true)
+
+    vi.advanceTimersByTime(25_000)
+    await flushPromises()
+    expect(document.body.textContent).not.toContain('Urządzenie nie odpowiedziało na czas.')
+    vi.useRealTimers()
+    wrapper.unmount()
+  })
+
+  it('shows "Czeka na urządzenie" with aria-busy until a state frame reports the value', async () => {
+    const waiting: Device = {
+      ...sleepyChair,
+      state: { ...sleepyChair.state!, pendingSettings: { lampka: true } },
+    }
+    vi.spyOn(devicesApi, 'household').mockResolvedValue([waiting])
+    const wrapper = render('Member')
+    await flushPromises()
+
+    const control = () => wrapper.find('[data-testid=control-lampka]')
+    expect(control().find('[data-testid=control-awaiting-device]').text()).toBe('Czeka na urządzenie')
+    expect(control().attributes('aria-busy')).toBe('true')
+    expect(control().findComponent(ToggleSwitch).props('disabled')).toBe(true)
+
+    activeStreamOptions?.onEvent({
+      type: 'state',
+      data: { deviceId: 'd1', values: { lampka: true }, at: '2026-11-27T10:00:00Z' },
+    })
+    await flushPromises()
+
+    expect(control().find('[data-testid=control-awaiting-device]').exists()).toBe(false)
+    expect(control().attributes('aria-busy')).toBeUndefined()
+    wrapper.unmount()
+  })
+})

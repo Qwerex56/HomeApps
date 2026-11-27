@@ -1058,7 +1058,6 @@
       "removed": "Urządzenie jest wyłączone — sterowanie niedostępne.",
       "unpaired": "Urządzenie czeka na sparowanie kodem."
     },
-    "sleepyLocked": "Urządzenie na baterii, sterowanie niedostępne.",
     "state": {
       "online": "Połączone",
       "offline": "Rozłączone",
@@ -1077,7 +1076,8 @@
     "controls": {
       "title": "Sterowanie",
       "run": "Uruchom",
-      "pending": "Wysyłanie…"
+      "pending": "Wysyłanie…",
+      "awaitingDevice": "Czeka na urządzenie"
     },
     "sensors": {
       "title": "Czujniki",

@@ -75,6 +75,15 @@ function patchHouseholdCache(queryClient: QueryClient, householdId: string, even
         }
       }
       if (event.type === 'state') {
+        // A state frame means the device has reported: a pending setting it now reports is applied.
+        const pending = current.pendingSettings
+          ? Object.fromEntries(
+              Object.entries(current.pendingSettings).filter(
+                ([key, wanted]) =>
+                  !(key in event.data.values) || JSON.stringify(event.data.values[key]) !== JSON.stringify(wanted),
+              ),
+            )
+          : null
         return {
           ...device,
           lastSeenAt: event.data.at,
@@ -82,6 +91,7 @@ function patchHouseholdCache(queryClient: QueryClient, householdId: string, even
             ...current,
             values: { ...current.values, ...event.data.values },
             valuesAt: event.data.at,
+            pendingSettings: pending && Object.keys(pending).length ? pending : null,
           },
         }
       }

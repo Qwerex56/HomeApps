@@ -203,9 +203,11 @@ A battery device keeps no WebSocket: it wakes, sends the same frames in one requ
 ]
 ```
 
-The answer is `200` with one result per frame, in order:
-`[{ "ok": true }, { "ok": false, "code": "devices.invalid_frame", "text": "..." }, ...]`. A bad frame does not stop the
-others. At most **50 frames** and **64 KB** per request (400 / 413 above that). A token that is not a paired household
+The answer is `200` with `{ "results": [...], "settings": {...} }`: one result per frame, in order
+(`{ "ok": true }` or `{ "ok": false, "code": "devices.invalid_frame", "text": "..." }`), and `settings`, the control
+values a member set while the device slept (`null` when none). A bad frame does not stop the others. `settings` is sent
+with every report until the device reports the value in a `state` frame; a newer value of the same control replaces the
+older one. At most **50 frames** and **64 KB** per request (400 / 413 above that). A token that is not a paired household
 device with a descriptor gets `devices.frames_unsupported`.
 
 **Limits.** At most **60 requests per minute** per device token (`429` with `Retry-After` above that). On the WebSocket, at
