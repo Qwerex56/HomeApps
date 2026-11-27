@@ -143,6 +143,76 @@ public sealed class ConnectedAppTests(AuthApiFactory api) : IClassFixture<AuthAp
         Assert.NotEqual(DesktopClient, app);
     }
 
+    [Fact]
+    public async Task A_registered_app_asking_for_the_persons_own_audience_is_told_the_target_is_invalid()
+    {
+        using var client = api.CreateClient();
+        var person = await PersonAsync(client);
+        var app = await RegisterAppAsync(client);
+
+        using var decision = await Send(client, HttpMethod.Post, "/auth/oauth/consent", person, new
+        {
+            responseType = "code", clientId = app, redirectUri = Redirect, codeChallenge = Pkce.New().Challenge,
+            codeChallengeMethod = "S256", resource = "homeapps", allow = true,
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, decision.StatusCode);
+        Assert.Equal("oauth.invalid_target", (await decision.ReadJsonAsync()).GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task Registration_cannot_take_the_desktop_client_id()
+    {
+        using var client = api.CreateClient();
+
+        using var response = await client.PostAsJsonAsync("/auth/oauth/register", new
+        {
+            client_id = DesktopClient, client_name = "Impostor", redirect_uris = RegisteredRedirects,
+            grant_types = GrantTypes, token_endpoint_auth_method = "none",
+        });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var issued = (await response.ReadJsonAsync()).GetProperty("client_id").GetString();
+        Assert.NotEqual(DesktopClient, issued);
+        Assert.StartsWith("app_", issued, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_native_client_without_redirect_uris_in_configuration_is_not_first_party()
+    {
+        using var client = api.CreateClient();
+        var person = await PersonAsync(client);
+
+        using var decision = await Send(client, HttpMethod.Post, "/auth/oauth/consent", person, new
+        {
+            responseType = "code", clientId = "jarvis", redirectUri = Redirect, codeChallenge = Pkce.New().Challenge,
+            codeChallengeMethod = "S256", resource = "homeapps", allow = true,
+        });
+
+        Assert.Equal(HttpStatusCode.Unauthorized, decision.StatusCode);
+        Assert.Equal("oauth.invalid_client", (await decision.ReadJsonAsync()).GetProperty("code").GetString());
+    }
+
+    [Theory]
+    [InlineData("http://localhost:50456/callback")]
+    [InlineData("http://127.0.0.1:50456/other")]
+    [InlineData("http://evil.example:50456/callback")]
+    [InlineData("https://127.0.0.1:50456/callback")]
+    public async Task The_desktop_redirect_must_be_the_registered_loopback_host_and_path(string redirect)
+    {
+        using var client = api.CreateClient();
+        var person = await PersonAsync(client);
+
+        using var decision = await Send(client, HttpMethod.Post, "/auth/oauth/consent", person, new
+        {
+            responseType = "code", clientId = DesktopClient, redirectUri = redirect, codeChallenge = Pkce.New().Challenge,
+            codeChallengeMethod = "S256", resource = "homeapps", allow = true,
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, decision.StatusCode);
+        Assert.Equal("oauth.invalid_redirect_uri", (await decision.ReadJsonAsync()).GetProperty("code").GetString());
+    }
+
     private static async Task<string> DesktopCodeAsync(HttpClient client, string person, Pkce pkce, string resource)
     {
         using var decision = await Send(client, HttpMethod.Post, "/auth/oauth/consent", person, new
