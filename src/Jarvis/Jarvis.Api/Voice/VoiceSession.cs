@@ -22,12 +22,13 @@ namespace Jarvis.Api.Voice;
 /// <c>say</c> with the text and gets <c>transcript</c>, <c>reply</c> and <c>done</c> without audio.
 /// </summary>
 internal sealed partial class VoiceSession(
-    WebSocket socket, Guid userId, Guid? satellite, bool local, IServiceScopeFactory scopes, VoiceOptions options, ILogger<VoiceSession> logger) : IDisposable
+    WebSocket socket, Guid userId, Guid? satellite, bool local, IServiceScopeFactory scopes, TurnLeases leases, VoiceOptions options, ILogger<VoiceSession> logger) : IDisposable
 {
     public const int SampleRate = 16_000;
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
 
+    private readonly Guid _sessionId = Guid.NewGuid();
     private readonly SemaphoreSlim _sending = new(1, 1);
     private readonly MemoryStream _audio = new();
     private Guid? _conversationId;
@@ -84,6 +85,7 @@ internal sealed partial class VoiceSession(
         finally
         {
             await StopTurnAsync();
+            leases.Release(userId, _sessionId);
         }
     }
 
@@ -118,6 +120,11 @@ internal sealed partial class VoiceSession(
                 break;
             case "say":
                 await StopTurnAsync();
+                if (!await HoldLeaseAsync())
+                {
+                    break;
+                }
+
                 _turn?.Dispose();
                 _turn = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                 _running = TurnAsync([], control.Text ?? string.Empty, _turn.Token);
@@ -125,13 +132,19 @@ internal sealed partial class VoiceSession(
             case "start":
                 await StopTurnAsync();
                 _audio.SetLength(0);
-                _recording = true;
+                _recording = await HoldLeaseAsync();
                 break;
             case "stop":
+                var wasRecording = _recording;
                 _recording = false;
                 await StopTurnAsync();
                 var audio = _audio.ToArray();
                 _audio.SetLength(0);
+                if (wasRecording && !await HoldLeaseAsync())
+                {
+                    break;
+                }
+
                 _turn?.Dispose();
                 _turn = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                 _running = TurnAsync(audio, null, _turn.Token);
@@ -140,6 +153,7 @@ internal sealed partial class VoiceSession(
                 _recording = false;
                 _audio.SetLength(0);
                 await StopTurnAsync();
+                leases.Release(userId, _sessionId);
                 break;
             default:
                 await SendAsync(new { type = "error", code = "voice.unknown_message" }, CancellationToken.None);
@@ -147,7 +161,31 @@ internal sealed partial class VoiceSession(
         }
     }
 
+    /// <summary>Takes (or renews) the person's turn lease; when another computer holds it, says <c>lease_conflict</c> and the listener keeps quiet.</summary>
+    private async Task<bool> HoldLeaseAsync()
+    {
+        if (leases.TryAcquire(userId, _sessionId))
+        {
+            return true;
+        }
+
+        await SendAsync(new { type = "lease_conflict", code = "turn_in_progress" }, CancellationToken.None);
+        return false;
+    }
+
     private async Task TurnAsync(byte[] audio, string? text, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await RunTurnAsync(audio, text, cancellationToken);
+        }
+        finally
+        {
+            leases.Release(userId, _sessionId);
+        }
+    }
+
+    private async Task RunTurnAsync(byte[] audio, string? text, CancellationToken cancellationToken)
     {
         if (text is null ? audio.Length == 0 : string.IsNullOrWhiteSpace(text))
         {

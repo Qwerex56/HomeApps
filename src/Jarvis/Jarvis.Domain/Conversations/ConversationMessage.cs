@@ -19,7 +19,12 @@ public sealed class ConversationMessage
 
     public DateTimeOffset SentAt { get; private set; }
 
-    internal static ConversationMessage Create(Guid conversationId, MessageRole role, string text, Guid? runId, TimeProvider time)
+    /// <summary>Where it was said: <c>app</c>, <c>voice</c> or <c>desktop</c>.</summary>
+    public string Channel { get; private set; } = DefaultChannel;
+
+    public const string DefaultChannel = "app";
+
+    internal static ConversationMessage Create(Guid conversationId, MessageRole role, string text, Guid? runId, TimeProvider time, string channel = DefaultChannel)
     {
         var now = time.GetUtcNow();
         return new ConversationMessage
@@ -30,6 +35,7 @@ public sealed class ConversationMessage
             Text = text,
             RunId = runId,
             SentAt = now,
+            Channel = channel,
         };
     }
 }

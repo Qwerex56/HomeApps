@@ -7,6 +7,9 @@ namespace Auth.Application.ConnectedApps;
 /// <summary>The same checks for the consent screen's preview and for the decision.</summary>
 internal static class AuthorizationRequestCheck
 {
+    /// <summary>The <c>aud</c> of HomeApps' own tokens (the default audience of <c>Auth:Clients</c>).</summary>
+    private const string ClientRegistryAudience = "homeapps";
+
     public static async Task<Result<CheckedAuthorizationRequest>> CheckAsync(
         this IAppClientRepository clients, AuthorizationRequest request, ConnectedAppsOptions options, CancellationToken cancellationToken)
     {
@@ -35,7 +38,10 @@ internal static class AuthorizationRequestCheck
             return Result.Fail<CheckedAuthorizationRequest>(ConnectedAppErrors.InvalidRequest("PKCE with S256 is required."));
         }
 
-        var audience = options.FindResource(request.Resource);
+        // A first-party app (HomeApps.Desktop) may ask for the person's own audience; every other app only gets a gateway resource.
+        var audience = client.IsFirstParty && string.Equals(request.Resource?.TrimEnd('/'), ClientRegistryAudience, StringComparison.Ordinal)
+            ? ClientRegistryAudience
+            : options.FindResource(request.Resource);
         if (audience is null)
         {
             return Result.Fail<CheckedAuthorizationRequest>(ConnectedAppErrors.InvalidTarget);

@@ -66,7 +66,7 @@ copies never migrate at the same time.
 | `JARVIS_CLIENT_SECRET` | Required: the secret JARVIS asks Auth for delegated tokens with (`openssl rand -base64 32`). See [jarvis.md](jarvis.md#production). |
 | `DEVICES_CLIENT_SECRET` | Required: the secret Devices pairs household satellites with in Auth (`openssl rand -base64 32`). See [devices.md](devices.md#household-devices-s-1). |
 | `HOMEMIX_CLIENT_SECRET` | Required: the secret HomeMix calls Devices and Households with for add-on triggers (`openssl rand -base64 32`). See [homemix.md](homemix.md). |
-| `JARVIS_CLAUDE_CODE_OAUTH_TOKEN` | Optional: the owner's Claude subscription for JARVIS's answers (`claude setup-token`). Empty: JARVIS says he is switched off; Claude Code can still connect to the gateway. A secret. |
+| `JARVIS_MODEL_BASE_URL`, `JARVIS_MODEL_NAME`, `JARVIS_MODEL_API_KEY` | Optional: JARVIS's model, any OpenAI-compatible `/v1` endpoint with tool calling. Empty URL or name: JARVIS says he is switched off; Claude Code can still connect to the gateway. The key is a secret. |
 | `NOTIFICATIONS_VAPID_SUBJECT` | Optional: how push services can reach you, `mailto:` or `https:` (the site's address by default). |
 
 Anything else a service reads can be set the same way, as an environment variable in `compose.prod.yaml`

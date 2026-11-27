@@ -101,6 +101,18 @@ public sealed class ConversationTests(JarvisFactory factory)
     }
 
     [Fact]
+    public async Task Each_message_says_the_channel_it_was_said_on()
+    {
+        factory.Brain.Script = _ => Task.FromResult("Dobrze.");
+        var conversation = await StartAsync(_person);
+        await SendAsync(_person, conversation.Id, "cześć");
+
+        var messages = await factory.CreateAuthenticatedClient(_person).GetStringAsync($"/jarvis/api/conversations/{conversation.Id}/messages");
+
+        Assert.Equal(2, System.Text.RegularExpressions.Regex.Count(messages, "\"channel\":\"app\""));
+    }
+
+    [Fact]
     public async Task Someone_elses_conversation_does_not_exist_for_them_and_the_owner_can_delete_it()
     {
         var conversation = await StartAsync(_person);

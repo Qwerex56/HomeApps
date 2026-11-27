@@ -12,6 +12,7 @@ builder.AddHomeAppsDefaults(typeof(Program).Assembly);
 builder.Services.AddJarvisApplication();
 builder.Services.AddJarvisInfrastructure(builder.Configuration);
 builder.AddJarvisGateway();
+builder.Services.AddSingleton<Jarvis.Api.Voice.TurnLeases>();
 
 // Statuses and roles as names, like the other services the web app reads.
 builder.Services.ConfigureHttpJsonOptions(json => json.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));

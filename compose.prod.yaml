@@ -107,6 +107,11 @@ services:
       Auth__Clients__2__Name: "Devices (service)"
       Auth__Clients__2__Type: Service
       Auth__Clients__2__Secret: ${DEVICES_CLIENT_SECRET:?set DEVICES_CLIENT_SECRET in .env}
+      # HomeApps.Desktop (docs/jarvis.md): a first-party OAuth client, tokens for the person's own audience.
+      Auth__Clients__3__ClientId: homeapps-desktop
+      Auth__Clients__3__Name: "HomeApps Desktop"
+      Auth__Clients__3__Type: Native
+      Auth__Clients__3__RedirectUris__0: "http://127.0.0.1/callback"
       Auth__ConnectedApps__Resources__0: "https://${HOMEAPPS_DOMAIN}/jarvis/mcp"
       Auth__Email__From: ${SMTP_FROM:?set SMTP_FROM in .env}
       Auth__Email__Smtp__Host: ${SMTP_HOST:?set SMTP_HOST in .env}
@@ -245,11 +250,11 @@ services:
       Jarvis__Resource: "https://${HOMEAPPS_DOMAIN}/jarvis/mcp"
       Jarvis__ClientSecret: ${JARVIS_CLIENT_SECRET:?set JARVIS_CLIENT_SECRET in .env}
       Jarvis__Plugins: ${HOMEAPPS_PLUGINS:-}
-      # The owner's Claude subscription (`claude setup-token`); empty: JARVIS answers that he is switched off, while
-      # connected apps (Claude Code, claude.ai) still use the gateway.
-      Jarvis__ClaudeCode__OAuthToken: ${JARVIS_CLAUDE_CODE_OAUTH_TOKEN:-}
-      # The model for Claude Code: an alias (haiku, sonnet, opus) or a full id; empty = Claude Code's default.
-      Jarvis__ClaudeCode__Model: ${JARVIS_CLAUDE_MODEL:-}
+      # An OpenAI-compatible endpoint with tool calling; empty URL or model: JARVIS answers that he is switched off,
+      # while connected apps (Claude Code, claude.ai) still use the gateway.
+      Jarvis__OpenAi__BaseUrl: ${JARVIS_MODEL_BASE_URL:-}
+      Jarvis__OpenAi__Model: ${JARVIS_MODEL_NAME:-}
+      Jarvis__OpenAi__ApiKey: ${JARVIS_MODEL_API_KEY:-}
       # His ears and voice (docs/jarvis.md "Voice"): a speech engine with the OpenAI audio API, e.g. Speaches on the
       # owner's Mac. Empty URL: /jarvis/voice answers 503 and nothing else changes.
       Jarvis__Voice__Enabled: ${JARVIS_VOICE_URL:+true}

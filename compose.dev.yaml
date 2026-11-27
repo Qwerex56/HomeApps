@@ -324,11 +324,12 @@ services:
       Jarvis__Sources__2__Url: "http://homemix:8080/mcp"
       Jarvis__Sources__3__Url: "http://devices:8080/mcp"
       Jarvis__ClientSecret: ${JARVIS_CLIENT_SECRET:-development-only-jarvis-secret-0123456789}
-      # Owner's Claude subscription (`claude setup-token`); without it JARVIS answers that he is switched off.
-      Jarvis__ClaudeCode__OAuthToken: ${JARVIS_CLAUDE_CODE_OAUTH_TOKEN:-}
-      Jarvis__ClaudeCode__Model: ${JARVIS_CLAUDE_MODEL:-}
-      # Claude Code inside the container calls the gateway on the container's own port, not Rider's 5700.
-      Jarvis__ClaudeCode__GatewayUrl: "http://localhost:8080/jarvis/mcp"
+      # An OpenAI-compatible endpoint with tool calling (jarvis.md); without a URL and model JARVIS answers that he is switched off.
+      Jarvis__OpenAi__BaseUrl: ${JARVIS_MODEL_BASE_URL:-}
+      Jarvis__OpenAi__Model: ${JARVIS_MODEL_NAME:-}
+      Jarvis__OpenAi__ApiKey: ${JARVIS_MODEL_API_KEY:-}
+      # The brain calls the gateway on the container's own port, not Rider's 5700.
+      Jarvis__OpenAi__GatewayUrl: "http://localhost:8080/jarvis/mcp"
       # Ears and voice: Speaches from compose.voice.yaml on the same Mac (docs/jarvis.md "Voice").
       Jarvis__Voice__Enabled: "true"
       Jarvis__Voice__SttUrl: ${JARVIS_VOICE_URL:-http://host.docker.internal:8000}

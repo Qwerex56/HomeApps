@@ -124,8 +124,8 @@ Working on the HomeMix tooling itself (`src/Web/homemix`): [homemix.md](homemix.
 
 ## JARVIS
 
-Put your Claude subscription token in `.env` (`JARVIS_CLAUDE_CODE_OAUTH_TOKEN`, from `claude setup-token`) and
-`docker compose up -d jarvis`; without it he answers that he is switched off. His tools come from the services and
+Put the model in `.env` (`JARVIS_MODEL_BASE_URL`, `JARVIS_MODEL_NAME`, `JARVIS_MODEL_API_KEY`) and
+`docker compose up -d jarvis`; without URL and model he answers that he is switched off. His tools come from the services and
 the plugins in `HOMEAPPS_PLUGINS`. Claude Code on your Mac can use the same tools:
 `claude mcp add --transport http homeapps https://app.localhost/jarvis/mcp` ([jarvis.md](jarvis.md)).
 
@@ -155,5 +155,5 @@ running. The web app: `npm run test:run` in `src/Web`; the end-to-end check agai
 | `network homeapps_default not found` in a plugin | start HomeApps first; its compose project must be named `homeapps` (it is, in `compose.dev.yaml`) |
 | `required variable ... is missing` in a plugin | the `.env` link is missing, or `CHAT_MEDIA_SIGNING_KEY` for Chat |
 | JARVIS cannot act for anyone (401 from Auth in `docker compose logs jarvis`), or pairing a satellite fails | a stale `.env` from production: remove `JARVIS_CLIENT_SECRET`/`DEVICES_CLIENT_SECRET`, or keep them; compose now passes them to Auth too. `docker compose up -d auth devices jarvis` |
-| JARVIS says he is switched off | `JARVIS_CLAUDE_CODE_OAUTH_TOKEN` in `.env`, then `docker compose up -d jarvis` |
+| JARVIS says he is switched off | `JARVIS_MODEL_BASE_URL` and `JARVIS_MODEL_NAME` in `.env`, then `docker compose up -d jarvis` |
 | No invitation email | Mailpit; `AUTH_BOOTSTRAP_EMAIL` only works on an empty `homeapps_auth` database |
