@@ -60,7 +60,7 @@ public sealed class Conversation
     }
 
     /// <summary>The person wrote: the conversation moves up the list, and an unnamed one takes the first words as title.</summary>
-    public ConversationMessage Write(string text, TimeProvider time)
+    public ConversationMessage Write(string text, TimeProvider time, string channel = ConversationMessage.DefaultChannel)
     {
         ArgumentNullException.ThrowIfNull(time);
         if (Title == DefaultTitle)
@@ -69,14 +69,14 @@ public sealed class Conversation
         }
 
         LastActivityAt = time.GetUtcNow();
-        return ConversationMessage.Create(Id, MessageRole.Person, text, null, time);
+        return ConversationMessage.Create(Id, MessageRole.Person, text, null, time, channel);
     }
 
-    public ConversationMessage Answer(string text, Guid? runId, TimeProvider time)
+    public ConversationMessage Answer(string text, Guid? runId, TimeProvider time, string channel = ConversationMessage.DefaultChannel)
     {
         ArgumentNullException.ThrowIfNull(time);
         LastActivityAt = time.GetUtcNow();
-        return ConversationMessage.Create(Id, MessageRole.Assistant, text, runId, time);
+        return ConversationMessage.Create(Id, MessageRole.Assistant, text, runId, time, channel);
     }
 
     private static string Shorten(string text)

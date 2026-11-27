@@ -28,14 +28,15 @@ internal sealed class SendMessageHandler(
         var history = (await conversations.MessagesAsync(conversation.Id, SendMessageCommand.History, cancellationToken))
             .Select(m => new ContextLine(m.Role == MessageRole.Person ? "Ty" : "JARVIS", m.Text, m.SentAt))
             .ToList();
-        conversations.Add(conversation.Write(command.Text, time));
+        var channel = command.Spoken ? Prompts.VoiceChannel : "app";
+        conversations.Add(conversation.Write(command.Text, time, channel));
 
         var answer = await agent.RunAsync(
-            new AskCommand(command.UserId, command.Text, command.HouseholdId, command.Spoken ? Prompts.VoiceChannel : "app", conversation.Id.ToString(), history, command.Satellite),
+            new AskCommand(command.UserId, command.Text, command.HouseholdId, channel, conversation.Id.ToString(), history, command.Satellite),
             command.StreamId,
             cancellationToken);
 
-        var message = conversation.Answer(answer.Text, answer.RunId, time);
+        var message = conversation.Answer(answer.Text, answer.RunId, time, channel);
         conversations.Add(message);
         return MessageView.From(message, answer.Actions);
     }
