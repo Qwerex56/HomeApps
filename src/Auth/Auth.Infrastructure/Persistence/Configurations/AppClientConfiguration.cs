@@ -13,6 +13,7 @@ internal sealed class AppClientConfiguration : IEntityTypeConfiguration<AppClien
         builder.Property(c => c.Id).HasMaxLength(64).ValueGeneratedNever();
         builder.Property(c => c.Name).HasMaxLength(AppClient.NameMaxLength);
         builder.Ignore(c => c.RedirectUris);
+        builder.Ignore(c => c.IsFirstParty);
         builder.PrimitiveCollection<List<string>>("_redirectUris").HasColumnName("RedirectUris");
     }
 }

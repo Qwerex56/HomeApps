@@ -107,6 +107,11 @@ services:
       Auth__Clients__2__Name: "Devices (service)"
       Auth__Clients__2__Type: Service
       Auth__Clients__2__Secret: ${DEVICES_CLIENT_SECRET:?set DEVICES_CLIENT_SECRET in .env}
+      # HomeApps.Desktop (docs/jarvis.md): a first-party OAuth client, tokens for the person's own audience.
+      Auth__Clients__3__ClientId: homeapps-desktop
+      Auth__Clients__3__Name: "HomeApps Desktop"
+      Auth__Clients__3__Type: Native
+      Auth__Clients__3__RedirectUris__0: "http://127.0.0.1/callback"
       Auth__ConnectedApps__Resources__0: "https://${HOMEAPPS_DOMAIN}/jarvis/mcp"
       Auth__Email__From: ${SMTP_FROM:?set SMTP_FROM in .env}
       Auth__Email__Smtp__Host: ${SMTP_HOST:?set SMTP_HOST in .env}

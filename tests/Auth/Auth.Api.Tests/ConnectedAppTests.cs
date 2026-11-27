@@ -87,6 +87,80 @@ public sealed class ConnectedAppTests(AuthApiFactory api) : IClassFixture<AuthAp
         Assert.Equal("invalid_grant", refresh.Body.GetProperty("error").GetString());
     }
 
+    private const string DesktopClient = "homeapps-desktop";
+    private const string DesktopRedirect = "http://127.0.0.1:50456/callback";
+
+    [Fact]
+    public async Task The_first_party_desktop_client_gets_a_token_for_the_persons_own_audience_without_registering()
+    {
+        using var client = api.CreateClient();
+        var person = await PersonAsync(client);
+        var pkce = Pkce.New();
+
+        var code = await DesktopCodeAsync(client, person, pkce, "homeapps");
+        var tokens = await TokenAsync(client, DesktopRedeem(code, pkce, "homeapps"));
+
+        Assert.Equal(HttpStatusCode.OK, tokens.Status);
+        var access = new JsonWebToken(tokens.Body.GetProperty("access_token").GetString());
+        Assert.Equal(["homeapps"], access.Audiences);
+        Assert.Equal(DesktopClient, access.GetPayloadValue<string>("client_id"));
+        var refreshed = await TokenAsync(client, new()
+        {
+            ["grant_type"] = "refresh_token", ["client_id"] = DesktopClient, ["refresh_token"] = tokens.Body.GetProperty("refresh_token").GetString()!,
+        });
+        Assert.Equal(HttpStatusCode.OK, refreshed.Status);
+    }
+
+    [Fact]
+    public async Task The_first_party_client_asking_for_the_gateway_resource_still_gets_the_resource_audience()
+    {
+        using var client = api.CreateClient();
+        var person = await PersonAsync(client);
+        var pkce = Pkce.New();
+
+        var code = await DesktopCodeAsync(client, person, pkce, Resource);
+        var tokens = await TokenAsync(client, DesktopRedeem(code, pkce, Resource));
+
+        Assert.Equal([Resource], new JsonWebToken(tokens.Body.GetProperty("access_token").GetString()).Audiences);
+    }
+
+    [Fact]
+    public async Task A_registered_app_cannot_ask_for_the_persons_own_audience_and_registration_never_makes_the_desktop_id()
+    {
+        using var client = api.CreateClient();
+        var person = await PersonAsync(client);
+        var app = await RegisterAppAsync(client);
+        var pkce = Pkce.New();
+
+        using var decision = await Send(client, HttpMethod.Post, "/auth/oauth/consent", person, new
+        {
+            responseType = "code", clientId = app, redirectUri = Redirect, codeChallenge = pkce.Challenge,
+            codeChallengeMethod = "S256", resource = "homeapps", allow = true,
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, decision.StatusCode);
+        Assert.StartsWith("app_", app, StringComparison.Ordinal);
+        Assert.NotEqual(DesktopClient, app);
+    }
+
+    private static async Task<string> DesktopCodeAsync(HttpClient client, string person, Pkce pkce, string resource)
+    {
+        using var decision = await Send(client, HttpMethod.Post, "/auth/oauth/consent", person, new
+        {
+            responseType = "code", clientId = DesktopClient, redirectUri = DesktopRedirect, codeChallenge = pkce.Challenge,
+            codeChallengeMethod = "S256", resource, allow = true,
+        });
+        Assert.Equal(HttpStatusCode.OK, decision.StatusCode);
+        var location = new Uri((await decision.ReadJsonAsync()).GetProperty("location").GetString()!);
+        return QueryHelpers.ParseQuery(location.Query)["code"].ToString();
+    }
+
+    private static Dictionary<string, string> DesktopRedeem(string code, Pkce pkce, string resource) => new()
+    {
+        ["grant_type"] = "authorization_code", ["client_id"] = DesktopClient, ["code"] = code,
+        ["redirect_uri"] = DesktopRedirect, ["code_verifier"] = pkce.Verifier, ["resource"] = resource,
+    };
+
     [Fact]
     public async Task Refresh_rotates_and_revoke_ends_the_session()
     {
