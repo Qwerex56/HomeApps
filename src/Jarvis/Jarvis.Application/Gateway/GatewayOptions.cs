@@ -45,12 +45,6 @@ public sealed class GatewayOptions
     [Required]
     public string ClientSecret { get; set; } = string.Empty;
 
-    /// <summary>
-    /// The OAuth client of HomeApps.Desktop (<c>client_id</c> claim): a first-party app, so its token, though issued for
-    /// the gateway's <see cref="Resource"/>, may list and decide confirmations (the toasts' Yes/No). Other connected apps may not.
-    /// </summary>
-    public string DesktopClientId { get; set; } = "homeapps-desktop";
-
     public IEnumerable<string> PluginIds =>
         Plugins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
