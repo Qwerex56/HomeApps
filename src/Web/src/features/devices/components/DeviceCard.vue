@@ -64,7 +64,7 @@ const controlDisabledReason = computed<string | null>(() => {
   if (props.device.removed) return t('devices.locked.removed')
   if (!props.device.paired) return t('devices.locked.unpaired')
   if (!canControl.value) return t('devices.locked.guest')
-  if (props.device.state?.silent) return t('devices.locked.silent')
+  if (props.device.state?.silent && !sleepy.value) return t('devices.locked.silent')
   if (!props.device.online && !sleepy.value) return t('devices.locked.offline')
   return null
 })

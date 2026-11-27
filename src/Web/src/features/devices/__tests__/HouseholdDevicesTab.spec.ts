@@ -576,3 +576,22 @@ describe('Sleepy device controls (downlink)', () => {
     wrapper.unmount()
   })
 })
+
+describe('Silent sleepy device', () => {
+  const silentState = { ...chair.state!, silent: true, online: false }
+
+  it('stays controllable (the setting waits for it) while a silent awake device stays locked', async () => {
+    const sleepy: Device = { ...chair, online: false, descriptor: { ...chair.descriptor!, sleepy: true }, state: silentState }
+    vi.spyOn(devicesApi, 'household').mockResolvedValue([sleepy])
+    const wrapper = render('Member')
+    await flushPromises()
+    expect(wrapper.find('[data-testid=control-disabled-reason]').exists()).toBe(false)
+    wrapper.unmount()
+
+    vi.spyOn(devicesApi, 'household').mockResolvedValue([{ ...chair, state: silentState }])
+    const awake = render('Member')
+    await flushPromises()
+    expect(awake.find('[data-testid=control-disabled-reason]').text()).toContain('zaginęło')
+    awake.unmount()
+  })
+})
