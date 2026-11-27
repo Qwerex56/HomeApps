@@ -20,7 +20,7 @@ public static class DependencyInjection
 {
     /// <summary>
     /// Postgres with the outbox and the consumers (<c>AssistantInvoked</c>, <c>AssistantConfirmed</c>, <c>UserErased</c>),
-    /// the gateway's adapters (Auth's delegation, the sources, MCP clients), the Claude Code brain, the speech engines
+    /// the gateway's adapters (Auth's delegation, the sources, MCP clients), the OpenAI-compatible brain, the speech engines
     /// (OpenAI audio API, jarvis-voice-bridge.md) and the retention job.
     /// </summary>
     public static IServiceCollection AddJarvisInfrastructure(this IServiceCollection services, IConfiguration configuration)
@@ -45,8 +45,11 @@ public static class DependencyInjection
         services.AddSingleton<SourceConnector>();
         services.AddScoped<IToolExecutor, GatewayToolExecutor>();
 
-        services.AddOptions<ClaudeCodeOptions>().BindConfiguration(ClaudeCodeOptions.SectionName);
-        services.AddScoped<IAssistantBrain, ClaudeCodeBrain>();
+        services.AddOptions<OpenAiChatOptions>().BindConfiguration(OpenAiChatOptions.SectionName);
+        services.AddHttpClient(OpenAiChatBrain.HttpClientName);
+        services.AddScoped<IAssistantBrain, OpenAiChatBrain>();
+        services.AddHttpClient<OpenAiModelHealthCheck>();
+        services.AddHostedService(sp => sp.GetRequiredService<OpenAiModelHealthCheck>());
 
         services.AddHttpClient<ISpeechToText, OpenAiSpeechToText>((sp, http) => Engine(sp, http, v => v.SttUrl));
         services.AddHttpClient<ITextToSpeech, OpenAiTextToSpeech>((sp, http) => Engine(sp, http, v => v.TtsUrl));

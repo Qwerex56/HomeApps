@@ -13,6 +13,7 @@ internal sealed class ConversationMessageConfiguration : IEntityTypeConfiguratio
         builder.HasKey(m => m.Id);
         builder.Property(m => m.Id).ValueGeneratedNever();
         builder.Property(m => m.Role).HasConversion<string>().HasMaxLength(16);
+        builder.Property(m => m.Channel).HasMaxLength(16).HasDefaultValue(ConversationMessage.DefaultChannel);
         builder.HasOne<Conversation>().WithMany().HasForeignKey(m => m.ConversationId).OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(m => new { m.ConversationId, m.SentAt });
     }

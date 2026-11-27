@@ -39,6 +39,15 @@ public sealed class AppClient
     /// <summary>The last time it got tokens; with <see cref="RegisteredAt"/> it decides when an unused client goes.</summary>
     public DateTimeOffset? LastUsedAt { get; private set; }
 
+    /// <summary>
+    /// A first-party app from configuration (<c>Auth:Clients</c>), e.g. HomeApps.Desktop: never stored, so registration
+    /// (whose ids are always <see cref="IdPrefix"/> + random) can neither create nor take its id.
+    /// </summary>
+    public bool IsFirstParty { get; private init; }
+
+    public static AppClient FirstParty(string id, string name, IEnumerable<string> redirectUris) =>
+        new(id, name, [.. redirectUris], DateTimeOffset.UnixEpoch) { IsFirstParty = true };
+
     public static Result<AppClient> Register(string? name, IReadOnlyCollection<string>? redirectUris, DateTimeOffset now)
     {
         var trimmed = name?.Trim();

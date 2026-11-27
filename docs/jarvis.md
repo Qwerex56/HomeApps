@@ -38,9 +38,10 @@ Settings (`Jarvis`):
 - **Ask:** `POST /jarvis/api/ask` `{text, householdId?}` with the person's own token (an assistant's is refused)
   answers `{runId, text, actions[]}`. A channel sends `AssistantInvoked` instead and gets `AssistantWorking`, then
   `AssistantResponded` with the same `reference`; the run happens in a background worker, not inside the consumer.
-- **Brain:** `claude -p` per run (`Jarvis:ClaudeCode`), only the gateway as MCP server with the person's delegated token
-  (reference `run:{id}`) and the `X-Jarvis-Run` header, no built-in tools, a turn limit and a timeout. Without
-  `OAuthToken`, or with `Jarvis:Enabled` false, JARVIS answers that he is switched off; over `Jarvis:DailyBudgetUsd`
+- **Brain:** `OpenAiChatBrain` (`Jarvis:OpenAi`): streams `/v1/chat/completions` of any OpenAI-compatible endpoint and runs the
+  tool-calling loop (up to `MaxTurns`) against the gateway over MCP, with the person's delegated token
+  (reference `run:{id}`) and the `X-Jarvis-Run` header. A model that does not answer in 15 s gives "JARVIS jest chwilowo niedostępny";
+  at start a health check logs a critical error when the model is unreachable. Without `BaseUrl` and `Model`, or with `Jarvis:Enabled` false, JARVIS answers that he is switched off; over `Jarvis:DailyBudgetUsd`
   (whole home, since midnight UTC) that the budget is spent.
 - **Actions:** in a run the gateway logs every call. `readOnlyHint` = a read (not on the card); `destructiveHint: false`
   = done and shown; anything else (MCP's default counts as destructive) is not called but waits 10 minutes for
@@ -79,6 +80,8 @@ household's JARVIS is off or its Devices switch is off (H-2), or Devices does no
   household ceiling work whatever a device writes.
 - **Voice:** a satellite token opens `/jarvis/voice` only when Devices lists that device with purpose `assistant` (403 otherwise, 503 when
   Devices cannot be asked).
+- **Turn lease:** one turn per person at a time. A second listener on `/jarvis/voice` gets `lease_conflict` (`turn_in_progress`)
+  and stays quiet until the turn ends; the lease renews while the turn runs and expires after five seconds without renewal.
 
 ## Conversations in the app (J2c)
 
@@ -169,6 +172,15 @@ run with `dotnet run --project src/Jarvis.VoiceBridge -- --server https://home-a
 `--speech local`, `--actions`, `--pair`) is in its `docs/bridge.md`. It talks to HomeApps only over `/jarvis/voice`
 and `/devices/link`.
 
+**Desktop OAuth contract (first-party client).** Confirmations (`/jarvis/api/confirmations`) refuse connected apps, so
+HomeApps.Desktop signs in as the static Auth client `homeapps-desktop` (`Auth:Clients`, type `Native`, redirect
+`http://127.0.0.1/callback`, any loopback port; not registered by DCR, whose ids are always `app_*`):
+`/auth/oauth/authorize` with `client_id=homeapps-desktop`, `response_type=code`, PKCE S256,
+`redirect_uri=http://127.0.0.1:<port>/callback` and **`resource=homeapps`** (no `scope` parameter is sent or read); `/auth/oauth/token` with the
+same `client_id`, `redirect_uri`, `code_verifier` and `resource=homeapps` (refresh: `grant_type=refresh_token`). The token's
+`aud` is `homeapps`, so the gateway, `/jarvis/voice` and the confirmations accept it. Any other app asking for
+`resource=homeapps` gets `invalid_target`. Production: `Auth__Clients__3__*` in `compose.prod.yaml`.
+
 ## Production
 
 `compose.prod.yaml` runs JARVIS next to the other services (database `homeapps_jarvis`, migrated on start). In `.env`:
@@ -176,13 +188,14 @@ and `/devices/link`.
 | Variable | |
 |---|---|
 | `JARVIS_CLIENT_SECRET` | Required. The secret of Auth's `jarvis-service` client, which JARVIS asks delegated tokens with: `openssl rand -base64 32`. Both services read it from `.env`. |
-| `JARVIS_CLAUDE_MODEL` | Optional. The model of JARVIS's answers: `haiku` (the cheapest, for tests), `sonnet`, `opus` or a full model id; empty = Claude Code's default. |
-| `JARVIS_CLAUDE_CODE_OAUTH_TOKEN` | Optional. JARVIS's own answers run on the owner's Claude subscription: on any computer with Claude Code, `claude setup-token`, then paste the token here. Empty: the JARVIS page and `@Jarvis` answer "JARVIS jest teraz wyłączony", while the gateway still serves your own Claude Code. A secret. |
+| `JARVIS_MODEL_BASE_URL` | Optional. The base URL of an OpenAI-compatible API with tool calling, e.g. `https://api.openai.com/v1`. Empty (or no model): the JARVIS page and `@Jarvis` answer "JARVIS jest teraz wyłączony", while the gateway still serves your own Claude Code. |
+| `JARVIS_MODEL_NAME` | Optional. The model's name for that API. |
+| `JARVIS_MODEL_API_KEY` | Optional. The API key; empty for a local model without one. A secret. |
 | `JARVIS_VOICE_URL` | Optional. JARVIS's ears and voice: the speech engine's URL as the server reaches it, e.g. Speaches on the Mac `http://192.168.1.20:8000` ("Voice" above). Empty: no voice. |
 
 The compose file also gives Auth the `jarvis-service` client and `Auth__ConnectedApps__Resources__0` =
 `https://${HOMEAPPS_DOMAIN}/jarvis/mcp`, so apps can sign in to the gateway. More settings, as environment variables of
-the `jarvis` service: `Jarvis__DailyBudgetUsd` (2 USD a day for the whole home), `Jarvis__Enabled` (`false` switches the agent off), `Jarvis__ClaudeCode__MaxTurns`.
+the `jarvis` service: `Jarvis__DailyBudgetUsd` (2 USD a day for the whole home), `Jarvis__Enabled` (`false` switches the agent off), `Jarvis__OpenAi__MaxTurns`.
 
 The tools: Households and Accounts always; plugins from `HOMEAPPS_PLUGINS` (the plugin's compose service must be named
 after its id, as the plugins' own compose files do); HomeMix add-ons that declare `"jarvis": true` and were allowed
@@ -190,7 +203,7 @@ to use him when installed. Then the release demo: install Pogoda in a household,
 page "Jarvis, jaka jutro pogoda?"; the answer comes from the `pogoda_forecast` tool.
 
 `scripts/smoke.sh` checks the gateway (metadata, 401, `tools/list`, a tool call) and that a message gets an answer; with
-`JARVIS_CLAUDE_CODE_OAUTH_TOKEN` set the answer is Claude's, otherwise the "switched off" line.
+`JARVIS_MODEL_BASE_URL` and `JARVIS_MODEL_NAME` set the answer is the model's, otherwise the "switched off" line.
 
 ## Connecting Claude Code
 

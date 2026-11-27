@@ -123,7 +123,7 @@ internal sealed class VoiceTurnHandler(
 
     /// <summary>An answer for the satellite only, not kept in its conversation.</summary>
     private VoiceTurnView Said(VoiceTurnCommand command, string transcript, string text, IReadOnlyList<ActionView> actions, Guid? speaker) =>
-        new(command.ConversationId, transcript, new MessageView(Guid.NewGuid(), MessageRole.Assistant, text, time.GetUtcNow(), actions), speaker);
+        new(command.ConversationId, transcript, new MessageView(Guid.NewGuid(), MessageRole.Assistant, text, time.GetUtcNow(), actions, Prompts.VoiceChannel), speaker);
 
     private async Task<Result<MessageView>> DecideAsync(
         VoiceTurnCommand command, Guid conversationId, string transcript, bool approve, CancellationToken cancellationToken)
@@ -145,9 +145,9 @@ internal sealed class VoiceTurnHandler(
         }
 
         var conversation = found.Value;
-        conversations.Add(conversation.Write(transcript, time));
+        conversations.Add(conversation.Write(transcript, time, Prompts.VoiceChannel));
         // No run of its own: the card of the answer that asked shows how the actions ended.
-        var message = conversation.Answer(Summary(decided, approve), null, time);
+        var message = conversation.Answer(Summary(decided, approve), null, time, Prompts.VoiceChannel);
         conversations.Add(message);
         return MessageView.From(message, decided);
     }

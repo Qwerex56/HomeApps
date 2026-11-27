@@ -106,6 +106,22 @@ public sealed class AssistantTests(JarvisFactory factory) : IDisposable
     }
 
     [Fact]
+    public async Task The_desktop_first_party_token_can_list_and_decide_confirmations_while_an_app_token_cannot()
+    {
+        // Auth issues the desktop (client homeapps-desktop, resource=homeapps) a token with aud homeapps; a registered app's is for the gateway resource.
+        var desktop = factory.CreateClient(TestJwt.CreateTokenWithClient(_person, clientId: "homeapps-desktop"));
+        var app = factory.CreateClient(TestJwt.CreateAppToken(_person, JarvisFactory.Resource, "app_registered"));
+
+        var listed = await desktop.GetAsync("/jarvis/api/confirmations");
+        var decided = await desktop.PostAsJsonAsync($"/jarvis/api/confirmations/{Guid.NewGuid()}", new { approve = true });
+        var refused = await app.GetAsync("/jarvis/api/confirmations");
+
+        Assert.Equal(HttpStatusCode.OK, listed.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, decided.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
+    }
+
+    [Fact]
     public async Task A_first_party_user_with_client_id_can_list_confirmations()
     {
         var firstPartyToken = TestJwt.CreateTokenWithClient(_person, clientId: "homeapps-web");
