@@ -68,6 +68,8 @@ internal sealed partial class OpenAiChatBrain(
         };
         var toolList = ToolList(tools);
         var answer = new StringBuilder();
+        var done = new Dictionary<string, string>();
+        var readOnly = tools.Where(t => t.ProtocolTool.Annotations?.ReadOnlyHint == true).Select(t => t.Name).ToHashSet(StringComparer.Ordinal);
         for (var turn = 0; turn < Math.Max(1, settings.MaxTurns); turn++)
         {
             var calls = new SortedDictionary<int, ToolCallBuilder>();
@@ -145,12 +147,23 @@ internal sealed partial class OpenAiChatBrain(
             messages.Add(assistant);
             foreach (var call in calls.Values)
             {
-                messages.Add(new JsonObject
+                // A mutating call again in the same run, after it succeeded (reads are always fresh): not executed twice (no second ToolCall row).
+                var key = call.Name + "\n" + Normalized(call.Arguments.ToString());
+                string content;
+                if (!readOnly.Contains(call.Name) && done.TryGetValue(key, out var earlier))
                 {
-                    ["role"] = "tool",
-                    ["tool_call_id"] = call.Id,
-                    ["content"] = await CallAsync(client, call, cancellationToken),
-                });
+                    content = $"{earlier}\n(To już zostało zrobione. Nie wywołuj tego ponownie; odpowiedz użytkownikowi.)";
+                }
+                else
+                {
+                    content = await CallAsync(client, call, cancellationToken);
+                    if (!readOnly.Contains(call.Name) && !content.StartsWith("Błąd:", StringComparison.Ordinal))
+                    {
+                        done[key] = content;
+                    }
+                }
+
+                messages.Add(new JsonObject { ["role"] = "tool", ["tool_call_id"] = call.Id, ["content"] = content });
             }
         }
 
@@ -197,6 +210,25 @@ internal sealed partial class OpenAiChatBrain(
 
         return list;
     }
+
+    private static string Normalized(string arguments)
+    {
+        try
+        {
+            return Sorted(JsonNode.Parse(arguments.Length == 0 ? "{}" : arguments))?.ToJsonString() ?? "null";
+        }
+        catch (JsonException)
+        {
+            return arguments;
+        }
+    }
+
+    private static JsonNode? Sorted(JsonNode? node) => node switch
+    {
+        JsonObject o => new JsonObject(o.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => KeyValuePair.Create(p.Key, Sorted(p.Value?.DeepClone())))),
+        JsonArray a => new JsonArray(a.Select(i => Sorted(i?.DeepClone())).ToArray()),
+        _ => node?.DeepClone(),
+    };
 
     private static async Task<string> CallAsync(McpClient client, ToolCallBuilder call, CancellationToken cancellationToken)
     {

@@ -7,6 +7,7 @@ namespace Jarvis.Api.Tests;
 /// <summary>An OpenAI-compatible endpoint in memory: each call to <c>/chat/completions</c> gets the next scripted SSE answer.</summary>
 internal sealed class FakeModel(IEnumerable<string>? answers = null) : HttpMessageHandler
 {
+    private int _sent;
     private readonly Queue<string> _answers = new(answers ?? []);
 
     /// <summary>The body of every request, parsed.</summary>
@@ -17,11 +18,23 @@ internal sealed class FakeModel(IEnumerable<string>? answers = null) : HttpMessa
 
     public Func<string>? Repeat { get; set; }
 
+    /// <summary>When set, hangs from this request on (1 = the first request); 0 = never.</summary>
+    public int HangFromRequest { get; set; }
+
+    /// <summary>How long every answer takes, like a slow model.</summary>
+    public TimeSpan Delay { get; set; }
+
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        if (Hang)
+        _sent++;
+        if (Hang || (HangFromRequest > 0 && _sent >= HangFromRequest))
         {
             await Task.Delay(Timeout.Infinite, cancellationToken);
+        }
+
+        if (Delay > TimeSpan.Zero)
+        {
+            await Task.Delay(Delay, cancellationToken);
         }
 
         if (request.Content is not null)
