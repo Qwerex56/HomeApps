@@ -97,6 +97,52 @@ public sealed class LlmSettingsTests(JarvisFactory factory)
         Assert.Equal("unreachable", json.RootElement.GetProperty("error").GetString());
     }
 
+    [Fact]
+    public async Task An_assistant_acting_for_an_admin_is_refused_so_JARVIS_cannot_change_his_own_model()
+    {
+        await ClearAsync();
+        var assistant = factory.CreateAssistantClient(Guid.NewGuid(), null, "Admin");
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await assistant.GetAsync(Url)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await assistant.PutAsJsonAsync(Url, Body)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await assistant.PostAsync(Url + "/test", null)).StatusCode);
+        using var scope = factory.Services.CreateScope();
+        Assert.Empty(await scope.ServiceProvider.GetRequiredService<JarvisDbContext>().LlmSettings.ToListAsync());
+    }
+
+    [Theory]
+    [InlineData("ftp://files.test/v1", "m", 20)]
+    [InlineData("nope", "m", 20)]
+    [InlineData("http://127.0.0.1:1/v1", "   ", 20)]
+    [InlineData("http://127.0.0.1:1/v1", "m", 0)]
+    [InlineData("http://127.0.0.1:1/v1", "m", 121)]
+    public async Task An_invalid_connection_is_refused_with_400_and_nothing_is_saved(string url, string model, int timeout)
+    {
+        await ClearAsync();
+        var admin = factory.CreateAuthenticatedClient(Guid.NewGuid(), null, "Admin");
+
+        var response = await admin.PutAsJsonAsync(Url, new { baseUrl = url, model, apiKey = Secret, timeoutSeconds = timeout });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var scope = factory.Services.CreateScope();
+        Assert.Empty(await scope.ServiceProvider.GetRequiredService<JarvisDbContext>().LlmSettings.ToListAsync());
+    }
+
+    [Fact]
+    public async Task An_empty_key_in_the_save_removes_the_stored_key()
+    {
+        await ClearAsync();
+        var admin = factory.CreateAuthenticatedClient(Guid.NewGuid(), null, "Admin");
+        await admin.PutAsJsonAsync(Url, Body);
+
+        var cleared = await admin.PutAsJsonAsync(Url, new { baseUrl = "http://127.0.0.1:1/v1", model = "gpt-test", apiKey = "", timeoutSeconds = 20 });
+
+        using var json = JsonDocument.Parse(await cleared.Content.ReadAsStringAsync());
+        Assert.False(json.RootElement.GetProperty("apiKeySet").GetBoolean());
+        using var scope = factory.Services.CreateScope();
+        Assert.Null((await scope.ServiceProvider.GetRequiredService<JarvisDbContext>().LlmSettings.AsNoTracking().SingleAsync()).ApiKeyProtected);
+    }
+
     private async Task ClearAsync()
     {
         using var scope = factory.Services.CreateScope();
