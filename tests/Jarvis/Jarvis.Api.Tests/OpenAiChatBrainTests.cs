@@ -159,6 +159,19 @@ public sealed class OpenAiChatBrainTests(JarvisFactory factory)
     }
 
     [Fact]
+    public async Task A_read_after_a_change_in_one_run_is_executed_again_and_returns_fresh_data()
+    {
+        using var tools = DeviceTool();
+        factory.DevicesSource.Tools = [FakeToolSet.Computer("mac_quiet", readOnly: false, destructive: false), FakeToolSet.Computer("mac_status", readOnly: true)];
+        var model = new FakeModel([
+            FakeModel.Call("c1", "device_mac_status", "{}"), FakeModel.Call("c2", "device_mac_quiet", "{}"), FakeModel.Call("c3", "device_mac_status", "{}"), FakeModel.Text("ok")]);
+
+        await RunAsync(model);
+
+        Assert.Equal(["mac_status", "mac_quiet", "mac_status"], factory.DevicesSource.Calls);
+    }
+
+    [Fact]
     public async Task The_same_action_in_a_new_run_is_executed()
     {
         using var tools = DeviceTool();

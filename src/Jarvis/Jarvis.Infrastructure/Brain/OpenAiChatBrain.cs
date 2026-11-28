@@ -69,6 +69,7 @@ internal sealed partial class OpenAiChatBrain(
         var toolList = ToolList(tools);
         var answer = new StringBuilder();
         var done = new Dictionary<string, string>();
+        var readOnly = tools.Where(t => t.ProtocolTool.Annotations?.ReadOnlyHint == true).Select(t => t.Name).ToHashSet(StringComparer.Ordinal);
         for (var turn = 0; turn < Math.Max(1, settings.MaxTurns); turn++)
         {
             var calls = new SortedDictionary<int, ToolCallBuilder>();
@@ -146,17 +147,17 @@ internal sealed partial class OpenAiChatBrain(
             messages.Add(assistant);
             foreach (var call in calls.Values)
             {
-                // The same call again in the same run, after it succeeded: not executed twice (no second ToolCall row).
+                // A mutating call again in the same run, after it succeeded (reads are always fresh): not executed twice (no second ToolCall row).
                 var key = call.Name + "\n" + Normalized(call.Arguments.ToString());
                 string content;
-                if (done.TryGetValue(key, out var earlier))
+                if (!readOnly.Contains(call.Name) && done.TryGetValue(key, out var earlier))
                 {
                     content = $"{earlier}\n(To już zostało zrobione. Nie wywołuj tego ponownie; odpowiedz użytkownikowi.)";
                 }
                 else
                 {
                     content = await CallAsync(client, call, cancellationToken);
-                    if (!content.StartsWith("Błąd:", StringComparison.Ordinal))
+                    if (!readOnly.Contains(call.Name) && !content.StartsWith("Błąd:", StringComparison.Ordinal))
                     {
                         done[key] = content;
                     }
