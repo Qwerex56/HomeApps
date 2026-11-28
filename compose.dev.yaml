@@ -324,6 +324,8 @@ services:
       Jarvis__Sources__2__Url: "http://homemix:8080/mcp"
       Jarvis__Sources__3__Url: "http://devices:8080/mcp"
       Jarvis__ClientSecret: ${JARVIS_CLIENT_SECRET:-development-only-jarvis-secret-0123456789}
+      # Data Protection keys protect the model API key saved in the admin panel: keep them on a volume.
+      Jarvis__DataProtection__KeysPath: /app/.keys/dataprotection
       # An OpenAI-compatible endpoint with tool calling (jarvis.md); without a URL and model JARVIS answers that he is switched off.
       Jarvis__OpenAi__BaseUrl: ${JARVIS_MODEL_BASE_URL:-}
       Jarvis__OpenAi__Model: ${JARVIS_MODEL_NAME:-}
@@ -345,6 +347,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    volumes:
+      - jarvis-keys:/app/.keys
     labels:
       - "traefik.enable=true"
       # Only the gateway and its RFC 9728 metadata; the services' own MCP servers stay inside the Docker network.
@@ -359,3 +363,4 @@ volumes:
   auth-keys:
   homemix-packages:
   avatars:
+  jarvis-keys:

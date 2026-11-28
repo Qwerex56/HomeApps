@@ -8,6 +8,8 @@ RUN dotnet publish src/Jarvis/Jarvis.Api/Jarvis.Api.csproj -c Release -o /app/pu
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build /app/publish .
+# Data Protection keys (the saved model API key); mount a volume here so they survive a new container.
+RUN mkdir -p /app/.keys && chown "$APP_UID" /app/.keys
 USER $APP_UID
 ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080

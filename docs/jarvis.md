@@ -38,11 +38,17 @@ Settings (`Jarvis`):
 - **Ask:** `POST /jarvis/api/ask` `{text, householdId?}` with the person's own token (an assistant's is refused)
   answers `{runId, text, actions[]}`. A channel sends `AssistantInvoked` instead and gets `AssistantWorking`, then
   `AssistantResponded` with the same `reference`; the run happens in a background worker, not inside the consumer.
-- **Brain:** `OpenAiChatBrain` (`Jarvis:OpenAi`): streams `/v1/chat/completions` of any OpenAI-compatible endpoint and runs the
+- **Brain:** `OpenAiChatBrain` (settings from the admin panel, else `Jarvis:OpenAi`): streams `/v1/chat/completions` of any OpenAI-compatible endpoint and runs the
   tool-calling loop (up to `MaxTurns`) against the gateway over MCP, with the person's delegated token
   (reference `run:{id}`) and the `X-Jarvis-Run` header. A model that does not answer in 15 s gives "JARVIS jest chwilowo niedostępny";
   at start a health check logs a critical error when the model is unreachable. Without `BaseUrl` and `Model`, or with `Jarvis:Enabled` false, JARVIS answers that he is switched off; over `Jarvis:DailyBudgetUsd`
   (whole home, since midnight UTC) that the budget is spent.
+- **Model settings (D14):** an admin or owner sets the URL, model, API key and timeout in the web admin (JARVIS tab) or with
+  `GET/PUT /jarvis/api/v1/admin/llm-settings` and `POST .../test` (the same check as the start-up health check). They are kept in
+  `JarvisLlmSettings` (one row), win over `Jarvis:OpenAi` (the fallback for existing installs) and are read on every turn, so no restart. The key is
+  protected with Data Protection (keys in `Jarvis:DataProtection:KeysPath`, default `.keys/dataprotection`: keep them on a volume: the compose files mount `jarvis-keys`; without them a recreated container loses the saved key) and is
+  never returned, only `apiKeySet`. Only a first-party admin token works (not an assistant's, not a connected app's). Changing the URL to another origin
+  without typing the key again gets `400` (`jarvis.llm_key_required`): the stored key is never sent to a new host. The health check does not follow redirects.
 - **Actions:** in a run the gateway logs every call. `readOnlyHint` = a read (not on the card); `destructiveHint: false`
   = done and shown; anything else (MCP's default counts as destructive) is not called but waits 10 minutes for
   `POST /jarvis/api/confirmations/{id}` `{approve}` or `AssistantConfirmed`, only from the person who asked. A decision

@@ -117,7 +117,7 @@ internal sealed partial class Agent(
         }
 
         var settings = options.Value;
-        if (!settings.Enabled || !brain.IsReady)
+        if (!settings.Enabled || !await brain.IsReadyAsync(cancellationToken))
         {
             return Answers.SwitchedOff;
         }

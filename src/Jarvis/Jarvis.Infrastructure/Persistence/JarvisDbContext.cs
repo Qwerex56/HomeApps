@@ -1,6 +1,7 @@
 using HomeApps.BuildingBlocks.Infrastructure.Persistence;
 using Jarvis.Domain.Conversations;
 using Jarvis.Domain.Runs;
+using Jarvis.Domain.Settings;
 using Jarvis.Domain.ToolCalls;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -19,4 +20,6 @@ public sealed class JarvisDbContext(DbContextOptions<JarvisDbContext> options, I
     public DbSet<Conversation> Conversations => Set<Conversation>();
 
     public DbSet<ConversationMessage> ConversationMessages => Set<ConversationMessage>();
+
+    public DbSet<JarvisLlmSettings> LlmSettings => Set<JarvisLlmSettings>();
 }

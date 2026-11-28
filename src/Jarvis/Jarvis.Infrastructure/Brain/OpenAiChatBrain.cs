@@ -6,7 +6,6 @@ using System.Text.Json.Nodes;
 using Jarvis.Application.Abstractions;
 using Jarvis.Infrastructure.Gateway;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using ModelContextProtocol;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
@@ -19,17 +18,21 @@ namespace Jarvis.Infrastructure.Brain;
 /// delegated token and the run's id in <c>X-Jarvis-Run</c> (no reference to the API project).
 /// </summary>
 internal sealed partial class OpenAiChatBrain(
-    IHttpClientFactory httpClients, ILoggerFactory loggers, IOptions<OpenAiChatOptions> options, ILogger<OpenAiChatBrain> logger) : IAssistantBrain
+    IHttpClientFactory httpClients, ILoggerFactory loggers, ILlmConnection connection, ILogger<OpenAiChatBrain> logger) : IAssistantBrain
 {
     public const string HttpClientName = "jarvis-model";
     public const string Unavailable = "JARVIS jest chwilowo niedostępny";
 
-    public bool IsReady => !string.IsNullOrWhiteSpace(options.Value.BaseUrl) && !string.IsNullOrWhiteSpace(options.Value.Model);
+    public async Task<bool> IsReadyAsync(CancellationToken cancellationToken)
+    {
+        var settings = await connection.CurrentAsync(cancellationToken);
+        return !string.IsNullOrWhiteSpace(settings.BaseUrl) && !string.IsNullOrWhiteSpace(settings.Model);
+    }
 
     public async IAsyncEnumerable<BrainEvent> RunAsync(BrainRequest request, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var settings = options.Value;
+        var settings = await connection.CurrentAsync(cancellationToken);
         McpClient? gateway = null;
         IList<McpClientTool> tools = [];
         var unreachable = false;

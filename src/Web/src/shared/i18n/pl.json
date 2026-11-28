@@ -227,7 +227,13 @@
       "conversation_title_invalid": "Nazwa rozmowy musi mieć od 1 do 80 znaków.",
       "action_not_found": "Nie ma takiej akcji.",
       "action_not_pending": "Ta akcja już nie czeka na potwierdzenie.",
-      "action_expired": "Czas na potwierdzenie minął. Poproś jeszcze raz."
+      "action_expired": "Czas na potwierdzenie minął. Poproś jeszcze raz.",
+      "forbidden": "Tylko administrator może zmienić połączenie z modelem.",
+      "llm_url": "Adres API musi być adresem http lub https, bez nazwy użytkownika i hasła.",
+      "llm_model": "Podaj nazwę modelu.",
+      "llm_timeout": "Limit czasu musi mieć od 1 do 120 sekund.",
+      "llm_length": "Adres, nazwa modelu albo klucz są za długie.",
+      "llm_key_required": "Adres wskazuje inny serwer: wpisz klucz API ponownie, zapisany klucz nie zostanie tam wysłany."
     },
     "devices": {
       "name_taken": "W tym domu jest już urządzenie o tej nazwie.",
@@ -528,7 +534,25 @@
       "households": "Domy",
       "plugins": "Pluginy serwera",
       "addons": "Dodatki",
+      "jarvis": "JARVIS",
       "about": "O serwerze"
+    },
+    "jarvis": {
+      "title": "JARVIS: połączenie z modelem",
+      "subtitle": "Dowolny serwer zgodny z OpenAI. Te ustawienia mają pierwszeństwo przed zmiennymi środowiskowymi i działają od następnej wiadomości.",
+      "baseUrl": "Adres API",
+      "model": "Model",
+      "apiKey": "Klucz API",
+      "keyKept": "Klucz jest zapisany (zostaw puste, by go zachować)",
+      "removeKey": "Usuń klucz",
+      "removeKeyText": "Zapisany klucz API zostanie usunięty. JARVIS nie połączy się z modelem wymagającym klucza, dopóki nie wpiszesz go ponownie.",
+      "keyRemoved": "Klucz API usunięty",
+      "timeout": "Limit czasu (sekundy)",
+      "save": "Zapisz",
+      "saved": "Zapisano ustawienia JARVIS-a",
+      "test": "Testuj połączenie",
+      "testOk": "Model odpowiada.",
+      "testFailed": "Model nie odpowiada: {error}"
     },
     "about": {
       "title": "O serwerze",

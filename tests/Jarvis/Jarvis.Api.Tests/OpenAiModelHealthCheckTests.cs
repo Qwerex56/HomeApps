@@ -1,4 +1,5 @@
 using Jarvis.Infrastructure.Brain;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -10,8 +11,7 @@ public sealed class OpenAiModelHealthCheckTests
     public async Task An_unreachable_model_is_logged_as_critical_at_start_and_start_goes_on()
     {
         var log = new RecordingLogger<OpenAiModelHealthCheck>();
-        var check = new OpenAiModelHealthCheck(
-            new HttpClient(new ThrowingHandler()), Options.Create(new OpenAiChatOptions { BaseUrl = "https://models.test/v1", Model = "m" }), log);
+        var check = Check(new HttpClient(new ThrowingHandler()), new OpenAiChatOptions { BaseUrl = "https://models.test/v1", Model = "m" }, log);
 
         await check.StartAsync(CancellationToken.None);
 
@@ -23,8 +23,7 @@ public sealed class OpenAiModelHealthCheckTests
     public async Task A_malformed_URL_is_logged_as_critical_and_does_not_stop_start()
     {
         var log = new RecordingLogger<OpenAiModelHealthCheck>();
-        var check = new OpenAiModelHealthCheck(
-            new HttpClient(new FakeModel()), Options.Create(new OpenAiChatOptions { BaseUrl = "not a url", Model = "m" }), log);
+        var check = Check(new HttpClient(new FakeModel()), new OpenAiChatOptions { BaseUrl = "not a url", Model = "m" }, log);
 
         await check.StartAsync(CancellationToken.None);
 
@@ -35,13 +34,15 @@ public sealed class OpenAiModelHealthCheckTests
     public async Task A_reachable_model_logs_nothing_critical()
     {
         var log = new RecordingLogger<OpenAiModelHealthCheck>();
-        var check = new OpenAiModelHealthCheck(
-            new HttpClient(new FakeModel()), Options.Create(new OpenAiChatOptions { BaseUrl = "https://models.test/v1", Model = "m" }), log);
+        var check = Check(new HttpClient(new FakeModel()), new OpenAiChatOptions { BaseUrl = "https://models.test/v1", Model = "m" }, log);
 
         await check.StartAsync(CancellationToken.None);
 
         Assert.DoesNotContain(log.Entries, e => e.Level >= LogLevel.Error);
     }
+
+    private static OpenAiModelHealthCheck Check(HttpClient http, OpenAiChatOptions options, ILogger<OpenAiModelHealthCheck> log) =>
+        new(http, new ServiceCollection().AddSingleton<ILlmConnection>(new FixedConnection(options)).BuildServiceProvider().GetRequiredService<IServiceScopeFactory>(), log);
 
     private sealed class ThrowingHandler : HttpMessageHandler
     {

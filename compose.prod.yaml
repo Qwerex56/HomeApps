@@ -250,6 +250,8 @@ services:
       Jarvis__Resource: "https://${HOMEAPPS_DOMAIN}/jarvis/mcp"
       Jarvis__ClientSecret: ${JARVIS_CLIENT_SECRET:?set JARVIS_CLIENT_SECRET in .env}
       Jarvis__Plugins: ${HOMEAPPS_PLUGINS:-}
+      # Data Protection keys protect the model API key saved in the admin panel: keep them on a volume.
+      Jarvis__DataProtection__KeysPath: /app/.keys/dataprotection
       # An OpenAI-compatible endpoint with tool calling; empty URL or model: JARVIS answers that he is switched off,
       # while connected apps (Claude Code, claude.ai) still use the gateway.
       Jarvis__OpenAi__BaseUrl: ${JARVIS_MODEL_BASE_URL:-}
@@ -261,6 +263,8 @@ services:
       Jarvis__Voice__SttUrl: ${JARVIS_VOICE_URL:-}
       Jarvis__Voice__TtsUrl: ${JARVIS_VOICE_URL:-}
       # Optional (docs/jarvis.md): Jarvis__DailyBudgetUsd (default 2 USD a day for the home).
+    volumes:
+      - jarvis-keys:/app/.keys
     labels:
       - "traefik.enable=true"
       # The gateway, the API and the gateway's OAuth metadata; /jarvis itself is a page of the web app.
@@ -295,3 +299,4 @@ volumes:
   auth-keys:
   homemix-packages:
   avatars:
+  jarvis-keys:

@@ -18,6 +18,8 @@ internal sealed class FakeBrain : IAssistantBrain
 
     public bool IsReady { get; set; } = true;
 
+    public Task<bool> IsReadyAsync(CancellationToken cancellationToken) => Task.FromResult(IsReady);
+
     public string? LastPrompt { get; private set; }
 
     public string? LastSystemPrompt { get; private set; }

@@ -2,7 +2,6 @@ using Jarvis.Application.Abstractions;
 using Jarvis.Infrastructure.Brain;
 using Jarvis.Infrastructure.Gateway;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using HomeApps.BuildingBlocks.Testing;
 
 namespace Jarvis.Api.Tests;
@@ -55,7 +54,7 @@ public sealed class OpenAiChatBrainTests(JarvisFactory factory)
     {
         var model = new FakeModel();
         var brain = Brain(model, new OpenAiChatOptions());
-        factory.Brain.IsReady = brain.IsReady;
+        factory.Brain.IsReady = await brain.IsReadyAsync(CancellationToken.None);
         try
         {
             var answer = await AssistantTests.AskAsync(factory, _person, "cześć");
@@ -66,6 +65,28 @@ public sealed class OpenAiChatBrainTests(JarvisFactory factory)
         finally
         {
             factory.Brain.IsReady = true;
+        }
+    }
+
+    [Fact]
+    public async Task A_change_of_the_connection_works_in_the_next_turn_without_a_restart()
+    {
+        var model = new FakeModel([FakeModel.Text("Pierwsza."), FakeModel.Text("Druga.")]);
+        var connection = new FixedConnection(new OpenAiChatOptions { BaseUrl = "https://one.test/v1", Model = "m1", GatewayUrl = "http://localhost/jarvis/mcp" });
+        var brain = Brain(model, connection);
+
+        await Drain(brain);
+        connection.Options = new OpenAiChatOptions { BaseUrl = "https://two.test/v1", Model = "m2", GatewayUrl = "http://localhost/jarvis/mcp" };
+        await Drain(brain);
+
+        Assert.Equal(["m1", "m2"], model.Requests.Select(r => r["model"]!.GetValue<string>()));
+    }
+
+    private async Task Drain(OpenAiChatBrain brain)
+    {
+        var request = new BrainRequest(Guid.NewGuid(), "system", "cześć", TestJwt.CreateToken(_person));
+        await foreach (var _ in brain.RunAsync(request, CancellationToken.None))
+        {
         }
     }
 
@@ -84,8 +105,8 @@ public sealed class OpenAiChatBrainTests(JarvisFactory factory)
     [InlineData("https://models.test/v1", "", false)]
     [InlineData("", "gpt", false)]
     [InlineData("https://models.test/v1", "gpt", true)]
-    public void Without_a_URL_and_a_model_it_is_not_ready(string url, string name, bool ready) =>
-        Assert.Equal(ready, Brain(new FakeModel(), new OpenAiChatOptions { BaseUrl = url, Model = name }).IsReady);
+    public async Task Without_a_URL_and_a_model_it_is_not_ready(string url, string name, bool ready) =>
+        Assert.Equal(ready, await Brain(new FakeModel(), new OpenAiChatOptions { BaseUrl = url, Model = name }).IsReadyAsync(CancellationToken.None));
 
     [Fact]
     public void The_system_prompt_carries_the_scope_refusal_and_the_voice_one_asks_for_the_screen()
@@ -132,9 +153,11 @@ public sealed class OpenAiChatBrainTests(JarvisFactory factory)
         return said;
     }
 
-    private OpenAiChatBrain Brain(FakeModel model, OpenAiChatOptions options) => new(
+    private OpenAiChatBrain Brain(FakeModel model, OpenAiChatOptions options) => Brain(model, new FixedConnection(options));
+
+    private OpenAiChatBrain Brain(FakeModel model, FixedConnection options) => new(
         new StubHttpClients(name => name == OpenAiChatBrain.HttpClientName ? new HttpClient(model) : factory.CreateClient()),
         NullLoggerFactory.Instance,
-        Options.Create(options),
+        options,
         NullLogger<OpenAiChatBrain>.Instance);
 }
