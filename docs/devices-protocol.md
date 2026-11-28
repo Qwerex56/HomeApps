@@ -262,5 +262,6 @@ are in `firmware/examples/` (switch, battery weather station, presence tag) and 
 - **Time.** Events carry `at` only after SNTP has set the clock; before that the server uses its receive time.
 - **Limits enforced by the component.** 50 items per list, 64 000 characters per descriptor, action names
   `^[a-z][a-z0-9_]{0,19}$`; at most 120 frames per minute on the link, and 50 frames / 64 KB per report.
+- **Transport.** Kconfig `HOMEAPPS_TRANSPORT` picks how pair, token and report reach the home: Wi-Fi + HTTPS (default) or a BLE stub for the future phone bridge, specified in [ble-bridge.md](ble-bridge.md) (the server does not change).
 - **Actions** are declared in the descriptor, but this version does not call a callback for them; only control `set`
   frames reach `on_set`.

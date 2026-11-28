@@ -37,6 +37,12 @@ against the serial log). Plain http only with `HOMEAPPS_INSECURE_HTTP`: the pair
 
 TOFU pins the leaf certificate: when the server certificate is renewed, reopen setup (hold the button 2 s) and clear or replace the fingerprint.
 
+## Transport
+
+Kconfig `HOMEAPPS_TRANSPORT`: `HOMEAPPS_TRANSPORT_WIFI` (default, Wi-Fi + HTTPS, unchanged) or `HOMEAPPS_TRANSPORT_BLE`, a **stub**
+(`homeapps_start` returns `ESP_ERR_NOT_SUPPORTED`, no NimBLE linked). The seam is `homeapps_transport_t` in `src/homeapps_internal.h`
+(`open`, `post_json` for pair, token and report). The phone-bridge design is in `docs/ble-bridge.md`.
+
 ## Behaviour
 
 - A fresh token for every connection and every `/report`; `devices.device_unpaired` or 3 `invalid_credentials` in a row

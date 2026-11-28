@@ -26,6 +26,7 @@ Written only by the Coordinator (agent teams). Read it first when a session star
 | jarvis-desktop-rework | S3 | done (PR pending) | feat/jarvis-desktop-rework-s3 | specs/jarvis-desktop-rework-adr.md | 2026-11-28 |
 | jarvis-desktop-rework | D3 | done (PR HomeApps.Desktop#3) | feat/jarvis-desktop-rework-d3 | same | 2026-11-28 |
 | jarvis-desktop-rework | S5 | done (PR pending) | feat/jarvis-desktop-rework-s5 | specs/jarvis-desktop-rework-adr.md (D14) | 2026-11-28 |
+| jarvis-desktop-rework | S4 | done (PR pending) | feat/jarvis-desktop-rework-s4 | specs/jarvis-desktop-rework-adr.md | 2026-11-28 |
 | jarvis-desktop-rework | S6 (fix: repeated identical tool call) | done (PR pending) | fix/jarvis-duplicate-tool-calls | specs/jarvis-desktop-rework-adr.md (D16) | 2026-11-28 |
 
 ## Decisions
