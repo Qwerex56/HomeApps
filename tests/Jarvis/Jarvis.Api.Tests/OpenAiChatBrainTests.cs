@@ -100,6 +100,58 @@ public sealed class OpenAiChatBrainTests(JarvisFactory factory)
         Assert.Equal("JARVIS jest chwilowo niedostępny", said.OfType<BrainFinished>().Single().Text);
     }
 
+    [Fact]
+    public async Task A_model_that_hangs_after_a_tool_ran_does_not_run_the_tool_again()
+    {
+        using var tools = DeviceTool();
+        var model = new FakeModel([FakeModel.Call("call_1", "device_mac_quiet", "{}")]) { HangFromRequest = 2 };
+
+        var said = await RunAsync(model, timeout: TimeSpan.FromMilliseconds(300));
+
+        Assert.Equal("JARVIS jest chwilowo niedostępny", said.OfType<BrainFinished>().Single().Text);
+        Assert.Equal(["mac_quiet"], factory.DevicesSource.Calls);
+        Assert.Equal(2, model.Requests.Count + 1);
+    }
+
+    [Fact]
+    public async Task The_model_time_limit_is_per_request_not_for_the_whole_tool_loop()
+    {
+        using var tools = DeviceTool();
+        var model = new FakeModel([
+            FakeModel.Call("c1", "device_mac_quiet", "{}"), FakeModel.Call("c2", "device_mac_quiet", """{"a":1}"""), FakeModel.Text("Gotowe.")])
+        {
+            Delay = TimeSpan.FromMilliseconds(250),
+        };
+
+        var said = await RunAsync(model, timeout: TimeSpan.FromMilliseconds(400));
+
+        Assert.Equal("Gotowe.", said.OfType<BrainFinished>().Single().Text);
+        Assert.Equal(["mac_quiet", "mac_quiet"], factory.DevicesSource.Calls);
+    }
+
+    [Fact]
+    public async Task One_model_issued_call_reaches_the_source_exactly_once()
+    {
+        using var tools = DeviceTool();
+        var model = new FakeModel([FakeModel.Call("c1", "device_mac_quiet", "{}"), FakeModel.Text("Zrobione.")]);
+
+        await RunAsync(model);
+
+        Assert.Equal(["mac_quiet"], factory.DevicesSource.Calls);
+    }
+
+    private Reset DeviceTool()
+    {
+        factory.DevicesSource.Reset();
+        factory.DevicesSource.Tools = [FakeToolSet.Computer("mac_quiet", readOnly: false, destructive: false)];
+        return new Reset(factory.DevicesSource);
+    }
+
+    private sealed class Reset(FakeToolSet set) : IDisposable
+    {
+        public void Dispose() => set.Reset();
+    }
+
     [Theory]
     [InlineData("", "", false)]
     [InlineData("https://models.test/v1", "", false)]
