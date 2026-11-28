@@ -10,6 +10,7 @@ using Jarvis.Infrastructure.Persistence;
 using Jarvis.Infrastructure.Tools;
 using Jarvis.Infrastructure.Voice;
 using Jarvis.Application.Voice;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -46,6 +47,11 @@ public static class DependencyInjection
         services.AddScoped<IToolExecutor, GatewayToolExecutor>();
 
         services.AddOptions<OpenAiChatOptions>().BindConfiguration(OpenAiChatOptions.SectionName);
+        services.AddDataProtection()
+            .SetApplicationName("homeapps-jarvis")
+            .PersistKeysToFileSystem(new DirectoryInfo(Path.GetFullPath(configuration["Jarvis:DataProtection:KeysPath"] ?? ".keys/dataprotection")));
+        services.AddScoped<LlmSettingsStore>();
+        services.AddScoped<ILlmConnection>(sp => sp.GetRequiredService<LlmSettingsStore>());
         services.AddHttpClient(OpenAiChatBrain.HttpClientName);
         services.AddScoped<IAssistantBrain, OpenAiChatBrain>();
         services.AddHttpClient<OpenAiModelHealthCheck>();

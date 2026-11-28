@@ -8,7 +8,7 @@ namespace Jarvis.Application.Abstractions;
 public interface IAssistantBrain
 {
     /// <summary>False when it cannot think at all (no model URL or name configured): JARVIS then says he is switched off.</summary>
-    bool IsReady { get; }
+    Task<bool> IsReadyAsync(CancellationToken cancellationToken);
 
     IAsyncEnumerable<BrainEvent> RunAsync(BrainRequest request, CancellationToken cancellationToken);
 }
