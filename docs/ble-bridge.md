@@ -42,7 +42,7 @@ change them afterwards).
 | Item | UUID | Properties | Content |
 | --- | --- | --- | --- |
 | Service `HomeApps Bridge` | `HA00xxxx-0000-1000-8000-00805F9B34FB` (placeholder) | | advertised, with the device name |
-| `Info` | `HA01xxxx-...` | Read (encrypted) | `{"v":1,"proto":"homeapps.device/1","mtu":N,"model":"author/name"}` UTF-8 JSON, no secrets |
+| `Info` | `HA01xxxx-...` | Read (encrypted) | `{"v":1,"proto":"homeapps.device/1","mtu":N,"model":"author/name"}` UTF-8 JSON, no secrets; optional `"fingerprint"` (TOFU only) is the server certificate SHA-256 the device saw, for the app to show |
 | `Up` (device to phone) | `HA02xxxx-...` | Notify (encrypted) | chunks of the device's TLS byte stream |
 | `Down` (phone to device) | `HA03xxxx-...` | Write without response (encrypted) | chunks of the server's TLS byte stream |
 | `Control` | `HA04xxxx-...` | Write, Notify (encrypted) | connection control, below |
@@ -55,6 +55,8 @@ change them afterwards).
 | `0x02 OPENED` / `0x03 FAILED code` | phone to device | result (`1` no network, `2` refused, `3` timeout) |
 | `0x04 CLOSE` | both | end the stream (the device does this after the response) |
 | `0x05 WAKE` | phone to device | optional, a user asked for an immediate report |
+| `0x06 CREDIT n` | device to phone | `n` more bytes of `Down` buffer, 2 bytes big-endian (type byte plus 2 = 3 bytes total) |
+| `0x07 SETUP tlv` | phone to device | address, code and optional fingerprint as one TLV (type byte plus the TLV), only after bonding |
 
 ### MTU, chunking and framing
 

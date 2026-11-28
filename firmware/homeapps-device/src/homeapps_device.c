@@ -78,6 +78,7 @@ static void to_setup_and_restart(const char *why)
 
 /* ---------- HTTP (pairing, token, report) ---------- */
 
+#ifndef CONFIG_HOMEAPPS_TRANSPORT_BLE
 static esp_err_t http_event(esp_http_client_event_t *e)
 {
     http_out_t *o = e->user_data;
@@ -89,6 +90,7 @@ static esp_err_t http_event(esp_http_client_event_t *e)
     }
     return ESP_OK;
 }
+#endif
 
 #ifdef CONFIG_HOMEAPPS_TLS_TOFU
 /* Trust on first use, bound to the real connection: mbedtls calls this for every certificate of the handshake. We pin the
@@ -130,6 +132,7 @@ static esp_err_t tofu_attach(void *conf)
 #endif
 
 /* POST json; returns the HTTP status or -1. */
+#ifndef CONFIG_HOMEAPPS_TRANSPORT_BLE
 static int http_json(const char *path, const char *bearer, const char *body, http_out_t *out)
 {
     char url[256];
@@ -158,10 +161,13 @@ static int http_json(const char *path, const char *bearer, const char *body, htt
     esp_http_client_cleanup(h);
     return status;
 }
+#endif
 
+#ifndef CONFIG_HOMEAPPS_TRANSPORT_BLE
 /* The Wi-Fi/HTTPS transport (the default). The one other transport, BLE, is a stub (homeapps_transport_ble.c). */
 static esp_err_t wifi_transport_open(void) { return ESP_OK; }   /* Wi-Fi, SNTP and the link are brought up by homeapps_start */
 static const homeapps_transport_t wifi_transport = { .name = "wifi", .open = wifi_transport_open, .post_json = http_json };
+#endif
 
 static const homeapps_transport_t *transport(void)
 {
