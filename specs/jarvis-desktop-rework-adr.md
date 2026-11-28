@@ -49,6 +49,13 @@ Target repo: ../HomeApps.Desktop (desktop stages) and this repo (server stages)
     *Powód:* Włączenie pomiaru ciśnienia (pressure) obok temperatury i wilgotności. Przygotowanie dokumentacji z 5 wymaganymi metrykami (średni prąd, czas wysyłki, % udanych raportów, powrót po utracie Wi-Fi, liczba stanów silent) oraz testu z hotspotem telefonu bez zmian w firmware.
 14. **D13: Warunkowy kontrakt centralnej dzierżawy tury (Turn Lease) dla Q2(A):**  
     *Powód:* Zabezpieczenie przed jednoczesną odpowiedzią wielu komputerów tej samej osoby w jednym pokoju poprzez 5-sekundową dzierżawę w pamięci podręcznej serwera `Jarvis`.
+15. **D14: Ustawienia połączenia LLM z konta admina w web (HomeApps, Stage S5, decyzja właściciela 2026-11-28):**
+    *Powód:* Połączenie z modelem (URL, model, klucz API, timeout) nie może wymagać ponownego ustawiania po każdej zmianie env.
+    - Tabela `JarvisLlmSettings` (jeden wiersz) w `homeapps_jarvis`: `BaseUrl`, `Model`, `ApiKeyProtected` (ASP.NET Data Protection; klucz nigdy nie wraca do klienta, API zwraca tylko `apiKeySet: bool`), `TimeoutSeconds`. Migracja EF Core.
+    - Endpointy tylko dla admina: `GET/PUT /jarvis/api/v1/admin/llm-settings`, `POST .../test` (to samo sprawdzenie co health check D7).
+    - Priorytet źródeł: ustawienia z bazy, gdy brak, `Jarvis:OpenAi` z env (istniejące instalacje działają bez zmian). `OpenAiChatBrain` czyta ustawienia przy każdej turze, bez restartu.
+    - Web: formularz w panelu admina (sekcja JARVIS) z przyciskiem „Testuj połączenie”; zapis wywołuje ponowne sprawdzenie modelu.
+    - Testy: endpointy odrzucają nie-admina (403); klucz zaszyfrowany w bazie i nieobecny w odpowiedziach; fallback na env; zmiana ustawień działa w następnej turze; Vitest dla formularza.
 
 ---
 
@@ -73,6 +80,7 @@ flowchart TD
         S2["Stage S2: Downlink dla śpiących urządzeń, SSE & Web (2.8, 3.4)"]
         S3["Stage S3: Firmware ESP32-C3 NVS, Pomiary PPK2 & C3 Lab (2.9)"]
         S4["Stage S4: Architektura i specyfikacja mostu BLE (2.11)"]
+        S5["Stage S5: Ustawienia połączenia LLM z konta admina w web (D14)"]
     end
 
     subgraph RepoDesktop["Repozytorium HomeApps.Desktop (Aplikacja Pulpitowa)"]
@@ -82,6 +90,7 @@ flowchart TD
         D4["Stage D4: Eksperymentalne narzędzia PC ('co gra', appki, url) & Wycofanie Godota (2.10)"]
     end
 
+    S1 --> S5
     S1 -.->|Niezależne API| D1
     S2 --> S3
     D1 --> D2 --> D3 --> D4
