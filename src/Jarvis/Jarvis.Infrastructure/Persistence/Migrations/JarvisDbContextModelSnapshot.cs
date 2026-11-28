@@ -147,6 +147,33 @@ namespace Jarvis.Infrastructure.Persistence.Migrations
                     b.ToTable("Runs", (string)null);
                 });
 
+            modelBuilder.Entity("Jarvis.Domain.Settings.JarvisLlmSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ApiKeyProtected")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("BaseUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("TimeoutSeconds")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("JarvisLlmSettings", (string)null);
+                });
+
             modelBuilder.Entity("Jarvis.Domain.ToolCalls.ToolCall", b =>
                 {
                     b.Property<Guid>("Id")
