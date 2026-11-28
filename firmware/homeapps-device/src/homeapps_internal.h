@@ -30,3 +30,18 @@ char *homeapps_descriptor_to_json(const homeapps_descriptor_t *d); /* caller fre
 
 /* setup portal: starts from the saved store (prefills SSID, address, fingerprint; keeps secret and password unless replaced). Blocks until the user saved a configuration or the timeout hit; returns ESP_OK when saved */
 esp_err_t homeapps_setup_run(const homeapps_store_t *current, void (*on_password)(const char *, const char *, void *), void *user);
+
+/* transport seam: how the three request/response calls (pair, token, report) reach the home. The default is Wi-Fi + HTTPS
+ * (homeapps_device.c); BLE is a stub, see docs/ble-bridge.md. The WebSocket link of a non-sleepy device stays on Wi-Fi. */
+typedef struct { char *body; size_t len; size_t cap; int retry_after; } http_out_t;
+
+typedef struct {
+    const char *name;
+    esp_err_t (*open)(void);   /* ESP_OK, or the reason the transport cannot be used (ESP_ERR_NOT_SUPPORTED) */
+    /* POST json to the home; returns the HTTP status or -1. Fills out->body (up to out->cap) and out->retry_after. */
+    int (*post_json)(const char *path, const char *bearer, const char *body, http_out_t *out);
+} homeapps_transport_t;
+
+#ifdef CONFIG_HOMEAPPS_TRANSPORT_BLE
+extern const homeapps_transport_t homeapps_transport_ble;
+#endif

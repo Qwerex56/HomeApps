@@ -6,6 +6,10 @@ idf_component_register(
     REQUIRES nvs_flash esp_wifi esp_netif esp_event esp_http_client esp_http_server esp_websocket_client esp_timer json mbedtls esp-tls driver lwip
     EMBED_TXTFILES "${CMAKE_CURRENT_LIST_DIR}/pinned_ca.pem" )
 
+if(CONFIG_HOMEAPPS_TRANSPORT_BLE)
+    target_sources(${COMPONENT_LIB} PRIVATE "src/homeapps_transport_ble.c")
+endif()
+
 if(CONFIG_HOMEAPPS_TLS_PINNED_CA)
     file(READ "${CMAKE_CURRENT_LIST_DIR}/pinned_ca.pem" _ha_ca)
     string(FIND "${_ha_ca}" "-----BEGIN CERTIFICATE-----" _ha_pos)

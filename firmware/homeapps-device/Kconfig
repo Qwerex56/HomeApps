@@ -29,4 +29,14 @@ menu "HomeApps device"
     config HOMEAPPS_SNTP_SERVER
         string "SNTP server"
         default "pool.ntp.org"
+    choice HOMEAPPS_TRANSPORT
+        prompt "Transport to the home"
+        default HOMEAPPS_TRANSPORT_WIFI
+        config HOMEAPPS_TRANSPORT_WIFI
+            bool "Wi-Fi + HTTPS (default)"
+        config HOMEAPPS_TRANSPORT_BLE
+            bool "Bluetooth LE bridge (STUB: not implemented, homeapps_start returns ESP_ERR_NOT_SUPPORTED)"
+            help
+                Placeholder for the phone bridge of docs/ble-bridge.md. Does not pull in NimBLE yet.
+    endchoice
 endmenu

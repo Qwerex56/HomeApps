@@ -78,8 +78,6 @@ static void to_setup_and_restart(const char *why)
 
 /* ---------- HTTP (pairing, token, report) ---------- */
 
-typedef struct { char *body; size_t len; size_t cap; int retry_after; } http_out_t;
-
 static esp_err_t http_event(esp_http_client_event_t *e)
 {
     http_out_t *o = e->user_data;
@@ -161,6 +159,19 @@ static int http_json(const char *path, const char *bearer, const char *body, htt
     return status;
 }
 
+/* The Wi-Fi/HTTPS transport (the default). The one other transport, BLE, is a stub (homeapps_transport_ble.c). */
+static esp_err_t wifi_transport_open(void) { return ESP_OK; }   /* Wi-Fi, SNTP and the link are brought up by homeapps_start */
+static const homeapps_transport_t wifi_transport = { .name = "wifi", .open = wifi_transport_open, .post_json = http_json };
+
+static const homeapps_transport_t *transport(void)
+{
+#ifdef CONFIG_HOMEAPPS_TRANSPORT_BLE
+    return &homeapps_transport_ble;
+#else
+    return &wifi_transport;
+#endif
+}
+
 static void out_init(http_out_t *o, size_t cap)
 {
     o->body = calloc(1, cap); o->len = 0; o->cap = cap; o->retry_after = 0;
@@ -178,7 +189,7 @@ static esp_err_t pair(int max_attempts)
     cJSON_Delete(req);
     for (int attempt = 0; max_attempts == 0 || attempt < max_attempts; attempt++) {
         http_out_t out; out_init(&out, 2048);
-        int status = http_json("/devices/pair", NULL, body, &out);
+        int status = transport()->post_json("/devices/pair", NULL, body, &out);
         if (status == 200) {
             cJSON *r = cJSON_Parse(out.body);
             const cJSON *id = cJSON_GetObjectItem(r, "deviceId"), *sec = cJSON_GetObjectItem(r, "secret");
@@ -215,7 +226,7 @@ static esp_err_t fetch_token(int max_attempts)
     snprintf(body, sizeof(body), "{\"deviceId\":\"%s\",\"secret\":\"%s\"}", S.store.device_id, S.store.secret);
     for (int attempt = 0; max_attempts == 0 || attempt < max_attempts; attempt++) {
         http_out_t out; out_init(&out, 2048);
-        int status = http_json("/auth/devices/token", NULL, body, &out);
+        int status = transport()->post_json("/auth/devices/token", NULL, body, &out);
         if (status == 200) {
             cJSON *r = cJSON_Parse(out.body);
             const cJSON *t = cJSON_GetObjectItem(r, "accessToken");
@@ -346,7 +357,7 @@ esp_err_t homeapps_flush(void)
     for (int attempt = 0; attempt < 4; attempt++) {
         if (fetch_token(3) != ESP_OK) break;
         http_out_t out; out_init(&out, 4096);
-        int status = http_json("/devices/report", S.token, body, &out);
+        int status = transport()->post_json("/devices/report", S.token, body, &out);
         if (status == 200) {
             xSemaphoreTake(S.lock, portMAX_DELAY);
             for (int i = 0; i < n; i++) free(S.queue[i]);
@@ -593,6 +604,8 @@ esp_err_t homeapps_start(const homeapps_config_t *config)
 {
     char err[120];
     if (homeapps_validate(config->descriptor, err, sizeof(err)) != ESP_OK) { ESP_LOGE(TAG, "Descriptor: %s", err); return ESP_ERR_INVALID_ARG; }
+    esp_err_t te = transport()->open();
+    if (te != ESP_OK) { ESP_LOGE(TAG, "Transport %s: %s", transport()->name, esp_err_to_name(te)); return te; }
     S.cfg = *config;
     S.events = xEventGroupCreate();
     S.lock = xSemaphoreCreateMutex();
