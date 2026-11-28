@@ -46,8 +46,9 @@ Settings (`Jarvis`):
 - **Model settings (D14):** an admin or owner sets the URL, model, API key and timeout in the web admin (JARVIS tab) or with
   `GET/PUT /jarvis/api/v1/admin/llm-settings` and `POST .../test` (the same check as the start-up health check). They are kept in
   `JarvisLlmSettings` (one row), win over `Jarvis:OpenAi` (the fallback for existing installs) and are read on every turn, so no restart. The key is
-  protected with Data Protection (keys in `Jarvis:DataProtection:KeysPath`, default `.keys/dataprotection`: keep them on a volume) and is
-  never returned, only `apiKeySet`.
+  protected with Data Protection (keys in `Jarvis:DataProtection:KeysPath`, default `.keys/dataprotection`: keep them on a volume: the compose files mount `jarvis-keys`; without them a recreated container loses the saved key) and is
+  never returned, only `apiKeySet`. Only a first-party admin token works (not an assistant's, not a connected app's). Changing the URL to another origin
+  without typing the key again gets `400` (`jarvis.llm_key_required`): the stored key is never sent to a new host. The health check does not follow redirects.
 - **Actions:** in a run the gateway logs every call. `readOnlyHint` = a read (not on the card); `destructiveHint: false`
   = done and shown; anything else (MCP's default counts as destructive) is not called but waits 10 minutes for
   `POST /jarvis/api/confirmations/{id}` `{approve}` or `AssistantConfirmed`, only from the person who asked. A decision
