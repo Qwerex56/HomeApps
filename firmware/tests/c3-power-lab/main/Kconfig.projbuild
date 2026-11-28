@@ -1,0 +1,16 @@
+menu "C3 Power Lab"
+    choice POWERLAB_MODE
+        prompt "Power mode"
+        default POWERLAB_MODE_DEEP_SLEEP
+        config POWERLAB_MODE_DEEP_SLEEP
+            bool "Deep sleep with report (sleepy device, POST /devices/report)"
+        config POWERLAB_MODE_MODEM_SLEEP
+            bool "Constant connection with modem sleep (WebSocket link)"
+        config POWERLAB_MODE_NO_SAVING
+            bool "Constant connection, no power saving"
+    endchoice
+    config POWERLAB_PERIOD_S
+        int "Report period in seconds"
+        default 60
+        range 5 86400
+endmenu

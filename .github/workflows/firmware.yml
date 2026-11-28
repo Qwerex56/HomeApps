@@ -25,3 +25,13 @@ jobs:
           esp_idf_version: v5.4
           target: ${{ matrix.target }}
           path: firmware/examples/${{ matrix.example }}
+  power-lab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build c3-power-lab for esp32c3
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v5.4
+          target: esp32c3
+          path: firmware/tests/c3-power-lab
