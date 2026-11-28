@@ -140,6 +140,35 @@ public sealed class OpenAiChatBrainTests(JarvisFactory factory)
         Assert.Equal(["mac_quiet"], factory.DevicesSource.Calls);
     }
 
+    [Fact]
+    public async Task The_same_action_again_in_one_run_is_not_executed_and_the_model_gets_the_earlier_result()
+    {
+        using var tools = DeviceTool();
+        var model = new FakeModel([
+            FakeModel.Call("c1", "device_mac_quiet", """{"level":30,"b":1}"""), FakeModel.Call("c2", "device_mac_quiet", """{"b":1, "level":30}"""), FakeModel.Text("Gotowe.")]);
+
+        var said = await RunAsync(model);
+
+        Assert.Equal("Gotowe.", said.OfType<BrainFinished>().Single().Text);
+        Assert.Equal(["mac_quiet"], factory.DevicesSource.Calls);
+        var third = model.Requests[2]["messages"]!.AsArray();
+        var first = third[^3]!["content"]!.GetValue<string>();
+        var again = third[^1]!["content"]!.GetValue<string>();
+        Assert.StartsWith(first, again);
+        Assert.Contains("Nie wywołuj tego ponownie", again);
+    }
+
+    [Fact]
+    public async Task The_same_action_in_a_new_run_is_executed()
+    {
+        using var tools = DeviceTool();
+
+        await RunAsync(new FakeModel([FakeModel.Call("c1", "device_mac_quiet", "{}"), FakeModel.Text("ok")]));
+        await RunAsync(new FakeModel([FakeModel.Call("c1", "device_mac_quiet", "{}"), FakeModel.Text("ok")]));
+
+        Assert.Equal(["mac_quiet", "mac_quiet"], factory.DevicesSource.Calls);
+    }
+
     private Reset DeviceTool()
     {
         factory.DevicesSource.Reset();
