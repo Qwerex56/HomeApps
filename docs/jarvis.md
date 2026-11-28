@@ -16,6 +16,7 @@ One MCP server (Streamable HTTP) in front of every MCP server of the instance, s
 
 - **Per person.** `tools/list` asks every source with the caller's token; nothing is kept between people. A source
   that does not answer leaves out only its own tools. A second tool with a name already taken is left out and logged.
+- **One execution per run.** The brain does not run an identical tool call (same name, same arguments) twice in one run once it succeeded: no second `ToolCall` row; the model gets the earlier result plus "Nie wywołuj tego ponownie; odpowiedz użytkownikowi.". A failed call, a new run or a new message executes again.
 - **Always as an assistant.** A connected app's token (`aud` = `Jarvis:Resource`) or a person's own token is exchanged
   for Auth's delegated token (`POST /internal/delegation`, 5 minutes, kept until shortly before it expires), so every
   source sees `act` and refuses changes to accounts and households (JV13). A delegated token passes as it is.
