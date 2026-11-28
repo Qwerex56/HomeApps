@@ -24,7 +24,7 @@ public sealed class SleepyReportTests(DevicesApiFactory api) : IClassFixture<Dev
         using var member = api.CreateAuthenticatedClient(admin);
         var added = await (await member.PostAsJsonAsync($"/devices/v1/households/{household}", new { name = "sleeper" })).Content.ReadFromJsonAsync<JsonElement>();
         using var anonymous = api.CreateClient();
-        var paired = await anonymous.PostAsJsonAsync("/devices/v1/pair", new { code = added.GetProperty("code").GetString(), descriptor = JsonDocument.Parse(Descriptor).RootElement });
+        var paired = await anonymous.PostAsJsonAsync("/devices/v1/pair", new { code = added.GetProperty("code").GetString(), descriptor = JsonElement.Parse(Descriptor) });
         var id = (await paired.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("deviceId").GetGuid();
         Assert.Equal(HttpStatusCode.NoContent, (await member.PostAsJsonAsync($"/devices/v1/{id}/set", new { control = "level", value = 3 })).StatusCode);
 
@@ -76,12 +76,12 @@ public sealed class SleepyReportTests(DevicesApiFactory api) : IClassFixture<Dev
         await using (var newer = Scope())
         {
             var fresh = await newer.Context.Set<Devices.Domain.Devices.DeviceState>().FindAsync(device);
-            fresh!.SetPendingSetting("level", JsonDocument.Parse("3").RootElement);
+            fresh!.SetPendingSetting("level", JsonElement.Parse("3"));
             await newer.Context.SaveChangesAsync();
         }
 
-        loaded!.ClearPendingSettingOnState(JsonDocument.Parse("""{ "level": 1 }""").RootElement);
-        loaded.ApplyValues(JsonDocument.Parse("""{ "level": 1 }""").RootElement, DateTimeOffset.UtcNow);
+        loaded!.ClearPendingSettingOnState(JsonElement.Parse("""{ "level": 1 }"""));
+        loaded.ApplyValues(JsonElement.Parse("""{ "level": 1 }"""), DateTimeOffset.UtcNow);
         await Assert.ThrowsAsync<HomeApps.BuildingBlocks.Application.Abstractions.ConcurrencyConflictException>(() => stale.Context.SaveChangesAsync());
     }
 
