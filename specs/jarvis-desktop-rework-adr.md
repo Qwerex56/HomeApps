@@ -57,6 +57,15 @@ Target repo: ../HomeApps.Desktop (desktop stages) and this repo (server stages)
     - Web: formularz w panelu admina (sekcja JARVIS) z przyciskiem „Testuj połączenie”; zapis wywołuje ponowne sprawdzenie modelu.
     - Testy: endpointy odrzucają nie-admina (403); klucz zaszyfrowany w bazie i nieobecny w odpowiedziach; fallback na env; zmiana ustawień działa w następnej turze; Vitest dla formularza.
 
+16. **D15: Paczki instalacyjne aplikacji tray (HomeApps.Desktop, Stage D5, decyzja właściciela 2026-11-28):**
+    *Powód:* po wycofaniu Godota nie ma żadnej dystrybucji; aplikacja startuje tylko przez `dotnet run`.
+    - Workflow GitHub Actions `release.yml` uruchamiany tagiem wersji `v*` (oraz ręcznie), budujący i publikujący w GitHub Release: Windows 10/11 (x64, instalator lub zip z `HomeApps.Desktop.exe`), macOS (arm64 i x64, `.app` w `.dmg` lub zip; `LSUIElement`, opis uprawnień mikrofonu, podpis ad hoc), Linux (x64, tar.gz lub AppImage).
+    - Wersja z tagu trafia do wersji aplikacji. Paczka self-contained, bez modeli Whisper/Piper (pobierane osobno, opisane w dokumentacji), z dokumentacją instalacji i autostartu (login item / Run key / `.desktop`).
+    - Testy: workflow przechodzi na tagu testowym (`v0.0.0-test`) lub `workflow_dispatch`; skrypty pakujące uruchamialne lokalnie; podpis i notaryzacja macOS poza zakresem.
+17. **D16: Jakość STT i duplikaty (HomeApps.Desktop i HomeApps, Stage D6, zgłoszenie właściciela 2026-11-28):**
+    - STT: domyślny model Whisper za mały dla polskiego (np. „Gdzieś nasz makarnat i a gente”); większy domyślny model (np. small lub medium), ustawienie modelu i języka `pl`, prompt ze słownictwem domu (JARVIS, listy, plan), dokumentacja kosztu CPU/RAM i pobierania modeli.
+    - Duplikaty: wiadomości JARVIS-a i wykonane akcje w historii pojawiają się podwójnie. Najpierw ustalić przyczynę (klient: dwa połączenia lub dwa wysłania tej samej tury, `DeviceLink` po `Reannounce`; serwer: podwójny zapis wiadomości/akcji lub podwójne wywołanie narzędzia), następnie naprawić w repo, którego dotyczy, z testem regresyjnym; akcja urządzenia nie może wykonać się dwa razy.
+
 ---
 
 ### 1.3 Konflikty rozstrzygnięte (Resolved Conflicts)
@@ -88,12 +97,15 @@ flowchart TD
         D2["Stage D2: Whisper.net + Piper ONNX in-process, 8s Follow-up, AEC (2.1-2.3)"]
         D3["Stage D3: Historia rozmów z filtrami/szukaniem & Powiadomienia Tak/Nie (2.4, 2.5)"]
         D4["Stage D4: Eksperymentalne narzędzia PC ('co gra', appki, url) & Wycofanie Godota (2.10)"]
+        D5["Stage D5: Paczki instalacyjne Win/macOS/Linux z GitHub Actions na tag (D15)"]
+        D6["Stage D6: Jakość STT i duplikaty wiadomości/akcji (D16)"]
     end
 
     S1 --> S5
     S1 -.->|Niezależne API| D1
     S2 --> S3
-    D1 --> D2 --> D3 --> D4
+    D1 --> D2 --> D3 --> D4 --> D5
+    D4 --> D6
 ```
 
 ---
