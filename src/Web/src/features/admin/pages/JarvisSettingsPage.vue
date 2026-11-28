@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { useToast } from 'primevue/usetoast'
+import { useConfirm } from 'primevue/useconfirm'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -17,9 +18,10 @@ import { llmSettingsApi, llmSettingsKeys } from '../llmSettings'
 // D14: the model connection of JARVIS, set by an administrator. The key field stays empty: empty keeps the stored key.
 const { t } = useI18n()
 const toast = useToast()
+const confirm = useConfirm()
 const queryClient = useQueryClient()
 
-const { data: settings, isPending, isError } = useQuery({
+const { data: settings, isPending, isError, error: loadError } = useQuery({
   queryKey: llmSettingsKeys.settings,
   queryFn: () => llmSettingsApi.get(),
 })
@@ -63,7 +65,17 @@ async function save() {
   }
 }
 
-async function removeKey() {
+function removeKey() {
+  confirm.require({
+    header: t('admin.jarvis.removeKey'),
+    message: t('admin.jarvis.removeKeyText'),
+    acceptProps: { label: t('admin.jarvis.removeKey'), severity: 'danger' },
+    rejectProps: { label: t('common.cancel'), severity: 'secondary', text: true },
+    accept: () => void doRemoveKey(),
+  })
+}
+
+async function doRemoveKey() {
   busy.value = true
   try {
     const saved = await llmSettingsApi.save({
@@ -73,6 +85,7 @@ async function removeKey() {
       apiKey: '',
     })
     queryClient.setQueryData(llmSettingsKeys.settings, saved)
+    toast.add({ severity: 'success', summary: t('admin.jarvis.keyRemoved'), life: 3000 })
   } catch (error) {
     toast.add({ severity: 'error', summary: errorMessage(toProblem(error)), life: 6000 })
   } finally {
@@ -99,7 +112,7 @@ async function test() {
     <template #subtitle>{{ t('admin.jarvis.subtitle') }}</template>
     <template #content>
       <Skeleton v-if="isPending" height="10rem" />
-      <Message v-else-if="isError" severity="error" :closable="false">{{ t('errors.unknown') }}</Message>
+      <Message v-else-if="isError" severity="error" :closable="false">{{ errorMessage(toProblem(loadError)) }}</Message>
       <form v-else class="flex max-w-xl flex-col gap-4" @submit.prevent="save">
         <label class="flex flex-col gap-1">
           <span class="text-sm">{{ t('admin.jarvis.baseUrl') }}</span>

@@ -3,6 +3,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice'
+import ConfirmationService from 'primevue/confirmationservice'
 import { i18n } from '@/shared/i18n'
 import { llmSettingsApi } from '../llmSettings'
 import JarvisSettingsPage from '../pages/JarvisSettingsPage.vue'
@@ -17,6 +18,7 @@ async function render() {
         i18n,
         PrimeVue,
         ToastService,
+        ConfirmationService,
         [VueQueryPlugin, { queryClient: new QueryClient({ defaultOptions: { queries: { retry: false } } }) }],
       ],
     },
