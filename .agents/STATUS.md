@@ -25,7 +25,7 @@ Written only by the Coordinator (agent teams). Read it first when a session star
 | jarvis-desktop-rework | S1 | done | feat/jarvis-desktop-rework-s1 | specs/jarvis-desktop-rework-adr.md | 2026-11-27 |
 | jarvis-desktop-rework | S3 | done (PR pending) | feat/jarvis-desktop-rework-s3 | specs/jarvis-desktop-rework-adr.md | 2026-11-28 |
 | jarvis-desktop-rework | D3 | done (PR HomeApps.Desktop#3) | feat/jarvis-desktop-rework-d3 | same | 2026-11-28 |
-| jarvis-desktop-rework | S5 | todo (ADR D14, owner-approved 2026-11-28) | | same | 2026-11-28 |
+| jarvis-desktop-rework | S5 | done (PR pending) | feat/jarvis-desktop-rework-s5 | specs/jarvis-desktop-rework-adr.md (D14) | 2026-11-28 |
 
 ## Decisions
 - 2026-11-21 (owner): agy roles run directly from the Coordinator, never through a Claude subagent. Devil's Advocate on agy uses `gemini-4-argon-<effort>`.
