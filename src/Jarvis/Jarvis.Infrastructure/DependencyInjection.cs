@@ -54,7 +54,8 @@ public static class DependencyInjection
         services.AddScoped<ILlmConnection>(sp => sp.GetRequiredService<LlmSettingsStore>());
         services.AddHttpClient(OpenAiChatBrain.HttpClientName);
         services.AddScoped<IAssistantBrain, OpenAiChatBrain>();
-        services.AddHttpClient<OpenAiModelHealthCheck>();
+        services.AddHttpClient<OpenAiModelHealthCheck>()
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.AddHostedService(sp => sp.GetRequiredService<OpenAiModelHealthCheck>());
 
         services.AddHttpClient<ISpeechToText, OpenAiSpeechToText>((sp, http) => Engine(sp, http, v => v.SttUrl));

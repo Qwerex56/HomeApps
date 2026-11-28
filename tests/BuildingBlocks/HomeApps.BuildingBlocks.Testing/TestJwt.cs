@@ -36,8 +36,8 @@ public static class TestJwt
     /// A token Auth gives a connected app (OAuth, jarvis-v1.md 3.1): <c>aud</c> = the <paramref name="resource"/> it
     /// asked for, <c>client_id</c> = the app.
     /// </summary>
-    public static string CreateAppToken(Guid userId, string resource, string clientId) =>
-        Create(userId, null, [], null, resource, clientId);
+    public static string CreateAppToken(Guid userId, string resource, string clientId, params string[] roles) =>
+        Create(userId, null, roles, null, resource, clientId);
 
     /// <summary>A household satellite's token (jarvis-satellites.md S13): the device as subject, its household named.</summary>
     public static string CreateDeviceToken(Guid deviceId, Guid householdId) =>
