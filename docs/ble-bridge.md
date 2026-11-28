@@ -55,8 +55,30 @@ change them afterwards).
 | `0x02 OPENED` / `0x03 FAILED code` | phone to device | result (`1` no network, `2` refused, `3` timeout) |
 | `0x04 CLOSE` | both | end the stream (the device does this after the response) |
 | `0x05 WAKE` | phone to device | optional, a user asked for an immediate report |
-| `0x06 CREDIT n` | device to phone | `n` more bytes of `Down` buffer, 2 bytes big-endian (type byte plus 2 = 3 bytes total) |
-| `0x07 SETUP tlv` | phone to device | address, code and optional fingerprint as one TLV (type byte plus the TLV), only after bonding |
+| `0x06 CREDIT n` | device to phone | `n` more bytes of `Down` buffer, uint16 **little-endian** (type byte plus 2 = 3 bytes total) |
+| `0x07 SETUP tlv` | phone to device | address, code and optional fingerprint as one TLV (type byte plus the TLV), only after bonding; layout under "SETUP layout" below |
+
+**Byte order:** every multi-byte integer in the `Control` messages (the `CREDIT` uint16 and the SETUP lengths) is
+little-endian, as in BLE/ATT. The `Up`/`Down` streams are opaque TLS bytes.
+
+### SETUP layout
+
+`0x07` followed by TLV entries, each `tag` (1 byte), `length` (uint16 little-endian), `value` (`length` bytes), in any
+order, no padding. Values are UTF-8 text without a terminator. Unknown tags are skipped; a missing required tag, a
+duplicate tag or a length past the end of the message makes the device ignore the write and notify `CLOSE`.
+
+| Tag | Field | Required | Value | Max length |
+| --- | --- | --- | --- | --- |
+| `0x01` | server address | yes | `host` or `host:port`, as in the portal | 128 |
+| `0x02` | pairing code | yes | the code shown in the app, as typed | 32 |
+| `0x03` | TLS fingerprint | no | SHA-256 as 64 hex characters (case-insensitive, no separators); absent means the CA chain is validated | 64 |
+
+The whole message must fit one ATT write (at MTU 244: 244 bytes, so at most 241 bytes of TLV after the type byte; the
+maximums above are only reached with a larger MTU or a long write). Example, address `home.lan`, code `ABCD2345`, no fingerprint:
+
+```text
+07 01 08 00 68 6f 6d 65 2e 6c 61 6e 02 08 00 41 42 43 44 32 33 34 35
+```
 
 ### MTU, chunking and framing
 
@@ -65,7 +87,7 @@ change them afterwards).
 - `Up`/`Down` carry the **raw TLS stream** split in arbitrary chunks: no extra framing is needed, because TLS records and
   HTTP/1.1 (`Content-Length`) delimit themselves. Each chunk is one notification or write; the receiver appends.
 - Flow control: Notify is paced by the controller (a queued notification at a time); on `Down` the phone must not write
-  faster than the device's credit: the device sends a 2-byte credit (`0x06 CREDIT n`) on `Control` when it has `n` more bytes
+  faster than the device's credit: the device sends a 2-byte little-endian credit (`0x06 CREDIT n`) on `Control` when it has `n` more bytes
   of buffer. Initial credit 2048.
 - Limits mirror the protocol: a report is at most 50 frames and 64 KB; at MTU 244 that is ~270 chunks, so a `/report`
   with a few frames (about 1 KB) is 5 chunks plus the TLS handshake (about 5 to 7 KB with a typical chain, ~30 chunks).
