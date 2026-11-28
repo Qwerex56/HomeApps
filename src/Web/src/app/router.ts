@@ -195,6 +195,11 @@ export const router = createRouter({
               component: () => import('@/features/admin/pages/ServerAboutPage.vue'),
             },
             {
+              path: 'jarvis',
+              name: 'admin-jarvis',
+              component: () => import('@/features/admin/pages/JarvisSettingsPage.vue'),
+            },
+            {
               path: 'plugins',
               name: 'admin-plugins',
               meta: { owner: true },

@@ -528,7 +528,23 @@
       "households": "Domy",
       "plugins": "Pluginy serwera",
       "addons": "Dodatki",
+      "jarvis": "JARVIS",
       "about": "O serwerze"
+    },
+    "jarvis": {
+      "title": "JARVIS: połączenie z modelem",
+      "subtitle": "Dowolny serwer zgodny z OpenAI. Te ustawienia mają pierwszeństwo przed zmiennymi środowiskowymi i działają od następnej wiadomości.",
+      "baseUrl": "Adres API",
+      "model": "Model",
+      "apiKey": "Klucz API",
+      "keyKept": "Klucz jest zapisany (zostaw puste, by go zachować)",
+      "removeKey": "Usuń klucz",
+      "timeout": "Limit czasu (sekundy)",
+      "save": "Zapisz",
+      "saved": "Zapisano ustawienia JARVIS-a",
+      "test": "Testuj połączenie",
+      "testOk": "Model odpowiada.",
+      "testFailed": "Model nie odpowiada: {error}"
     },
     "about": {
       "title": "O serwerze",
