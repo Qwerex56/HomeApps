@@ -152,8 +152,14 @@ new secrets and 18 migrations. Migrations are not reversible: the way back is a 
    (the admin "About the server" page lists no plugins without it). Optional: `JARVIS_VOICE_URL` (the voice service; voice stays off while empty).
    Devices uses a new database, `homeapps_devices`; include it in later backups.
 3. **Pull and start:** `git pull` (or `git checkout V3.0.0`), then `docker compose -f compose.prod.yaml up -d --build`.
+   **Behind a tunnel** use both files, `docker compose -f compose.prod.yaml -f compose.tunnel.yaml up -d --build`, or
+   plain `docker compose up -d --build` when `COMPOSE_FILE` is set in `.env`. Any `-f` makes compose ignore
+   `COMPOSE_FILE`: with `-f compose.prod.yaml` alone Traefik is recreated on ports 80/443 without its `:8080`
+   entrypoint, the old `cloudflared` keeps running (the tunnel stays Healthy) and every page is a Cloudflare 502.
+   The same applies to every command below.
 4. **Check after the start:**
-   - `docker compose -f compose.prod.yaml ps`: every service is `running`/`healthy`, none restarting.
+   - `docker compose -f compose.prod.yaml ps`: every service is `running`/`healthy`, none restarting (behind a tunnel
+     `traefik` publishes no ports and `cloudflared` is listed as a service, not as an orphan).
    - `docker compose -f compose.prod.yaml logs --tail 50 <service>` shows no migration error.
    - Sign in; your homes, members, HomeMix add-ons, chat and todo data are still there.
    - Admin, "O serwerze": 3.0.0 for every service and the plugins healthy.
@@ -277,7 +283,9 @@ Google sign-in does not change: the redirect URI is still `https://<HOMEAPPS_DOM
   `up -d` again.
 - **Error 1033:** Cloudflare has the hostname but no running tunnel: `cloudflared` is not running or cannot reach the
   internet (it needs outgoing port 7844, UDP or TCP, or 443).
-- **502 Bad Gateway:** the public hostname is not `HTTP` + `traefik:8080` (for example `HTTPS`), or Traefik is not up.
+- **502 Bad Gateway:** the public hostname is not `HTTP` + `traefik:8080` (for example `HTTPS`), or Traefik is not up,
+  or the stack was started with `-f compose.prod.yaml` only (Traefik then listens on 80/443, not on 8080, while the old
+  `cloudflared` keeps the tunnel Healthy). Start it again with both files, see [Updating](#updating).
 - **404 from Traefik:** the hostname in the request is not `HOMEAPPS_DOMAIN` (a typo in `.env`, or another hostname
   pointed at the same tunnel).
 
